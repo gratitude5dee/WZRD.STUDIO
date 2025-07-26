@@ -13,6 +13,7 @@ import NotFound from "./pages/NotFound";
 import Credits from "./pages/Credits";
 import ProjectSetup from "./pages/ProjectSetup";
 import StudioPage from "./pages/StudioPage";
+import LearningStudioPage from "./pages/LearningStudioPage";
 import StoryboardPage from "./pages/StoryboardPage";
 import EditorPage from "./pages/EditorPage";
 import CustomCursor from "@/components/CustomCursor";
@@ -51,6 +52,13 @@ const App = () => {
               <Route path="/studio/:projectId" element={
                 <ProtectedRoute>
                   <StudioPage />
+                </ProtectedRoute>
+              } />
+              
+              {/* Learning Studio Route */}
+              <Route path="/learning-studio" element={
+                <ProtectedRoute>
+                  <LearningStudioPage />
                 </ProtectedRoute>
               } />
               

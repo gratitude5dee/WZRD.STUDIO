@@ -188,8 +188,9 @@ const Home = () => {
                 <Plus className="w-4 h-4" />
                 New Reality
               </GlassButton>
-              <GlassButton variant="cosmic" size="icon">
+              <GlassButton variant="cosmic" onClick={() => navigate('/learning-studio')}>
                 <Brain className="w-4 h-4" />
+                Learning Studio
               </GlassButton>
               <GlassButton variant="void" size="icon">
                 <Star className="w-4 h-4" />
