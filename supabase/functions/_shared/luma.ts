@@ -31,13 +31,14 @@ export async function initiateLumaImageGeneration({
   const requestBody = {
     prompt,
     aspect_ratio: aspectRatio,
+    modality: "image",
     model,
   };
 
   try {
     // Call Luma API
     console.log(`[Luma Helper][Shot ${shotId}] Sending request to Luma API...`);
-    const response = await fetch("https://api.lumalabs.ai/photon", {
+    const response = await fetch("https://api.lumalabs.ai/dream-machine/v1/generations", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
