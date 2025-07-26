@@ -140,14 +140,14 @@ serve(async (req) => {
     console.log(`[generate-shot-image][Shot ${shotId}] Using aspect ratio: ${aspectRatio}, image size: ${imageSize}`);
 
     try {
-      // Generate image using Fal.ai FLUX.1 [schnell] - the cheapest and fastest model
+      // Generate image using Fal.ai FLUX.1 [dev] - reliable and fast model
       console.log(`[generate-shot-image][Shot ${shotId}] Calling Fal.ai for image generation...`);
       
-      const falResponse = await executeFalModel('fal-ai/flux/schnell', {
+      const falResponse = await executeFalModel('fal-ai/flux/dev', {
         prompt: shot.visual_prompt,
         image_size: imageSize,
-        num_inference_steps: 4, // Minimum for schnell model for fastest generation
-        guidance_scale: 2.5, // Lower guidance for faster generation
+        num_inference_steps: 28, // Standard for flux/dev model
+        guidance_scale: 3.5, // Standard guidance for flux/dev
         num_images: 1,
         enable_safety_checker: true
       });
