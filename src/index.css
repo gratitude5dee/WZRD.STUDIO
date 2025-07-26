@@ -4,65 +4,101 @@
  
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
- 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
- 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
- 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
- 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
- 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
- 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
- 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
- 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
- 
-    --radius: 0.5rem;
+    /* Odyssey Light Mode - Cosmic Foundation */
+    --background: 240 10% 96%;
+    --foreground: 220 15% 15%;
+
+    --card: 240 20% 98%;
+    --card-foreground: 220 15% 15%;
+
+    --popover: 240 20% 98%;
+    --popover-foreground: 220 15% 15%;
+
+    /* Cosmic Primary - Deep Space Blue */
+    --primary: 230 50% 25%;
+    --primary-foreground: 240 100% 98%;
+
+    /* Nebula Secondary - Ethereal Purple */
+    --secondary: 270 30% 85%;
+    --secondary-foreground: 270 50% 20%;
+
+    /* Muted Cosmic Dust */
+    --muted: 240 15% 90%;
+    --muted-foreground: 220 10% 45%;
+
+    /* Stellar Accent - Cosmic Gold */
+    --accent: 45 90% 70%;
+    --accent-foreground: 45 95% 10%;
+
+    --destructive: 0 75% 55%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 240 20% 85%;
+    --input: 240 20% 92%;
+    --ring: 230 50% 25%;
+
+    /* Odyssey Extended Palette */
+    --cosmic-void: 220 25% 8%;
+    --nebula-purple: 270 60% 50%;
+    --stellar-gold: 45 95% 60%;
+    --plasma-blue: 200 85% 55%;
+    --quantum-green: 160 70% 45%;
+    --temporal-orange: 25 85% 60%;
+    --void-shadow: 220 30% 12%;
+    
+    /* Glass Effects */
+    --glass-primary: 230 50% 25% / 0.1;
+    --glass-secondary: 270 60% 50% / 0.08;
+    --glass-accent: 45 95% 60% / 0.12;
+    --glass-backdrop: 240 10% 5% / 0.4;
+    
+    /* Glow Effects */
+    --glow-primary: 230 80% 60%;
+    --glow-secondary: 270 70% 65%;
+    --glow-accent: 45 100% 70%;
+    
+    --radius: 1rem;
   }
- 
+
   .dark {
-    --background: 224 71% 4%;
-    --foreground: 210 40% 98%;
- 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
- 
-    --popover: 226 71% 9%;
-    --popover-foreground: 210 40% 98%;
- 
-    --primary: 210 40% 98%;
-    --primary-foreground: 224 71% 10%;
- 
-    --secondary: 217 33% 17%;
-    --secondary-foreground: 210 40% 98%;
- 
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
- 
-    --accent: 217 33% 17%;
-    --accent-foreground: 210 40% 98%;
- 
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 210 40% 98%;
- 
-    --border: 217 33% 25%;
-    --input: 217 33% 20%;
-    --ring: 213 94% 68%;
+    /* Odyssey Dark Mode - Deep Space */
+    --background: 220 25% 6%;
+    --foreground: 240 20% 92%;
+
+    --card: 220 30% 8%;
+    --card-foreground: 240 20% 92%;
+
+    --popover: 220 30% 10%;
+    --popover-foreground: 240 20% 92%;
+
+    /* Cosmic Primary - Stellar Blue */
+    --primary: 200 85% 65%;
+    --primary-foreground: 220 25% 8%;
+
+    /* Nebula Secondary - Deep Purple */
+    --secondary: 270 40% 15%;
+    --secondary-foreground: 270 60% 85%;
+
+    /* Muted Space Dust */
+    --muted: 220 20% 12%;
+    --muted-foreground: 240 15% 65%;
+
+    /* Stellar Accent - Quantum Gold */
+    --accent: 45 95% 65%;
+    --accent-foreground: 220 25% 8%;
+
+    --destructive: 0 70% 60%;
+    --destructive-foreground: 240 20% 92%;
+
+    --border: 220 30% 18%;
+    --input: 220 30% 12%;
+    --ring: 200 85% 65%;
+
+    /* Enhanced Glass Effects for Dark Mode */
+    --glass-primary: 200 85% 65% / 0.15;
+    --glass-secondary: 270 60% 50% / 0.12;
+    --glass-accent: 45 95% 65% / 0.18;
+    --glass-backdrop: 220 25% 6% / 0.6;
   }
 }
 
@@ -138,30 +174,157 @@ body::after {
   transform: translateZ(10px);
 }
 
-/* Glassmorphism utility classes */
+/* Odyssey Glass Components - Liquid Cosmic Effects */
 .glass-panel {
-  @apply bg-[#0A0D16]/80 backdrop-blur-lg border-white/10;
+  background: linear-gradient(135deg, hsl(var(--glass-backdrop)), hsl(var(--glass-primary)));
+  backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid hsl(var(--border));
+  box-shadow: 
+    0 8px 32px hsl(var(--cosmic-void) / 0.3),
+    0 4px 16px hsl(var(--glass-primary)),
+    inset 0 1px 0 hsl(var(--foreground) / 0.1);
 }
 
 .glass-card {
-  @apply bg-zinc-900/60 backdrop-blur-md border border-white/10 shadow-xl;
+  background: linear-gradient(135deg, hsl(var(--card) / 0.8), hsl(var(--glass-secondary)));
+  backdrop-filter: blur(16px) saturate(150%);
+  border: 1px solid hsl(var(--border));
+  box-shadow: 
+    0 6px 24px hsl(var(--cosmic-void) / 0.2),
+    0 2px 8px hsl(var(--glass-primary)),
+    inset 0 1px 0 hsl(var(--foreground) / 0.08);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 12px 36px hsl(var(--cosmic-void) / 0.3),
+    0 4px 16px hsl(var(--glow-primary) / 0.4),
+    inset 0 1px 0 hsl(var(--foreground) / 0.12);
 }
 
 .glass-input {
-  @apply bg-black/30 backdrop-blur-sm border-white/10 focus:border-white/20 focus:ring-1 focus:ring-white/20;
+  background: linear-gradient(135deg, hsl(var(--input) / 0.6), hsl(var(--glass-backdrop)));
+  backdrop-filter: blur(12px);
+  border: 1px solid hsl(var(--border));
+  transition: all 0.3s ease;
 }
 
-/* Glow Effects */
+.glass-input:focus {
+  background: linear-gradient(135deg, hsl(var(--input) / 0.8), hsl(var(--glass-primary)));
+  border-color: hsl(var(--glow-primary));
+  box-shadow: 
+    0 0 0 2px hsl(var(--glow-primary) / 0.2),
+    0 4px 12px hsl(var(--glow-primary) / 0.3);
+}
+
+.glass-button {
+  background: linear-gradient(135deg, hsl(var(--primary) / 0.8), hsl(var(--glass-accent)));
+  backdrop-filter: blur(16px);
+  border: 1px solid hsl(var(--primary));
+  box-shadow: 
+    0 4px 16px hsl(var(--glow-primary) / 0.3),
+    inset 0 1px 0 hsl(var(--foreground) / 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-button:hover {
+  transform: translateY(-1px);
+  background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--glow-accent) / 0.6));
+  box-shadow: 
+    0 8px 24px hsl(var(--glow-primary) / 0.4),
+    0 4px 12px hsl(var(--glow-accent) / 0.3),
+    inset 0 1px 0 hsl(var(--foreground) / 0.15);
+}
+
+/* Particle Effects */
+.particle-field {
+  position: relative;
+  overflow: hidden;
+}
+
+.particle-field::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    radial-gradient(2px 2px at 20px 30px, hsl(var(--glow-primary) / 0.3), transparent),
+    radial-gradient(2px 2px at 40px 70px, hsl(var(--glow-secondary) / 0.4), transparent),
+    radial-gradient(1px 1px at 90px 40px, hsl(var(--glow-accent) / 0.3), transparent),
+    radial-gradient(1px 1px at 130px 80px, hsl(var(--glow-primary) / 0.2), transparent);
+  background-repeat: repeat;
+  background-size: 150px 100px;
+  animation: particle-drift 20s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes particle-drift {
+  0% { transform: translate(0, 0); }
+  100% { transform: translate(-150px, -100px); }
+}
+
+/* Cosmic Depth Effects */
+.cosmic-depth {
+  position: relative;
+  transform-style: preserve-3d;
+}
+
+.cosmic-depth::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    45deg,
+    hsl(var(--glow-primary) / 0.05),
+    transparent 30%,
+    hsl(var(--glow-secondary) / 0.03) 70%,
+    hsl(var(--glow-accent) / 0.05)
+  );
+  transform: translateZ(-10px);
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+/* Odyssey Glow Effects - Cosmic Luminescence */
 .glow-text {
-  text-shadow: 0 0 10px rgba(249, 208, 88, 0.5), 0 0 20px rgba(249, 208, 88, 0.2);
+  text-shadow: 
+    0 0 10px hsl(var(--glow-accent) / 0.6),
+    0 0 20px hsl(var(--glow-accent) / 0.4),
+    0 0 30px hsl(var(--glow-accent) / 0.2);
 }
 
-.glow-text-blue {
-  text-shadow: 0 0 10px rgba(47, 123, 188, 0.5), 0 0 20px rgba(47, 123, 188, 0.2);
+.glow-text-primary {
+  text-shadow: 
+    0 0 10px hsl(var(--glow-primary) / 0.7),
+    0 0 20px hsl(var(--glow-primary) / 0.5),
+    0 0 30px hsl(var(--glow-primary) / 0.3);
 }
 
-.glow-text-gold {
-  text-shadow: 0 0 10px rgba(255, 182, 40, 0.5), 0 0 20px rgba(255, 182, 40, 0.2);
+.glow-text-secondary {
+  text-shadow: 
+    0 0 10px hsl(var(--glow-secondary) / 0.6),
+    0 0 20px hsl(var(--glow-secondary) / 0.4),
+    0 0 30px hsl(var(--glow-secondary) / 0.2);
+}
+
+.glow-text-cosmic {
+  background: linear-gradient(135deg, 
+    hsl(var(--glow-primary)), 
+    hsl(var(--glow-secondary)), 
+    hsl(var(--glow-accent))
+  );
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: none;
+  filter: drop-shadow(0 0 10px hsl(var(--glow-primary) / 0.5));
 }
 
 .shadow-glow-purple {
@@ -215,6 +378,60 @@ body::after {
   80% { transform: translate(-15%, 0); }
   90% { transform: translate(10%, 5%); }
   100% { transform: translate(0, 0); }
+}
+
+/* Odyssey Cosmic Animations */
+@keyframes cosmic-pulse {
+  0%, 100% { 
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% { 
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes stellar-drift {
+  0% { transform: translateX(-100px) translateY(0px); }
+  25% { transform: translateX(0px) translateY(-50px); }
+  50% { transform: translateX(100px) translateY(0px); }
+  75% { transform: translateX(50px) translateY(50px); }
+  100% { transform: translateX(-100px) translateY(0px); }
+}
+
+@keyframes quantum-shift {
+  0% { 
+    box-shadow: 0 0 20px hsl(var(--cosmic-quantum) / 0.3);
+    filter: hue-rotate(0deg);
+  }
+  33% { 
+    box-shadow: 0 0 25px hsl(var(--cosmic-plasma) / 0.4);
+    filter: hue-rotate(120deg);
+  }
+  66% { 
+    box-shadow: 0 0 30px hsl(var(--cosmic-stellar) / 0.5);
+    filter: hue-rotate(240deg);
+  }
+  100% { 
+    box-shadow: 0 0 20px hsl(var(--cosmic-quantum) / 0.3);
+    filter: hue-rotate(360deg);
+  }
+}
+
+@keyframes void-ripple {
+  0% { 
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  50% { 
+    transform: scale(1.1);
+    opacity: 0.4;
+  }
+  100% { 
+    transform: scale(1.2);
+    opacity: 0;
+  }
 }
 
 /* Font styles */

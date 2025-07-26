@@ -7,8 +7,11 @@ import type { Project } from '@/components/home/ProjectCard';
 import { supabase } from '@/integrations/supabase/client';
 import { supabaseService } from '@/services/supabaseService';
 import { useAuth } from '@/providers/AuthProvider';
-import { Loader2, AlertTriangle, Plus } from 'lucide-react';
+import { Loader2, AlertTriangle, Plus, Sparkles, Orbit, Zap, Atom, Star, Brain } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { GlassButton } from '@/components/ui/glass-button';
+import { GlassCard } from '@/components/ui/glass-card';
+import { PortalHeader } from '@/components/ui/portal-header';
 import { toast } from 'sonner';
 
 const Home = () => {
@@ -85,52 +88,73 @@ const Home = () => {
     if (isLoading) {
       return (
         <div className="flex justify-center items-center py-16">
-          <Loader2 className="h-8 w-8 animate-spin text-zinc-500" />
-          <span className="ml-3 text-zinc-400">Loading projects...</span>
+          <div className="relative">
+            <Orbit className="h-12 w-12 text-cosmic-stellar animate-spin" style={{ animationDuration: '3s' }} />
+            <div className="absolute inset-0 rounded-full bg-cosmic-stellar/20 animate-pulse" />
+          </div>
+          <span className="ml-4 text-muted-foreground font-light">Synchronizing realities...</span>
         </div>
       );
     }
 
     if (error) {
       return (
-        <div className="flex flex-col items-center justify-center py-16 text-red-400 bg-red-900/20 border border-red-500/30 rounded-lg p-6">
-          <AlertTriangle className="h-8 w-8 mb-3" />
-          <p className="font-semibold mb-1">Error Loading Projects</p>
-          <p className="text-sm text-red-300">{error}</p>
-          <Button 
-            variant="outline" 
-            className="mt-4 border-red-500/30 hover:bg-red-950/50 text-red-300"
-            onClick={() => window.location.reload()}
-          >
-            Try Again
-          </Button>
-        </div>
+        <GlassCard variant="void" depth="shallow" className="p-8">
+          <div className="flex flex-col items-center justify-center text-center space-y-4">
+            <div className="w-16 h-16 rounded-full bg-destructive/20 flex items-center justify-center">
+              <AlertTriangle className="h-8 w-8 text-destructive" />
+            </div>
+            <h3 className="text-lg font-semibold text-destructive">Portal Disruption Detected</h3>
+            <p className="text-sm text-muted-foreground max-w-md">{error}</p>
+            <GlassButton 
+              variant="outline" 
+              onClick={() => window.location.reload()}
+              className="border-destructive/30 hover:bg-destructive/10"
+            >
+              <Zap className="w-4 h-4" />
+              Reconnect Portal
+            </GlassButton>
+          </div>
+        </GlassCard>
       );
     }
 
     if (projects.length === 0) {
       return (
-        <div className="flex flex-col items-center justify-center py-16 text-zinc-500 border border-dashed border-zinc-700 rounded-lg bg-zinc-900/50">
-          <div className="w-16 h-16 mb-4 flex items-center justify-center rounded-full bg-zinc-800/60">
-            <Plus className="h-8 w-8 text-zinc-400" />
+        <GlassCard variant="stellar" depth="deep" particle shimmer className="p-12">
+          <div className="flex flex-col items-center justify-center text-center space-y-6">
+            <div className="relative">
+              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-cosmic-stellar to-cosmic-temporal flex items-center justify-center">
+                <Sparkles className="h-12 w-12 text-cosmic-void animate-pulse" />
+              </div>
+              <div className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-cosmic-nebula flex items-center justify-center">
+                <Plus className="h-4 w-4 text-white" />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-2xl font-bold glow-text-cosmic">Your Cosmos Awaits</h3>
+              <p className="text-muted-foreground">Begin your journey by creating your first reality.</p>
+            </div>
+            <GlassButton
+              onClick={handleCreateProject}
+              variant="stellar"
+              size="lg"
+              glow="intense"
+              particle
+            >
+              <Plus className="w-5 h-5" />
+              Create First Reality
+            </GlassButton>
           </div>
-          <p className="text-lg mb-2">No projects yet</p>
-          <p className="text-sm text-zinc-400 mb-5">Start creating to see your projects here.</p>
-          <Button
-            onClick={handleCreateProject}
-            className="bg-purple-600 hover:bg-purple-700 text-white shadow-glow-purple-sm"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Create Your First Project
-          </Button>
-        </div>
+        </GlassCard>
       );
     }
 
     if (filteredProjects.length === 0 && activeTab !== 'all') {
       return (
-        <div className="text-center py-16 text-zinc-500">
-          No {activeTab} projects found.
+        <div className="text-center py-16 space-y-4">
+          <Atom className="w-12 h-12 text-cosmic-stellar/50 mx-auto animate-pulse" />
+          <p className="text-muted-foreground">No {activeTab} dimensions discovered yet.</p>
         </div>
       );
     }
@@ -145,55 +169,83 @@ const Home = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-black to-zinc-900 text-white">
+    <div className="min-h-screen bg-cosmic-void text-foreground relative overflow-hidden">
+      {/* Cosmic Background */}
+      <div className="fixed inset-0 bg-nebula-field opacity-30 pointer-events-none" />
+      <div className="fixed inset-0 particle-field opacity-20 pointer-events-none" />
+      
       <Header />
       
-      <main className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-semibold">Your Projects</h1>
-        </div>
+      <main className="relative z-10 container mx-auto px-4 py-8 space-y-8">
+        {/* Portal Header */}
+        <PortalHeader 
+          title="Discovery Portal" 
+          subtitle="Navigate your creative cosmos"
+          cosmic={true}
+          actions={
+            <div className="flex space-x-3">
+              <GlassButton variant="stellar" onClick={handleCreateProject}>
+                <Plus className="w-4 h-4" />
+                New Reality
+              </GlassButton>
+              <GlassButton variant="cosmic" size="icon">
+                <Brain className="w-4 h-4" />
+              </GlassButton>
+              <GlassButton variant="void" size="icon">
+                <Star className="w-4 h-4" />
+              </GlassButton>
+            </div>
+          }
+        />
 
-        <section>
-          <div className="border-b border-zinc-700/50 mb-6">
-            <div className="flex gap-6">
-              <button
-                onClick={() => setActiveTab('all')}
-                className={`relative px-4 py-2 text-sm transition-colors duration-200 ${
-                  activeTab === 'all'
-                    ? 'text-white font-medium'
-                    : 'text-zinc-400 hover:text-zinc-200'
-                }`}
-              >
-                All Projects ({counts.all})
-                {activeTab === 'all' && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-purple-500"></span>}
-              </button>
-              <button
-                onClick={() => setActiveTab('private')}
-                className={`relative px-4 py-2 text-sm transition-colors duration-200 ${
-                  activeTab === 'private'
-                    ? 'text-white font-medium'
-                    : 'text-zinc-400 hover:text-zinc-200'
-                }`}
-              >
-                Private ({counts.private})
-                {activeTab === 'private' && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-purple-500"></span>}
-              </button>
-              <button
-                onClick={() => setActiveTab('public')}
-                className={`relative px-4 py-2 text-sm transition-colors duration-200 ${
-                  activeTab === 'public'
-                    ? 'text-white font-medium'
-                    : 'text-zinc-400 hover:text-zinc-200'
-                }`}
-              >
-                Public ({counts.public})
-                {activeTab === 'public' && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-purple-500"></span>}
-              </button>
+        {/* Cosmic Navigation */}
+        <GlassCard variant="nebula" depth="medium" glow="subtle" className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center space-x-4">
+              <Orbit className="w-6 h-6 text-cosmic-stellar" />
+              <h2 className="text-xl font-semibold glow-text-primary">Project Dimensions</h2>
+            </div>
+            <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+              <div className="w-2 h-2 rounded-full bg-cosmic-quantum animate-pulse" />
+              <span>{projects.length} Active Realities</span>
             </div>
           </div>
-          
+
+          <div className="flex space-x-1 bg-cosmic-void/30 p-1 rounded-lg backdrop-blur-sm">
+            <GlassButton
+              variant={activeTab === 'all' ? 'stellar' : 'ghost'}
+              size="sm"
+              onClick={() => setActiveTab('all')}
+              className="flex-1"
+            >
+              <Atom className="w-3 h-3" />
+              All Dimensions ({counts.all})
+            </GlassButton>
+            <GlassButton
+              variant={activeTab === 'private' ? 'stellar' : 'ghost'}
+              size="sm"
+              onClick={() => setActiveTab('private')}
+              className="flex-1"
+            >
+              <Zap className="w-3 h-3" />
+              Private ({counts.private})
+            </GlassButton>
+            <GlassButton
+              variant={activeTab === 'public' ? 'stellar' : 'ghost'}
+              size="sm"
+              onClick={() => setActiveTab('public')}
+              className="flex-1"
+            >
+              <Sparkles className="w-3 h-3" />
+              Public ({counts.public})
+            </GlassButton>
+          </div>
+        </GlassCard>
+        
+        {/* Content Area */}
+        <GlassCard variant="cosmic" depth="deep" glow="medium" className="min-h-[400px]">
           {renderContent()}
-        </section>
+        </GlassCard>
       </main>
     </div>
   );

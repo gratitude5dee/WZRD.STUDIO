@@ -61,6 +61,27 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				// Odyssey Extended Color Palette
+				cosmic: {
+					void: 'hsl(var(--cosmic-void))',
+					nebula: 'hsl(var(--nebula-purple))',
+					stellar: 'hsl(var(--stellar-gold))',
+					plasma: 'hsl(var(--plasma-blue))',
+					quantum: 'hsl(var(--quantum-green))',
+					temporal: 'hsl(var(--temporal-orange))',
+					shadow: 'hsl(var(--void-shadow))'
+				},
+				glass: {
+					primary: 'hsl(var(--glass-primary))',
+					secondary: 'hsl(var(--glass-secondary))',
+					accent: 'hsl(var(--glass-accent))',
+					backdrop: 'hsl(var(--glass-backdrop))'
+				},
+				glow: {
+					primary: 'hsl(var(--glow-primary))',
+					secondary: 'hsl(var(--glow-secondary))',
+					accent: 'hsl(var(--glow-accent))'
 				}
 			},
 			fontFamily: {
@@ -130,13 +151,24 @@ export default {
 				'accordion-up': 'accordion-up 0.2s ease-out',
 				'glow-pulse': 'glow-pulse 3s ease-in-out infinite',
 				'text-glow-pulse': 'text-glow-pulse 3s ease-in-out infinite',
-				'noise': 'noise-animation 0.2s infinite'
+				'noise': 'noise-animation 0.2s infinite',
+				// Odyssey Cosmic Animations
+				'cosmic-pulse': 'cosmic-pulse 4s ease-in-out infinite',
+				'stellar-drift': 'stellar-drift 15s ease-in-out infinite',
+				'quantum-shift': 'quantum-shift 8s ease-in-out infinite',
+				'void-ripple': 'void-ripple 2s ease-out infinite'
 			},
 			backgroundImage: {
 				'noise': 'url("/noise.png")',
 				'gradient-dark': 'radial-gradient(ellipse at bottom, hsl(224, 71%, 10%) 0%, hsl(224, 71%, 4%) 100%)',
 				'gradient-hero': 'linear-gradient(135deg, rgba(76, 29, 149, 0.5) 0%, rgba(124, 58, 237, 0.5) 35%, rgba(139, 92, 246, 0.5) 75%, rgba(167, 139, 250, 0.3) 100%)',
 				'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+				// Odyssey Cosmic Gradients
+				'cosmic-void': 'radial-gradient(circle at center, hsl(var(--cosmic-void)) 0%, hsl(var(--background)) 100%)',
+				'nebula-field': 'linear-gradient(135deg, hsl(var(--glow-primary) / 0.2), hsl(var(--glow-secondary) / 0.3), hsl(var(--glow-accent) / 0.2))',
+				'stellar-burst': 'radial-gradient(ellipse at top, hsl(var(--stellar-gold) / 0.3), transparent 70%)',
+				'quantum-flow': 'conic-gradient(from 180deg, hsl(var(--quantum-green) / 0.4), hsl(var(--plasma-blue) / 0.4), hsl(var(--temporal-orange) / 0.4), hsl(var(--quantum-green) / 0.4))',
+				'glass-reflection': 'linear-gradient(135deg, transparent 0%, hsl(var(--foreground) / 0.05) 25%, transparent 50%, hsl(var(--foreground) / 0.03) 75%, transparent 100%)'
 			}
 		},
 		transformStyle: {
