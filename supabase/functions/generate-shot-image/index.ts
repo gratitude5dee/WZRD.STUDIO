@@ -1,3 +1,4 @@
+
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -51,19 +52,6 @@ serve(async (req) => {
     }
 
     console.log(`[generate-shot-image][Shot ${shotId}] Request received.`);
-
-    // Check if FAL_KEY is configured
-    const falKey = Deno.env.get("FAL_KEY");
-    if (!falKey) {
-      console.error(`[generate-shot-image][Shot ${shotId}] FAL_KEY is not configured`);
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: "Fal.ai API key is not configured. Please set the FAL_KEY in your Supabase project settings." 
-        }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
 
     // Get shot information including the visual prompt
     console.log(`[generate-shot-image][Shot ${shotId}] Fetching shot data...`);
@@ -140,44 +128,39 @@ serve(async (req) => {
     console.log(`[generate-shot-image][Shot ${shotId}] Using aspect ratio: ${aspectRatio}, image size: ${imageSize}`);
 
     try {
-      // Generate image using Fal.ai's flux-schnell model
-      console.log(`[generate-shot-image][Shot ${shotId}] Calling Fal.ai for image generation...`);
+      // Use our unified falai-image-generation function
+      console.log(`[generate-shot-image][Shot ${shotId}] Calling falai-image-generation function...`);
       
-      const response = await fetch('https://fal.run/fal-ai/flux/schnell', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Key ${falKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      const { data: imageData, error: imageError } = await supabase.functions.invoke('falai-image-generation', {
+        body: {
           prompt: shot.visual_prompt,
           image_size: imageSize,
           num_inference_steps: 4,
           num_images: 1,
-          enable_safety_checker: true
-        }),
+          enable_safety_checker: true,
+          model_id: 'fal-ai/flux/schnell'
+        },
+        headers: {
+          Authorization: req.headers.get("Authorization") || ""
+        }
       });
 
-      const responseText = await response.text();
-      console.log(`[generate-shot-image][Shot ${shotId}] Fal.ai response status: ${response.status}`);
-
-      if (!response.ok) {
-        console.error(`[generate-shot-image][Shot ${shotId}] Fal.ai API error: ${responseText}`);
-        throw new Error(`Fal.ai API error (${response.status}): ${responseText}`);
+      if (imageError) {
+        console.error(`[generate-shot-image][Shot ${shotId}] Image generation error: ${imageError.message}`);
+        throw new Error(imageError.message || 'Failed to generate image');
       }
 
-      const result = JSON.parse(responseText);
-      console.log(`[generate-shot-image][Shot ${shotId}] Fal.ai generation successful`);
+      console.log(`[generate-shot-image][Shot ${shotId}] Image generation successful`);
 
-      // Fal.ai returns image URLs directly
-      if (result.images && result.images[0] && result.images[0].url) {
-        const imageUrl = result.images[0].url;
+      // Extract image URL from the response
+      if (imageData?.images && imageData.images[0] && imageData.images[0].url) {
+        const imageUrl = imageData.images[0].url;
         
-        // Download the image from Fal.ai and upload to Supabase storage
-        console.log(`[generate-shot-image][Shot ${shotId}] Downloading image from Fal.ai...`);
+        // Download the image and upload to Supabase storage
+        console.log(`[generate-shot-image][Shot ${shotId}] Downloading image...`);
         const imageResponse = await fetch(imageUrl);
         if (!imageResponse.ok) {
-          throw new Error(`Failed to download image from Fal.ai: ${imageResponse.status}`);
+          throw new Error(`Failed to download image: ${imageResponse.status}`);
         }
         
         const imageBuffer = await imageResponse.arrayBuffer();
@@ -224,11 +207,11 @@ serve(async (req) => {
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       } else {
-        throw new Error('No image data returned from Fal.ai');
+        throw new Error('No image data returned from image generation');
       }
 
     } catch (error) {
-      console.error(`[generate-shot-image][Shot ${shotId}] Error in Fal.ai generation: ${error.message}`);
+      console.error(`[generate-shot-image][Shot ${shotId}] Error in image generation: ${error.message}`);
       
       // Update shot status to failed
       console.log(`[generate-shot-image][Shot ${shotId}] Updating status to 'failed' due to error.`);
