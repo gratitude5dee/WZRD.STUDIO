@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { initiateLumaImageGeneration } from "../_shared/luma.ts";
@@ -34,6 +33,19 @@ serve(async (req) => {
     }
 
     console.log(`[generate-shot-image][Shot ${shotId}] Request received.`);
+
+    // Check if LUMA_API_KEY is configured
+    const lumaApiKey = Deno.env.get("LUMA_API_KEY");
+    if (!lumaApiKey) {
+      console.error(`[generate-shot-image][Shot ${shotId}] LUMA_API_KEY is not configured`);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: "Luma API key is not configured. Please set the LUMA_API_KEY in your Supabase project settings." 
+        }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     // Get shot information including the visual prompt
     console.log(`[generate-shot-image][Shot ${shotId}] Fetching shot data...`);
@@ -111,6 +123,7 @@ serve(async (req) => {
     try {
       // Call the helper function to initiate the Luma image generation
       console.log(`[generate-shot-image][Shot ${shotId}] Calling initiateLumaImageGeneration...`);
+      
       const result = await initiateLumaImageGeneration({
         supabase,
         userId: authData.user.id,
