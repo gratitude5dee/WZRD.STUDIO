@@ -130,17 +130,14 @@ export const ShotCard: React.FC<ShotCardProps> = ({ shot, onUpdate, onDelete }) 
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.9 }}
       whileHover={{ 
-        translateY: -5, 
-        rotateX: '3deg', 
-        rotateY: '2deg', 
-        scale: 1.02,
-        transition: { duration: 0.2 } 
+        y: -2,
+        transition: { duration: 0.15, ease: "easeOut" }
       }}
       style={style}
       ref={setNodeRef}
       className={cn(
         "relative flex flex-col glass-card rounded-lg overflow-hidden w-[280px] min-h-[320px]",
-        "transform-style-3d transition-all-std hover:shadow-glow-purple-md",
+        "transition-shadow duration-200 hover:shadow-glow-purple-md",
         isExpanded && "min-h-[480px] w-[360px]"
       )}
     >
@@ -154,35 +151,25 @@ export const ShotCard: React.FC<ShotCardProps> = ({ shot, onUpdate, onDelete }) 
       </div>
       
       {/* Expand/Collapse button */}
-      <motion.div
-        whileHover={{ scale: 1.2, rotate: 0 }}
-        whileTap={{ scale: 0.9 }}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="absolute top-2 right-10 z-30 h-8 w-8 p-1 bg-black/30 hover:bg-black/50 backdrop-blur-sm opacity-70 hover:opacity-100 transition-opacity pointer-events-auto"
+        onClick={() => setIsExpanded(!isExpanded)}
       >
-        <Button
-          variant="ghost"
-          size="icon"
-          className="absolute top-2 right-10 z-20 h-8 w-8 p-1 bg-black/30 hover:bg-black/50 backdrop-blur-sm opacity-70 hover:opacity-100 transition-opacity"
-          onClick={() => setIsExpanded(!isExpanded)}
-        >
-          <Expand className="h-5 w-5 text-white" />
-        </Button>
-      </motion.div>
+        <Expand className="h-5 w-5 text-white" />
+      </Button>
       
       {/* Delete button */}
-      <motion.div
-        whileHover={{ scale: 1.2, rotate: 0 }}
-        whileTap={{ scale: 0.9 }}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="absolute bottom-2 right-2 z-30 h-8 w-8 p-1 bg-black/30 hover:bg-black/50 backdrop-blur-sm opacity-70 hover:opacity-100 transition-opacity text-red-400 hover:text-red-300 pointer-events-auto"
+        onClick={validateAndDelete}
+        disabled={isDeleting}
       >
-        <Button
-          variant="ghost"
-          size="icon"
-          className="absolute bottom-2 right-2 z-20 h-6 w-6 p-1 bg-black/30 hover:bg-black/50 backdrop-blur-sm opacity-70 hover:opacity-100 transition-opacity text-red-400 hover:text-red-300"
-          onClick={validateAndDelete}
-          disabled={isDeleting}
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
-      </motion.div>
+        <Trash2 className="h-5 w-5" />
+      </Button>
 
       {/* Shot number badge */}
       <motion.div 

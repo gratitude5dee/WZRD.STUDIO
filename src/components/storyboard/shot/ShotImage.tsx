@@ -56,24 +56,20 @@ const ShotImage: React.FC<ShotImageProps> = ({
 
   const overlayBaseClass = "absolute inset-0 flex flex-col items-center justify-center text-center p-2 bg-gradient-to-t from-black/60 via-black/30 to-transparent";
   const textClass = "text-xs text-zinc-400";
-  const buttonClass = "text-xs h-7 px-2 bg-black/40 border border-white/20 hover:bg-white/10 text-white backdrop-blur-sm transition-all-std";
+  const buttonClass = "text-xs h-8 px-3 bg-black/40 border border-white/20 hover:bg-white/10 text-white backdrop-blur-sm transition-colors duration-150 pointer-events-auto cursor-pointer";
   const iconClass = "w-3 h-3 mr-1";
 
   // Completed Image State
   if (imageUrl && status === 'completed') {
     return (
       <div className="w-full aspect-video relative group/image overflow-hidden">
-        <motion.img 
+        <img 
           src={imageUrl} 
           alt="Shot visualization" 
-          className="w-full h-full object-cover"
-          whileHover={{ scale: 1.05 }}
-          transition={{ duration: 0.3 }}
+          className="w-full h-full object-cover transition-transform duration-200 hover:scale-105"
         />
-        <motion.div 
-          className={cn(overlayBaseClass, "opacity-0 group-hover/image:opacity-100 transition-all duration-200")}
-          initial={{ opacity: 0 }}
-          whileHover={{ opacity: 1 }}
+        <div 
+          className={cn(overlayBaseClass, "opacity-0 group-hover/image:opacity-100 transition-opacity duration-200")}
         >
           <Button
             variant="outline"
@@ -89,7 +85,7 @@ const ShotImage: React.FC<ShotImageProps> = ({
             )}
             Generate Video
           </Button>
-        </motion.div>
+        </div>
       </div>
     );
   }
@@ -98,22 +94,12 @@ const ShotImage: React.FC<ShotImageProps> = ({
   return (
     <div className="w-full aspect-video bg-zinc-900/50 backdrop-blur-sm flex flex-col items-center justify-center p-2 relative overflow-hidden border-b border-white/5">
       {isGenerating || status === 'generating' ? (
-        <motion.div 
-          className="flex flex-col items-center justify-center gap-2"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.3 }}
-        >
+        <div className="flex flex-col items-center justify-center gap-2">
           <Loader2 className="h-5 w-5 animate-spin text-blue-400 mb-1" />
           <span className="text-xs text-zinc-300">Generating image...</span>
-        </motion.div>
+        </div>
       ) : status === 'failed' ? (
-        <motion.div 
-          className="flex flex-col items-center justify-center gap-2"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.3 }}
-        >
+        <div className="flex flex-col items-center justify-center gap-2">
           <AlertTriangle className="h-5 w-5 text-red-400 mb-1" />
           <span className="text-xs text-red-400 mb-2">Generation failed</span>
           <Button 
@@ -124,14 +110,9 @@ const ShotImage: React.FC<ShotImageProps> = ({
           >
             <RefreshCw className={iconClass} /> Retry
           </Button>
-        </motion.div>
+        </div>
       ) : status === 'prompt_ready' ? (
-        <motion.div 
-          className="flex flex-col items-center justify-center gap-2"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.3 }}
-        >
+        <div className="flex flex-col items-center justify-center gap-2">
           <span className={textClass}>Prompt ready</span>
           <Button 
             variant="outline" 
@@ -141,14 +122,9 @@ const ShotImage: React.FC<ShotImageProps> = ({
           >
             <Wand2 className={iconClass}/> Generate Image
           </Button>
-        </motion.div>
+        </div>
       ) : ( // Status is 'pending'
-        <motion.div 
-          className="flex flex-col items-center justify-center gap-2"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.3 }}
-        >
+        <div className="flex flex-col items-center justify-center gap-2">
           <ImageOff className="h-5 w-5 text-zinc-500 mb-1" />
           <span className={textClass}>No image yet</span>
           <Button 
@@ -159,7 +135,7 @@ const ShotImage: React.FC<ShotImageProps> = ({
           >
             <Wand2 className={iconClass} /> Generate Prompt
           </Button>
-        </motion.div>
+        </div>
       )}
     </div>
   );
