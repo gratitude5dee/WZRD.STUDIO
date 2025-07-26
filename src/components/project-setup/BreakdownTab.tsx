@@ -5,7 +5,7 @@ import { Plus, X, Info, Edit, Trash2, Loader2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { SceneEditDialog, type Scene } from './SceneEditDialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useProject } from './ProjectContext';
+import { useProjectContext } from './ProjectContext';
 import { supabase } from '@/integrations/supabase/client';
 import { supabaseService } from '@/services/supabaseService';
 import { toast } from 'sonner';
@@ -21,7 +21,7 @@ const BreakdownTab = ({ projectData, updateProjectData }: BreakdownTabProps) => 
   const [editingScene, setEditingScene] = useState<Scene | null>(null);
   const [showNoScenesAlert, setShowNoScenesAlert] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
-  const { projectId, isGenerating } = useProject();
+  const { projectId, isGenerating } = useProjectContext();
 
   // Function to fetch scenes
   const fetchScenes = async () => {

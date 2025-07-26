@@ -32,3 +32,15 @@ export interface Character {
   description?: string | null;
   image_url?: string | null;
 }
+
+// Storyline type definition
+export interface Storyline {
+  id: string;
+  project_id: string;
+  title: string;
+  description: string;
+  full_story: string;
+  tags: string[];
+  is_selected: boolean;
+  created_at?: string;
+}

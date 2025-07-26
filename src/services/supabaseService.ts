@@ -11,6 +11,7 @@ export interface Project {
   description?: string;
   aspect_ratio?: string;
   user_id: string;
+  selected_storyline_id?: string;
   created_at?: string;
   updated_at?: string;
 }
@@ -779,6 +780,88 @@ export const storylineService = {
   }
 };
 
+// Shot types
+export interface Shot {
+  id: string;
+  scene_id: string;
+  project_id: string;
+  shot_number: number;
+  shot_type?: string;
+  prompt_idea?: string;
+  visual_prompt?: string;
+  dialogue?: string;
+  sound_effects?: string;
+  image_url?: string;
+  image_status?: string;
+  luma_generation_id?: string;
+  audio_url?: string;
+  audio_status?: string;
+  failure_reason?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+// Shots service
+export const shotService = {
+  async listByScene(sceneId: string): Promise<Shot[]> {
+    try {
+      const { data, error } = await supabase
+        .from('shots')
+        .select('*')
+        .eq('scene_id', sceneId)
+        .order('shot_number', { ascending: true });
+        
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      handleError(error, 'listing shots');
+      return [];
+    }
+  },
+
+  async create(shot: Omit<Shot, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
+    try {
+      const { data, error } = await supabase
+        .from('shots')
+        .insert(shot)
+        .select('id')
+        .single();
+        
+      if (error) throw error;
+      return data.id;
+    } catch (error) {
+      handleError(error, 'creating shot');
+      throw error;
+    }
+  },
+
+  async update(id: string, updates: Partial<Omit<Shot, 'id' | 'scene_id' | 'project_id' | 'created_at' | 'updated_at'>>): Promise<void> {
+    try {
+      const { error } = await supabase
+        .from('shots')
+        .update(updates)
+        .eq('id', id);
+        
+      if (error) throw error;
+    } catch (error) {
+      handleError(error, 'updating shot');
+    }
+  },
+
+  async delete(id: string): Promise<void> {
+    try {
+      const { error } = await supabase
+        .from('shots')
+        .delete()
+        .eq('id', id);
+        
+      if (error) throw error;
+    } catch (error) {
+      handleError(error, 'deleting shot');
+    }
+  }
+};
+
 // Export all services
 export const supabaseService = {
   projects: projectService,
@@ -788,7 +871,8 @@ export const supabaseService = {
   keyframes: keyframeService,
   scenes: sceneService,
   characters: characterService,
-  storylines: storylineService
+  storylines: storylineService,
+  shots: shotService
 };
 
 export default supabaseService;

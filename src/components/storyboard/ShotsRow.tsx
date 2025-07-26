@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Plus, Trash2, AlertCircle } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ShotCard } from './shot'; // Updated import path
-import { supabase } from '@/integrations/supabase/client';
+import { supabaseService } from '@/services/supabaseService';
 import { toast } from 'sonner';
 import { ShotDetails } from '@/types/storyboardTypes';
 import { cn } from '@/lib/utils';
@@ -38,14 +38,8 @@ const ShotsRow = ({ sceneId, sceneNumber, projectId, onSceneDelete, isSelected =
     const fetchShots = async () => {
       setIsLoading(true);
       try {
-        const { data, error } = await supabase
-          .from('shots')
-          .select('*')
-          .eq('scene_id', sceneId)
-          .order('shot_number', { ascending: true });
-        
-        if (error) throw error;
-        setShots(data as ShotDetails[]);
+        const shots = await supabaseService.shots.listByScene(sceneId);
+        setShots(shots as ShotDetails[]);
       } catch (error: any) {
         console.error("Error fetching shots:", error);
         toast.error(`Failed to load shots: ${error.message}`);
@@ -86,10 +80,7 @@ const ShotsRow = ({ sceneId, sceneNumber, projectId, onSceneDelete, isSelected =
         // Use Promise.all to update all shots in parallel
         await Promise.all(
           updatedShots.map(shot => 
-            supabase
-              .from('shots')
-              .update({ shot_number: shot.shot_number })
-              .eq('id', shot.id)
+            supabaseService.shots.update(shot.id, { shot_number: shot.shot_number })
           )
         );
       } catch (error: any) {
@@ -107,22 +98,36 @@ const ShotsRow = ({ sceneId, sceneNumber, projectId, onSceneDelete, isSelected =
         ? Math.max(...shots.map(s => s.shot_number)) + 1 
         : 1;
       
-      const { data, error } = await supabase
-        .from('shots')
-        .insert({
-          scene_id: sceneId,
-          project_id: projectId,
-          shot_number: newShotNumber,
-          shot_type: 'medium', // Default shot type
-          prompt_idea: '',
-          image_status: 'pending'
-        })
-        .select()
-        .single();
+      const shotId = await supabaseService.shots.create({
+        scene_id: sceneId,
+        project_id: projectId,
+        shot_number: newShotNumber,
+        shot_type: 'medium',
+        prompt_idea: '',
+        image_status: 'pending'
+      });
       
-      if (error) throw error;
+      const newShot: ShotDetails = {
+        id: shotId,
+        scene_id: sceneId,
+        project_id: projectId,
+        shot_number: newShotNumber,
+        shot_type: 'medium',
+        prompt_idea: '',
+        visual_prompt: '',
+        dialogue: '',
+        sound_effects: '',
+        image_url: '',
+        image_status: 'pending',
+        luma_generation_id: '',
+        audio_url: '',
+        audio_status: 'pending',
+        failure_reason: '',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
       
-      setShots(prev => [...prev, data as ShotDetails]);
+      setShots(prev => [...prev, newShot]);
       toast.success('Shot added');
     } catch (error: any) {
       console.error("Error adding shot:", error);
@@ -132,12 +137,7 @@ const ShotsRow = ({ sceneId, sceneNumber, projectId, onSceneDelete, isSelected =
 
   const handleDeleteShot = async (shotId: string) => {
     try {
-      const { error } = await supabase
-        .from('shots')
-        .delete()
-        .eq('id', shotId);
-      
-      if (error) throw error;
+      await supabaseService.shots.delete(shotId);
       
       setShots(shots.filter(shot => shot.id !== shotId));
       toast.success('Shot deleted');
@@ -162,12 +162,7 @@ const ShotsRow = ({ sceneId, sceneNumber, projectId, onSceneDelete, isSelected =
 
   const handleShotUpdate = async (shotId: string, updates: Partial<ShotDetails>) => {
     try {
-      const { error } = await supabase
-        .from('shots')
-        .update(updates)
-        .eq('id', shotId);
-      
-      if (error) throw error;
+      await supabaseService.shots.update(shotId, updates);
       
       // Update local state
       setShots(shots.map(shot => 

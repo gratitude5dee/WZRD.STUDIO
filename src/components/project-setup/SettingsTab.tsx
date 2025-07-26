@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Plus, ChevronRight, ImageIcon, HelpCircle, Loader2 } from 'lucide-react';
-import { useProject } from './ProjectContext';
+import { useProjectContext } from './ProjectContext';
 import { supabase } from '@/integrations/supabase/client';
 import { supabaseService } from '@/services/supabaseService';
 import CharacterCard from './CharacterCard';
@@ -23,7 +23,7 @@ type AspectRatioOption = '16:9' | '1:1' | '9:16';
 type VideoStyleOption = 'none' | 'cinematic' | 'scribble' | 'film-noir';
 
 const SettingsTab = ({ projectData, updateProjectData }: SettingsTabProps) => {
-  const { projectId, generationCompletedSignal } = useProject();
+  const { projectId, generationCompletedSignal } = useProjectContext();
   const [selectedAspectRatio, setSelectedAspectRatio] = useState<AspectRatioOption>(
     (projectData.aspectRatio as AspectRatioOption) || '16:9'
   );

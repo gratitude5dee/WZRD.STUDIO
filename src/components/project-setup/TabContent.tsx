@@ -4,10 +4,10 @@ import ConceptTab from './ConceptTab';
 import StorylineTab from './StorylineTab';
 import SettingsTab from './SettingsTab';
 import BreakdownTab from './BreakdownTab';
-import { useProject } from './ProjectContext';
+import { useProjectContext } from './ProjectContext';
 
 const TabContent = () => {
-  const { activeTab, projectData, updateProjectData } = useProject();
+  const { activeTab, projectData, updateProjectData } = useProjectContext();
 
   // Animation variants
   const tabContentVariants = {

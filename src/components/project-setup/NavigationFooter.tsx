@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 import { ArrowRight, ArrowLeft, Loader2 } from 'lucide-react';
-import { useProject } from './ProjectContext';
+import { useProjectContext } from './ProjectContext';
 
 const NavigationFooter = () => {
   const navigate = useNavigate();
@@ -19,7 +19,7 @@ const NavigationFooter = () => {
     finalizeProjectSetup,
     projectData,
     projectId
-  } = useProject();
+  } = useProjectContext();
 
   const visibleTabs = getVisibleTabs();
   const currentTabIndex = visibleTabs.indexOf(activeTab);

@@ -1,11 +1,11 @@
 
 import { motion } from 'framer-motion';
 import { ChevronRight } from 'lucide-react';
-import { useProject } from './ProjectContext';
+import { useProjectContext } from './ProjectContext';
 import { ProjectSetupTab } from './types';
 
 const TabNavigation = () => {
-  const { activeTab, setActiveTab, getVisibleTabs } = useProject();
+  const { activeTab, setActiveTab, getVisibleTabs } = useProjectContext();
   const visibleTabs = getVisibleTabs();
 
   return (
