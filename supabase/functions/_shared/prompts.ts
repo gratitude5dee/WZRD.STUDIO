@@ -98,4 +98,60 @@ ${projectContext.cinematic_inspiration ? `- Cinematic Inspiration: ${projectCont
 Generate a detailed visual prompt that describes exactly how this character should look in a high-quality portrait image. Focus on their physical appearance, clothing, expression, pose, and any environmental elements that would complement the character. Make it specific enough to guide an AI image generator to create a distinct, memorable character design.`;
 }
 
+// Shot idea generation prompts
+export function getShotIdeasSystemPrompt(): string {
+  return `You are an expert cinematographer and director. Your task is to generate a list of specific shot ideas for a given scene.
+
+Guidelines:
+1. Generate 3-5 distinct shot ideas that tell the story effectively
+2. Each shot should capture a different moment or aspect of the scene
+3. Focus on key dramatic moments, character emotions, and visual storytelling
+4. Consider different angles and compositions
+5. Each shot idea should be concise but descriptive (10-20 words)
+6. Return ONLY a JSON array of strings, nothing else
+
+Example output: ["Wide shot of the bustling marketplace at dawn", "Close-up of the protagonist's determined expression", "Medium shot of the antagonist emerging from shadows"]`;
+}
+
+export function getShotIdeasUserPrompt(scene: any): string {
+  return `Generate shot ideas for this scene:
+
+Scene Number: ${scene.scene_number}
+Title: ${scene.title || 'Untitled Scene'}
+Description: ${scene.description || 'No description provided'}
+Location: ${scene.location || 'Not specified'}
+Lighting: ${scene.lighting || 'Not specified'}
+Weather: ${scene.weather || 'Not specified'}
+
+Create 3-5 specific shot ideas that capture the key moments and emotions of this scene. Return as a JSON array of strings.`;
+}
+
+// Shot type determination prompts
+export function getShotTypeSystemPrompt(): string {
+  return `You are a cinematography expert. Your task is to determine the most appropriate shot type for a given shot idea.
+
+Shot types to choose from:
+- wide (establishing shots, full environment)
+- medium (waist-up, good for dialogue and interaction)
+- close (head and shoulders, for emotion and detail)
+- extreme-close (eyes, hands, specific details)
+
+Guidelines:
+1. Consider what the shot is trying to convey
+2. Wide shots for location/context
+3. Medium shots for character interaction
+4. Close shots for emotion and character focus
+5. Extreme close shots for intimate details or tension
+
+Return ONLY the shot type (wide, medium, close, or extreme-close), nothing else.`;
+}
+
+export function getShotTypeUserPrompt(shotIdea: string): string {
+  return `Determine the best shot type for this shot idea:
+
+"${shotIdea}"
+
+Return only the shot type: wide, medium, close, or extreme-close`;
+}
+
 // Add other prompt helpers below as needed
