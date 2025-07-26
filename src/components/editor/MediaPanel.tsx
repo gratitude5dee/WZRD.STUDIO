@@ -5,6 +5,7 @@ import { Plus, Film, Music, Image, Upload, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { v4 as uuidv4 } from 'uuid';
 import { supabase } from '@/integrations/supabase/client';
+import { supabaseService } from '@/services/supabaseService';
 import { toast } from 'sonner';
 
 const MediaPanel = () => {
@@ -76,25 +77,17 @@ const MediaPanel = () => {
           .getPublicUrl(filePath);
           
         // Create media item in database
-        const { data: mediaItem, error: mediaError } = await supabase
-          .from('media_items')
-          .insert({
-            project_id: projectId,
-            media_type: mediaType,
-            name: file.name,
-            url: publicUrl,
-            duration: mediaType === 'image' ? 5 : undefined,  // Default duration for images
-            start_time: 0,
-            status: 'ready'
-          })
-          .select()
-          .single();
+        const mediaItemId = await supabaseService.media.create(projectId, {
+          type: mediaType,
+          name: file.name,
+          url: publicUrl,
+          duration: mediaType === 'image' ? 5 : undefined,  // Default duration for images
+          startTime: 0
+        });
           
-        if (mediaError) throw mediaError;
-        
         // Add to local state
         addMediaItem({
-          id: mediaItem.id,
+          id: mediaItemId,
           type: mediaType,
           url: publicUrl,
           name: file.name,
@@ -151,12 +144,7 @@ const MediaPanel = () => {
   const handleDeleteMedia = async (id: string) => {
     try {
       // Remove from database
-      const { error } = await supabase
-        .from('media_items')
-        .delete()
-        .eq('id', id);
-        
-      if (error) throw error;
+      await supabaseService.media.delete(id);
       
       // Remove from local state
       removeMediaItem(id);

@@ -7,7 +7,7 @@ import { useAppStore } from '@/store/appStore';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import CreditsDisplay from '@/components/CreditsDisplay';
-import { supabase } from '@/integrations/supabase/client'; // Add this import
+import { supabaseService } from '@/services/supabaseService';
 
 type ViewMode = 'studio' | 'storyboard' | 'editor';
 
@@ -44,13 +44,8 @@ export const AppHeader = ({
     if (projectIdFromURL && projectIdFromURL !== activeProjectId) {
       const fetchProjectName = async () => {
         try {
-          const { data } = await supabase
-            .from('projects')
-            .select('title')
-            .eq('id', projectIdFromURL)
-            .single();
-            
-          setActiveProject(projectIdFromURL, data?.title || 'Untitled');
+          const project = await supabaseService.projects.find(projectIdFromURL);
+          setActiveProject(projectIdFromURL, project?.title || 'Untitled');
         } catch (error) {
           console.error('Error fetching project name:', error);
         }

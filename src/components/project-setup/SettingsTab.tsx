@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Plus, ChevronRight, ImageIcon, HelpCircle, Loader2 } from 'lucide-react';
 import { useProject } from './ProjectContext';
 import { supabase } from '@/integrations/supabase/client';
+import { supabaseService } from '@/services/supabaseService';
 import CharacterCard from './CharacterCard';
 import { toast } from 'sonner';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -44,15 +45,10 @@ const SettingsTab = ({ projectData, updateProjectData }: SettingsTabProps) => {
       setIsLoadingCharacters(true);
       try {
         console.log(`Fetching characters for project: ${projectId}, generation signal: ${generationCompletedSignal}`);
-        const { data, error } = await supabase
-          .from('characters')
-          .select('*')
-          .eq('project_id', projectId)
-          .order('created_at', { ascending: true });
+        const characters = await supabaseService.characters.listByProject(projectId);
 
-        if (error) throw error;
-        console.log(`Found ${data?.length || 0} characters for project`);
-        setCharacters(data || []);
+        console.log(`Found ${characters?.length || 0} characters for project`);
+        setCharacters(characters || []);
       } catch (error: any) {
         console.error("Error fetching characters:", error);
         toast.error("Failed to load characters");
@@ -89,21 +85,24 @@ const SettingsTab = ({ projectData, updateProjectData }: SettingsTabProps) => {
     setIsAddingCharacter(true);
     try {
       const newName = `Character ${characters.length + 1}`;
-      const { data: newChar, error } = await supabase
-        .from('characters')
-        .insert({
-          project_id: projectId,
-          name: newName,
-          description: "A new character."
-        })
-        .select()
-        .single();
+      const characterId = await supabaseService.characters.create({
+        project_id: projectId,
+        name: newName,
+        description: "A new character."
+      });
 
-      if (error) throw error;
-      if (newChar) {
-        setCharacters([...characters, newChar]);
-        toast.success(`Added ${newName}`);
-      }
+      const newChar = {
+        id: characterId,
+        project_id: projectId,
+        name: newName,
+        description: "A new character.",
+        image_url: undefined,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+
+      setCharacters([...characters, newChar]);
+      toast.success(`Added ${newName}`);
     } catch (error: any) {
       console.error("Error adding character:", error);
       toast.error("Failed to add character");
@@ -120,11 +119,7 @@ const SettingsTab = ({ projectData, updateProjectData }: SettingsTabProps) => {
   const handleDeleteCharacter = async (characterId: string) => {
     if (!confirm('Are you sure you want to delete this character?')) return;
     try {
-      const { error } = await supabase
-        .from('characters')
-        .delete()
-        .eq('id', characterId);
-      if (error) throw error;
+      await supabaseService.characters.delete(characterId);
       setCharacters(characters.filter(c => c.id !== characterId));
       toast.success("Character deleted");
     } catch (error: any) {

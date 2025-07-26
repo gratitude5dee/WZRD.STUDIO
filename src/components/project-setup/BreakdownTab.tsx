@@ -7,6 +7,7 @@ import { SceneEditDialog, type Scene } from './SceneEditDialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useProject } from './ProjectContext';
 import { supabase } from '@/integrations/supabase/client';
+import { supabaseService } from '@/services/supabaseService';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 
@@ -34,22 +35,13 @@ const BreakdownTab = ({ projectData, updateProjectData }: BreakdownTabProps) => 
     setIsLoading(true);
     try {
       console.log(`Fetching scenes for project ID: ${projectId}`);
-      const { data, error } = await supabase
-        .from('scenes')
-        .select('*')
-        .eq('project_id', projectId)
-        .order('scene_number', { ascending: true });
-          
-      if (error) {
-        console.error('Supabase fetch error:', error);
-        throw error;
-      }
+      const scenes = await supabaseService.scenes.listByProject(projectId);
       
-      console.log('Fetched scenes data:', data);
+      console.log('Fetched scenes data:', scenes);
 
-      if (data && data.length > 0) {
+      if (scenes && scenes.length > 0) {
         // Transform the data to match our Scene type
-        const mappedScenes: Scene[] = data.map(scene => ({
+        const mappedScenes: Scene[] = scenes.map(scene => ({
           id: scene.id,
           number: scene.scene_number,
           title: scene.title || `Scene ${scene.scene_number}`,
@@ -92,27 +84,21 @@ const BreakdownTab = ({ projectData, updateProjectData }: BreakdownTabProps) => 
     
     try {
       // Insert new scene into database
-      const { data, error } = await supabase
-        .from('scenes')
-        .insert({
-          project_id: projectId,
-          scene_number: newSceneNumber,
-          title: `Scene ${newSceneNumber}`
-        })
-        .select()
-        .single();
-        
-      if (error) throw error;
+      const sceneId = await supabaseService.scenes.create({
+        project_id: projectId,
+        scene_number: newSceneNumber,
+        title: `Scene ${newSceneNumber}`
+      });
       
       const newScene: Scene = {
-        id: data.id,
-        number: data.scene_number,
-        title: data.title || `Scene ${data.scene_number}`,
-        description: data.description || "",
-        location: data.location || "",
-        lighting: data.lighting || "",
-        weather: data.weather || "",
-        voiceover: data.voiceover || ""
+        id: sceneId,
+        number: newSceneNumber,
+        title: `Scene ${newSceneNumber}`,
+        description: "",
+        location: "",
+        lighting: "",
+        weather: "",
+        voiceover: ""
       };
       
       setFetchedScenes([...fetchedScenes, newScene]);
@@ -133,12 +119,7 @@ const BreakdownTab = ({ projectData, updateProjectData }: BreakdownTabProps) => 
     if (!confirm('Are you sure you want to delete this scene?')) return;
     
     try {
-      const { error } = await supabase
-        .from('scenes')
-        .delete()
-        .eq('id', sceneId);
-        
-      if (error) throw error;
+      await supabaseService.scenes.delete(sceneId);
       
       setFetchedScenes(fetchedScenes.filter(s => s.id !== sceneId));
       toast.success('Scene deleted');
@@ -155,19 +136,14 @@ const BreakdownTab = ({ projectData, updateProjectData }: BreakdownTabProps) => 
   const handleSaveScene = async (updatedScene: Scene) => {
     try {
       // Update scene in database
-      const { error } = await supabase
-        .from('scenes')
-        .update({
-          title: updatedScene.title,
-          description: updatedScene.description,
-          location: updatedScene.location,
-          lighting: updatedScene.lighting,
-          weather: updatedScene.weather,
-          voiceover: updatedScene.voiceover
-        })
-        .eq('id', updatedScene.id);
-        
-      if (error) throw error;
+      await supabaseService.scenes.update(updatedScene.id, {
+        title: updatedScene.title,
+        description: updatedScene.description,
+        location: updatedScene.location,
+        lighting: updatedScene.lighting,
+        weather: updatedScene.weather,
+        voiceover: updatedScene.voiceover
+      });
       
       // Update local state
       setFetchedScenes(fetchedScenes.map(s => s.id === updatedScene.id ? updatedScene : s));

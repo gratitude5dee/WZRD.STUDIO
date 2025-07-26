@@ -1,29 +1,22 @@
 
-import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card } from '@/components/ui/card';
-import { RefreshCw, Loader2 } from 'lucide-react';
-import { type ProjectData } from './types';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/providers/AuthProvider';
+import { supabaseService } from '@/services/supabaseService';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Loader2, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useProject } from './ProjectContext';
+import { useProjectContext } from './ProjectContext';
+import type { Storyline } from './types';
+import { ProjectData } from './types';
 
 interface StorylineTabProps {
   projectData: ProjectData;
   updateProjectData: (data: Partial<ProjectData>) => void;
 }
 
-interface Storyline {
-  id: string;
-  title: string;
-  description: string;
-  tags: string[];
-  full_story: string;
-  is_selected: boolean;
-}
 
 const StorylineTab = ({ projectData, updateProjectData }: StorylineTabProps) => {
   const [characterCount, setCharacterCount] = useState(0);
@@ -31,8 +24,7 @@ const StorylineTab = ({ projectData, updateProjectData }: StorylineTabProps) => 
   const [alternativeStorylines, setAlternativeStorylines] = useState<Storyline[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
-  const { user } = useAuth();
-  const { projectId: contextProjectId, saveProjectData } = useProject();
+  const { projectId: contextProjectId, saveProjectData } = useProjectContext();
   const navigate = useNavigate();
   const params = useParams();
   
@@ -57,28 +49,10 @@ const StorylineTab = ({ projectData, updateProjectData }: StorylineTabProps) => 
     setIsLoading(true);
     try {
       // Fetch selected storyline
-      const { data: selectedData, error: selectedError } = await supabase
-        .from('storylines')
-        .select('*')
-        .eq('project_id', currentProjectId)
-        .eq('is_selected', true)
-        .maybeSingle(); // Use maybeSingle to handle not found gracefully
-
-      if (selectedError && selectedError.code !== 'PGRST116') { // Ignore 'not found' error
-        throw selectedError;
-      }
+      const selectedData = await supabaseService.storylines.findSelected(currentProjectId);
 
       // Fetch alternative storylines
-      const { data: alternativesData, error: alternativesError } = await supabase
-        .from('storylines')
-        .select('*')
-        .eq('project_id', currentProjectId)
-        .eq('is_selected', false)
-        .order('created_at', { ascending: false });
-
-      if (alternativesError) {
-        throw alternativesError;
-      }
+      const alternativesData = await supabaseService.storylines.listByProject(currentProjectId);
 
       // Update states based on fetched data
       if (selectedData) {
@@ -114,38 +88,11 @@ const StorylineTab = ({ projectData, updateProjectData }: StorylineTabProps) => 
       );
 
       // Update the is_selected flag in the database
-      const { error: selectError } = await supabase
-        .from('storylines')
-        .update({ is_selected: true })
-        .eq('id', storylineToSelect.id);
-
-      if (selectError) {
-        throw selectError;
-      }
-
-      // Deselect the previous selected storyline if exists
-      if (previousSelected) {
-        const { error: deselectError } = await supabase
-          .from('storylines')
-          .update({ is_selected: false })
-          .eq('id', previousSelected.id);
-
-        if (deselectError) {
-          console.warn('Error deselecting previous storyline:', deselectError);
-          // Continue anyway as the main operation succeeded
-        }
-      }
+      await supabaseService.storylines.clearSelection(currentProjectId);
+      await supabaseService.storylines.setSelected(storylineToSelect.id);
 
       // Update the project's selected_storyline_id
-      const { error: projectUpdateError } = await supabase
-        .from('projects')
-        .update({ selected_storyline_id: storylineToSelect.id })
-        .eq('id', currentProjectId);
-
-      if (projectUpdateError) {
-        console.warn('Error updating project selected storyline:', projectUpdateError);
-        // Continue anyway as the main operation succeeded
-      }
+      await supabaseService.projects.update(currentProjectId, { selected_storyline_id: storylineToSelect.id });
 
       toast.success("Storyline selected");
 
@@ -184,8 +131,8 @@ const StorylineTab = ({ projectData, updateProjectData }: StorylineTabProps) => 
       }
     }
 
-    if (!effectiveProjectId || !user) {
-      toast.error("Cannot generate storylines: missing project ID or user not logged in");
+    if (!effectiveProjectId) {
+      toast.error("Cannot generate storylines: missing project ID");
       return;
     }
 

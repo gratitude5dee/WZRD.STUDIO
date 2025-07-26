@@ -555,13 +555,240 @@ const validateMediaType = (type: string): 'video' | 'image' | 'audio' => {
   return 'image';
 };
 
+// Scene types
+export interface Scene {
+  id: string;
+  project_id: string;
+  storyline_id?: string;
+  scene_number: number;
+  title?: string;
+  description?: string;
+  location?: string;
+  lighting?: string;
+  weather?: string;
+  voiceover?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+// Character types
+export interface Character {
+  id: string;
+  project_id: string;
+  name: string;
+  description?: string;
+  image_url?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+// Storyline types
+export interface Storyline {
+  id: string;
+  project_id: string;
+  title: string;
+  description: string;
+  full_story: string;
+  tags?: string[];
+  is_selected?: boolean;
+  generated_by?: string;
+  created_at?: string;
+}
+
+// Scenes service
+export const sceneService = {
+  async listByProject(projectId: string): Promise<Scene[]> {
+    try {
+      const { data, error } = await supabase
+        .from('scenes')
+        .select('*')
+        .eq('project_id', projectId)
+        .order('scene_number', { ascending: true });
+        
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      handleError(error, 'listing scenes');
+      return [];
+    }
+  },
+
+  async create(scene: Omit<Scene, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
+    try {
+      const { data, error } = await supabase
+        .from('scenes')
+        .insert(scene)
+        .select('id')
+        .single();
+        
+      if (error) throw error;
+      return data.id;
+    } catch (error) {
+      handleError(error, 'creating scene');
+      throw error;
+    }
+  },
+
+  async update(id: string, updates: Partial<Omit<Scene, 'id' | 'project_id' | 'created_at' | 'updated_at'>>): Promise<void> {
+    try {
+      const { error } = await supabase
+        .from('scenes')
+        .update(updates)
+        .eq('id', id);
+        
+      if (error) throw error;
+    } catch (error) {
+      handleError(error, 'updating scene');
+    }
+  },
+
+  async delete(id: string): Promise<void> {
+    try {
+      const { error } = await supabase
+        .from('scenes')
+        .delete()
+        .eq('id', id);
+        
+      if (error) throw error;
+    } catch (error) {
+      handleError(error, 'deleting scene');
+    }
+  }
+};
+
+// Characters service
+export const characterService = {
+  async listByProject(projectId: string): Promise<Character[]> {
+    try {
+      const { data, error } = await supabase
+        .from('characters')
+        .select('*')
+        .eq('project_id', projectId)
+        .order('created_at', { ascending: true });
+        
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      handleError(error, 'listing characters');
+      return [];
+    }
+  },
+
+  async create(character: Omit<Character, 'id' | 'created_at' | 'updated_at'>): Promise<string> {
+    try {
+      const { data, error } = await supabase
+        .from('characters')
+        .insert(character)
+        .select('id')
+        .single();
+        
+      if (error) throw error;
+      return data.id;
+    } catch (error) {
+      handleError(error, 'creating character');
+      throw error;
+    }
+  },
+
+  async update(id: string, updates: Partial<Omit<Character, 'id' | 'project_id' | 'created_at' | 'updated_at'>>): Promise<void> {
+    try {
+      const { error } = await supabase
+        .from('characters')
+        .update(updates)
+        .eq('id', id);
+        
+      if (error) throw error;
+    } catch (error) {
+      handleError(error, 'updating character');
+    }
+  },
+
+  async delete(id: string): Promise<void> {
+    try {
+      const { error } = await supabase
+        .from('characters')
+        .delete()
+        .eq('id', id);
+        
+      if (error) throw error;
+    } catch (error) {
+      handleError(error, 'deleting character');
+    }
+  }
+};
+
+// Storylines service
+export const storylineService = {
+  async listByProject(projectId: string): Promise<Storyline[]> {
+    try {
+      const { data, error } = await supabase
+        .from('storylines')
+        .select('*')
+        .eq('project_id', projectId)
+        .order('created_at', { ascending: false });
+        
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      handleError(error, 'listing storylines');
+      return [];
+    }
+  },
+
+  async findSelected(projectId: string): Promise<Storyline | null> {
+    try {
+      const { data, error } = await supabase
+        .from('storylines')
+        .select('*')
+        .eq('project_id', projectId)
+        .eq('is_selected', true)
+        .single();
+        
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.log('No selected storyline found or error:', error);
+      return null;
+    }
+  },
+
+  async setSelected(storylineId: string): Promise<void> {
+    try {
+      const { error } = await supabase
+        .from('storylines')
+        .update({ is_selected: true })
+        .eq('id', storylineId);
+        
+      if (error) throw error;
+    } catch (error) {
+      handleError(error, 'selecting storyline');
+    }
+  },
+
+  async clearSelection(projectId: string): Promise<void> {
+    try {
+      const { error } = await supabase
+        .from('storylines')
+        .update({ is_selected: false })
+        .eq('project_id', projectId);
+        
+      if (error) throw error;
+    } catch (error) {
+      handleError(error, 'clearing storyline selection');
+    }
+  }
+};
+
 // Export all services
 export const supabaseService = {
   projects: projectService,
   media: mediaService,
   tracks: trackService,
   trackItems: trackItemService,
-  keyframes: keyframeService
+  keyframes: keyframeService,
+  scenes: sceneService,
+  characters: characterService,
+  storylines: storylineService
 };
 
 export default supabaseService;

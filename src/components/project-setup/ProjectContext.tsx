@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { ProjectData, ProjectSetupTab, Character } from './types';
 import { supabase } from '@/integrations/supabase/client';
+import { supabaseService } from '@/services/supabaseService';
 import { toast } from 'sonner';
 import { useAuth } from '@/providers/AuthProvider';
 
@@ -108,37 +109,20 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
       // If project already exists, update it
       if (currentProjectId) {
         console.log(`Updating existing project ID: ${currentProjectId}`);
-        const { error } = await supabase
-          .from('projects')
-          .update(projectPayload)
-          .eq('id', currentProjectId);
-          
-        if (error) {
-          console.error('Error updating project:', error);
-          throw error;
-        }
+        await supabaseService.projects.update(currentProjectId, projectPayload);
         
         toast.info("Project data saved");
         return currentProjectId;
       } else {
         // Create new project
         console.log('Creating new project...');
-        const { data: project, error } = await supabase
-          .from('projects')
-          .insert(projectPayload)
-          .select('id')
-          .single();
-          
-        if (error) {
-          console.error('Error creating project:', error);
-          throw error;
-        }
+        const newProjectId = await supabaseService.projects.create(projectPayload);
         
-        console.log(`New project created with ID: ${project.id}`);
-        setProjectId(project.id);
-        currentProjectId = project.id;
+        console.log(`New project created with ID: ${newProjectId}`);
+        setProjectId(newProjectId);
+        currentProjectId = newProjectId;
         toast.success("Project created successfully");
-        return project.id;
+        return newProjectId;
       }
     } catch (error: any) {
       console.error('Error saving project:', error);

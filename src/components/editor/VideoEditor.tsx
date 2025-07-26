@@ -11,6 +11,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { supabaseService } from '@/services/supabaseService';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 
@@ -81,20 +82,13 @@ const VideoEditor = () => {
       }
       
       // Create default project
-      const { data: project, error } = await supabase
-        .from('projects')
-        .insert({
-          user_id: session.user.id,
-          title: 'Untitled Project',
-        })
-        .select()
-        .single();
-        
-      if (error) throw error;
+      const newProjectId = await supabaseService.projects.create({
+        title: 'Untitled Project',
+      });
       
       // Set project in store
-      setProjectId(project.id);
-      setProjectName(project.title);
+      setProjectId(newProjectId);
+      setProjectName('Untitled Project');
       
       toast.success("New project created");
       

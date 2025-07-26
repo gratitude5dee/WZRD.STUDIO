@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Settings, Save, Upload, FileText, Scissors, Copy, Undo, Redo, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { supabaseService } from '@/services/supabaseService';
 import { 
   Dialog,
   DialogContent,
@@ -44,12 +45,7 @@ const ToolbarPanel = () => {
       setIsSaving(true);
       
       // Update project in database
-      const { error } = await supabase
-        .from('projects')
-        .update({ title: projectName })
-        .eq('id', projectId);
-        
-      if (error) throw error;
+      await supabaseService.projects.update(projectId, { title: projectName });
       
       toast.success("Project saved successfully");
     } catch (error) {
