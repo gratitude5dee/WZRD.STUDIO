@@ -11,20 +11,21 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Map aspect ratios to OpenAI image sizes
+// Map aspect ratios to Fal.ai image sizes
 function getImageSizeFromAspectRatio(aspectRatio: string): string {
   switch (aspectRatio) {
     case "16:9":
-      return "1536x1024";
+      return "landscape_16_9";
     case "9:16":
-      return "1024x1536";
+      return "portrait_9_16";
     case "1:1":
-      return "1024x1024";
+      return "square";
     case "4:3":
+      return "landscape_4_3";
     case "3:4":
-      return "1024x1024"; // OpenAI doesn't support these ratios, use square
+      return "portrait_3_4";
     default:
-      return "1024x1024"; // Default square
+      return "landscape_16_9"; // Default landscape
   }
 }
 
@@ -51,14 +52,14 @@ serve(async (req) => {
 
     console.log(`[generate-shot-image][Shot ${shotId}] Request received.`);
 
-    // Check if OPENAI_API_KEY is configured
-    const openaiApiKey = Deno.env.get("OPENAI_API_KEY");
-    if (!openaiApiKey) {
-      console.error(`[generate-shot-image][Shot ${shotId}] OPENAI_API_KEY is not configured`);
+    // Check if FAL_KEY is configured
+    const falKey = Deno.env.get("FAL_KEY");
+    if (!falKey) {
+      console.error(`[generate-shot-image][Shot ${shotId}] FAL_KEY is not configured`);
       return new Response(
         JSON.stringify({ 
           success: false, 
-          error: "OpenAI API key is not configured. Please set the OPENAI_API_KEY in your Supabase project settings." 
+          error: "Fal.ai API key is not configured. Please set the FAL_KEY in your Supabase project settings." 
         }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
@@ -139,42 +140,47 @@ serve(async (req) => {
     console.log(`[generate-shot-image][Shot ${shotId}] Using aspect ratio: ${aspectRatio}, image size: ${imageSize}`);
 
     try {
-      // Generate image using OpenAI's gpt-image-1 model
-      console.log(`[generate-shot-image][Shot ${shotId}] Calling OpenAI for image generation...`);
+      // Generate image using Fal.ai's flux-schnell model
+      console.log(`[generate-shot-image][Shot ${shotId}] Calling Fal.ai for image generation...`);
       
-      const response = await fetch('https://api.openai.com/v1/images/generations', {
+      const response = await fetch('https://fal.run/fal-ai/flux/schnell', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${openaiApiKey}`,
+          'Authorization': `Key ${falKey}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'gpt-image-1',
           prompt: shot.visual_prompt,
-          size: imageSize,
-          quality: 'high',
-          output_format: 'png',
-          n: 1
+          image_size: imageSize,
+          num_inference_steps: 4,
+          num_images: 1,
+          enable_safety_checker: true
         }),
       });
 
       const responseText = await response.text();
-      console.log(`[generate-shot-image][Shot ${shotId}] OpenAI response status: ${response.status}`);
+      console.log(`[generate-shot-image][Shot ${shotId}] Fal.ai response status: ${response.status}`);
 
       if (!response.ok) {
-        console.error(`[generate-shot-image][Shot ${shotId}] OpenAI API error: ${responseText}`);
-        throw new Error(`OpenAI API error (${response.status}): ${responseText}`);
+        console.error(`[generate-shot-image][Shot ${shotId}] Fal.ai API error: ${responseText}`);
+        throw new Error(`Fal.ai API error (${response.status}): ${responseText}`);
       }
 
       const result = JSON.parse(responseText);
-      console.log(`[generate-shot-image][Shot ${shotId}] OpenAI generation successful`);
+      console.log(`[generate-shot-image][Shot ${shotId}] Fal.ai generation successful`);
 
-      // OpenAI gpt-image-1 returns base64 data, we need to convert it to a URL
-      if (result.data && result.data[0] && result.data[0].b64_json) {
-        const base64Data = result.data[0].b64_json;
+      // Fal.ai returns image URLs directly
+      if (result.images && result.images[0] && result.images[0].url) {
+        const imageUrl = result.images[0].url;
         
-        // Upload the base64 image to Supabase storage
-        const imageBuffer = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
+        // Download the image from Fal.ai and upload to Supabase storage
+        console.log(`[generate-shot-image][Shot ${shotId}] Downloading image from Fal.ai...`);
+        const imageResponse = await fetch(imageUrl);
+        if (!imageResponse.ok) {
+          throw new Error(`Failed to download image from Fal.ai: ${imageResponse.status}`);
+        }
+        
+        const imageBuffer = await imageResponse.arrayBuffer();
         const fileName = `shot-${shotId}-${Date.now()}.png`;
         
         const { data: uploadData, error: uploadError } = await supabase.storage
@@ -218,11 +224,11 @@ serve(async (req) => {
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       } else {
-        throw new Error('No image data returned from OpenAI');
+        throw new Error('No image data returned from Fal.ai');
       }
 
     } catch (error) {
-      console.error(`[generate-shot-image][Shot ${shotId}] Error in OpenAI generation: ${error.message}`);
+      console.error(`[generate-shot-image][Shot ${shotId}] Error in Fal.ai generation: ${error.message}`);
       
       // Update shot status to failed
       console.log(`[generate-shot-image][Shot ${shotId}] Updating status to 'failed' due to error.`);
