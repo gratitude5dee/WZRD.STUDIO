@@ -30,7 +30,7 @@ serve(async (req) => {
     }
 
     // Parse the request body
-    const { prompt, model, temperature = 0.7, maxTokens = 1024, systemPrompt } = await req.json();
+    const { prompt, model, temperature = 0.7, maxTokens = 1024, systemPrompt, responseFormat } = await req.json();
 
     if (!prompt) {
       return errorResponse('prompt is required', 400);
@@ -48,6 +48,19 @@ serve(async (req) => {
       { role: 'user', content: prompt }
     ];
 
+    // Prepare request body - only add response_format if explicitly requested
+    const requestBody: any = {
+      model,
+      messages,
+      temperature,
+      max_tokens: maxTokens,
+    };
+
+    // Only add JSON response format if specifically requested
+    if (responseFormat === 'json') {
+      requestBody.response_format = { type: "json_object" };
+    }
+
     // Make request to Groq API
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
@@ -55,13 +68,7 @@ serve(async (req) => {
         'Authorization': `Bearer ${groqApiKey}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        model,
-        messages,
-        temperature,
-        max_tokens: maxTokens,
-        response_format: { type: "json_object" } // Request JSON format when possible
-      }),
+      body: JSON.stringify(requestBody),
     });
 
     if (!response.ok) {
