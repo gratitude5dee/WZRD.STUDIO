@@ -139,18 +139,18 @@ export const ShotCard: React.FC<ShotCardProps> = ({ shot, onUpdate, onDelete }) 
       style={style}
       ref={setNodeRef}
       className={cn(
-        "relative flex flex-col glass-card rounded-lg overflow-hidden w-[230px] min-h-[300px]",
+        "relative flex flex-col glass-card rounded-lg overflow-hidden w-[280px] min-h-[320px]",
         "transform-style-3d transition-all-std hover:shadow-glow-purple-md",
-        isExpanded && "min-h-[400px] w-[320px]"
+        isExpanded && "min-h-[480px] w-[360px]"
       )}
     >
       {/* Drag handle */}
       <div
         {...attributes}
         {...listeners}
-        className="absolute top-2 left-2 z-20 cursor-move bg-black/30 hover:bg-black/50 backdrop-blur-sm p-1 rounded opacity-70 hover:opacity-100 transition-opacity"
+        className="absolute top-2 left-2 z-20 cursor-move bg-black/30 hover:bg-black/50 backdrop-blur-sm p-2 rounded-md opacity-70 hover:opacity-100 transition-opacity"
       >
-        <Move className="h-4 w-4 text-white" />
+        <Move className="h-5 w-5 text-white" />
       </div>
       
       {/* Expand/Collapse button */}
@@ -161,10 +161,10 @@ export const ShotCard: React.FC<ShotCardProps> = ({ shot, onUpdate, onDelete }) 
         <Button
           variant="ghost"
           size="icon"
-          className="absolute top-2 right-2 z-20 h-6 w-6 p-1 bg-black/30 hover:bg-black/50 backdrop-blur-sm opacity-70 hover:opacity-100 transition-opacity"
+          className="absolute top-2 right-10 z-20 h-8 w-8 p-1 bg-black/30 hover:bg-black/50 backdrop-blur-sm opacity-70 hover:opacity-100 transition-opacity"
           onClick={() => setIsExpanded(!isExpanded)}
         >
-          <Expand className="h-4 w-4 text-white" />
+          <Expand className="h-5 w-5 text-white" />
         </Button>
       </motion.div>
       
