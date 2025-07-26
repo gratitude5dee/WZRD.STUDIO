@@ -11,11 +11,30 @@ serve(async (req) => {
   try {
     await authenticateRequest(req.headers);
 
+    // Handle both URL params and request body params
     const url = new URL(req.url);
-    const category = url.searchParams.get('category');
-    const search = url.searchParams.get('search');
-    const capabilities = url.searchParams.getAll('capabilities');
-    const modelId = url.searchParams.get('id');
+    let category = url.searchParams.get('category');
+    let search = url.searchParams.get('search');
+    let capabilities = url.searchParams.getAll('capabilities');
+    let modelId = url.searchParams.get('id');
+
+    // If request has a body, parse params from it
+    if (req.method === 'POST') {
+      try {
+        const body = await req.json();
+        if (body.params) {
+          const bodyParams = new URLSearchParams(body.params);
+          category = category || bodyParams.get('category');
+          search = search || bodyParams.get('search');
+          if (!capabilities.length) {
+            capabilities = bodyParams.getAll('capabilities');
+          }
+          modelId = modelId || bodyParams.get('id');
+        }
+      } catch (e) {
+        // If body parsing fails, continue with URL params
+      }
+    }
 
     // Get specific model by ID
     if (modelId) {

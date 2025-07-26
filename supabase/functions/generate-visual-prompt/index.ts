@@ -100,6 +100,9 @@ serve(async (req) => {
         model: 'llama3-8b-8192', // Using the faster model since this is a simpler task
         temperature: 0.7,
         maxTokens: 200 // Visual prompts should be concise
+      },
+      headers: {
+        'x-internal-request': 'true'
       }
     });
 

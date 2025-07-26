@@ -7,7 +7,7 @@ import AppHeader from '@/components/AppHeader';
 import StudioSidebar from '@/components/studio/StudioSidebar';
 import StudioCanvas from '@/components/studio/StudioCanvas';
 import StudioBottomBar from '@/components/studio/StudioBottomBar';
-import { StudioRightPanel } from '@/components/studio/StudioSidePanels';
+import StudioRightPanel from '@/components/studio/StudioRightPanel';
 import { supabase } from '@/integrations/supabase/client';
 
 interface Block {
