@@ -1,7 +1,8 @@
 
-import { MoreVertical, ImageIcon } from 'lucide-react';
+import { MoreVertical, ImageIcon, Clock, Lock, Globe, Sparkles, Zap } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from "@/lib/utils";
+import { GlassCard } from '@/components/ui/glass-card';
 
 // Updated Project interface to match our database schema
 export interface Project {
@@ -25,8 +26,18 @@ export const ProjectCard = ({ project, onOpen }: ProjectCardProps) => {
     : 'No edits';
 
   return (
-    <div className="group relative bg-zinc-900/80 backdrop-blur-sm rounded-lg overflow-hidden border border-white/10 hover:border-purple-500/30 transition-all perspective-1000">
-      <div className="transform-style-3d transition-transform duration-300 group-hover:-translate-y-1 group-hover:rotate-x-[2deg]">
+    <GlassCard 
+      variant="cosmic" 
+      depth="medium" 
+      glow="subtle" 
+      interactive="press"
+      particle
+      shimmer
+      className="overflow-hidden cursor-pointer group"
+      onClick={() => onOpen(project.id)}
+    >
+      {/* Thumbnail Area */}
+      <div className="relative">
         {project.thumbnail_url ? (
           <img
             src={project.thumbnail_url}
@@ -34,35 +45,61 @@ export const ProjectCard = ({ project, onOpen }: ProjectCardProps) => {
             className="w-full aspect-video object-cover"
           />
         ) : (
-          <div className="w-full aspect-video bg-gradient-to-br from-zinc-800 to-zinc-900 flex items-center justify-center">
-            <ImageIcon className="h-10 w-10 text-zinc-600 opacity-50" />
+          <div className="w-full aspect-video bg-gradient-to-br from-cosmic-void/40 to-cosmic-shadow/30 flex items-center justify-center relative overflow-hidden">
+            <div className="absolute inset-0 bg-stellar-burst opacity-20" />
+            <ImageIcon className="h-12 w-12 text-cosmic-stellar/60 relative z-10" />
+            <div className="absolute bottom-2 right-2">
+              <Sparkles className="h-4 w-4 text-cosmic-stellar animate-pulse" />
+            </div>
           </div>
         )}
-        <div className="p-3">
-          <div className="flex items-center justify-between mb-1">
-            <h3 className="font-medium text-sm truncate">{project.title}</h3>
-            <button className="opacity-0 group-hover:opacity-100 transition-opacity p-1 -mr-1">
-              <MoreVertical className="h-4 w-4 text-zinc-400" />
-            </button>
+        
+        {/* Status Badge */}
+        <div className="absolute top-3 right-3">
+          <div className={cn(
+            "flex items-center space-x-1 px-2 py-1 rounded-full text-xs backdrop-blur-sm border",
+            project.is_private 
+              ? "bg-cosmic-plasma/20 border-cosmic-plasma/30 text-cosmic-plasma" 
+              : "bg-cosmic-quantum/20 border-cosmic-quantum/30 text-cosmic-quantum"
+          )}>
+            {project.is_private ? <Lock className="w-3 h-3" /> : <Globe className="w-3 h-3" />}
+            <span className="font-medium">{project.is_private ? 'Private' : 'Public'}</span>
           </div>
-          <div className="flex items-center justify-between text-xs text-zinc-400">
+        </div>
+
+        {/* Hover Options */}
+        <div className="absolute top-3 left-3 opacity-0 group-hover:opacity-100 transition-all duration-300">
+          <button className="p-2 rounded-full bg-cosmic-void/60 backdrop-blur-sm border border-cosmic-stellar/30 hover:bg-cosmic-void/80 transition-colors">
+            <MoreVertical className="h-4 w-4 text-cosmic-stellar" />
+          </button>
+        </div>
+      </div>
+
+      {/* Content Area */}
+      <div className="p-4 space-y-3">
+        <div>
+          <h3 className="font-semibold text-lg text-foreground group-hover:glow-text-primary transition-all duration-300 line-clamp-1">
+            {project.title}
+          </h3>
+          {project.description && (
+            <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+              {project.description}
+            </p>
+          )}
+        </div>
+
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2 text-xs text-muted-foreground">
+            <Clock className="w-3 h-3" />
             <span>{lastEditedFormatted}</span>
-            <span className={cn(
-              "px-1.5 py-0.5 rounded text-[10px] border",
-              project.is_private 
-                ? "bg-blue-900/30 border-blue-700/30 text-blue-300" 
-                : "bg-green-900/30 border-green-700/30 text-green-300"
-            )}>
-              {project.is_private ? 'Private' : 'Public'}
-            </span>
+          </div>
+          
+          <div className="flex items-center space-x-1">
+            <Zap className="w-3 h-3 text-cosmic-stellar animate-pulse" />
+            <span className="text-xs text-cosmic-stellar font-medium">Active</span>
           </div>
         </div>
       </div>
-      <button
-        onClick={() => onOpen(project.id)}
-        className="absolute inset-0 w-full h-full opacity-0"
-        aria-label={`Open ${project.title}`}
-      />
-    </div>
+    </GlassCard>
   );
 };
