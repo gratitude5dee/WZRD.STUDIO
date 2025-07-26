@@ -92,51 +92,62 @@ const ShotImage: React.FC<ShotImageProps> = ({
 
   // Loading/Generating/Pending/Failed States
   return (
-    <div className="w-full aspect-video bg-zinc-900/50 backdrop-blur-sm flex flex-col items-center justify-center p-2 relative overflow-hidden border-b border-white/5">
-      {isGenerating || status === 'generating' ? (
-        <div className="flex flex-col items-center justify-center gap-2">
-          <Loader2 className="h-5 w-5 animate-spin text-blue-400 mb-1" />
-          <span className="text-xs text-zinc-300">Generating image...</span>
-        </div>
-      ) : status === 'failed' ? (
-        <div className="flex flex-col items-center justify-center gap-2">
-          <AlertTriangle className="h-5 w-5 text-red-400 mb-1" />
-          <span className="text-xs text-red-400 mb-2">Generation failed</span>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className={buttonClass}
-            onClick={hasVisualPrompt ? onGenerateImage : onGenerateVisualPrompt}
-          >
-            <RefreshCw className={iconClass} /> Retry
-          </Button>
-        </div>
-      ) : status === 'prompt_ready' ? (
-        <div className="flex flex-col items-center justify-center gap-2">
-          <span className={textClass}>Prompt ready</span>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className={cn(buttonClass, "text-purple-300 border-purple-500/30 hover:bg-purple-500/10 hover:text-purple-200 mt-2")}
-            onClick={onGenerateImage}
-          >
-            <Wand2 className={iconClass}/> Generate Image
-          </Button>
-        </div>
-      ) : ( // Status is 'pending'
-        <div className="flex flex-col items-center justify-center gap-2">
-          <ImageOff className="h-5 w-5 text-zinc-500 mb-1" />
-          <span className={textClass}>No image yet</span>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className={cn(buttonClass, "text-blue-300 border-blue-500/30 hover:bg-blue-500/10 hover:text-blue-200 mt-2")}
-            onClick={onGenerateVisualPrompt}
-          >
-            <Wand2 className={iconClass} /> Generate Prompt
-          </Button>
-        </div>
-      )}
+    <div className="w-full aspect-video bg-zinc-900/50 backdrop-blur-sm flex flex-col items-center justify-center p-3 relative overflow-hidden border-b border-white/5 pointer-events-auto">
+      <div className="relative z-10 pointer-events-auto">
+        {isGenerating || status === 'generating' ? (
+          <div className="flex flex-col items-center justify-center gap-2">
+            <Loader2 className="h-5 w-5 animate-spin text-blue-400 mb-1" />
+            <span className="text-xs text-zinc-300">Generating image...</span>
+          </div>
+        ) : status === 'failed' ? (
+          <div className="flex flex-col items-center justify-center gap-2">
+            <AlertTriangle className="h-5 w-5 text-red-400 mb-1" />
+            <span className="text-xs text-red-400 mb-2">Generation failed</span>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className={buttonClass}
+              onClick={(e) => {
+                e.stopPropagation();
+                hasVisualPrompt ? onGenerateImage() : onGenerateVisualPrompt();
+              }}
+            >
+              <RefreshCw className={iconClass} /> Retry
+            </Button>
+          </div>
+        ) : status === 'prompt_ready' ? (
+          <div className="flex flex-col items-center justify-center gap-2">
+            <span className={textClass}>Prompt ready</span>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className={cn(buttonClass, "text-purple-300 border-purple-500/30 hover:bg-purple-500/10 hover:text-purple-200 mt-2")}
+              onClick={(e) => {
+                e.stopPropagation();
+                onGenerateImage();
+              }}
+            >
+              <Wand2 className={iconClass}/> Generate Image
+            </Button>
+          </div>
+        ) : ( // Status is 'pending'
+          <div className="flex flex-col items-center justify-center gap-2">
+            <ImageOff className="h-5 w-5 text-zinc-500 mb-1" />
+            <span className={textClass}>No image yet</span>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className={cn(buttonClass, "text-blue-300 border-blue-500/30 hover:bg-blue-500/10 hover:text-blue-200 mt-2")}
+              onClick={(e) => {
+                e.stopPropagation();
+                onGenerateVisualPrompt();
+              }}
+            >
+              <Wand2 className={iconClass} /> Generate Prompt
+            </Button>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

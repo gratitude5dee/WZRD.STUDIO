@@ -145,9 +145,10 @@ export const ShotCard: React.FC<ShotCardProps> = ({ shot, onUpdate, onDelete }) 
       <div
         {...attributes}
         {...listeners}
-        className="absolute top-2 left-2 z-20 cursor-move bg-black/30 hover:bg-black/50 backdrop-blur-sm p-2 rounded-md opacity-70 hover:opacity-100 transition-opacity"
+        className="absolute top-2 left-2 z-20 cursor-move bg-black/30 hover:bg-black/50 backdrop-blur-sm p-2 rounded-md opacity-70 hover:opacity-100 transition-opacity pointer-events-auto"
+        style={{ touchAction: 'none' }}
       >
-        <Move className="h-5 w-5 text-white" />
+        <Move className="h-5 w-5 text-white pointer-events-none" />
       </div>
       
       {/* Expand/Collapse button */}
@@ -180,7 +181,7 @@ export const ShotCard: React.FC<ShotCardProps> = ({ shot, onUpdate, onDelete }) 
       </motion.div>
 
       {/* Image section */}
-      <div className="flex-shrink-0">
+      <div className="flex-shrink-0 pointer-events-auto" style={{ touchAction: 'auto' }}>
         <ShotImage
           shotId={shot.id}
           imageUrl={shot.image_url}
