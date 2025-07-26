@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { initiateLumaImageGeneration } from "../_shared/luma.ts";
+import { executeFalModel } from '../_shared/falai-client.ts';
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") as string;
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") as string;
@@ -10,6 +10,24 @@ const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// Map aspect ratios to Fal.ai image sizes
+function getImageSizeFromAspectRatio(aspectRatio: string): string {
+  switch (aspectRatio) {
+    case "16:9":
+      return "1344x768";
+    case "9:16":
+      return "768x1344";
+    case "1:1":
+      return "1024x1024";
+    case "4:3":
+      return "1152x896";
+    case "3:4":
+      return "896x1152";
+    default:
+      return "1024x1024"; // Default square
+  }
+}
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -34,14 +52,14 @@ serve(async (req) => {
 
     console.log(`[generate-shot-image][Shot ${shotId}] Request received.`);
 
-    // Check if LUMA_API_KEY is configured
-    const lumaApiKey = Deno.env.get("LUMA_API_KEY");
-    if (!lumaApiKey) {
-      console.error(`[generate-shot-image][Shot ${shotId}] LUMA_API_KEY is not configured`);
+    // Check if FAL_KEY is configured
+    const falApiKey = Deno.env.get("FAL_KEY");
+    if (!falApiKey) {
+      console.error(`[generate-shot-image][Shot ${shotId}] FAL_KEY is not configured`);
       return new Response(
         JSON.stringify({ 
           success: false, 
-          error: "Luma API key is not configured. Please set the LUMA_API_KEY in your Supabase project settings." 
+          error: "Fal.ai API key is not configured. Please set the FAL_KEY in your Supabase project settings." 
         }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
@@ -118,28 +136,89 @@ serve(async (req) => {
     }
 
     const aspectRatio = project?.aspect_ratio || "16:9";
-    console.log(`[generate-shot-image][Shot ${shotId}] Using aspect ratio: ${aspectRatio}`);
+    const imageSize = getImageSizeFromAspectRatio(aspectRatio);
+    console.log(`[generate-shot-image][Shot ${shotId}] Using aspect ratio: ${aspectRatio}, image size: ${imageSize}`);
 
     try {
-      // Call the helper function to initiate the Luma image generation
-      console.log(`[generate-shot-image][Shot ${shotId}] Calling initiateLumaImageGeneration...`);
+      // Generate image using Fal.ai FLUX.1 [schnell] - the cheapest and fastest model
+      console.log(`[generate-shot-image][Shot ${shotId}] Calling Fal.ai for image generation...`);
       
-      const result = await initiateLumaImageGeneration({
-        supabase,
-        userId: authData.user.id,
-        shotId: shotId,
-        projectId: shot.project_id,
+      const falResponse = await executeFalModel('fal-ai/flux/schnell', {
         prompt: shot.visual_prompt,
-        aspectRatio
+        image_size: imageSize,
+        num_inference_steps: 4, // Minimum for schnell model for fastest generation
+        guidance_scale: 2.5, // Lower guidance for faster generation
+        num_images: 1,
+        enable_safety_checker: true
       });
 
-      console.log(`[generate-shot-image][Shot ${shotId}] Luma image generation initiated successfully:`, result);
-      return new Response(
-        JSON.stringify({ success: true, ...result }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      console.log(`[generate-shot-image][Shot ${shotId}] Fal.ai response:`, falResponse);
+
+      if (!falResponse.success) {
+        throw new Error(falResponse.error || 'Fal.ai generation failed');
+      }
+
+      // Handle both sync and async responses
+      if (falResponse.data) {
+        // Synchronous response with immediate result
+        const imageUrl = falResponse.data.images?.[0]?.url;
+        if (imageUrl) {
+          // Update shot with the generated image
+          const { error: updateError } = await supabase
+            .from("shots")
+            .update({ 
+              image_url: imageUrl,
+              image_status: "completed"
+            })
+            .eq("id", shotId);
+
+          if (updateError) {
+            console.error(`[generate-shot-image][Shot ${shotId}] Failed to update shot with image: ${updateError.message}`);
+            throw new Error(`Failed to update shot: ${updateError.message}`);
+          }
+
+          console.log(`[generate-shot-image][Shot ${shotId}] Image generation completed successfully`);
+          return new Response(
+            JSON.stringify({ 
+              success: true, 
+              image_url: imageUrl,
+              status: "completed"
+            }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        } else {
+          throw new Error('No image URL returned from Fal.ai');
+        }
+      } else if (falResponse.request_id) {
+        // Asynchronous response - store request ID for polling
+        const { error: updateError } = await supabase
+          .from("shots")
+          .update({ 
+            luma_generation_id: falResponse.request_id, // Reuse this field for Fal.ai request ID
+            image_status: "generating"
+          })
+          .eq("id", shotId);
+
+        if (updateError) {
+          console.error(`[generate-shot-image][Shot ${shotId}] Failed to update shot with request ID: ${updateError.message}`);
+          throw new Error(`Failed to update shot: ${updateError.message}`);
+        }
+
+        console.log(`[generate-shot-image][Shot ${shotId}] Async generation started with request ID: ${falResponse.request_id}`);
+        return new Response(
+          JSON.stringify({ 
+            success: true, 
+            request_id: falResponse.request_id,
+            status: "generating"
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      } else {
+        throw new Error('Invalid response from Fal.ai - no data or request_id');
+      }
+
     } catch (error) {
-      console.error(`[generate-shot-image][Shot ${shotId}] Error in generate-shot-image: ${error.message}`);
+      console.error(`[generate-shot-image][Shot ${shotId}] Error in Fal.ai generation: ${error.message}`);
       
       // Update shot status to failed
       console.log(`[generate-shot-image][Shot ${shotId}] Updating status to 'failed' due to error.`);
