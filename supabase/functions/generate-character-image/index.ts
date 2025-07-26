@@ -74,6 +74,9 @@ serve(async (req) => {
         model: 'llama3-8b-8192', // Using faster model for prompt generation
         temperature: 0.7,
         maxTokens: 200 // Visual prompts should be concise
+      },
+      headers: {
+        'x-internal-request': 'true'
       }
     });
 
@@ -85,12 +88,26 @@ serve(async (req) => {
     const visualPrompt = groqResponse.text.trim();
     console.log(`Generated visual prompt: ${visualPrompt}`);
 
-    // 3. Generate Image using Luma API
-    const lumaApiKey = Deno.env.get('LUMA_API_KEY');
-    if (!lumaApiKey) return errorResponse('Server config error: Luma key missing', 500);
+    // 3. Generate Image using FAL.AI or OpenAI
+    console.log('Calling image generation service...');
+    
+    const { data: imageResponse, error: imageError } = await supabaseClient.functions.invoke('falai-image-generation', {
+      body: {
+        prompt: visualPrompt,
+        image_size: '1024x1024',
+        model_id: 'fal-ai/flux/dev'
+      },
+      headers: {
+        'x-internal-request': 'true'
+      }
+    });
 
-    console.log('Calling Luma API with generated prompt...');
-    const imageUrl = await callLumaApi(lumaApiKey, visualPrompt);
+    if (imageError || !imageResponse?.data?.images?.[0]?.url) {
+      console.error('Failed to generate character image:', imageError || 'No image URL returned');
+      return errorResponse('Failed to generate character image', 500, imageError);
+    }
+
+    const imageUrl = imageResponse.data.images[0].url;
     console.log(`Generated Image URL: ${imageUrl}`);
 
     // 4. Update Character Record

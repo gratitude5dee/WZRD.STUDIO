@@ -120,9 +120,24 @@ serve(async (req) => {
 
           // Insert all shots for the scene at once
           if (shotsToInsert.length > 0) {
+            // First, check if shots already exist for this scene
+            const { data: existingShots } = await supabaseClient
+              .from('shots')
+              .select('shot_number')
+              .eq('scene_id', scene.id);
+
+            // Filter out shots that already exist
+            const existingShotNumbers = new Set(existingShots?.map(s => s.shot_number) || []);
+            const newShotsToInsert = shotsToInsert.filter(shot => !existingShotNumbers.has(shot.shot_number));
+
+            if (newShotsToInsert.length === 0) {
+              console.log(`[Scene ${scene.scene_number}] All shots already exist, skipping insertion.`);
+              return;
+            }
+
             const { data: insertedShots, error: insertErr } = await supabaseClient
               .from('shots')
-              .insert(shotsToInsert)
+              .insert(newShotsToInsert)
               .select('id, prompt_idea, shot_type'); // Select data needed for visual prompt
 
             if (insertErr) {
@@ -131,7 +146,7 @@ serve(async (req) => {
             }
             
             if (!insertedShots || insertedShots.length === 0) {
-              console.warn(`[Scene ${scene.scene_number}] No shots were inserted.`);
+              console.warn(`[Scene ${scene.scene_number}] No new shots were inserted.`);
               return;
             }
 
