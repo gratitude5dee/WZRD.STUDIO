@@ -40,7 +40,7 @@ export interface Storyline {
   title: string;
   description: string;
   full_story: string;
-  tags: string[];
-  is_selected: boolean;
+  tags?: string[];
+  is_selected?: boolean;
   created_at?: string;
 }

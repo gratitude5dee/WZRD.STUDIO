@@ -5,6 +5,7 @@ import { Header } from '@/components/home/Header';
 import { ProjectList } from '@/components/home/ProjectList';
 import type { Project } from '@/components/home/ProjectCard';
 import { supabase } from '@/integrations/supabase/client';
+import { supabaseService } from '@/services/supabaseService';
 import { useAuth } from '@/providers/AuthProvider';
 import { Loader2, AlertTriangle, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -32,13 +33,7 @@ const Home = () => {
       setError(null);
 
       try {
-        const { data, error: fetchError } = await supabase
-          .from('projects')
-          .select('id, title, description, updated_at, created_at')
-          .eq('user_id', user.id)
-          .order('updated_at', { ascending: false });
-
-        if (fetchError) throw fetchError;
+        const data = await supabaseService.projects.list();
 
         const fetchedProjects: Project[] = (data || []).map(p => ({
           id: p.id,

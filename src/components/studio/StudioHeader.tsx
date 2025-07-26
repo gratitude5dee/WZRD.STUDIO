@@ -6,6 +6,7 @@ import { ViewModeSelector } from '@/components/home/ViewModeSelector';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { supabaseService } from '@/services/supabaseService';
 import { toast } from 'sonner';
 
 interface StudioHeaderProps {
@@ -32,17 +33,7 @@ const StudioHeader = ({ viewMode = 'studio', setViewMode }: StudioHeaderProps) =
           }
           
           // Fetch the most recent project for this user
-          const { data: projects, error } = await supabase
-            .from('projects')
-            .select('id')
-            .eq('user_id', user.id)
-            .order('updated_at', { ascending: false })
-            .limit(1);
-            
-          if (error) {
-            console.error('Error fetching recent project:', error);
-            return;
-          }
+          const projects = await supabaseService.projects.list();
           
           if (projects && projects.length > 0) {
             setProjectId(projects[0].id);

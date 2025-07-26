@@ -7,6 +7,7 @@ import VideoEditor from '@/components/editor/VideoEditor';
 import { toast } from 'sonner';
 import AppHeader from '@/components/AppHeader';
 import { supabase } from '@/integrations/supabase/client';
+import { supabaseService } from '@/services/supabaseService';
 
 const EditorPage = () => {
   const navigate = useNavigate();
@@ -24,21 +25,13 @@ const EditorPage = () => {
     // Fetch project details and update app state
     const fetchProjectDetails = async () => {
       try {
-        const { data, error } = await supabase
-          .from('projects')
-          .select('title')
-          .eq('id', projectId)
-          .single();
-          
-        if (error) {
-          throw error;
-        }
+        const project = await supabaseService.projects.find(projectId);
         
-        if (!data) {
+        if (!project) {
           throw new Error('Project not found');
         }
         
-        setActiveProject(projectId, data.title || 'Untitled');
+        setActiveProject(projectId, project.title || 'Untitled');
       } catch (error) {
         console.error('Error loading project:', error);
         toast.error('Could not load project');
