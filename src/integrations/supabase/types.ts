@@ -176,6 +176,89 @@ export type Database = {
           },
         ]
       }
+      falai_job_updates: {
+        Row: {
+          created_at: string | null
+          error: string | null
+          id: string
+          output: Json | null
+          progress: number | null
+          request_id: string
+          status: string
+        }
+        Insert: {
+          created_at?: string | null
+          error?: string | null
+          id?: string
+          output?: Json | null
+          progress?: number | null
+          request_id: string
+          status: string
+        }
+        Update: {
+          created_at?: string | null
+          error?: string | null
+          id?: string
+          output?: Json | null
+          progress?: number | null
+          request_id?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      falai_jobs: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          error: string | null
+          id: string
+          inputs: Json
+          model_id: string
+          output: Json | null
+          project_id: string | null
+          request_id: string | null
+          source: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          error?: string | null
+          id?: string
+          inputs: Json
+          model_id: string
+          output?: Json | null
+          project_id?: string | null
+          request_id?: string | null
+          source?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          error?: string | null
+          id?: string
+          inputs?: Json
+          model_id?: string
+          output?: Json | null
+          project_id?: string | null
+          request_id?: string | null
+          source?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "falai_jobs_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fund_transactions: {
         Row: {
           amount: number
