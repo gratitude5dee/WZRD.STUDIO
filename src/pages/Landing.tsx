@@ -1,7 +1,6 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
 import { 
   ArrowRight, 
   Lightbulb, 
@@ -13,10 +12,20 @@ import {
   Sparkles,
   MessageSquare,
   Database,
-  Mic
+  Mic,
+  Orbit,
+  Atom,
+  Zap,
+  Star,
+  Brain,
+  Layers
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { GlassButton } from '@/components/ui/glass-button';
+import { GlassCard } from '@/components/ui/glass-card';
+import { PortalHeader } from '@/components/ui/portal-header';
+import { Button } from '@/components/ui/button';
 import TechBadge from '@/components/landing/TechBadge';
 import TechHighlight from '@/components/landing/TechHighlight';
 import FeatureCard from '@/components/landing/FeatureCard';
@@ -52,37 +61,44 @@ const Landing = () => {
   };
 
   return (
-    <div className="bg-[#0A0D16] text-white relative overflow-hidden">
+    <div className="bg-cosmic-void text-foreground relative overflow-hidden">
+      {/* Cosmic Background */}
+      <div className="fixed inset-0 bg-nebula-field opacity-20 pointer-events-none" />
+      <div className="fixed inset-0 particle-field opacity-15 pointer-events-none" />
+      
       {/* Fixed progress bar */}
-      <div className="fixed top-0 left-0 w-full h-1 bg-white/10 z-50">
+      <div className="fixed top-0 left-0 w-full h-1 bg-cosmic-void/50 z-50 backdrop-blur-sm">
         <motion.div 
-          className="h-full bg-gradient-to-r from-purple-600 to-blue-600" 
+          className="h-full bg-gradient-to-r from-cosmic-stellar via-cosmic-plasma to-cosmic-quantum" 
           style={{ width: `${scrollProgress * 100}%` }}
         />
       </div>
 
-      {/* Noise overlay */}
-      <div className="absolute inset-0 bg-noise opacity-[0.03] z-10 pointer-events-none"></div>
       
-      {/* Hero Section */}
+      {/* Hero Section - Cosmic Portal */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-        {/* Background video */}
+        {/* Cosmic Background Layers */}
+        <div className="absolute inset-0 bg-cosmic-void" />
+        <div className="absolute inset-0 bg-stellar-burst opacity-30" />
+        <div className="absolute inset-0 bg-quantum-flow opacity-20" />
+        
+        {/* Background video with cosmic filter */}
         <video
           autoPlay
           muted
           loop
           playsInline
-          className="absolute inset-0 w-full h-full object-cover opacity-50"
-          style={{ filter: 'brightness(0.5)' }}
+          className="absolute inset-0 w-full h-full object-cover opacity-40"
+          style={{ filter: 'brightness(0.3) saturate(1.2) hue-rotate(220deg)' }}
         >
           <source src="/bgvid.mp4" type="video/mp4" />
         </video>
 
-        {/* Abstract background overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[#0F1320]/40 via-[#141830]/40 to-[#1D1E3A]/40 z-0"></div>
+        {/* Cosmic particles overlay */}
+        <div className="absolute inset-0 particle-field opacity-30 pointer-events-none" />
         
-        {/* Content */}
-        <div className="container mx-auto px-6 z-20 max-w-6xl">
+        {/* Content - Cosmic Portal Interface */}
+        <div className="container mx-auto px-6 z-20 max-w-6xl relative">
           <motion.div 
             className="text-center"
             initial="hidden"
@@ -97,45 +113,70 @@ const Landing = () => {
               }
             }}
           >
-            {/* Logo and badge */}
-            <motion.div variants={fadeInUp} className="flex items-center justify-center gap-2 mb-8">
-              <h1 className="text-3xl font-bold text-yellow-300 tracking-tight glow-text-gold font-serif">WZRD.STUDIO</h1>
-              <span className="text-xs text-white/50 bg-[#292F46] px-2 py-0.5 rounded">ALPHA</span>
+            {/* Cosmic Logo Portal */}
+            <motion.div variants={fadeInUp} className="flex items-center justify-center gap-4 mb-8">
+              <div className="relative">
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-cosmic-stellar to-cosmic-temporal flex items-center justify-center">
+                  <Orbit className="w-8 h-8 text-cosmic-void animate-spin" style={{ animationDuration: '8s' }} />
+                </div>
+                <div className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-cosmic-nebula flex items-center justify-center">
+                  <Sparkles className="w-3 h-3 text-white animate-pulse" />
+                </div>
+              </div>
+              <div>
+                <h1 className="text-4xl font-bold glow-text-cosmic font-serif tracking-wide">WZRD.STUDIO</h1>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-xs bg-cosmic-stellar/20 text-cosmic-stellar px-2 py-0.5 rounded-full border border-cosmic-stellar/30">ODYSSEY</span>
+                  <span className="text-xs bg-cosmic-nebula/20 text-cosmic-nebula px-2 py-0.5 rounded-full border border-cosmic-nebula/30">ALPHA</span>
+                </div>
+              </div>
             </motion.div>
             
-            {/* Main headline */}
+            
+            {/* Cosmic Headline */}
             <motion.h2 
               variants={fadeInUp}
-              className="text-4xl md:text-6xl font-bold mb-6 leading-tight bg-gradient-to-r from-white via-white to-white/80 bg-clip-text text-transparent"
+              className="text-5xl md:text-7xl font-bold mb-8 leading-tight glow-text-cosmic"
             >
-              AI-Powered Cinematic Storytelling Studio
+              AI-Powered Cosmic Storytelling Portal
             </motion.h2>
             
-            {/* Sub-headline */}
+            {/* Sub-headline with stellar accent */}
             <motion.p 
               variants={fadeInUp}
-              className="text-xl text-zinc-300 max-w-3xl mx-auto mb-10"
+              className="text-xl md:text-2xl text-muted-foreground max-w-4xl mx-auto mb-12 font-light"
             >
-              Transform your ideas into stunning storyboards, shots, and video sequences with our cutting-edge AI platform powered by Kling AI, Luma, Hailou AI, and Runway.
+              Transform your ideas into stunning <span className="text-cosmic-stellar">storyboards</span>, 
+              <span className="text-cosmic-plasma"> shots</span>, and 
+              <span className="text-cosmic-quantum"> video sequences</span> with our cutting-edge AI platform 
+              powered by <span className="glow-text-primary">quantum creativity engines</span>.
             </motion.p>
             
-            {/* CTA Buttons */}
-            <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Button 
+            {/* Cosmic CTA Buttons */}
+            <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-16">
+              <GlassButton 
                 onClick={handleGetStarted}
-                className="bg-gradient-to-r from-purple-700 to-indigo-700 hover:from-purple-600 hover:to-indigo-600 text-white px-8 py-6 rounded-md shadow-glow-purple-sm hover:shadow-glow-purple-md transition-all-std group w-full sm:w-auto"
-                size="lg"
+                variant="stellar"
+                size="xl"
+                glow="intense"
+                particle
+                className="w-full sm:w-auto min-w-[200px]"
               >
-                Start Creating Free <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </Button>
-              <Button 
-                variant="outline" 
+                <Zap className="w-5 h-5" />
+                Enter the Portal
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </GlassButton>
+              
+              <GlassButton 
+                variant="cosmic" 
                 onClick={() => setIsVideoModalOpen(true)}
-                className="bg-gradient-to-r from-violet-700 to-purple-700 hover:from-violet-600 hover:to-purple-600 text-white px-6 py-6 w-full sm:w-auto border-none shadow-glow-purple-sm hover:shadow-glow-purple-md transition-all-std"
-                size="lg"
+                size="xl"
+                glow="medium"
+                className="w-full sm:w-auto min-w-[200px]"
               >
-                <Play className="mr-2 w-4 h-4 fill-current" /> Watch Demo
-              </Button>
+                <Play className="w-4 h-4 fill-current" />
+                Witness the Magic
+              </GlassButton>
             </motion.div>
 
             {/* Tech stack badges */}
