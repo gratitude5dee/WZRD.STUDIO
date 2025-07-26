@@ -1,6 +1,6 @@
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { executeFalModel } from '../_shared/falai-client.ts';
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") as string;
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") as string;
@@ -11,19 +11,18 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Map aspect ratios to Fal.ai image sizes
+// Map aspect ratios to OpenAI image sizes
 function getImageSizeFromAspectRatio(aspectRatio: string): string {
   switch (aspectRatio) {
     case "16:9":
-      return "1344x768";
+      return "1536x1024";
     case "9:16":
-      return "768x1344";
+      return "1024x1536";
     case "1:1":
       return "1024x1024";
     case "4:3":
-      return "1152x896";
     case "3:4":
-      return "896x1152";
+      return "1024x1024"; // OpenAI doesn't support these ratios, use square
     default:
       return "1024x1024"; // Default square
   }
@@ -52,14 +51,14 @@ serve(async (req) => {
 
     console.log(`[generate-shot-image][Shot ${shotId}] Request received.`);
 
-    // Check if FAL_KEY is configured
-    const falApiKey = Deno.env.get("FAL_KEY");
-    if (!falApiKey) {
-      console.error(`[generate-shot-image][Shot ${shotId}] FAL_KEY is not configured`);
+    // Check if OPENAI_API_KEY is configured
+    const openaiApiKey = Deno.env.get("OPENAI_API_KEY");
+    if (!openaiApiKey) {
+      console.error(`[generate-shot-image][Shot ${shotId}] OPENAI_API_KEY is not configured`);
       return new Response(
         JSON.stringify({ 
           success: false, 
-          error: "Fal.ai API key is not configured. Please set the FAL_KEY in your Supabase project settings." 
+          error: "OpenAI API key is not configured. Please set the OPENAI_API_KEY in your Supabase project settings." 
         }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
@@ -140,85 +139,90 @@ serve(async (req) => {
     console.log(`[generate-shot-image][Shot ${shotId}] Using aspect ratio: ${aspectRatio}, image size: ${imageSize}`);
 
     try {
-      // Generate image using Fal.ai FLUX.1 [dev] - reliable and fast model
-      console.log(`[generate-shot-image][Shot ${shotId}] Calling Fal.ai for image generation...`);
+      // Generate image using OpenAI's gpt-image-1 model
+      console.log(`[generate-shot-image][Shot ${shotId}] Calling OpenAI for image generation...`);
       
-      const falResponse = await executeFalModel('fal-ai/flux/dev', {
-        prompt: shot.visual_prompt,
-        image_size: imageSize,
-        num_inference_steps: 28, // Standard for flux/dev model
-        guidance_scale: 3.5, // Standard guidance for flux/dev
-        num_images: 1,
-        enable_safety_checker: true
+      const response = await fetch('https://api.openai.com/v1/images/generations', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${openaiApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-image-1',
+          prompt: shot.visual_prompt,
+          size: imageSize,
+          quality: 'high',
+          output_format: 'png',
+          n: 1
+        }),
       });
 
-      console.log(`[generate-shot-image][Shot ${shotId}] Fal.ai response:`, falResponse);
+      const responseText = await response.text();
+      console.log(`[generate-shot-image][Shot ${shotId}] OpenAI response status: ${response.status}`);
 
-      if (!falResponse.success) {
-        throw new Error(falResponse.error || 'Fal.ai generation failed');
+      if (!response.ok) {
+        console.error(`[generate-shot-image][Shot ${shotId}] OpenAI API error: ${responseText}`);
+        throw new Error(`OpenAI API error (${response.status}): ${responseText}`);
       }
 
-      // Handle both sync and async responses
-      if (falResponse.data) {
-        // Synchronous response with immediate result
-        const imageUrl = falResponse.data.images?.[0]?.url;
-        if (imageUrl) {
-          // Update shot with the generated image
-          const { error: updateError } = await supabase
-            .from("shots")
-            .update({ 
-              image_url: imageUrl,
-              image_status: "completed"
-            })
-            .eq("id", shotId);
+      const result = JSON.parse(responseText);
+      console.log(`[generate-shot-image][Shot ${shotId}] OpenAI generation successful`);
 
-          if (updateError) {
-            console.error(`[generate-shot-image][Shot ${shotId}] Failed to update shot with image: ${updateError.message}`);
-            throw new Error(`Failed to update shot: ${updateError.message}`);
-          }
+      // OpenAI gpt-image-1 returns base64 data, we need to convert it to a URL
+      if (result.data && result.data[0] && result.data[0].b64_json) {
+        const base64Data = result.data[0].b64_json;
+        
+        // Upload the base64 image to Supabase storage
+        const imageBuffer = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
+        const fileName = `shot-${shotId}-${Date.now()}.png`;
+        
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('workflow-media')
+          .upload(fileName, imageBuffer, {
+            contentType: 'image/png',
+            upsert: false
+          });
 
-          console.log(`[generate-shot-image][Shot ${shotId}] Image generation completed successfully`);
-          return new Response(
-            JSON.stringify({ 
-              success: true, 
-              image_url: imageUrl,
-              status: "completed"
-            }),
-            { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        } else {
-          throw new Error('No image URL returned from Fal.ai');
+        if (uploadError) {
+          console.error(`[generate-shot-image][Shot ${shotId}] Failed to upload image: ${uploadError.message}`);
+          throw new Error(`Failed to upload image: ${uploadError.message}`);
         }
-      } else if (falResponse.request_id) {
-        // Asynchronous response - store request ID for polling
+
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('workflow-media')
+          .getPublicUrl(fileName);
+
+        // Update shot with the generated image
         const { error: updateError } = await supabase
           .from("shots")
           .update({ 
-            luma_generation_id: falResponse.request_id, // Reuse this field for Fal.ai request ID
-            image_status: "generating"
+            image_url: publicUrl,
+            image_status: "completed"
           })
           .eq("id", shotId);
 
         if (updateError) {
-          console.error(`[generate-shot-image][Shot ${shotId}] Failed to update shot with request ID: ${updateError.message}`);
+          console.error(`[generate-shot-image][Shot ${shotId}] Failed to update shot with image: ${updateError.message}`);
           throw new Error(`Failed to update shot: ${updateError.message}`);
         }
 
-        console.log(`[generate-shot-image][Shot ${shotId}] Async generation started with request ID: ${falResponse.request_id}`);
+        console.log(`[generate-shot-image][Shot ${shotId}] Image generation completed successfully`);
         return new Response(
           JSON.stringify({ 
             success: true, 
-            request_id: falResponse.request_id,
-            status: "generating"
+            image_url: publicUrl,
+            status: "completed"
           }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       } else {
-        throw new Error('Invalid response from Fal.ai - no data or request_id');
+        throw new Error('No image data returned from OpenAI');
       }
 
     } catch (error) {
-      console.error(`[generate-shot-image][Shot ${shotId}] Error in Fal.ai generation: ${error.message}`);
+      console.error(`[generate-shot-image][Shot ${shotId}] Error in OpenAI generation: ${error.message}`);
       
       // Update shot status to failed
       console.log(`[generate-shot-image][Shot ${shotId}] Updating status to 'failed' due to error.`);
