@@ -12,21 +12,21 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Map aspect ratios to Fal.ai image sizes
+// Map aspect ratios to image sizes
 function getImageSizeFromAspectRatio(aspectRatio: string): string {
   switch (aspectRatio) {
     case "16:9":
-      return "landscape_16_9";
+      return "1536x1024"; // Landscape 16:9
     case "9:16":
-      return "portrait_9_16";
+      return "1024x1536"; // Portrait 9:16
     case "1:1":
-      return "square";
+      return "1024x1024"; // Square
     case "4:3":
-      return "landscape_4_3";
+      return "1152x1024"; // Landscape 4:3
     case "3:4":
-      return "portrait_3_4";
+      return "1024x1152"; // Portrait 3:4
     default:
-      return "landscape_16_9"; // Default landscape
+      return "1536x1024"; // Default landscape 16:9
   }
 }
 
@@ -141,7 +141,7 @@ serve(async (req) => {
           model_id: 'fal-ai/flux/schnell'
         },
         headers: {
-          Authorization: req.headers.get("Authorization") || ""
+          'x-internal-request': 'true'
         }
       });
 
