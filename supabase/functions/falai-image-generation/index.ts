@@ -16,12 +16,37 @@ interface ImageGenerationInput {
 }
 
 const IMAGE_MODELS = [
+  'fal-ai/flux-1/schnell',
   'fal-ai/flux/dev',
   'fal-ai/flux-pro/v1.1-ultra', 
   'fal-ai/hidream-i1-fast',
   'fal-ai/ideogram/v3',
   'fal-ai/minimax/image-01'
 ];
+
+// Helper function to convert aspect ratio to FAL.AI image_size format
+function getImageSizeForModel(modelId: string, sizeInput: string): any {
+  // Handle direct dimension strings like "1536x1024"
+  if (sizeInput.includes('x')) {
+    const [width, height] = sizeInput.split('x').map(n => parseInt(n));
+    
+    // For FLUX models, convert to enum values
+    if (modelId.includes('flux')) {
+      const aspectRatio = width / height;
+      if (aspectRatio > 1.5) return 'landscape_16_9';
+      if (aspectRatio > 1.2) return 'landscape_4_3';
+      if (aspectRatio < 0.7) return 'portrait_16_9';
+      if (aspectRatio < 0.9) return 'portrait_4_3';
+      return width > 1000 ? 'square_hd' : 'square';
+    }
+    
+    // For other models that accept dimensions
+    return sizeInput;
+  }
+  
+  // Return as-is if it's already an enum value
+  return sizeInput;
+}
 
 // Helper function to generate images with OpenAI as fallback
 async function generateWithOpenAI(prompt: string, size: string = '1024x1024'): Promise<any> {
@@ -43,8 +68,7 @@ async function generateWithOpenAI(prompt: string, size: string = '1024x1024'): P
       prompt: prompt,
       n: 1,
       size: size,
-      quality: 'high',
-      response_format: 'b64_json'
+      quality: 'high'
     }),
   });
 
@@ -100,8 +124,8 @@ serve(async (req) => {
     // Try FAL.AI first if key is available
     if (falKey) {
       try {
-        // Use specified model or default to FLUX dev
-        const modelId = input.model_id || 'fal-ai/flux/dev';
+        // Use specified model or default to FLUX schnell (faster)
+        const modelId = input.model_id || 'fal-ai/flux-1/schnell';
         
         if (!IMAGE_MODELS.includes(modelId)) {
           return errorResponse(`Unsupported image model: ${modelId}`, 400);
@@ -114,12 +138,27 @@ serve(async (req) => {
 
         // Add model-specific parameters
         if (modelId.includes('flux')) {
-          modelInput.image_size = input.image_size || '1024x1024';
-          modelInput.num_inference_steps = input.num_inference_steps || 28;
-          modelInput.guidance_scale = input.guidance_scale || 3.5;
+          // Convert image size to correct format for FLUX models
+          const rawImageSize = input.image_size || '1024x1024';
+          modelInput.image_size = getImageSizeForModel(modelId, rawImageSize);
+          
+          // Use correct defaults for FLUX models
+          if (modelId.includes('schnell')) {
+            modelInput.num_inference_steps = input.num_inference_steps || 4;
+            modelInput.guidance_scale = input.guidance_scale || 3.5;
+          } else {
+            modelInput.num_inference_steps = input.num_inference_steps || 28;
+            modelInput.guidance_scale = input.guidance_scale || 3.5;
+          }
+          
           modelInput.num_images = input.num_images || 1;
           if (input.seed) modelInput.seed = input.seed;
           modelInput.enable_safety_checker = input.enable_safety_checker ?? true;
+          
+          // Add output format if specified
+          if (input.output_format) {
+            modelInput.output_format = input.output_format;
+          }
         } else if (modelId.includes('ideogram')) {
           if (input.seed) modelInput.seed = input.seed;
         } else if (modelId.includes('hidream')) {
