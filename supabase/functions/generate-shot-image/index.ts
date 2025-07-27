@@ -138,7 +138,7 @@ serve(async (req) => {
           num_inference_steps: 4,
           num_images: 1,
           enable_safety_checker: true,
-          model_id: 'fal-ai/flux/schnell'
+          model_id: 'fal-ai/flux/dev'
         },
         headers: {
           'x-internal-request': 'true'
