@@ -129,7 +129,10 @@ serve(async (req) => {
         console.log(`Generating image with ${modelId}:`, modelInput);
         result = await executeFalModel(modelId, modelInput);
         
+        console.log('FAL.AI result:', JSON.stringify(result, null, 2));
+        
         if (!result.success) {
+          console.error('FAL.AI generation failed with error:', result.error);
           throw new Error(result.error || 'FAL.AI generation failed');
         }
         

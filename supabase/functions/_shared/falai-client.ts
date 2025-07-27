@@ -27,16 +27,13 @@ export async function executeFalModel<T>(
 
     console.log(`Executing Fal.AI model: ${modelId} with mode: ${mode}`)
 
-    const response = await fetch(`https://fal.run/v1/${modelId}`, {
+    const response = await fetch(`https://fal.run/${modelId}`, {
       method: 'POST',
       headers: {
         'Authorization': `Key ${falKey}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        ...inputs,
-        mode,
-      }),
+      body: JSON.stringify(inputs),
     })
 
     const responseText = await response.text()
