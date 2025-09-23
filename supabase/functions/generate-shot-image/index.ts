@@ -2,16 +2,11 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import * as fal from "npm:@fal-ai/serverless-client";
+import { executeFalModel } from '../_shared/falai-client.ts';
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") as string;
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") as string;
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-// Configure Fal.AI client
-fal.config({
-  credentials: Deno.env.get("FAL_KEY")
-});
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -159,31 +154,22 @@ serve(async (req) => {
       // Use Fal.AI Flux Schnell model directly
       console.log(`[generate-shot-image][Shot ${shotId}] Calling Fal.AI Flux Schnell model...`);
       
-      const result = await fal.subscribe("fal-ai/flux-1/schnell", {
-        input: {
-          prompt: shot.visual_prompt,
-          image_size: falImageSize,
-          num_inference_steps: 4,
-          guidance_scale: 3.5,
-          num_images: 1,
-          enable_safety_checker: true,
-          output_format: "jpeg"
-        },
-        logs: true,
-        onQueueUpdate: (update) => {
-          console.log(`[generate-shot-image][Shot ${shotId}] Queue status: ${update.status}`);
-          if (update.status === "IN_PROGRESS" && update.logs) {
-            update.logs.forEach(log => console.log(`[generate-shot-image][Shot ${shotId}] ${log.message}`));
-          }
-        }
-      });
+      const result = await executeFalModel("fal-ai/flux/schnell", {
+        prompt: shot.visual_prompt,
+        image_size: falImageSize,
+        num_inference_steps: 4,
+        guidance_scale: 3.5,
+        num_images: 1,
+        enable_safety_checker: true,
+        output_format: "jpeg"
+      }, 'queue');
 
       console.log(`[generate-shot-image][Shot ${shotId}] Fal.AI generation successful`);
-      console.log(`[generate-shot-image][Shot ${shotId}] Response:`, JSON.stringify(result.data, null, 2));
+      console.log(`[generate-shot-image][Shot ${shotId}] Response:`, JSON.stringify(result, null, 2));
 
       // Extract image URL from the response
-      if (result.data?.images && result.data.images[0] && result.data.images[0].url) {
-        const imageUrl = result.data.images[0].url;
+      if (result?.images && result.images[0] && result.images[0].url) {
+        const imageUrl = result.images[0].url;
         console.log(`[generate-shot-image][Shot ${shotId}] Found image URL: ${imageUrl}`);
         
         // Download the image and upload to Supabase storage
@@ -238,7 +224,7 @@ serve(async (req) => {
         );
       } else {
         console.error(`[generate-shot-image][Shot ${shotId}] Invalid response structure. Expected images array with URL.`);
-        console.error(`[generate-shot-image][Shot ${shotId}] Actual response:`, JSON.stringify(result.data, null, 2));
+        console.error(`[generate-shot-image][Shot ${shotId}] Actual response:`, JSON.stringify(result, null, 2));
         throw new Error('Invalid image generation response: missing image URL in response');
       }
 
