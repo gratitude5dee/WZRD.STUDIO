@@ -61,14 +61,23 @@ serve(async (req) => {
     }
 
     try {
-      // Generate video from image using Fal.ai
-      const result = await submitToFalQueue(FAL_MODELS.STABLE_VIDEO, {
+      // Generate video from image using LTX Video 13B Distilled
+      const result = await submitToFalQueue(FAL_MODELS.LTX_VIDEO_13B_DISTILLED_IMAGE_TO_VIDEO, {
         image_url: image_url,
-        motion_bucket_id: 127,
-        fps: 6,
-        num_frames: 25,
-        decoding_t: 14,
-        seed: Math.floor(Math.random() * 1000000)
+        prompt: "Natural motion and camera movement, cinematic quality",
+        negative_prompt: "worst quality, inconsistent motion, blurry, jittery, distorted",
+        resolution: "720p",
+        aspect_ratio: "auto",
+        num_frames: 121,
+        first_pass_num_inference_steps: 8,
+        first_pass_skip_final_steps: 1,
+        second_pass_num_inference_steps: 8,
+        second_pass_skip_initial_steps: 5,
+        frame_rate: 30,
+        expand_prompt: false,
+        reverse_video: false,
+        enable_safety_checker: true,
+        constant_rate_factor: 35
       });
 
       // Store the generated video in Supabase storage

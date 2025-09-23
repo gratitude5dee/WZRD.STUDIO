@@ -226,6 +226,24 @@ export const FAL_MODELS_BY_CATEGORY = {
       outputs: { video: 'File' },
     },
     {
+      id: 'fal-ai/ltx-video-13b-distilled/image-to-video',
+      name: 'LTX Video 13B Distilled (Image to Video)',
+      description: 'High-quality image-to-video generation with advanced motion understanding and 13B parameters.',
+      inputs: { 
+        image_url: 'string*',
+        prompt: 'string*',
+        negative_prompt: 'string',
+        resolution: 'string',
+        aspect_ratio: 'string',
+        num_frames: 'integer',
+        first_pass_num_inference_steps: 'integer',
+        second_pass_num_inference_steps: 'integer',
+        frame_rate: 'integer',
+        enable_safety_checker: 'boolean'
+      },
+      outputs: { video: 'File' },
+    },
+    {
       id: 'fal-ai/framepack',
       name: 'Framepack Image to Video',
       description: 'Efficient Image-to-video model that autoregressively generates videos.',
@@ -485,6 +503,7 @@ export const FAL_MODELS = {
   KLING_V2_IMAGE_TO_VIDEO: "fal-ai/kling-video/v2/master/image-to-video",
   LTX_VIDEO_TEXT: "fal-ai/ltx-video-v097",
   LTX_VIDEO_IMAGE: "fal-ai/ltx-video-v097/image-to-video",
+  LTX_VIDEO_13B_DISTILLED_IMAGE_TO_VIDEO: "fal-ai/ltx-video-13b-distilled/image-to-video",
   FRAMEPACK: "fal-ai/framepack",
   WAN_I2V: "fal-ai/wan-i2v",
   VEO2_IMAGE_TO_VIDEO: "fal-ai/veo2/image-to-video",
