@@ -2,7 +2,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { executeFalModel } from '../_shared/falai-client.ts';
+import { FAL_MODELS, submitToFalQueue } from '../_shared/falai-client.ts';
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") as string;
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") as string;
@@ -151,10 +151,10 @@ serve(async (req) => {
     console.log(`[generate-shot-image][Shot ${shotId}] Using aspect ratio: ${aspectRatio}, FAL image size:`, falImageSize);
 
     try {
-      // Use Fal.AI Flux Schnell model directly
+      // Use Fal.ai Flux Schnell model with improved queue handling
       console.log(`[generate-shot-image][Shot ${shotId}] Calling Fal.AI Flux Schnell model...`);
       
-      const result = await executeFalModel("fal-ai/flux/schnell", {
+      const result = await submitToFalQueue(FAL_MODELS.FLUX_SCHNELL, {
         prompt: shot.visual_prompt,
         image_size: falImageSize,
         num_inference_steps: 4,
@@ -162,14 +162,22 @@ serve(async (req) => {
         num_images: 1,
         enable_safety_checker: true,
         output_format: "jpeg"
-      }, 'queue');
+      }, {
+        onProgress: (status) => {
+          console.log(`[generate-shot-image][Shot ${shotId}] Queue status: ${status.status} (attempt ${status.attempts})`);
+        }
+      });
+
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to generate image with Fal.ai');
+      }
 
       console.log(`[generate-shot-image][Shot ${shotId}] Fal.AI generation successful`);
-      console.log(`[generate-shot-image][Shot ${shotId}] Response:`, JSON.stringify(result, null, 2));
+      console.log(`[generate-shot-image][Shot ${shotId}] Response:`, JSON.stringify(result.data, null, 2));
 
       // Extract image URL from the response
-      if (result?.images && result.images[0] && result.images[0].url) {
-        const imageUrl = result.images[0].url;
+      if (result.data?.images && result.data.images[0] && result.data.images[0].url) {
+        const imageUrl = result.data.images[0].url;
         console.log(`[generate-shot-image][Shot ${shotId}] Found image URL: ${imageUrl}`);
         
         // Download the image and upload to Supabase storage

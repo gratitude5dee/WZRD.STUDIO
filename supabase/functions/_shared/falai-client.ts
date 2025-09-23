@@ -133,6 +133,13 @@ export interface ModelInfo {
 export const FAL_MODELS_BY_CATEGORY = {
   'image-generation': [
     {
+      id: 'fal-ai/flux/schnell',
+      name: 'FLUX.1 [schnell] Text to Image',
+      description: 'Fast 12B parameter flow transformer for rapid text-to-image generation.',
+      inputs: { prompt: 'string*', image_size: 'ImageSize|string', num_inference_steps: 'integer', guidance_scale: 'number' },
+      outputs: { images: 'list<Image>' },
+    },
+    {
       id: 'fal-ai/flux/dev',
       name: 'FLUX.1 [dev] Text to Image',
       description: '12B parameter flow transformer for high-quality text-to-image generation.',
@@ -457,4 +464,122 @@ export function getModelsByCategory(category: string) {
 // Helper function to find a model by ID
 export function getModelById(id: string) {
   return ALL_FAL_MODELS.find(model => model.id === id);
+}
+
+// Fal.ai Model Constants for easy reference
+export const FAL_MODELS = {
+  // Image Generation
+  FLUX_PRO: "fal-ai/flux-pro/v1.1-ultra",
+  FLUX_DEV: "fal-ai/flux/dev",
+  FLUX_SCHNELL: "fal-ai/flux/schnell",
+  STABLE_DIFFUSION_XL: "fal-ai/stable-diffusion-xl",
+  HIDREAM_I1_DEV: "fal-ai/hidream-i1-dev",
+  HIDREAM_I1_FAST: "fal-ai/hidream-i1-fast",
+  IDEOGRAM_V3: "fal-ai/ideogram/v3",
+  MINIMAX_IMAGE: "fal-ai/minimax/image-01",
+  
+  // Video Generation  
+  MAGI_TEXT_TO_VIDEO: "fal-ai/magi",
+  MAGI_IMAGE_TO_VIDEO: "fal-ai/magi/image-to-video",
+  KLING_V2_TEXT_TO_VIDEO: "fal-ai/kling-video/v2/master/text-to-video",
+  KLING_V2_IMAGE_TO_VIDEO: "fal-ai/kling-video/v2/master/image-to-video",
+  LTX_VIDEO_TEXT: "fal-ai/ltx-video-v097",
+  LTX_VIDEO_IMAGE: "fal-ai/ltx-video-v097/image-to-video",
+  FRAMEPACK: "fal-ai/framepack",
+  WAN_I2V: "fal-ai/wan-i2v",
+  VEO2_IMAGE_TO_VIDEO: "fal-ai/veo2/image-to-video",
+  
+  // Audio Generation
+  MUSIC_GENERATOR: "cassetteai/music-generator",
+  SOUND_EFFECTS: "cassetteai/sound-effects-generator",
+  ACE_STEP_AUDIO: "fal-ai/ace-step/prompt-to-audio",
+  MINIMAX_TTS: "fal-ai/minimax/speech-02-hd",
+  DIA_TTS: "fal-ai/dia-tts",
+  
+  // Image Enhancement
+  UPSCALE_CREATIVE: "fal-ai/recraft/upscale/creative",
+  UPSCALE_CRISP: "fal-ai/recraft/upscale/crisp",
+  
+  // Image Editing
+  HIDREAM_E1_EDIT: "fal-ai/hidream-e1-full",
+  STEP1X_EDIT: "fal-ai/step1x-edit",
+  FINEGRAIN_ERASER: "fal-ai/finegrain-eraser",
+  CARTOONIFY: "fal-ai/cartoonify",
+}
+
+// Helper to handle Fal.ai queue with better error handling
+export async function submitToFalQueue<T>(
+  modelId: string,
+  inputs: Record<string, any>,
+  options: {
+    pollInterval?: number;
+    maxAttempts?: number;
+    onProgress?: (status: any) => void;
+  } = {}
+): Promise<FalResponse<T>> {
+  const { pollInterval = 2000, maxAttempts = 180, onProgress } = options;
+  
+  try {
+    console.log(`[Fal Queue] Submitting to model: ${modelId}`);
+    
+    // Submit to queue
+    const submitResponse = await executeFalModel(modelId, inputs, 'queue');
+    
+    if (!submitResponse.success) {
+      throw new Error(submitResponse.error || 'Failed to submit to Fal queue');
+    }
+    
+    const requestId = submitResponse.requestId;
+    if (!requestId) {
+      // If no request ID, it was processed synchronously
+      return submitResponse;
+    }
+    
+    console.log(`[Fal Queue] Request ID: ${requestId}, polling for result...`);
+    
+    // Poll for result
+    let attempts = 0;
+    while (attempts < maxAttempts) {
+      await new Promise(resolve => setTimeout(resolve, pollInterval));
+      
+      const statusResponse = await pollFalStatus(requestId);
+      
+      if (!statusResponse.success) {
+        throw new Error(statusResponse.error || 'Failed to check status');
+      }
+      
+      const { status, result } = statusResponse.data;
+      
+      if (onProgress) {
+        onProgress({ status, attempts, requestId });
+      }
+      
+      console.log(`[Fal Queue] Status: ${status} (attempt ${attempts + 1}/${maxAttempts})`);
+      
+      if (status === 'COMPLETED') {
+        if (result) {
+          return {
+            success: true,
+            data: result,
+            requestId,
+          };
+        } else {
+          throw new Error('Job completed but no result returned');
+        }
+      } else if (status === 'FAILED') {
+        throw new Error('Fal.ai job failed');
+      }
+      
+      attempts++;
+    }
+    
+    throw new Error(`Polling timeout after ${maxAttempts} attempts`);
+    
+  } catch (error) {
+    console.error('[Fal Queue] Error:', error);
+    return {
+      success: false,
+      error: error.message || 'Unknown error in Fal queue processing',
+    };
+  }
 }
