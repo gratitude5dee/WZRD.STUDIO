@@ -97,7 +97,7 @@ serve(async (req) => {
       body: {
         prompt: userPrompt,
         systemPrompt: systemPrompt,
-        model: 'llama3-8b-8192', // Using the faster model since this is a simpler task
+        model: 'llama-3.1-8b-instant', // Using the faster model since this is a simpler task
         temperature: 0.7,
         maxTokens: 200 // Visual prompts should be concise
       },
