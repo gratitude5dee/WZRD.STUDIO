@@ -169,7 +169,7 @@ const Home = () => {
   };
 
   return (
-    <div className="min-h-screen bg-cosmic-void text-foreground relative overflow-hidden">
+    <div className="min-h-screen bg-slate-900 text-foreground relative overflow-hidden">
       {/* Cosmic Background */}
       <div className="fixed inset-0 bg-nebula-field opacity-30 pointer-events-none" />
       <div className="fixed inset-0 particle-field opacity-20 pointer-events-none" />
