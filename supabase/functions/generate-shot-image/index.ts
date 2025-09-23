@@ -152,9 +152,13 @@ serve(async (req) => {
 
       console.log(`[generate-shot-image][Shot ${shotId}] Image generation successful`);
 
-      // Extract image URL from the response
-      if (imageData?.images && imageData.images[0] && imageData.images[0].url) {
-        const imageUrl = imageData.images[0].url;
+      console.log(`[generate-shot-image][Shot ${shotId}] Response data structure:`, JSON.stringify(imageData, null, 2));
+
+      // Extract image URL from the response - check both possible response structures
+      const images = imageData?.data?.images || imageData?.images;
+      if (images && images[0] && images[0].url) {
+        const imageUrl = images[0].url;
+        console.log(`[generate-shot-image][Shot ${shotId}] Found image URL: ${imageUrl}`);
         
         // Download the image and upload to Supabase storage
         console.log(`[generate-shot-image][Shot ${shotId}] Downloading image...`);
@@ -207,7 +211,9 @@ serve(async (req) => {
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       } else {
-        throw new Error('No image data returned from image generation');
+        console.error(`[generate-shot-image][Shot ${shotId}] Invalid response structure. Expected images array with URL.`);
+        console.error(`[generate-shot-image][Shot ${shotId}] Actual response:`, JSON.stringify(imageData, null, 2));
+        throw new Error('Invalid image generation response: missing image URL in response');
       }
 
     } catch (error) {
