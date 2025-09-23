@@ -69,7 +69,7 @@ serve(async (req) => {
       body: {
         systemPrompt: storylineSystemPrompt,
         prompt: storylineUserPrompt,
-        model: 'llama3-70b-8192', // Using the more powerful model for complex structured output
+        model: 'llama-3.3-70b-versatile', // Using the more powerful model for complex structured output
         temperature: 0.7,
         maxTokens: generate_alternative ? 1500 : 4000
       },
@@ -105,7 +105,7 @@ serve(async (req) => {
           body: {
             systemPrompt: analysisSystemPrompt,
             prompt: analysisUserPrompt,
-            model: 'llama3-70b-8192',
+            model: 'llama-3.3-70b-versatile',
             temperature: 0.5, // Lower temperature for more consistent structured output
             maxTokens: 1000
           },
