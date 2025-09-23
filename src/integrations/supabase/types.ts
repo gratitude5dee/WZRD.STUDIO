@@ -787,6 +787,54 @@ export type Database = {
         }
         Relationships: []
       }
+      generation_jobs: {
+        Row: {
+          completed_at: string | null
+          config: Json
+          created_at: string
+          error_message: string | null
+          id: string
+          job_type: string
+          priority: number | null
+          progress: number | null
+          result_url: string | null
+          started_at: string | null
+          status: string
+          user_id: string
+          worker_id: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          config?: Json
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          job_type: string
+          priority?: number | null
+          progress?: number | null
+          result_url?: string | null
+          started_at?: string | null
+          status?: string
+          user_id: string
+          worker_id?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          config?: Json
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          job_type?: string
+          priority?: number | null
+          progress?: number | null
+          result_url?: string | null
+          started_at?: string | null
+          status?: string
+          user_id?: string
+          worker_id?: string | null
+        }
+        Relationships: []
+      }
       generations: {
         Row: {
           api_provider: string
@@ -1450,6 +1498,62 @@ export type Database = {
         }
         Relationships: []
       }
+      render_queue: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          error_message: string | null
+          estimated_completion: string | null
+          id: string
+          priority: number | null
+          progress: number | null
+          result_url: string | null
+          started_at: string | null
+          status: string
+          timeline_id: string | null
+          user_id: string
+          worker_id: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          estimated_completion?: string | null
+          id?: string
+          priority?: number | null
+          progress?: number | null
+          result_url?: string | null
+          started_at?: string | null
+          status?: string
+          timeline_id?: string | null
+          user_id: string
+          worker_id?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          estimated_completion?: string | null
+          id?: string
+          priority?: number | null
+          progress?: number | null
+          result_url?: string | null
+          started_at?: string | null
+          status?: string
+          timeline_id?: string | null
+          user_id?: string
+          worker_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "render_queue_timeline_id_fkey"
+            columns: ["timeline_id"]
+            isOneToOne: false
+            referencedRelation: "timelines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       scenes: {
         Row: {
           created_at: string
@@ -1797,6 +1901,50 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "storylines_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      timelines: {
+        Row: {
+          composition_data: Json
+          created_at: string
+          duration_ms: number | null
+          frame_rate: number | null
+          id: string
+          project_id: string | null
+          resolution: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          composition_data?: Json
+          created_at?: string
+          duration_ms?: number | null
+          frame_rate?: number | null
+          id?: string
+          project_id?: string | null
+          resolution?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          composition_data?: Json
+          created_at?: string
+          duration_ms?: number | null
+          frame_rate?: number | null
+          id?: string
+          project_id?: string | null
+          resolution?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "timelines_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
