@@ -114,25 +114,25 @@ export const ProjectCard = ({ project, onOpen, onDelete }: ProjectCardProps) => 
       {/* Content Area */}
       <div className="p-4 space-y-3">
         <div>
-          <h3 className="font-semibold text-lg text-foreground group-hover:glow-text-primary transition-all duration-300 line-clamp-1">
+          <h3 className="font-semibold text-lg text-white group-hover:glow-text-primary transition-all duration-300 line-clamp-1">
             {project.title}
           </h3>
           {project.description && (
-            <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+            <p className="text-sm text-white mt-1 line-clamp-2">
               {project.description}
             </p>
           )}
         </div>
 
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2 text-xs text-muted-foreground">
+          <div className="flex items-center space-x-2 text-xs text-white">
             <Clock className="w-3 h-3" />
             <span>{lastEditedFormatted}</span>
           </div>
           
           <div className="flex items-center space-x-1">
             <Zap className="w-3 h-3 text-cosmic-stellar animate-pulse" />
-            <span className="text-xs text-cosmic-stellar font-medium">Active</span>
+            <span className="text-xs text-white font-medium">Active</span>
           </div>
         </div>
       </div>
