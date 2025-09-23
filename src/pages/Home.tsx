@@ -67,7 +67,7 @@ const Home = () => {
   };
 
   const handleOpenProject = (projectId: string) => {
-    navigate(`/storyboard/${projectId}`);
+    navigate(`/timeline/${projectId}`);
   };
 
   // Filter projects based on active tab

@@ -48,11 +48,11 @@ const NavigationFooter = () => {
         nextTab = visibleTabs[currentTabIndex + 1];
       }
     } else if (isLastTab) {
-      // If on the last tab, finalize the project and navigate to storyboard
+      // If on the last tab, finalize the project and navigate to timeline
       const setupInitiated = await finalizeProjectSetup();
       if (setupInitiated && projectId) {
-        // Navigate to storyboard if successful
-        navigate(`/storyboard/${projectId}`);
+        // Navigate to timeline if successful
+        navigate(`/timeline/${projectId}`);
       }
       return; // Exit after attempting to navigate
     } else {
@@ -80,10 +80,10 @@ const NavigationFooter = () => {
   
   // Determine the button text based on various states
   const getNextButtonText = () => {
-    if (isFinalizing) return "Preparing Storyboard...";
+    if (isFinalizing) return "Preparing Timeline...";
     if (isGenerating) return "Generating...";
     if (isCreating) return "Saving...";
-    if (isLastTab) return "Go to Storyboard";
+    if (isLastTab) return "Go to Timeline";
     return "Next";
   };
 

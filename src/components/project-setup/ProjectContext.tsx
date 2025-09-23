@@ -247,7 +247,7 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
     }
 
     setIsFinalizing(true);
-    toast.info("Preparing your storyboard, please wait...", { duration: 10000 }); // Longer duration
+    toast.info("Preparing your timeline, please wait...", { duration: 10000 }); // Longer duration
 
     try {
       // Ensure latest data is saved before finalizing
@@ -265,15 +265,15 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
 
       if (error) {
         console.error('Error invoking finalize-project-setup:', error);
-        throw new Error(error.message || "Failed to start storyboard preparation.");
+        throw new Error(error.message || "Failed to start timeline preparation.");
       }
 
       console.log('Finalize project setup response:', data);
-      toast.success(data.message || "Storyboard preparation started!");
+      toast.success(data.message || "Timeline preparation started!");
       return true; // Indicate invocation success
     } catch (error: any) {
       console.error('Error finalizing project setup:', error);
-      toast.error(`Storyboard preparation failed: ${error.message}`);
+      toast.error(`Timeline preparation failed: ${error.message}`);
       return false;
     } finally {
       setIsFinalizing(false);

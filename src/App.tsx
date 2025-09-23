@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useParams } from "react-router-dom";
 import { AuthProvider } from "@/providers/AuthProvider";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Home from "./pages/Home";
@@ -17,6 +17,12 @@ import LearningStudioPage from "./pages/LearningStudioPage";
 import StoryboardPage from "./pages/StoryboardPage";
 import EditorPage from "./pages/EditorPage";
 import CustomCursor from "@/components/CustomCursor";
+
+// Component to handle redirect from old storyboard URLs to timeline
+const RedirectToTimeline = () => {
+  const { projectId } = useParams();
+  return <Navigate to={`/timeline/${projectId}`} replace />;
+};
 
 const queryClient = new QueryClient();
 
@@ -77,7 +83,7 @@ const App = () => {
               } />
               
               {/* Redirect legacy routes */}
-              <Route path="/storyboard/:projectId" element={<Navigate to="/timeline/$1" replace />} />
+              <Route path="/storyboard/:projectId" element={<RedirectToTimeline />} />
               <Route path="/storyboard" element={<Navigate to="/home" replace />} />
               <Route path="/timeline" element={<Navigate to="/home" replace />} />
               <Route path="/editor" element={<Navigate to="/home" replace />} />
