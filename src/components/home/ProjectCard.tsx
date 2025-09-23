@@ -1,8 +1,11 @@
 
-import { MoreVertical, ImageIcon, Clock, Lock, Globe, Sparkles, Zap } from 'lucide-react';
+import { MoreVertical, ImageIcon, Clock, Lock, Globe, Sparkles, Zap, Trash2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from "@/lib/utils";
 import { GlassCard } from '@/components/ui/glass-card';
+import { useState } from 'react';
+import { DeleteProjectDialog } from '@/components/dialogs/DeleteProjectDialog';
+import { useProjectActions } from '@/hooks/useProjectActions';
 
 // Updated Project interface to match our database schema
 export interface Project {
@@ -17,25 +20,48 @@ export interface Project {
 interface ProjectCardProps {
   project: Project;
   onOpen: (projectId: string) => void;
+  onDelete?: (projectId: string) => void;
 }
 
-export const ProjectCard = ({ project, onOpen }: ProjectCardProps) => {
+export const ProjectCard = ({ project, onOpen, onDelete }: ProjectCardProps) => {
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const { deleteProject, isDeleting } = useProjectActions();
+
   // Format the date
   const lastEditedFormatted = project.updated_at
     ? `${formatDistanceToNow(new Date(project.updated_at), { addSuffix: true })}`
     : 'No edits';
 
+  const handleDelete = async () => {
+    const success = await deleteProject(project.id);
+    if (success) {
+      setShowDeleteDialog(false);
+      onDelete?.(project.id);
+    }
+  };
+
+  const handleCardClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onOpen(project.id);
+  };
+
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowDeleteDialog(true);
+  };
+
   return (
-    <GlassCard 
-      variant="cosmic" 
-      depth="medium" 
-      glow="subtle" 
-      interactive="press"
-      particle
-      shimmer
-      className="overflow-hidden cursor-pointer group"
-      onClick={() => onOpen(project.id)}
-    >
+    <>
+      <GlassCard 
+        variant="cosmic" 
+        depth="medium" 
+        glow="subtle" 
+        interactive="press"
+        particle
+        shimmer
+        className="overflow-hidden cursor-pointer group hover:scale-[1.02] transition-all duration-300"
+        onClick={handleCardClick}
+      >
       {/* Thumbnail Area */}
       <div className="relative">
         {project.thumbnail_url ? (
@@ -68,9 +94,19 @@ export const ProjectCard = ({ project, onOpen }: ProjectCardProps) => {
         </div>
 
         {/* Hover Options */}
-        <div className="absolute top-3 left-3 opacity-0 group-hover:opacity-100 transition-all duration-300">
-          <button className="p-2 rounded-full bg-cosmic-void/60 backdrop-blur-sm border border-cosmic-stellar/30 hover:bg-cosmic-void/80 transition-colors">
+        <div className="absolute top-3 left-3 opacity-0 group-hover:opacity-100 transition-all duration-300 flex space-x-2">
+          <button 
+            className="p-2 rounded-full bg-cosmic-void/60 backdrop-blur-sm border border-cosmic-stellar/30 hover:bg-cosmic-void/80 transition-colors"
+            onClick={(e) => e.stopPropagation()}
+          >
             <MoreVertical className="h-4 w-4 text-cosmic-stellar" />
+          </button>
+          <button 
+            onClick={handleDeleteClick}
+            className="p-2 rounded-full bg-destructive/60 backdrop-blur-sm border border-destructive/50 hover:bg-destructive/80 transition-all duration-200 hover:scale-110"
+            title="Delete project"
+          >
+            <Trash2 className="h-4 w-4 text-white" />
           </button>
         </div>
       </div>
@@ -100,6 +136,15 @@ export const ProjectCard = ({ project, onOpen }: ProjectCardProps) => {
           </div>
         </div>
       </div>
-    </GlassCard>
+      </GlassCard>
+      
+      <DeleteProjectDialog
+        isOpen={showDeleteDialog}
+        onClose={() => setShowDeleteDialog(false)}
+        onConfirm={handleDelete}
+        projectTitle={project.title}
+        isDeleting={isDeleting}
+      />
+    </>
   );
 };
