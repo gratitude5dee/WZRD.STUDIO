@@ -15,7 +15,7 @@ export const Header = () => {
   };
 
   return (
-    <header className="relative border-b border-cosmic-stellar/20 bg-cosmic-void/60 backdrop-blur-xl">
+    <header className="relative border-b border-cosmic-stellar/20 bg-black backdrop-blur-xl">
       <div className="absolute inset-0 bg-nebula-field opacity-10 pointer-events-none" />
       <div className="container mx-auto px-4 py-4 relative z-10">
         <div className="flex items-center justify-between">
