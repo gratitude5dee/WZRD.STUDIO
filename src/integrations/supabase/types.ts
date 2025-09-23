@@ -1768,6 +1768,8 @@ export type Database = {
           shot_type: string | null
           sound_effects: string | null
           updated_at: string | null
+          video_status: string | null
+          video_url: string | null
           visual_prompt: string | null
         }
         Insert: {
@@ -1787,6 +1789,8 @@ export type Database = {
           shot_type?: string | null
           sound_effects?: string | null
           updated_at?: string | null
+          video_status?: string | null
+          video_url?: string | null
           visual_prompt?: string | null
         }
         Update: {
@@ -1806,6 +1810,8 @@ export type Database = {
           shot_type?: string | null
           sound_effects?: string | null
           updated_at?: string | null
+          video_status?: string | null
+          video_url?: string | null
           visual_prompt?: string | null
         }
         Relationships: [
