@@ -59,7 +59,7 @@ export const ProjectCard = ({ project, onOpen, onDelete }: ProjectCardProps) => 
         interactive="none"
         particle
         shimmer
-        className="overflow-hidden cursor-pointer group transform-gpu will-change-transform hover:scale-[1.02] hover:-translate-y-2 transition-all duration-300 hover:shadow-[0_12px_40px_hsl(var(--cosmic-stellar)/0.3)] hover:z-10 relative"
+        className="overflow-hidden cursor-pointer group will-change-transform hover:scale-[1.02] hover:-translate-y-2 transition-all duration-300 hover:shadow-[0_12px_40px_hsl(var(--cosmic-stellar)/0.3)] hover:z-10 isolate"
         onClick={handleCardClick}
       >
       {/* Thumbnail Area */}

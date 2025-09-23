@@ -22,9 +22,9 @@ export const ProjectList = ({ projects, onOpenProject, onCreateProject }: Projec
   };
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 isolate">
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 contain-layout">
       {localProjects.map((project) => (
-        <div key={project.id} className="relative">
+        <div key={project.id} className="transform-gpu">
           <ProjectCard
             project={project}
             onOpen={onOpenProject}
@@ -32,7 +32,7 @@ export const ProjectList = ({ projects, onOpenProject, onCreateProject }: Projec
           />
         </div>
       ))}
-      <div className="relative">
+      <div className="transform-gpu">
         <NewProjectCard onClick={onCreateProject} />
       </div>
     </div>
