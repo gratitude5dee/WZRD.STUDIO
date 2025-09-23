@@ -1,7 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { initiateLumaVideoGeneration } from "../_shared/luma.ts";
+import { FAL_MODELS, submitToFalQueue } from "../_shared/falai-client.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") as string;
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") as string;
@@ -61,19 +61,65 @@ serve(async (req) => {
     }
 
     try {
-      // Call the helper function to initiate the Luma video generation
-      const result = await initiateLumaVideoGeneration({
-        supabase,
-        userId: authData.user.id,
-        shotId: shot_id,
-        projectId: shot.project_id,
-        imageUrl: image_url
+      // Generate video from image using Fal.ai
+      const result = await submitToFalQueue(FAL_MODELS.STABLE_VIDEO, {
+        image_url: image_url,
+        motion_bucket_id: 127,
+        fps: 6,
+        num_frames: 25,
+        decoding_t: 14,
+        seed: Math.floor(Math.random() * 1000000)
       });
 
-      return new Response(
-        JSON.stringify({ success: true, ...result }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      // Store the generated video in Supabase storage
+      if (result.video?.url) {
+        const videoResponse = await fetch(result.video.url);
+        const videoBuffer = await videoResponse.arrayBuffer();
+        const fileName = `shot-${shot_id}-video-${Date.now()}.mp4`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('workflow-media')
+          .upload(fileName, videoBuffer, {
+            contentType: 'video/mp4'
+          });
+
+        if (uploadError) {
+          console.error(`Error uploading video: ${uploadError.message}`);
+          throw new Error(`Failed to upload video: ${uploadError.message}`);
+        }
+
+        // Get the public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('workflow-media')
+          .getPublicUrl(fileName);
+
+        // Update the shot with the video URL
+        const { error: updateError } = await supabase
+          .from('shots')
+          .update({ 
+            video_url: publicUrl,
+            video_status: 'completed' 
+          })
+          .eq('id', shot_id);
+
+        if (updateError) {
+          console.error(`Error updating shot: ${updateError.message}`);
+        }
+
+        console.log(`[Shot ${shot_id}] Video generation completed successfully`);
+
+        return new Response(
+          JSON.stringify({ 
+            success: true, 
+            video_url: publicUrl,
+            duration: result.video.duration,
+            frames: result.video.frames
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      } else {
+        throw new Error('No video URL in Fal.ai response');
+      }
     } catch (error) {
       console.error(`[Shot ${shot_id}] Error in generate-video-from-image: ${error}`);
       
