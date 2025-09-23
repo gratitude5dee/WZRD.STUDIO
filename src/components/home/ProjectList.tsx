@@ -23,6 +23,9 @@ export const ProjectList = ({ projects, onOpenProject, onCreateProject }: Projec
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4" style={{ contain: 'layout style' }}>
+      <div className="relative overflow-visible" style={{ contain: 'layout' }}>
+        <NewProjectCard onClick={onCreateProject} />
+      </div>
       {localProjects.map((project) => (
         <div key={project.id} className="relative overflow-visible" style={{ contain: 'layout' }}>
           <ProjectCard
@@ -32,9 +35,6 @@ export const ProjectList = ({ projects, onOpenProject, onCreateProject }: Projec
           />
         </div>
       ))}
-      <div className="relative overflow-visible" style={{ contain: 'layout' }}>
-        <NewProjectCard onClick={onCreateProject} />
-      </div>
     </div>
   );
 };
