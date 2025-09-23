@@ -192,6 +192,7 @@ export const ShotCard: React.FC<ShotCardProps> = ({ shot, onUpdate, onDelete }) 
           hasVisualPrompt={!!localVisualPrompt}
           onGenerateImage={handleGenerateImage}
           onGenerateVisualPrompt={handleGenerateVisualPrompt}
+          onUpdate={(updates) => onUpdate(updates)}
         />
       </div>
 
