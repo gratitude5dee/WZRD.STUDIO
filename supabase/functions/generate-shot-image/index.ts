@@ -2,17 +2,44 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { fal } from "npm:@fal-ai/serverless-client";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") as string;
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") as string;
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+// Configure Fal.AI client
+fal.config({
+  credentials: Deno.env.get("FAL_KEY")
+});
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Map aspect ratios to image sizes
+// Convert image size string to FAL.AI format
+function convertImageSizeToFalFormat(imageSize: string): { width: number; height: number } | string {
+  const dimensions = imageSize.split('x');
+  if (dimensions.length !== 2) {
+    return "landscape_4_3"; // Default fallback
+  }
+  
+  const width = parseInt(dimensions[0]);
+  const height = parseInt(dimensions[1]);
+  
+  // Check for standard sizes that have enum values
+  if (width === 1024 && height === 1024) return "square_hd";
+  if (width === 1536 && height === 1024) return "landscape_16_9";
+  if (width === 1024 && height === 1536) return "portrait_16_9";
+  if (width === 1152 && height === 1024) return "landscape_4_3";
+  if (width === 1024 && height === 1152) return "portrait_4_3";
+  
+  // For custom sizes, return width/height object
+  return { width, height };
+}
+
+// Map aspect ratios to image sizes for backwards compatibility
 function getImageSizeFromAspectRatio(aspectRatio: string): string {
   switch (aspectRatio) {
     case "16:9":
@@ -125,39 +152,38 @@ serve(async (req) => {
 
     const aspectRatio = project?.aspect_ratio || "16:9";
     const imageSize = getImageSizeFromAspectRatio(aspectRatio);
-    console.log(`[generate-shot-image][Shot ${shotId}] Using aspect ratio: ${aspectRatio}, image size: ${imageSize}`);
+    const falImageSize = convertImageSizeToFalFormat(imageSize);
+    console.log(`[generate-shot-image][Shot ${shotId}] Using aspect ratio: ${aspectRatio}, FAL image size:`, falImageSize);
 
     try {
-      // Use our unified falai-image-generation function
-      console.log(`[generate-shot-image][Shot ${shotId}] Calling falai-image-generation function...`);
+      // Use Fal.AI Flux Schnell model directly
+      console.log(`[generate-shot-image][Shot ${shotId}] Calling Fal.AI Flux Schnell model...`);
       
-      const { data: imageData, error: imageError } = await supabase.functions.invoke('falai-image-generation', {
-        body: {
+      const result = await fal.subscribe("fal-ai/flux-1/schnell", {
+        input: {
           prompt: shot.visual_prompt,
-          image_size: imageSize,
+          image_size: falImageSize,
           num_inference_steps: 4,
+          guidance_scale: 3.5,
           num_images: 1,
           enable_safety_checker: true,
-          model_id: 'fal-ai/flux-1/schnell'
+          output_format: "jpeg"
         },
-        headers: {
-          'x-internal-request': 'true'
+        logs: true,
+        onQueueUpdate: (update) => {
+          console.log(`[generate-shot-image][Shot ${shotId}] Queue status: ${update.status}`);
+          if (update.status === "IN_PROGRESS" && update.logs) {
+            update.logs.forEach(log => console.log(`[generate-shot-image][Shot ${shotId}] ${log.message}`));
+          }
         }
       });
 
-      if (imageError) {
-        console.error(`[generate-shot-image][Shot ${shotId}] Image generation error: ${imageError.message}`);
-        throw new Error(imageError.message || 'Failed to generate image');
-      }
+      console.log(`[generate-shot-image][Shot ${shotId}] Fal.AI generation successful`);
+      console.log(`[generate-shot-image][Shot ${shotId}] Response:`, JSON.stringify(result.data, null, 2));
 
-      console.log(`[generate-shot-image][Shot ${shotId}] Image generation successful`);
-
-      console.log(`[generate-shot-image][Shot ${shotId}] Response data structure:`, JSON.stringify(imageData, null, 2));
-
-      // Extract image URL from the response - check both possible response structures
-      const images = imageData?.data?.images || imageData?.images;
-      if (images && images[0] && images[0].url) {
-        const imageUrl = images[0].url;
+      // Extract image URL from the response
+      if (result.data?.images && result.data.images[0] && result.data.images[0].url) {
+        const imageUrl = result.data.images[0].url;
         console.log(`[generate-shot-image][Shot ${shotId}] Found image URL: ${imageUrl}`);
         
         // Download the image and upload to Supabase storage
@@ -212,7 +238,7 @@ serve(async (req) => {
         );
       } else {
         console.error(`[generate-shot-image][Shot ${shotId}] Invalid response structure. Expected images array with URL.`);
-        console.error(`[generate-shot-image][Shot ${shotId}] Actual response:`, JSON.stringify(imageData, null, 2));
+        console.error(`[generate-shot-image][Shot ${shotId}] Actual response:`, JSON.stringify(result.data, null, 2));
         throw new Error('Invalid image generation response: missing image URL in response');
       }
 
