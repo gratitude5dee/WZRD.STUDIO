@@ -22,9 +22,9 @@ export const ProjectList = ({ projects, onOpenProject, onCreateProject }: Projec
   };
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 contain-layout">
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4" style={{ contain: 'layout style' }}>
       {localProjects.map((project) => (
-        <div key={project.id} className="transform-gpu">
+        <div key={project.id} className="relative overflow-visible" style={{ contain: 'layout' }}>
           <ProjectCard
             project={project}
             onOpen={onOpenProject}
@@ -32,7 +32,7 @@ export const ProjectList = ({ projects, onOpenProject, onCreateProject }: Projec
           />
         </div>
       ))}
-      <div className="transform-gpu">
+      <div className="relative overflow-visible" style={{ contain: 'layout' }}>
         <NewProjectCard onClick={onCreateProject} />
       </div>
     </div>
