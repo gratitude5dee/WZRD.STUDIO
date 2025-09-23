@@ -61,6 +61,8 @@ serve(async (req) => {
     }
 
     try {
+      console.log(`[Shot ${shot_id}] Starting video generation with LTX Video 13B Distilled`);
+      
       // Generate video from image using LTX Video 13B Distilled
       const result = await submitToFalQueue(FAL_MODELS.LTX_VIDEO_13B_DISTILLED_IMAGE_TO_VIDEO, {
         image_url: image_url,
@@ -80,55 +82,95 @@ serve(async (req) => {
         constant_rate_factor: 35
       });
 
-      // Store the generated video in Supabase storage
-      if (result.video?.url) {
-        const videoResponse = await fetch(result.video.url);
-        const videoBuffer = await videoResponse.arrayBuffer();
-        const fileName = `shot-${shot_id}-video-${Date.now()}.mp4`;
-        
-        const { error: uploadError } = await supabase.storage
-          .from('workflow-media')
-          .upload(fileName, videoBuffer, {
-            contentType: 'video/mp4'
-          });
+      console.log(`[Shot ${shot_id}] Fal.ai response:`, JSON.stringify(result, null, 2));
 
-        if (uploadError) {
-          console.error(`Error uploading video: ${uploadError.message}`);
-          throw new Error(`Failed to upload video: ${uploadError.message}`);
+      // Handle different possible response formats
+      let videoUrl: string | undefined;
+      let videoDuration: number | undefined;
+      let videoFrames: number | undefined;
+
+      // Check various possible response structures
+      if (result.success && result.data) {
+        // Format 1: result.data.video.url
+        if (result.data.video?.url) {
+          videoUrl = result.data.video.url;
+          videoDuration = result.data.video.duration;
+          videoFrames = result.data.video.frames;
         }
-
-        // Get the public URL
-        const { data: { publicUrl } } = supabase.storage
-          .from('workflow-media')
-          .getPublicUrl(fileName);
-
-        // Update the shot with the video URL
-        const { error: updateError } = await supabase
-          .from('shots')
-          .update({ 
-            video_url: publicUrl,
-            video_status: 'completed' 
-          })
-          .eq('id', shot_id);
-
-        if (updateError) {
-          console.error(`Error updating shot: ${updateError.message}`);
+        // Format 2: result.data.url (direct video URL)
+        else if (result.data.url) {
+          videoUrl = result.data.url;
+          videoDuration = result.data.duration;
+          videoFrames = result.data.frames;
         }
-
-        console.log(`[Shot ${shot_id}] Video generation completed successfully`);
-
-        return new Response(
-          JSON.stringify({ 
-            success: true, 
-            video_url: publicUrl,
-            duration: result.video.duration,
-            frames: result.video.frames
-          }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      } else {
-        throw new Error('No video URL in Fal.ai response');
+        // Format 3: result.data is the video URL string
+        else if (typeof result.data === 'string' && result.data.startsWith('http')) {
+          videoUrl = result.data;
+        }
+        // Format 4: Check if data has a videos array
+        else if (result.data.videos && result.data.videos.length > 0) {
+          videoUrl = result.data.videos[0].url;
+          videoDuration = result.data.videos[0].duration;
+          videoFrames = result.data.videos[0].frames;
+        }
       }
+
+      if (!videoUrl) {
+        console.error(`[Shot ${shot_id}] No video URL found in response structure:`, result);
+        throw new Error(`No video URL found in Fal.ai response. Response structure: ${JSON.stringify(result)}`);
+      }
+
+      console.log(`[Shot ${shot_id}] Video URL found: ${videoUrl}`);
+
+      // Store the generated video in Supabase storage
+      const videoResponse = await fetch(videoUrl);
+      if (!videoResponse.ok) {
+        throw new Error(`Failed to fetch video from URL: ${videoResponse.status} ${videoResponse.statusText}`);
+      }
+      
+      const videoBuffer = await videoResponse.arrayBuffer();
+      const fileName = `shot-${shot_id}-video-${Date.now()}.mp4`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('workflow-media')
+        .upload(fileName, videoBuffer, {
+          contentType: 'video/mp4'
+        });
+
+      if (uploadError) {
+        console.error(`Error uploading video: ${uploadError.message}`);
+        throw new Error(`Failed to upload video: ${uploadError.message}`);
+      }
+
+      // Get the public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('workflow-media')
+        .getPublicUrl(fileName);
+
+      // Update the shot with the video URL
+      const { error: updateError } = await supabase
+        .from('shots')
+        .update({ 
+          video_url: publicUrl,
+          video_status: 'completed' 
+        })
+        .eq('id', shot_id);
+
+      if (updateError) {
+        console.error(`Error updating shot: ${updateError.message}`);
+      }
+
+      console.log(`[Shot ${shot_id}] Video generation completed successfully`);
+
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          video_url: publicUrl,
+          duration: videoDuration,
+          frames: videoFrames
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     } catch (error) {
       console.error(`[Shot ${shot_id}] Error in generate-video-from-image: ${error}`);
       
