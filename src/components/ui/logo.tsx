@@ -18,7 +18,7 @@ export function Logo({ className, showVersion = true, size = "md" }: LogoProps) 
     <div className={cn("flex items-center gap-2", className)}>
       <img 
         src="/lovable-uploads/f8be561d-d5b5-49a8-adaa-dbf01721ef9f.png" 
-        alt="WZRD.tech" 
+        alt="WZRD.STUDIO Logo" 
         className={cn("object-contain", sizeClasses[size])}
       />
       {showVersion && (

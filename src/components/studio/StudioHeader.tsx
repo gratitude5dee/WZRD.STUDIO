@@ -10,8 +10,8 @@ import { supabaseService } from '@/services/supabaseService';
 import { toast } from 'sonner';
 
 interface StudioHeaderProps {
-  viewMode?: 'studio' | 'storyboard' | 'editor';
-  setViewMode?: (mode: 'studio' | 'storyboard' | 'editor') => void;
+  viewMode?: 'studio' | 'timeline' | 'editor';
+  setViewMode?: (mode: 'studio' | 'timeline' | 'editor') => void;
 }
 
 const StudioHeader = ({ viewMode = 'studio', setViewMode }: StudioHeaderProps) => {
@@ -48,15 +48,15 @@ const StudioHeader = ({ viewMode = 'studio', setViewMode }: StudioHeaderProps) =
     fetchMostRecentProject();
   }, [urlProjectId, viewMode]);
 
-  const handleViewModeChange = (mode: 'studio' | 'storyboard' | 'editor') => {
+  const handleViewModeChange = (mode: 'studio' | 'timeline' | 'editor') => {
     if (setViewMode) {
       setViewMode(mode);
     }
     
     switch (mode) {
-      case 'storyboard':
+      case 'timeline':
         if (projectId) {
-          navigate(`/storyboard/${projectId}`);
+          navigate(`/timeline/${projectId}`);
         } else {
           toast.warning('No project available. Please create a project first.');
           navigate('/home');

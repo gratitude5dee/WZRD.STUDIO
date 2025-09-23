@@ -13,8 +13,8 @@ import { toast } from 'sonner';
 import { ProjectDetails, SceneDetails, CharacterDetails, SidebarData } from '@/types/storyboardTypes';
 
 interface StoryboardPageProps {
-  viewMode: 'studio' | 'storyboard' | 'editor';
-  setViewMode: (mode: 'studio' | 'storyboard' | 'editor') => void;
+  viewMode: 'studio' | 'timeline' | 'editor';
+  setViewMode: (mode: 'studio' | 'timeline' | 'editor') => void;
 }
 
 const StoryboardPage = ({ viewMode, setViewMode }: StoryboardPageProps) => {

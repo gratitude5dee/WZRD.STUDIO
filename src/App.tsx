@@ -62,8 +62,8 @@ const App = () => {
                 </ProtectedRoute>
               } />
               
-              {/* Storyboard Routes - always requires projectId */}
-              <Route path="/storyboard/:projectId" element={
+              {/* Timeline Routes - always requires projectId */}
+              <Route path="/timeline/:projectId" element={
                 <ProtectedRoute>
                   <StoryboardPage />
                 </ProtectedRoute>
@@ -77,7 +77,9 @@ const App = () => {
               } />
               
               {/* Redirect legacy routes */}
+              <Route path="/storyboard/:projectId" element={<Navigate to="/timeline/$1" replace />} />
               <Route path="/storyboard" element={<Navigate to="/home" replace />} />
+              <Route path="/timeline" element={<Navigate to="/home" replace />} />
               <Route path="/editor" element={<Navigate to="/home" replace />} />
               
               <Route path="/credits" element={

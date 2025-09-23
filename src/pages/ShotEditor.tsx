@@ -6,8 +6,8 @@ import { useParams } from 'react-router-dom';
 import { useSyncVideoEditorState } from '@/integrations/stateIntegration';
 
 interface ShotEditorProps {
-  viewMode: 'studio' | 'storyboard' | 'editor';
-  setViewMode: (mode: 'studio' | 'storyboard' | 'editor') => void;
+  viewMode: 'studio' | 'timeline' | 'editor';
+  setViewMode: (mode: 'studio' | 'timeline' | 'editor') => void;
 }
 
 const ShotEditor = ({ viewMode, setViewMode }: ShotEditorProps) => {

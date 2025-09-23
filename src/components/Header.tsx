@@ -18,8 +18,8 @@ const Header = ({ viewMode, setViewMode }) => {
     }
   };
 
-  const handleStoryboardClick = () => {
-    setViewMode('storyboard');
+  const handleTimelineClick = () => {
+    setViewMode('timeline');
   };
 
   const handleEditorClick = () => {
@@ -41,11 +41,11 @@ const Header = ({ viewMode, setViewMode }) => {
           </Button>
           
           <Button
-            variant={viewMode === 'storyboard' ? 'default' : 'ghost'}
-            className={viewMode === 'storyboard' ? 'bg-purple-700 hover:bg-purple-800' : 'text-zinc-400'}
-            onClick={handleStoryboardClick}
+            variant={viewMode === 'timeline' ? 'default' : 'ghost'}
+            className={viewMode === 'timeline' ? 'bg-purple-700 hover:bg-purple-800' : 'text-zinc-400'}
+            onClick={handleTimelineClick}
           >
-            Storyboard
+            Timeline
           </Button>
           
           <Button

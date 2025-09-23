@@ -37,7 +37,7 @@ import TechLogoIcon from '@/components/landing/TechLogoIcon';
 const Landing = () => {
   const navigate = useNavigate();
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
-  const [activeDemo, setActiveDemo] = useState('storyboard');
+  const [activeDemo, setActiveDemo] = useState('lyrical');
   const [scrollProgress, setScrollProgress] = useState(0);
 
   useEffect(() => {
@@ -138,7 +138,7 @@ const Landing = () => {
               variants={fadeInUp}
               className="text-5xl md:text-7xl font-bold mb-8 leading-tight glow-text-cosmic"
             >
-              AI-Powered Cosmic Storytelling Portal
+              AI-Powered Music Video Generator
             </motion.h2>
             
             {/* Sub-headline with stellar accent */}
@@ -146,10 +146,10 @@ const Landing = () => {
               variants={fadeInUp}
               className="text-xl md:text-2xl text-muted-foreground max-w-4xl mx-auto mb-12 font-light"
             >
-              Transform your ideas into stunning <span className="text-cosmic-stellar">storyboards</span>, 
-              <span className="text-cosmic-plasma"> shots</span>, and 
-              <span className="text-cosmic-quantum"> video sequences</span> with our cutting-edge AI platform 
-              powered by <span className="glow-text-primary">quantum creativity engines</span>.
+              Transform your audio tracks into stunning <span className="text-cosmic-stellar">music videos</span>, 
+              <span className="text-cosmic-plasma"> lyrical visualizations</span>, and 
+              <span className="text-cosmic-quantum"> promotional clips</span> with our cutting-edge AI platform 
+              powered by <span className="glow-text-primary">intelligent audio analysis</span>.
             </motion.p>
             
             {/* Cosmic CTA Buttons */}
@@ -253,7 +253,7 @@ const Landing = () => {
               variants={fadeInUp}
               className="text-xl text-zinc-300 max-w-2xl mx-auto"
             >
-              Create videos from ideas in four simple steps
+              Create stunning music videos from your audio tracks in four simple steps
             </motion.p>
           </motion.div>
           
@@ -261,37 +261,37 @@ const Landing = () => {
             {/* Step 1 */}
             <FeatureCard 
               icon={<Lightbulb className="w-8 h-8 text-yellow-400" />}
-              title="Input Your Concept"
-              description="Start with a simple idea, a detailed script, or existing media. Kling AI's Claude helps refine your creative vision."
+              title="Upload Your Song"
+              description="Start with any audio track. Our AI analyzes lyrics, beat patterns, and musical mood to understand your song's essence."
               delay={0.1}
-              techBadge="Kling AI"
+              techBadge="Advanced Generative AI"
             />
             
             {/* Step 2 */}
             <FeatureCard 
               icon={<Wand className="w-8 h-8 text-purple-400" />}
-              title="AI Co-Creation"
-              description="Let WZRD generate storylines, breakdown scenes, and suggest shot types with our custom Luma UI components."
+              title="Generate Visuals"
+              description="AI creates scenes that sync with your audio's rhythm and meaning using intelligent audio analysis."
               delay={0.2}
-              techBadge="Luma"
+              techBadge="Intelligent Audio Analysis"
             />
             
             {/* Step 3 */}
             <FeatureCard 
               icon={<Image className="w-8 h-8 text-blue-400" />}
-              title="Visualize & Refine"
-              description="Generate stunning shot images, Runway audio, and video sequences. Iterate quickly."
+              title="Customize & Refine"
+              description="Fine-tune visual effects, scene transitions, and style elements with scalable cloud rendering."
               delay={0.3}
-              techBadge="Runway"
+              techBadge="Scalable Cloud Rendering"
             />
             
             {/* Step 4 */}
             <FeatureCard 
               icon={<Settings className="w-8 h-8 text-green-400" />}
-              title="Customize & Control"
-              description="Fine-tune everything with Hailou AI-backed real-time collaboration and export your final vision."
+              title="Export & Share"
+              description="Render in HD with custom artist styles and share your professional music video across platforms."
               delay={0.4}
-              techBadge="Hailou AI"
+              techBadge="Custom Artist Styles"
             />
           </div>
         </div>
@@ -323,38 +323,38 @@ const Landing = () => {
               variants={fadeInUp}
               className="text-xl text-zinc-300 max-w-2xl mx-auto mb-8"
             >
-              Explore how our platform transforms creative ideas into visual content
+              Explore how our platform transforms audio tracks into visual masterpieces
             </motion.p>
             
             {/* Demo navigation */}
             <motion.div variants={fadeInUp} className="flex flex-wrap justify-center gap-2 mb-12">
               <Button 
-                variant={activeDemo === 'storyboard' ? 'default' : 'ghost'} 
-                className={activeDemo === 'storyboard' ? 'bg-purple-700' : 'hover:bg-white/5'} 
-                onClick={() => setActiveDemo('storyboard')}
+                variant={activeDemo === 'lyrical' ? 'default' : 'ghost'} 
+                className={activeDemo === 'lyrical' ? 'bg-purple-700' : 'hover:bg-white/5'} 
+                onClick={() => setActiveDemo('lyrical')}
               >
-                Storyboarding
+                Lyrical Visualization
               </Button>
               <Button 
-                variant={activeDemo === 'character' ? 'default' : 'ghost'} 
-                className={activeDemo === 'character' ? 'bg-purple-700' : 'hover:bg-white/5'} 
-                onClick={() => setActiveDemo('character')}
+                variant={activeDemo === 'beat' ? 'default' : 'ghost'} 
+                className={activeDemo === 'beat' ? 'bg-purple-700' : 'hover:bg-white/5'} 
+                onClick={() => setActiveDemo('beat')}
               >
-                Character Creation
+                Beat-Synced Motion
               </Button>
               <Button 
-                variant={activeDemo === 'voice' ? 'default' : 'ghost'} 
-                className={activeDemo === 'voice' ? 'bg-purple-700' : 'hover:bg-white/5'} 
-                onClick={() => setActiveDemo('voice')}
+                variant={activeDemo === 'scenery' ? 'default' : 'ghost'} 
+                className={activeDemo === 'scenery' ? 'bg-purple-700' : 'hover:bg-white/5'} 
+                onClick={() => setActiveDemo('scenery')}
               >
-                Voice Generation
+                AI-Generated Scenery
               </Button>
               <Button 
-                variant={activeDemo === 'video' ? 'default' : 'ghost'} 
-                className={activeDemo === 'video' ? 'bg-purple-700' : 'hover:bg-white/5'} 
-                onClick={() => setActiveDemo('video')}
+                variant={activeDemo === 'style' ? 'default' : 'ghost'} 
+                className={activeDemo === 'style' ? 'bg-purple-700' : 'hover:bg-white/5'} 
+                onClick={() => setActiveDemo('style')}
               >
-                Video Synthesis
+                Artist Style Transfer
               </Button>
             </motion.div>
           </motion.div>
@@ -379,36 +379,36 @@ const Landing = () => {
                 {/* Demo content would go here */}
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="text-center p-6">
-                    {activeDemo === 'storyboard' && (
+                    {activeDemo === 'lyrical' && (
                       <>
                         <Sparkles className="w-12 h-12 text-purple-400 mx-auto mb-4" />
-                        <h3 className="text-2xl font-bold mb-2">Intelligent Storyboarding</h3>
-                        <p className="text-zinc-300 max-w-md mx-auto mb-4">Kling AI's Claude AI helps break down your scripts into compelling visual narratives.</p>
-                        <TechHighlight name="Kling AI" />
+                        <h3 className="text-2xl font-bold mb-2">Lyrical Visualization</h3>
+                        <p className="text-zinc-300 max-w-md mx-auto mb-4">AI interprets your lyrics and creates matching visual narratives that tell your song's story.</p>
+                        <TechHighlight name="Advanced Generative AI" />
                       </>
                     )}
-                    {activeDemo === 'character' && (
+                    {activeDemo === 'beat' && (
                       <>
                         <MessageSquare className="w-12 h-12 text-rose-400 mx-auto mb-4" />
-                        <h3 className="text-2xl font-bold mb-2">Character Development</h3>
-                        <p className="text-zinc-300 max-w-md mx-auto mb-4">Create consistent characters with Luma's intuitive design components.</p>
-                        <TechHighlight name="Luma" />
+                        <h3 className="text-2xl font-bold mb-2">Beat-Synced Motion</h3>
+                        <p className="text-zinc-300 max-w-md mx-auto mb-4">Visual elements pulse and move in perfect sync with your music's rhythm and tempo.</p>
+                        <TechHighlight name="Intelligent Audio Analysis" />
                       </>
                     )}
-                    {activeDemo === 'voice' && (
+                    {activeDemo === 'scenery' && (
                       <>
                         <Mic className="w-12 h-12 text-blue-400 mx-auto mb-4" />
-                        <h3 className="text-2xl font-bold mb-2">Expressive Voice Generation</h3>
-                        <p className="text-zinc-300 max-w-md mx-auto mb-4">Bring your characters to life with Runway's natural-sounding voice generation.</p>
-                        <TechHighlight name="Runway" />
+                        <h3 className="text-2xl font-bold mb-2">AI-Generated Scenery</h3>
+                        <p className="text-zinc-300 max-w-md mx-auto mb-4">Dynamic backgrounds and environments based on your song's mood and energy.</p>
+                        <TechHighlight name="Scalable Cloud Rendering" />
                       </>
                     )}
-                    {activeDemo === 'video' && (
+                    {activeDemo === 'style' && (
                       <>
                         <Database className="w-12 h-12 text-emerald-400 mx-auto mb-4" />
-                        <h3 className="text-2xl font-bold mb-2">Seamless Video Synthesis</h3>
-                        <p className="text-zinc-300 max-w-md mx-auto mb-4">Store and process video assets efficiently with Hailou AI's powerful database.</p>
-                        <TechHighlight name="Hailou AI" />
+                        <h3 className="text-2xl font-bold mb-2">Artist Style Transfer</h3>
+                        <p className="text-zinc-300 max-w-md mx-auto mb-4">Apply specific artistic styles to match your brand and create unique visual identities.</p>
+                        <TechHighlight name="Custom Artist Styles" />
                       </>
                     )}
                   </div>
@@ -449,43 +449,43 @@ const Landing = () => {
             </motion.p>
           </motion.div>
           
-          {/* Kling AI Feature */}
+          {/* Advanced Generative AI Feature */}
           <FeatureHighlight 
-            title="Kling AI's Claude"
-            description="Our intelligent story development and dialogue systems are powered by Claude, one of the world's most advanced AI assistants. Turn simple prompts into detailed narratives, characters, and dialogue with nuanced understanding of film concepts."
+            title="Advanced Generative AI"
+            description="Our intelligent music and lyric analysis systems are powered by cutting-edge AI that understands musical structure, mood, and lyrical meaning. Transform any song into compelling visual narratives with nuanced understanding of rhythm and emotion."
             imageSrc="/lovable-uploads/1e1aab33-e5d2-4ef2-b40d-84a2e2679e3c.png"
             isImageRight={false}
-            techBadge="Kling AI"
+            techBadge="Advanced Generative AI"
             techIcon={<Sparkles className="w-5 h-5" />}
           />
           
-          {/* Luma Feature */}
+          {/* Intelligent Audio Analysis Feature */}
           <FeatureHighlight 
-            title="Luma UI Framework"
-            description="Our intuitive user interface is built with Luma, enabling rapid iteration of creative concepts. The responsive design lets you work seamlessly across devices with a focus on accessibility and user experience."
+            title="Intelligent Audio Analysis"
+            description="Real-time beat detection and mood mapping technology analyzes your audio tracks to identify tempo, key changes, emotional peaks, and lyrical themes. Our system creates perfectly synchronized visual elements that pulse and move with your music."
             imageSrc="/lovable-uploads/96cbbf8f-bdb1-4d37-9c62-da1306d5fb96.png"
             isImageRight={true}
-            techBadge="Luma"
+            techBadge="Intelligent Audio Analysis"
             techIcon={<MessageSquare className="w-5 h-5" />}
           />
           
-          {/* Hailou AI Feature */}
+          {/* Scalable Cloud Rendering Feature */}
           <FeatureHighlight 
-            title="Hailou AI Backend"
-            description="Your projects are securely stored and managed with Hailou AI's powerful database and authentication systems. Real-time collaboration features allow teams to work together seamlessly, while ensuring your creative assets remain protected."
+            title="Scalable Cloud Rendering"
+            description="High-performance video processing infrastructure ensures your music videos render quickly and efficiently. Process multiple tracks simultaneously while maintaining 4K quality, with secure storage and collaboration features for teams."
             imageSrc="/lovable-uploads/1e1aab33-e5d2-4ef2-b40d-84a2e2679e3c.png"
             isImageRight={false}
-            techBadge="Hailou AI"
+            techBadge="Scalable Cloud Rendering"
             techIcon={<Database className="w-5 h-5" />}
           />
           
-          {/* Runway Feature */}
+          {/* Custom Artist Styles Feature */}
           <FeatureHighlight 
-            title="Runway Voice Generation"
-            description="Bring your characters to life with Runway's advanced voice synthesis. Generate realistic dialogue, narration, and sound effects that match your creative vision, with control over emotion, pacing, and character."
+            title="Custom Artist Styles"
+            description="Personalized visual style generation allows you to create unique artistic identities for your music videos. Choose from preset styles or train custom looks that match your brand, ensuring every video reflects your artistic vision."
             imageSrc="/lovable-uploads/96cbbf8f-bdb1-4d37-9c62-da1306d5fb96.png"
             isImageRight={true}
-            techBadge="Runway"
+            techBadge="Custom Artist Styles"
             techIcon={<Mic className="w-5 h-5" />}
           />
         </div>
@@ -511,27 +511,27 @@ const Landing = () => {
               variants={fadeInUp}
               className="text-3xl md:text-4xl font-bold mb-4 text-white"
             >
-              What Creators Are Saying
+              What Musicians Are Saying
             </motion.h2>
           </motion.div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <TestimonialCard 
-              quote="WZRD.STUDIO has revolutionized our pre-production process. What used to take weeks now happens in days."
-              author="Sarah Chen"
-              title="Independent Filmmaker"
+              quote="WZRD.STUDIO transformed my bedroom recordings into professional music videos in minutes. The beat-sync technology is incredible!"
+              author="Alex Rivera"
+              title="Independent Musician"
               delay={0.1}
             />
             <TestimonialCard 
-              quote="The integration of Kling AI's AI with Runway voice generation has completely transformed how we create animated content."
-              author="Mark Johnson"
-              title="Animation Director"
+              quote="The AI perfectly captures the mood of my tracks. Every visual perfectly matches my drops and builds - it's like having a video director who truly understands electronic music."
+              author="DJ Luna"
+              title="Electronic Producer"
               delay={0.2}
             />
             <TestimonialCard 
-              quote="The Hailou AI integration means our whole team can collaborate in real-time, with all our assets securely stored and instantly available."
-              author="Priya Patel"
-              title="Creative Studio Head"
+              quote="We went from having no budget for music videos to creating viral content that perfectly captures our sound. The lyrical visualization feature is pure magic."
+              author="The Midnight Collective"
+              title="Indie Rock Band"
               delay={0.3}
             />
           </div>
@@ -577,11 +577,12 @@ const Landing = () => {
             <PricingCard 
               title="Starter"
               price="Free"
-              description="Perfect for trying out the platform"
+              description="Perfect for trying out music video generation"
               features={[
                 "100 free credits upon signup",
-                "Basic storyboarding tools",
-                "Limited image generation",
+                "Basic music video generation",
+                "Beat detection",
+                "Standard visual effects",
                 "Community support"
               ]}
               ctaText="Get Started Free"
@@ -593,12 +594,13 @@ const Landing = () => {
             <PricingCard 
               title="Creator"
               price="$29"
-              description="For serious creative professionals"
+              description="For serious musicians and content creators"
               features={[
                 "2,500 credits per month",
-                "Advanced storyboarding",
-                "Full image & video generation",
-                "Runway voice integration",
+                "Advanced lyric analysis",
+                "Custom style presets",
+                "Full HD video output",
+                "Social media formats",
                 "Priority support"
               ]}
               ctaText="Sign Up Now"
@@ -610,12 +612,13 @@ const Landing = () => {
             <PricingCard 
               title="Studio"
               price="$99"
-              description="For teams and production companies"
+              description="For labels and production companies"
               features={[
                 "10,000 credits per month",
-                "Team collaboration via Hailou AI",
-                "Advanced character creation",
-                "Custom voice training",
+                "4K video output",
+                "Multi-track audio support",
+                "Brand customization",
+                "Advanced motion graphics",
                 "Dedicated support"
               ]}
               ctaText="Contact Sales"
@@ -682,7 +685,7 @@ const Landing = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
             <div>
               <h3 className="text-xl font-bold text-yellow-300/80 tracking-tight font-serif mb-4">WZRD.STUDIO</h3>
-              <p className="text-sm text-zinc-500 mb-4">Transforming storytelling with AI-powered creative tools.</p>
+              <p className="text-sm text-zinc-500 mb-4">AI-Powered Music Video Generator</p>
               <div className="flex gap-4">
                 <a href="#" className="text-zinc-400 hover:text-white transition-colors">
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">

@@ -1,5 +1,5 @@
 
-type ViewMode = 'studio' | 'storyboard' | 'editor';
+type ViewMode = 'studio' | 'timeline' | 'editor';
 
 interface ViewModeSelectorProps {
   viewMode: ViewMode;
@@ -20,14 +20,14 @@ export const ViewModeSelector = ({ viewMode, setViewMode }: ViewModeSelectorProp
         Studio
       </button>
       <button
-        onClick={() => setViewMode('storyboard')}
+        onClick={() => setViewMode('timeline')}
         className={`px-4 py-1.5 text-xs font-medium rounded-md transition-all duration-200 ${
-          viewMode === 'storyboard'
+          viewMode === 'timeline'
             ? 'bg-gradient-to-br from-purple-500 to-purple-700 text-white shadow-sm'
             : 'text-zinc-400 hover:text-zinc-200'
         }`}
       >
-        Storyboard
+        Timeline
       </button>
       <button
         onClick={() => setViewMode('editor')}

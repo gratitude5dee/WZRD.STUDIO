@@ -9,8 +9,8 @@ import CreditsDisplay from '@/components/CreditsDisplay';
 import { Logo } from '@/components/ui/logo';
 
 interface StoryboardHeaderProps {
-  viewMode: 'studio' | 'storyboard' | 'editor';
-  setViewMode: (mode: 'studio' | 'storyboard' | 'editor') => void;
+  viewMode: 'studio' | 'timeline' | 'editor';
+  setViewMode: (mode: 'studio' | 'timeline' | 'editor') => void;
 }
 
 const StoryboardHeader = ({ viewMode, setViewMode }: StoryboardHeaderProps) => {

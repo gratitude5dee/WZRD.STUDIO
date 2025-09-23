@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 import CreditsDisplay from '@/components/CreditsDisplay';
 import { supabaseService } from '@/services/supabaseService';
 
-type ViewMode = 'studio' | 'storyboard' | 'editor';
+type ViewMode = 'studio' | 'timeline' | 'editor';
 
 interface AppHeaderProps {
   // Optional customizations
@@ -32,7 +32,7 @@ export const AppHeader = ({
   const getCurrentView = (): ViewMode => {
     const path = location.pathname;
     if (path.includes('/studio')) return 'studio';
-    if (path.includes('/storyboard')) return 'storyboard';
+    if (path.includes('/timeline')) return 'timeline';
     if (path.includes('/editor')) return 'editor';
     return 'studio'; // Default
   };
@@ -63,7 +63,7 @@ export const AppHeader = ({
       return;
     }
     
-    // Case 2: User wants to go to storyboard or editor
+    // Case 2: User wants to go to timeline or editor
     // Both require a project ID
     if (!activeProjectId) {
       // If we don't have an active project, try to fetch the most recent one
@@ -125,10 +125,10 @@ export const AppHeader = ({
           
           <Button
             variant="ghost" 
-            className={getButtonClass('storyboard')}
-            onClick={() => handleNavigate('storyboard')}
+            className={getButtonClass('timeline')}
+            onClick={() => handleNavigate('timeline')}
           >
-            Storyboard
+            Timeline
           </Button>
           
           <Button
