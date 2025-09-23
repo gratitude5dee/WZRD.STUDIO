@@ -22,16 +22,19 @@ export const ProjectList = ({ projects, onOpenProject, onCreateProject }: Projec
   };
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 isolate">
       {localProjects.map((project) => (
-        <ProjectCard
-          key={project.id}
-          project={project}
-          onOpen={onOpenProject}
-          onDelete={handleDeleteProject}
-        />
+        <div key={project.id} className="relative">
+          <ProjectCard
+            project={project}
+            onOpen={onOpenProject}
+            onDelete={handleDeleteProject}
+          />
+        </div>
       ))}
-      <NewProjectCard onClick={onCreateProject} />
+      <div className="relative">
+        <NewProjectCard onClick={onCreateProject} />
+      </div>
     </div>
   );
 };
