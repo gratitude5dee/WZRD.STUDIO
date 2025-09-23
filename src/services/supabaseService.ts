@@ -793,6 +793,8 @@ export interface Shot {
   sound_effects?: string;
   image_url?: string;
   image_status?: string;
+  video_url?: string;
+  video_status?: string;
   luma_generation_id?: string;
   audio_url?: string;
   audio_status?: string;

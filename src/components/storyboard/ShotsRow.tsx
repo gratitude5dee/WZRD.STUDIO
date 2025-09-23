@@ -119,6 +119,8 @@ const ShotsRow = ({ sceneId, sceneNumber, projectId, onSceneDelete, isSelected =
         sound_effects: '',
         image_url: '',
         image_status: 'pending',
+        video_url: null,
+        video_status: 'pending',
         luma_generation_id: '',
         audio_url: '',
         audio_status: 'pending',

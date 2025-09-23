@@ -185,6 +185,8 @@ export const ShotCard: React.FC<ShotCardProps> = ({ shot, onUpdate, onDelete }) 
         <ShotImage
           shotId={shot.id}
           imageUrl={shot.image_url}
+          videoUrl={shot.video_url}
+          videoStatus={shot.video_status || 'pending'}
           status={localImageStatus}
           isGenerating={isGeneratingPrompt || isGeneratingImage}
           hasVisualPrompt={!!localVisualPrompt}
