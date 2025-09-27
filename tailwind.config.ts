@@ -62,7 +62,12 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				// Odyssey Extended Color Palette
+				// Cyberpunk Neon Color Palette
+				electric: 'hsl(var(--electric))',
+				'neon-purple': 'hsl(var(--neon-purple))',
+				'cyber-pink': 'hsl(var(--cyber-pink))',
+				'deep-space': 'hsl(var(--deep-space))',
+				'void-black': 'hsl(var(--void-black))',
 				cosmic: {
 					void: 'hsl(var(--cosmic-void))',
 					nebula: 'hsl(var(--nebula-purple))',
@@ -86,6 +91,8 @@ export default {
 			},
 			fontFamily: {
 				serif: ['Cinzel', 'serif'],
+				cyber: ['Orbitron', 'monospace'],
+				inter: ['Inter', 'sans-serif'],
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
@@ -144,6 +151,27 @@ export default {
 					'80%': { transform: 'translate(-15%, 0)' },
 					'90%': { transform: 'translate(10%, 5%)' },
 					'100%': { transform: 'translate(0, 0)' }
+				},
+				// Cyberpunk Animations
+				'float': {
+					'0%, 100%': { transform: 'translateY(0px)' },
+					'50%': { transform: 'translateY(-20px)' }
+				},
+				'cyber-glow-pulse': {
+					'0%': { boxShadow: '0 0 20px rgba(0, 245, 255, 0.5)' },
+					'100%': { boxShadow: '0 0 40px rgba(0, 245, 255, 0.8), 0 0 60px rgba(0, 245, 255, 0.4)' }
+				},
+				'slide-up': {
+					'0%': { opacity: '0', transform: 'translateY(50px)' },
+					'100%': { opacity: '1', transform: 'translateY(0)' }
+				},
+				'hologram': {
+					'0%, 100%': { backgroundPosition: '0% 0%' },
+					'50%': { backgroundPosition: '100% 100%' }
+				},
+				'stars': {
+					'from': { transform: 'translateY(0px)' },
+					'to': { transform: 'translateY(-100px)' }
 				}
 			},
 			animation: {
@@ -156,7 +184,14 @@ export default {
 				'cosmic-pulse': 'cosmic-pulse 4s ease-in-out infinite',
 				'stellar-drift': 'stellar-drift 15s ease-in-out infinite',
 				'quantum-shift': 'quantum-shift 8s ease-in-out infinite',
-				'void-ripple': 'void-ripple 2s ease-out infinite'
+				'void-ripple': 'void-ripple 2s ease-out infinite',
+				// Cyberpunk Animations
+				'float': 'float 6s ease-in-out infinite',
+				'cyber-glow-pulse': 'cyber-glow-pulse 2s ease-in-out infinite alternate',
+				'slide-up': 'slide-up 0.8s ease-out',
+				'fade-in': 'fade-in 1s ease-out',
+				'hologram': 'hologram 3s ease-in-out infinite',
+				'stars': 'stars 20s linear infinite'
 			},
 			backgroundImage: {
 				'noise': 'url("/noise.png")',
@@ -168,7 +203,11 @@ export default {
 				'nebula-field': 'linear-gradient(135deg, hsl(var(--glow-primary) / 0.2), hsl(var(--glow-secondary) / 0.3), hsl(var(--glow-accent) / 0.2))',
 				'stellar-burst': 'radial-gradient(ellipse at top, hsl(var(--stellar-gold) / 0.3), transparent 70%)',
 				'quantum-flow': 'conic-gradient(from 180deg, hsl(var(--quantum-green) / 0.4), hsl(var(--plasma-blue) / 0.4), hsl(var(--temporal-orange) / 0.4), hsl(var(--quantum-green) / 0.4))',
-				'glass-reflection': 'linear-gradient(135deg, transparent 0%, hsl(var(--foreground) / 0.05) 25%, transparent 50%, hsl(var(--foreground) / 0.03) 75%, transparent 100%)'
+				'glass-reflection': 'linear-gradient(135deg, transparent 0%, hsl(var(--foreground) / 0.05) 25%, transparent 50%, hsl(var(--foreground) / 0.03) 75%, transparent 100%)',
+				// Cyberpunk Gradients
+				'cyber-gradient': 'linear-gradient(135deg, hsl(var(--deep-space)) 0%, #1a1a2e 50%, #16213e 100%)',
+				'neon-gradient': 'linear-gradient(135deg, hsl(var(--electric)) 0%, hsl(var(--neon-purple)) 50%, hsl(var(--cyber-pink)) 100%)',
+				'glass-gradient': 'linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%)'
 			}
 		},
 		transformStyle: {

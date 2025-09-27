@@ -1,498 +1,938 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, Lightbulb, Wand, Image, Settings, Play, ChevronDown, Sparkles, MessageSquare, Database, Mic, Orbit, Atom, Zap, Star, Brain, Layers } from 'lucide-react';
+import { ArrowRight, Play, ChevronDown, Sparkles, Brain, Zap, Star, Palette, Users, Trophy, Shield, Clock, TrendingUp, Music, Eye, Layers, Lightbulb } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { GlassButton } from '@/components/ui/glass-button';
 import { GlassCard } from '@/components/ui/glass-card';
-import { PortalHeader } from '@/components/ui/portal-header';
 import { Button } from '@/components/ui/button';
-import TechBadge from '@/components/landing/TechBadge';
-import TechHighlight from '@/components/landing/TechHighlight';
-import FeatureCard from '@/components/landing/FeatureCard';
-import FeatureHighlight from '@/components/landing/FeatureHighlight';
-import TestimonialCard from '@/components/landing/TestimonialCard';
-import PricingCard from '@/components/landing/PricingCard';
-import TechLogoIcon from '@/components/landing/TechLogoIcon';
+
 const Landing = () => {
   const navigate = useNavigate();
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
-  const [activeDemo, setActiveDemo] = useState('lyrical');
+  const [activeDemo, setActiveDemo] = useState('emotional');
   const [scrollProgress, setScrollProgress] = useState(0);
+  const [scrollRevealed, setScrollRevealed] = useState<string[]>([]);
+
   useEffect(() => {
     const handleScroll = () => {
       const totalHeight = document.body.scrollHeight - window.innerHeight;
       const progress = window.scrollY / totalHeight;
       setScrollProgress(progress);
     };
+
+    // Scroll reveal observer
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const elementId = entry.target.getAttribute('data-reveal-id');
+            if (elementId) {
+              setScrollRevealed(prev => [...prev, elementId]);
+            }
+          }
+        });
+      },
+      { threshold: 0.1, rootMargin: '0px 0px -50px 0px' }
+    );
+
+    document.querySelectorAll('[data-reveal-id]').forEach(el => observer.observe(el));
     window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      observer.disconnect();
+    };
   }, []);
+
   const handleGetStarted = () => {
     navigate('/login');
   };
+
   const fadeInUp = {
-    hidden: {
-      opacity: 0,
-      y: 20
-    },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.6
-      }
+    hidden: { opacity: 0, y: 20 },
+    visible: { 
+      opacity: 1, 
+      y: 0, 
+      transition: { duration: 0.6 } 
     }
   };
-  return <div className="bg-cosmic-void text-foreground relative overflow-hidden">
-      {/* Cosmic Background */}
-      <div className="fixed inset-0 bg-nebula-field opacity-20 pointer-events-none" />
-      <div className="fixed inset-0 particle-field opacity-15 pointer-events-none" />
-      
-      {/* Fixed progress bar */}
-      <div className="fixed top-0 left-0 w-full h-1 bg-cosmic-void/50 z-50 backdrop-blur-sm">
-        <motion.div className="h-full bg-gradient-to-r from-cosmic-stellar via-cosmic-plasma to-cosmic-quantum" style={{
-        width: `${scrollProgress * 100}%`
-      }} />
+
+  return (
+    <div className="bg-void-black text-white font-inter overflow-x-hidden">
+      {/* Floating particles background */}
+      <div className="fixed inset-0 opacity-30 pointer-events-none">
+        <div 
+          className="absolute inset-0 bg-repeat animate-stars"
+          style={{
+            backgroundImage: `
+              radial-gradient(2px 2px at 20px 30px, hsl(var(--electric)), transparent),
+              radial-gradient(2px 2px at 40px 70px, hsl(var(--neon-purple)), transparent),
+              radial-gradient(1px 1px at 90px 40px, hsl(var(--cyber-pink)), transparent),
+              radial-gradient(1px 1px at 130px 80px, hsl(var(--electric)), transparent),
+              radial-gradient(2px 2px at 160px 30px, hsl(var(--neon-purple)), transparent)
+            `,
+            backgroundSize: '200px 100px'
+          }}
+        />
       </div>
 
-      
-      {/* Hero Section - Cosmic Portal */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-        {/* Background video with cosmic filter */}
-        <video autoPlay muted loop playsInline className="absolute inset-0 w-full h-full object-cover opacity-70" style={{
-        filter: 'brightness(0.5) saturate(1.2) hue-rotate(220deg)'
-      }}>
+      {/* Navigation */}
+      <nav className="fixed top-0 w-full z-50 glass-morphism backdrop-blur-xl bg-void-black/10 border-b border-white/10">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="font-cyber text-2xl font-bold text-electric" style={{
+              textShadow: '0 0 10px currentColor, 0 0 20px currentColor, 0 0 40px currentColor'
+            }}>
+              WZRD.STUDIO
+            </div>
+            <div className="hidden md:flex space-x-8">
+              <a href="#features" className="hover:text-electric transition-colors">Features</a>
+              <a href="#how-it-works" className="hover:text-electric transition-colors">How It Works</a>
+              <a href="#pricing" className="hover:text-electric transition-colors">Pricing</a>
+              <a href="#testimonials" className="hover:text-electric transition-colors">Reviews</a>
+            </div>
+            <GlassButton 
+              onClick={handleGetStarted}
+              className="bg-gradient-to-r from-electric to-neon-purple animate-cyber-glow-pulse hover:scale-105 transition-transform"
+            >
+              Start Creating
+            </GlassButton>
+          </div>
+        </div>
+      </nav>
+
+      {/* Hero Section */}
+      <section className="min-h-screen flex items-center justify-center relative overflow-hidden">
+        {/* Cyberpunk Grid Background */}
+        <div 
+          className="absolute inset-0 opacity-20"
+          style={{
+            backgroundImage: `
+              linear-gradient(rgba(0, 245, 255, 0.1) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(0, 245, 255, 0.1) 1px, transparent 1px)
+            `,
+            backgroundSize: '50px 50px'
+          }}
+        />
+        
+        {/* Background video */}
+        <video 
+          autoPlay 
+          muted 
+          loop 
+          playsInline 
+          className="absolute inset-0 w-full h-full object-cover opacity-30"
+          style={{ filter: 'brightness(0.3) saturate(1.2) hue-rotate(220deg)' }}
+        >
           <source src="/bgvid.mp4" type="video/mp4" />
         </video>
         
-        {/* Content - Cosmic Portal Interface */}
-        <div className="container mx-auto px-6 z-20 max-w-6xl relative">
-          <motion.div className="text-center" initial="hidden" animate="visible" variants={{
-          hidden: {
-            opacity: 0
-          },
-          visible: {
-            opacity: 1,
-            transition: {
-              staggerChildren: 0.2
-            }
-          }
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-deep-space/50 to-void-black"></div>
+        
+        {/* 3D Floating Elements */}
+        <div className="absolute top-20 left-10 w-20 h-20 bg-electric/20 rounded-full animate-float blur-xl"></div>
+        <div className="absolute top-40 right-20 w-32 h-32 bg-neon-purple/20 rounded-full blur-xl" style={{ animationDelay: '1s' }}></div>
+        <div className="absolute bottom-40 left-1/4 w-16 h-16 bg-cyber-pink/20 rounded-full blur-xl" style={{ animationDelay: '2s' }}></div>
+        
+        <div className="relative z-10 text-center max-w-6xl mx-auto px-6">
+          <div className="animate-slide-up">
+            <motion.h1 
+              className="font-cyber text-6xl md:text-8xl font-black mb-6 leading-tight"
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8 }}
+            >
+              <span className="text-electric" style={{ textShadow: '0 0 10px currentColor, 0 0 20px currentColor, 0 0 40px currentColor' }}>MUSIC</span><br/>
+              <span className="text-neon-purple" style={{ textShadow: '0 0 10px currentColor, 0 0 20px currentColor, 0 0 40px currentColor' }}>MEETS</span><br/>
+              <span className="text-cyber-pink" style={{ textShadow: '0 0 10px currentColor, 0 0 20px currentColor, 0 0 40px currentColor' }}>MAGIC</span>
+            </motion.h1>
+            
+            <motion.p 
+              className="text-xl md:text-2xl text-gray-300 mb-8 max-w-3xl mx-auto leading-relaxed"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.8, delay: 0.5 }}
+            >
+              Transform any track into <span className="text-electric font-semibold">cinematic masterpieces</span> with AI that understands your music's soul. No directors. No crews. Just pure creative freedom.
+            </motion.p>
+            
+            <motion.div 
+              className="flex flex-col md:flex-row gap-4 justify-center items-center mb-12"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.8, delay: 1 }}
+            >
+              <GlassButton
+                onClick={handleGetStarted}
+                size="xl"
+                className="bg-gradient-to-r from-electric to-neon-purple animate-cyber-glow-pulse hover:scale-110 transition-all duration-300 shadow-2xl font-bold text-lg px-8 py-4"
+              >
+                <Music className="w-5 h-5 mr-2" />
+                Create Your First Video FREE
+              </GlassButton>
+              <GlassButton
+                onClick={() => setIsVideoModalOpen(true)}
+                variant="ghost"
+                size="xl"
+                className="backdrop-blur-20 bg-white/5 hover:bg-white/10 transition-all font-semibold text-lg px-8 py-4"
+              >
+                <Play className="w-5 h-5 mr-2" />
+                Watch 60-Second Demo
+              </GlassButton>
+            </motion.div>
+            
+            <motion.div 
+              className="text-center"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.8, delay: 1.5 }}
+            >
+              <p className="text-sm text-gray-400 mb-4">Trusted by 50,000+ musicians worldwide</p>
+              <div className="flex justify-center items-center space-x-8 opacity-60">
+                <div className="text-2xl">🎵</div>
+                <div className="text-2xl">🎸</div>
+                <div className="text-2xl">🎤</div>
+                <div className="text-2xl">🎹</div>
+                <div className="text-2xl">🥁</div>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+        
+        {/* Floating 3D Music Video Preview */}
+        <div className="absolute bottom-20 right-10 w-64 h-36 backdrop-blur-20 bg-white/5 border border-white/10 rounded-xl animate-float hidden lg:block" style={{
+          background: 'linear-gradient(45deg, transparent 30%, rgba(0, 245, 255, 0.2) 50%, transparent 70%)',
+          backgroundSize: '200% 200%',
+          animation: 'float 6s ease-in-out infinite, hologram 3s ease-in-out infinite'
         }}>
-            {/* Cosmic Logo Portal */}
-            <motion.div variants={fadeInUp} className="flex items-center justify-center gap-4 mb-8">
-              <div className="relative">
-                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-cosmic-stellar to-cosmic-temporal flex items-center justify-center">
-                  <Orbit className="w-8 h-8 text-cosmic-void animate-spin" style={{
-                  animationDuration: '8s'
-                }} />
-                </div>
-                <div className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-cosmic-nebula flex items-center justify-center">
-                  <Sparkles className="w-3 h-3 text-white animate-pulse" />
-                </div>
+          <div className="p-4 h-full flex items-center justify-center">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-gradient-to-br from-electric to-neon-purple rounded-full mx-auto mb-2 flex items-center justify-center animate-pulse">
+                <span className="text-2xl">🎬</span>
+              </div>
+              <p className="text-xs text-gray-300">Live Preview</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Social Proof Banner */}
+      <section className="py-12 bg-gradient-to-r from-electric/10 to-neon-purple/10">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl font-bold mb-4">Join the Music Video Revolution</h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+              <div>
+                <div className="text-3xl font-cyber font-bold text-electric">50K+</div>
+                <div className="text-gray-400">Videos Created</div>
               </div>
               <div>
-                <h1 className="text-4xl font-bold glow-text-cosmic font-serif tracking-wide">WZRD.STUDIO</h1>
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="text-xs bg-cosmic-stellar/20 text-cosmic-stellar px-2 py-0.5 rounded-full border border-cosmic-stellar/30">UniversalAI</span>
-                  <span className="text-xs bg-cosmic-nebula/20 text-cosmic-nebula px-2 py-0.5 rounded-full border border-cosmic-nebula/30">ALPHA</span>
-                </div>
+                <div className="text-3xl font-cyber font-bold text-neon-purple">2M+</div>
+                <div className="text-gray-400">Views Generated</div>
               </div>
-            </motion.div>
-            
-            
-            {/* Cosmic Headline */}
-            <motion.h2 variants={fadeInUp} className="text-5xl md:text-7xl font-bold mb-8 leading-tight glow-text-cosmic">
-              AI-Powered Music Video Generator
-            </motion.h2>
-            
-            {/* Sub-headline with stellar accent */}
-            <motion.p variants={fadeInUp} className="text-xl md:text-2xl text-white max-w-4xl mx-auto mb-12 font-light">
-              Transform your audio tracks into stunning <span className="text-cosmic-stellar">music videos</span>, 
-              <span className="text-cosmic-plasma"> lyrical visualizations</span>, and 
-              <span className="text-cosmic-quantum"> promotional clips</span> with our cutting-edge generative media platform 
-              powered by <span className="glow-text-primary">leading multi-modal image, audio, and video models</span>.
-            </motion.p>
-            
-            {/* Cosmic CTA Buttons */}
-            <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-16">
-              <GlassButton onClick={handleGetStarted} variant="stellar" size="xl" glow="intense" particle className="w-full sm:w-auto min-w-[200px]">
-                <Zap className="w-5 h-5" />
-                Enter the Portal
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </GlassButton>
-              
-              <GlassButton variant="cosmic" onClick={() => setIsVideoModalOpen(true)} size="xl" glow="medium" className="w-full sm:w-auto min-w-[200px]">
-                <Play className="w-4 h-4 fill-current" />
-                Witness the Magic
-              </GlassButton>
-            </motion.div>
-
-            {/* Tech stack badges */}
-            <motion.div variants={fadeInUp} className="mt-12 flex flex-wrap justify-center gap-4">
-              <TechBadge icon={<Sparkles className="w-4 h-4" />} name="Anthropic" description="Powered by Claude AI" color="text-purple-400" />
-              <TechBadge icon={<MessageSquare className="w-4 h-4" />} name="Lovable" description="Rapid UI Development" color="text-rose-400" />
-              <TechBadge icon={<Database className="w-4 h-4" />} name="Supabase" description="Secure Data Platform" color="text-emerald-400" />
-              <TechBadge icon={<Mic className="w-4 h-4" />} name="ElevenLabs" description="Voice Generation" color="text-blue-400" />
-            </motion.div>
-
-            {/* Scroll indicator */}
-            <motion.div variants={fadeInUp} className="absolute bottom-10 left-0 right-0 flex justify-center" animate={{
-            y: [0, 10, 0]
-          }} transition={{
-            duration: 2,
-            repeat: Infinity,
-            repeatType: "reverse"
-          }}>
-              <ChevronDown className="w-6 h-6 text-white/60" />
-            </motion.div>
-          </motion.div>
+              <div>
+                <div className="text-3xl font-cyber font-bold text-cyber-pink">98%</div>
+                <div className="text-gray-400">Satisfaction Rate</div>
+              </div>
+              <div>
+                <div className="text-3xl font-cyber font-bold text-electric">4.9★</div>
+                <div className="text-gray-400">User Rating</div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* Rest of sections */}
-      
-      {/* How it Works Section */}
-      <section className="py-24 relative z-20 bg-[#0A0D16]/90">
-        <div className="container mx-auto px-6 max-w-6xl">
-          <motion.div initial="hidden" whileInView="visible" viewport={{
-          once: true,
-          margin: "-100px"
-        }} variants={{
-          hidden: {
-            opacity: 0
-          },
-          visible: {
-            opacity: 1,
-            transition: {
-              staggerChildren: 0.2
-            }
-          }
-        }} className="text-center mb-16">
-            <motion.h2 variants={fadeInUp} className="text-3xl md:text-4xl font-bold mb-4 text-white">
-              How It Works
-            </motion.h2>
-            <motion.p variants={fadeInUp} className="text-xl text-zinc-300 max-w-2xl mx-auto">
-              Create stunning music videos from your audio tracks in four simple steps
-            </motion.p>
+      {/* Problem/Solution Section */}
+      <section className="py-24 relative">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="grid md:grid-cols-2 gap-16 items-center">
+            {/* Problem */}
+            <motion.div 
+              data-reveal-id="problem"
+              className={cn(
+                "transition-all duration-800 ease-out",
+                scrollRevealed.includes('problem') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
+              )}
+            >
+              <h2 className="text-4xl font-bold mb-6 text-red-400">The $50,000 Problem</h2>
+              <div className="space-y-4 text-gray-300">
+                <p className="text-lg">Professional music videos cost <span className="text-red-400 font-bold">$10,000-$50,000+</span></p>
+                <p>Most musicians can't afford cinematic visuals for their art</p>
+                <p>DIY videos lack the polish to compete on social platforms</p>
+                <p>Traditional production takes weeks or months</p>
+              </div>
+              <div className="mt-8 p-6 backdrop-blur-16 bg-red-400/5 border border-red-400/30 rounded-xl">
+                <div className="text-red-400 font-semibold mb-2">Reality Check:</div>
+                <div className="text-sm text-gray-400">90% of independent musicians never create a professional music video due to cost barriers</div>
+              </div>
+            </motion.div>
+            
+            {/* Solution */}
+            <motion.div 
+              data-reveal-id="solution"
+              className={cn(
+                "transition-all duration-800 ease-out",
+                scrollRevealed.includes('solution') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
+              )}
+            >
+              <h2 className="text-4xl font-bold mb-6 text-electric" style={{ textShadow: '0 0 10px currentColor, 0 0 20px currentColor, 0 0 40px currentColor' }}>The AI Solution</h2>
+              <div className="space-y-4 text-gray-300">
+                <p className="text-lg">Create <span className="text-electric font-bold">Hollywood-quality videos</span> for under $30</p>
+                <p>AI understands your music's emotion, rhythm, and lyrics</p>
+                <p>Generate multiple concepts in minutes, not months</p>
+                <p>Perfect sync with beat drops, mood changes, and crescendos</p>
+              </div>
+              <div className="mt-8 p-6 backdrop-blur-16 bg-electric/5 border border-electric/30 rounded-xl">
+                <div className="text-electric font-semibold mb-2">Game Changer:</div>
+                <div className="text-sm text-gray-400">Transform any bedroom recording into a viral-ready masterpiece</div>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works */}
+      <section id="how-it-works" className="py-24 relative bg-deep-space/30">
+        <div className="max-w-7xl mx-auto px-6">
+          <motion.div 
+            data-reveal-id="how-it-works-title"
+            className={cn(
+              "text-center mb-16 transition-all duration-800 ease-out",
+              scrollRevealed.includes('how-it-works-title') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
+            )}
+          >
+            <h2 className="text-5xl font-cyber font-bold mb-6 text-electric" style={{ textShadow: '0 0 10px currentColor, 0 0 20px currentColor, 0 0 40px currentColor' }}>
+              FROM TRACK TO VIRAL IN 4 STEPS
+            </h2>
+            <p className="text-xl text-gray-300 max-w-3xl mx-auto">
+              Our AI doesn't just add visuals—it creates a story that amplifies your music's emotional impact
+            </p>
           </motion.div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid md:grid-cols-4 gap-8">
             {/* Step 1 */}
-            <FeatureCard icon={<Lightbulb className="w-8 h-8 text-yellow-400" />} title="Upload Your Song" description="Start with any audio track. Our AI analyzes lyrics, beat patterns, and musical mood to understand your song's essence." delay={0.1} techBadge="Advanced Generative AI" />
+            <motion.div 
+              data-reveal-id="step-1"
+              className={cn(
+                "text-center group transition-all duration-800 ease-out",
+                scrollRevealed.includes('step-1') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
+              )}
+            >
+              <div className="w-20 h-20 bg-gradient-to-br from-electric to-neon-purple rounded-full mx-auto mb-6 flex items-center justify-center text-3xl transform transition-all duration-500 group-hover:scale-120 group-hover:rotate-y-180">
+                🎵
+              </div>
+              <h3 className="text-xl font-bold mb-4 text-electric">Upload & Analyze</h3>
+              <p className="text-gray-400">AI scans your track's BPM, key, mood, and lyrical themes in seconds</p>
+              <div className="mt-4 text-xs text-electric font-semibold">✨ Advanced Audio AI</div>
+            </motion.div>
             
             {/* Step 2 */}
-            <FeatureCard icon={<Wand className="w-8 h-8 text-purple-400" />} title="Generate Visuals" description="AI creates scenes that sync with your audio's rhythm and meaning using intelligent audio analysis." delay={0.2} techBadge="Intelligent Audio Analysis" />
+            <motion.div 
+              data-reveal-id="step-2"
+              className={cn(
+                "text-center group transition-all duration-800 ease-out",
+                scrollRevealed.includes('step-2') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
+              )}
+            >
+              <div className="w-20 h-20 bg-gradient-to-br from-neon-purple to-cyber-pink rounded-full mx-auto mb-6 flex items-center justify-center text-3xl transform transition-all duration-500 group-hover:scale-120 group-hover:rotate-y-180">
+                🧠
+              </div>
+              <h3 className="text-xl font-bold mb-4 text-neon-purple">Generate Concepts</h3>
+              <p className="text-gray-400">Multiple storylines and visual styles tailored to your genre and vibe</p>
+              <div className="mt-4 text-xs text-neon-purple font-semibold">✨ Creative AI</div>
+            </motion.div>
             
             {/* Step 3 */}
-            <FeatureCard icon={<Image className="w-8 h-8 text-blue-400" />} title="Customize & Refine" description="Fine-tune visual effects, scene transitions, and style elements with scalable cloud rendering." delay={0.3} techBadge="Scalable Cloud Rendering" />
+            <motion.div 
+              data-reveal-id="step-3"
+              className={cn(
+                "text-center group transition-all duration-800 ease-out",
+                scrollRevealed.includes('step-3') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
+              )}
+            >
+              <div className="w-20 h-20 bg-gradient-to-br from-cyber-pink to-electric rounded-full mx-auto mb-6 flex items-center justify-center text-3xl transform transition-all duration-500 group-hover:scale-120 group-hover:rotate-y-180">
+                🎬
+              </div>
+              <h3 className="text-xl font-bold mb-4 text-cyber-pink">Perfect Sync</h3>
+              <p className="text-gray-400">Visuals automatically sync to beat drops, vocals, and emotional peaks</p>
+              <div className="mt-4 text-xs text-cyber-pink font-semibold">✨ Rhythm AI</div>
+            </motion.div>
             
             {/* Step 4 */}
-            <FeatureCard icon={<Settings className="w-8 h-8 text-green-400" />} title="Export & Share" description="Render in HD with custom artist styles and share your professional music video across platforms." delay={0.4} techBadge="Custom Artist Styles" />
+            <motion.div 
+              data-reveal-id="step-4"
+              className={cn(
+                "text-center group transition-all duration-800 ease-out",
+                scrollRevealed.includes('step-4') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
+              )}
+            >
+              <div className="w-20 h-20 bg-gradient-to-br from-electric to-neon-purple rounded-full mx-auto mb-6 flex items-center justify-center text-3xl transform transition-all duration-500 group-hover:scale-120 group-hover:rotate-y-180">
+                🚀
+              </div>
+              <h3 className="text-xl font-bold mb-4 text-electric">Export & Dominate</h3>
+              <p className="text-gray-400">Download in 4K for platforms or social-optimized formats</p>
+              <div className="mt-4 text-xs text-electric font-semibold">✨ Cloud Rendering</div>
+            </motion.div>
           </div>
         </div>
       </section>
-      
-      {/* Interactive Demo Section */}
-      <section className="py-24 relative z-20 bg-gradient-to-b from-[#0A0D16] to-[#0F1320]">
-        <div className="container mx-auto px-6 max-w-6xl">
-          <motion.div initial="hidden" whileInView="visible" viewport={{
-          once: true,
-          margin: "-100px"
-        }} variants={{
-          hidden: {
-            opacity: 0
-          },
-          visible: {
-            opacity: 1
-          }
-        }} className="text-center mb-16">
-            <motion.div variants={fadeInUp} className="inline-block text-sm font-medium text-purple-400 bg-purple-400/10 px-3 py-1 rounded-full mb-3">
-              Interactive Demo
-            </motion.div>
-            <motion.h2 variants={fadeInUp} className="text-3xl md:text-4xl font-bold mb-4 text-white">
-              See the Magic in Action
-            </motion.h2>
-            <motion.p variants={fadeInUp} className="text-xl text-zinc-300 max-w-2xl mx-auto mb-8">
-              Explore how our platform transforms audio tracks into visual masterpieces
-            </motion.p>
-            
-            {/* Demo navigation */}
-            <motion.div variants={fadeInUp} className="flex flex-wrap justify-center gap-2 mb-12">
-              <Button variant={activeDemo === 'lyrical' ? 'default' : 'ghost'} className={activeDemo === 'lyrical' ? 'bg-purple-700' : 'hover:bg-white/5'} onClick={() => setActiveDemo('lyrical')}>
-                Lyrical Visualization
-              </Button>
-              <Button variant={activeDemo === 'beat' ? 'default' : 'ghost'} className={activeDemo === 'beat' ? 'bg-purple-700' : 'hover:bg-white/5'} onClick={() => setActiveDemo('beat')}>
-                Beat-Synced Motion
-              </Button>
-              <Button variant={activeDemo === 'scenery' ? 'default' : 'ghost'} className={activeDemo === 'scenery' ? 'bg-purple-700' : 'hover:bg-white/5'} onClick={() => setActiveDemo('scenery')}>
-                AI-Generated Scenery
-              </Button>
-              <Button variant={activeDemo === 'style' ? 'default' : 'ghost'} className={activeDemo === 'style' ? 'bg-purple-700' : 'hover:bg-white/5'} onClick={() => setActiveDemo('style')}>
-                Artist Style Transfer
-              </Button>
-            </motion.div>
+
+      {/* Features Deep Dive */}
+      <section id="features" className="py-24 relative">
+        <div className="max-w-7xl mx-auto px-6">
+          <motion.div 
+            data-reveal-id="features-title"
+            className={cn(
+              "text-center mb-16 transition-all duration-800 ease-out",
+              scrollRevealed.includes('features-title') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
+            )}
+          >
+            <h2 className="text-5xl font-cyber font-bold mb-6 text-neon-purple" style={{ textShadow: '0 0 10px currentColor, 0 0 20px currentColor, 0 0 40px currentColor' }}>
+              REVOLUTIONARY AI TECHNOLOGY
+            </h2>
+            <p className="text-xl text-gray-300 max-w-3xl mx-auto">
+              Each feature is designed to understand and amplify your music's unique emotional signature
+            </p>
           </motion.div>
           
-          {/* Demo showcase */}
-          <motion.div initial="hidden" whileInView="visible" viewport={{
-          once: true,
-          margin: "-100px"
-        }} variants={fadeInUp} className="rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
-            <AnimatePresence mode="wait">
-              <motion.div key={activeDemo} initial={{
-              opacity: 0
-            }} animate={{
-              opacity: 1
-            }} exit={{
-              opacity: 0
-            }} transition={{
-              duration: 0.3
-            }} className="relative aspect-video bg-gradient-to-br from-[#0F1320] to-[#1D1E3A]">
-                {/* Demo content would go here */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-center p-6">
-                    {activeDemo === 'lyrical' && <>
-                        <Sparkles className="w-12 h-12 text-purple-400 mx-auto mb-4" />
-                        <h3 className="text-2xl font-bold mb-2">Lyrical Visualization</h3>
-                        <p className="text-zinc-300 max-w-md mx-auto mb-4">AI interprets your lyrics and creates matching visual narratives that tell your song's story.</p>
-                        <TechHighlight name="Advanced Generative AI" />
-                      </>}
-                    {activeDemo === 'beat' && <>
-                        <MessageSquare className="w-12 h-12 text-rose-400 mx-auto mb-4" />
-                        <h3 className="text-2xl font-bold mb-2">Beat-Synced Motion</h3>
-                        <p className="text-zinc-300 max-w-md mx-auto mb-4">Visual elements pulse and move in perfect sync with your music's rhythm and tempo.</p>
-                        <TechHighlight name="Intelligent Audio Analysis" />
-                      </>}
-                    {activeDemo === 'scenery' && <>
-                        <Mic className="w-12 h-12 text-blue-400 mx-auto mb-4" />
-                        <h3 className="text-2xl font-bold mb-2">AI-Generated Scenery</h3>
-                        <p className="text-zinc-300 max-w-md mx-auto mb-4">Dynamic backgrounds and environments based on your song's mood and energy.</p>
-                        <TechHighlight name="Scalable Cloud Rendering" />
-                      </>}
-                    {activeDemo === 'style' && <>
-                        <Database className="w-12 h-12 text-emerald-400 mx-auto mb-4" />
-                        <h3 className="text-2xl font-bold mb-2">Artist Style Transfer</h3>
-                        <p className="text-zinc-300 max-w-md mx-auto mb-4">Apply specific artistic styles to match your brand and create unique visual identities.</p>
-                        <TechHighlight name="Custom Artist Styles" />
-                      </>}
-                  </div>
-                </div>
-              </motion.div>
-            </AnimatePresence>
-          </motion.div>
-        </div>
-      </section>
-      
-      {/* Feature Deep Dive Section */}
-      <section className="py-24 relative z-20 bg-gradient-to-b from-[#0F1320] to-[#0A0D16]">
-        <div className="container mx-auto px-6 max-w-6xl">
-          <motion.div initial="hidden" whileInView="visible" viewport={{
-          once: true,
-          margin: "-100px"
-        }} variants={{
-          hidden: {
-            opacity: 0
-          },
-          visible: {
-            opacity: 1
-          }
-        }} className="text-center mb-16">
-            <motion.div variants={fadeInUp} className="inline-block text-sm font-medium text-blue-400 bg-blue-400/10 px-3 py-1 rounded-full mb-3">
-              Technology Stack
-            </motion.div>
-            <motion.h2 variants={fadeInUp} className="text-3xl md:text-4xl font-bold mb-4 text-white">
-              Powered by Industry-Leading AI
-            </motion.h2>
-            <motion.p variants={fadeInUp} className="text-xl text-zinc-300 max-w-2xl mx-auto">
-              WZRD.STUDIO integrates cutting-edge technologies to deliver unmatched creative capabilities
-            </motion.p>
-          </motion.div>
-          
-          {/* Advanced Generative AI Feature */}
-          <FeatureHighlight title="Advanced Generative AI" description="Our intelligent music and lyric analysis systems are powered by cutting-edge AI that understands musical structure, mood, and lyrical meaning. Transform any song into compelling visual narratives with nuanced understanding of rhythm and emotion." imageSrc="/lovable-uploads/1e1aab33-e5d2-4ef2-b40d-84a2e2679e3c.png" isImageRight={false} techBadge="Advanced Generative AI" techIcon={<Sparkles className="w-5 h-5" />} />
-          
-          {/* Intelligent Audio Analysis Feature */}
-          <FeatureHighlight title="Intelligent Audio Analysis" description="Real-time beat detection and mood mapping technology analyzes your audio tracks to identify tempo, key changes, emotional peaks, and lyrical themes. Our system creates perfectly synchronized visual elements that pulse and move with your music." imageSrc="/lovable-uploads/96cbbf8f-bdb1-4d37-9c62-da1306d5fb96.png" isImageRight={true} techBadge="Intelligent Audio Analysis" techIcon={<MessageSquare className="w-5 h-5" />} />
-          
-          {/* Scalable Cloud Rendering Feature */}
-          <FeatureHighlight title="Scalable Cloud Rendering" description="High-performance video processing infrastructure ensures your music videos render quickly and efficiently. Process multiple tracks simultaneously while maintaining 4K quality, with secure storage and collaboration features for teams." imageSrc="/lovable-uploads/1e1aab33-e5d2-4ef2-b40d-84a2e2679e3c.png" isImageRight={false} techBadge="Scalable Cloud Rendering" techIcon={<Database className="w-5 h-5" />} />
-          
-          {/* Custom Artist Styles Feature */}
-          <FeatureHighlight title="Custom Artist Styles" description="Personalized visual style generation allows you to create unique artistic identities for your music videos. Choose from preset styles or train custom looks that match your brand, ensuring every video reflects your artistic vision." imageSrc="/lovable-uploads/96cbbf8f-bdb1-4d37-9c62-da1306d5fb96.png" isImageRight={true} techBadge="Custom Artist Styles" techIcon={<Mic className="w-5 h-5" />} />
-        </div>
-      </section>
-      
-      {/* Testimonials Section */}
-      <section className="py-24 relative z-20 bg-[#0A0D16]">
-        <div className="container mx-auto px-6 max-w-6xl">
-          <motion.div initial="hidden" whileInView="visible" viewport={{
-          once: true,
-          margin: "-100px"
-        }} variants={{
-          hidden: {
-            opacity: 0
-          },
-          visible: {
-            opacity: 1
-          }
-        }} className="text-center mb-16">
-            <motion.div variants={fadeInUp} className="inline-block text-sm font-medium text-yellow-400 bg-yellow-400/10 px-3 py-1 rounded-full mb-3">
-              Testimonials
-            </motion.div>
-            <motion.h2 variants={fadeInUp} className="text-3xl md:text-4xl font-bold mb-4 text-white">
-              What Musicians Are Saying
-            </motion.h2>
-          </motion.div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <TestimonialCard quote="WZRD.STUDIO transformed my bedroom recordings into professional music videos in minutes. The beat-sync technology is incredible!" author="Alex Rivera" title="Independent Musician" delay={0.1} />
-            <TestimonialCard quote="The AI perfectly captures the mood of my tracks. Every visual perfectly matches my drops and builds - it's like having a video director who truly understands electronic music." author="DJ Luna" title="Electronic Producer" delay={0.2} />
-            <TestimonialCard quote="We went from having no budget for music videos to creating viral content that perfectly captures our sound. The lyrical visualization feature is pure magic." author="The Midnight Collective" title="Indie Rock Band" delay={0.3} />
-          </div>
-        </div>
-      </section>
-      
-      {/* Pricing Section */}
-      <section className="py-24 relative z-20 bg-gradient-to-b from-[#0A0D16] to-[#0F1320]">
-        <div className="container mx-auto px-6 max-w-6xl">
-          <motion.div initial="hidden" whileInView="visible" viewport={{
-          once: true,
-          margin: "-100px"
-        }} variants={{
-          hidden: {
-            opacity: 0
-          },
-          visible: {
-            opacity: 1,
-            transition: {
-              staggerChildren: 0.2
-            }
-          }
-        }} className="text-center mb-16">
-            <motion.div variants={fadeInUp} className="inline-block text-sm font-medium text-green-400 bg-green-400/10 px-3 py-1 rounded-full mb-3">
-              Pricing
-            </motion.div>
-            <motion.h2 variants={fadeInUp} className="text-3xl md:text-4xl font-bold mb-4 text-white">
-              Simple, Transparent Pricing
-            </motion.h2>
-            <motion.p variants={fadeInUp} className="text-xl text-zinc-300 max-w-2xl mx-auto">
-              Pay only for what you use with our credit-based system
-            </motion.p>
-          </motion.div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <PricingCard title="Starter" price="Free" description="Perfect for trying out music video generation" features={["100 free credits upon signup", "Basic music video generation", "Beat detection", "Standard visual effects", "Community support"]} ctaText="Get Started Free" ctaAction={handleGetStarted} popular={false} delay={0.1} />
-            
-            <PricingCard title="Creator" price="$29" description="For serious musicians and content creators" features={["2,500 credits per month", "Advanced lyric analysis", "Custom style presets", "Full HD video output", "Social media formats", "Priority support"]} ctaText="Sign Up Now" ctaAction={handleGetStarted} popular={true} delay={0.2} />
-            
-            <PricingCard title="Studio" price="$99" description="For labels and production companies" features={["10,000 credits per month", "4K video output", "Multi-track audio support", "Brand customization", "Advanced motion graphics", "Dedicated support"]} ctaText="Contact Sales" ctaAction={handleGetStarted} popular={false} delay={0.3} />
-          </div>
-        </div>
-      </section>
-      
-      {/* CTA Section */}
-      <section className="py-24 relative z-20 bg-gradient-to-b from-[#0F1320] to-[#0A0D16]">
-        <div className="container mx-auto px-6 text-center max-w-3xl">
-          <motion.div initial="hidden" whileInView="visible" viewport={{
-          once: true,
-          margin: "-100px"
-        }} variants={{
-          hidden: {
-            opacity: 0
-          },
-          visible: {
-            opacity: 1,
-            transition: {
-              staggerChildren: 0.2
-            }
-          }
-        }}>
-            <motion.h2 variants={fadeInUp} className="text-3xl md:text-4xl font-bold mb-4 text-white">
-              Start Creating Today
-            </motion.h2>
-            <motion.p variants={fadeInUp} className="text-xl text-zinc-300 mb-8">
-              Join thousands of creators already using WZRD.STUDIO to bring their stories to life.
-            </motion.p>
-            <motion.div variants={fadeInUp}>
-              <Button onClick={handleGetStarted} className="bg-gradient-to-r from-purple-700 to-indigo-700 hover:from-purple-600 hover:to-indigo-600 text-white px-8 py-6 rounded-md shadow-glow-purple-sm hover:shadow-glow-purple-md transition-all-std group" size="lg">
-                Sign Up & Get Free Credits <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </Button>
-            </motion.div>
-            
-            <motion.div variants={fadeInUp} className="mt-8 flex justify-center gap-6">
-              <TechLogoIcon type="kling" />
-              <TechLogoIcon type="luma" />
-              <TechLogoIcon type="hailou" />
-              <TechLogoIcon type="runway" />
-            </motion.div>
-          </motion.div>
-        </div>
-      </section>
-      
-      {/* Footer */}
-      <footer className="py-10 px-6 bg-[#080B13] text-zinc-400 relative z-20 border-t border-white/5">
-        <div className="container mx-auto max-w-6xl">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+          {/* Feature 1: Emotional AI */}
+          <motion.div 
+            data-reveal-id="feature-1"
+            className={cn(
+              "grid md:grid-cols-2 gap-16 items-center mb-32 transition-all duration-800 ease-out",
+              scrollRevealed.includes('feature-1') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
+            )}
+          >
             <div>
-              <h3 className="text-xl font-bold text-yellow-300/80 tracking-tight font-serif mb-4">WZRD.STUDIO</h3>
-              <p className="text-sm text-zinc-500 mb-4">AI-Powered Music Video Generator</p>
-              <div className="flex gap-4">
-                <a href="#" className="text-zinc-400 hover:text-white transition-colors">
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path fillRule="evenodd" d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" clipRule="evenodd"></path>
-                  </svg>
-                </a>
-                <a href="#" className="text-zinc-400 hover:text-white transition-colors">
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84"></path>
-                  </svg>
-                </a>
-                <a href="#" className="text-zinc-400 hover:text-white transition-colors">
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path fillRule="evenodd" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10c5.51 0 10-4.48 10-10S17.51 2 12 2zm6.605 4.61a8.502 8.502 0 011.93 5.314c-.281-.054-3.101-.629-5.943-.271-.065-.141-.12-.293-.184-.445a25.416 25.416 0 00-.564-1.236c3.145-1.28 4.577-3.124 4.761-3.362zM12 3.475c2.17 0 4.154.813 5.662 2.148-.152.216-1.443 1.941-4.48 3.08-1.399-2.57-2.95-4.675-3.189-5A8.687 8.687 0 0112 3.475zm-3.633.803a53.896 53.896 0 013.167 4.935c-3.992 1.063-7.517 1.04-7.896 1.04a8.581 8.581 0 014.729-5.975zM3.453 12.01v-.26c.37.01 4.512.065 8.775-1.215.25.477.477.965.694 1.453-.109.033-.228.065-.336.098-4.404 1.42-6.747 5.303-6.942 5.629a8.522 8.522 0 01-2.19-5.705zM12 20.547a8.482 8.482 0 01-5.239-1.8c.152-.315 1.888-3.656 6.703-5.337.022-.01.033-.01.054-.022a35.318 35.318 0 011.823 6.475 8.4 8.4 0 01-3.341.684zm4.761-1.465c-.086-.52-.542-3.015-1.659-6.084 2.679-.423 5.022.271 5.314.369a8.468 8.468 0 01-3.655 5.715z" clipRule="evenodd"></path>
-                  </svg>
-                </a>
+              <div className="inline-block bg-electric/20 text-electric px-4 py-2 rounded-full text-sm font-semibold mb-4">
+                🧠 Emotional Intelligence AI
+              </div>
+              <h3 className="text-4xl font-bold mb-6">Feels Your Music's Soul</h3>
+              <p className="text-xl text-gray-300 mb-6">
+                Our AI doesn't just hear notes—it understands <span className="text-electric">emotional context</span>. 
+                Melancholy verses get intimate visuals, explosive choruses get dynamic action.
+              </p>
+              <div className="space-y-4">
+                <div className="flex items-center space-x-3">
+                  <div className="w-6 h-6 bg-electric/30 rounded-full flex items-center justify-center">✓</div>
+                  <span>Mood detection from musical keys and progressions</span>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <div className="w-6 h-6 bg-electric/30 rounded-full flex items-center justify-center">✓</div>
+                  <span>Lyrical sentiment analysis for visual storytelling</span>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <div className="w-6 h-6 bg-electric/30 rounded-full flex items-center justify-center">✓</div>
+                  <span>Dynamic adaptation to tempo and energy changes</span>
+                </div>
+              </div>
+            </div>
+            <div className="backdrop-blur-16 bg-white/5 border border-white/10 p-8 rounded-2xl">
+              <div className="aspect-video bg-gradient-to-br from-electric/20 to-neon-purple/20 rounded-xl flex items-center justify-center">
+                <div className="text-6xl animate-pulse">🎭</div>
+              </div>
+              <div className="mt-4 text-center text-sm text-gray-400">
+                AI analyzing emotional peaks in real-time
+              </div>
+            </div>
+          </motion.div>
+          
+          {/* Feature 2: Beat Sync Mastery */}
+          <motion.div 
+            data-reveal-id="feature-2"
+            className={cn(
+              "grid md:grid-cols-2 gap-16 items-center mb-32 transition-all duration-800 ease-out",
+              scrollRevealed.includes('feature-2') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
+            )}
+          >
+            <div className="order-2 md:order-1 backdrop-blur-16 bg-white/5 border border-white/10 p-8 rounded-2xl">
+              <div className="aspect-video bg-gradient-to-br from-neon-purple/20 to-cyber-pink/20 rounded-xl flex items-center justify-center">
+                <div className="text-6xl animate-bounce">🥁</div>
+              </div>
+              <div className="mt-4 text-center text-sm text-gray-400">
+                Perfect synchronization with every beat
+              </div>
+            </div>
+            <div className="order-1 md:order-2">
+              <div className="inline-block bg-neon-purple/20 text-neon-purple px-4 py-2 rounded-full text-sm font-semibold mb-4">
+                🎵 Beat-Sync Mastery
+              </div>
+              <h3 className="text-4xl font-bold mb-6">Every Frame Matches Your Rhythm</h3>
+              <p className="text-xl text-gray-300 mb-6">
+                Millisecond-perfect synchronization that makes your audience <span className="text-neon-purple">feel</span> the music. 
+                Cuts, transitions, and effects align with your track's natural flow.
+              </p>
+              <div className="space-y-4">
+                <div className="flex items-center space-x-3">
+                  <div className="w-6 h-6 bg-neon-purple/30 rounded-full flex items-center justify-center">✓</div>
+                  <span>Advanced beat detection algorithms</span>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <div className="w-6 h-6 bg-neon-purple/30 rounded-full flex items-center justify-center">✓</div>
+                  <span>Smart scene transitions on musical phrases</span>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <div className="w-6 h-6 bg-neon-purple/30 rounded-full flex items-center justify-center">✓</div>
+                  <span>Visual effects timed to instrumental solos</span>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+          
+          {/* Feature 3: Style Adaptation */}
+          <motion.div 
+            data-reveal-id="feature-3"
+            className={cn(
+              "grid md:grid-cols-2 gap-16 items-center transition-all duration-800 ease-out",
+              scrollRevealed.includes('feature-3') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
+            )}
+          >
+            <div>
+              <div className="inline-block bg-cyber-pink/20 text-cyber-pink px-4 py-2 rounded-full text-sm font-semibold mb-4">
+                🎨 Infinite Style Universe
+              </div>
+              <h3 className="text-4xl font-bold mb-6">Your Brand, Amplified</h3>
+              <p className="text-xl text-gray-300 mb-6">
+                From <span className="text-cyber-pink">cyberpunk neon</span> to vintage film noir—our AI adapts to any aesthetic. 
+                Create a consistent visual identity across all your releases.
+              </p>
+              <div className="space-y-4">
+                <div className="flex items-center space-x-3">
+                  <div className="w-6 h-6 bg-cyber-pink/30 rounded-full flex items-center justify-center">✓</div>
+                  <span>Genre-specific visual language database</span>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <div className="w-6 h-6 bg-cyber-pink/30 rounded-full flex items-center justify-center">✓</div>
+                  <span>Custom brand palette integration</span>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <div className="w-6 h-6 bg-cyber-pink/30 rounded-full flex items-center justify-center">✓</div>
+                  <span>Style consistency across multiple videos</span>
+                </div>
+              </div>
+            </div>
+            <div className="backdrop-blur-16 bg-white/5 border border-white/10 p-8 rounded-2xl">
+              <div className="aspect-video bg-gradient-to-br from-cyber-pink/20 to-electric/20 rounded-xl flex items-center justify-center">
+                <div className="text-6xl" style={{ animation: 'float 6s ease-in-out infinite' }}>🎨</div>
+              </div>
+              <div className="mt-4 text-center text-sm text-gray-400">
+                Infinite visual styles at your command
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Testimonials */}
+      <section id="testimonials" className="py-24 relative bg-deep-space/50">
+        <div className="max-w-7xl mx-auto px-6">
+          <motion.div 
+            data-reveal-id="testimonials-title"
+            className={cn(
+              "text-center mb-16 transition-all duration-800 ease-out",
+              scrollRevealed.includes('testimonials-title') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
+            )}
+          >
+            <h2 className="text-5xl font-cyber font-bold mb-6 text-electric" style={{ textShadow: '0 0 10px currentColor, 0 0 20px currentColor, 0 0 40px currentColor' }}>
+              ARTISTS ARE GOING VIRAL
+            </h2>
+            <p className="text-xl text-gray-300">Real stories from musicians who transformed their careers</p>
+          </motion.div>
+          
+          <div className="grid md:grid-cols-3 gap-8">
+            {/* Testimonial 1 */}
+            <motion.div 
+              data-reveal-id="testimonial-1"
+              className={cn(
+                "backdrop-blur-16 bg-white/5 border border-white/10 p-8 rounded-2xl hover:scale-105 transition-all duration-300",
+                scrollRevealed.includes('testimonial-1') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
+              )}
+            >
+              <div className="flex items-center mb-4">
+                <div className="w-12 h-12 bg-gradient-to-r from-electric to-neon-purple rounded-full mr-4"></div>
+                <div>
+                  <div className="font-bold">Alex Rivera</div>
+                  <div className="text-sm text-gray-400">@alexbeats • 2.1M followers</div>
+                </div>
+              </div>
+              <p className="text-gray-300 mb-4">
+                "My bedroom track went from 500 views to 2.1M in 3 days after using WZRD.STUDIO. 
+                The AI perfectly captured the dark synthwave vibe I was going for. Now I have a record deal."
+              </p>
+              <div className="text-electric text-sm font-semibold">📈 +420,000% view increase</div>
+            </motion.div>
+            
+            {/* Testimonial 2 */}
+            <motion.div 
+              data-reveal-id="testimonial-2"
+              className={cn(
+                "backdrop-blur-16 bg-white/5 border border-white/10 p-8 rounded-2xl hover:scale-105 transition-all duration-300",
+                scrollRevealed.includes('testimonial-2') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
+              )}
+            >
+              <div className="flex items-center mb-4">
+                <div className="w-12 h-12 bg-gradient-to-r from-neon-purple to-cyber-pink rounded-full mr-4"></div>
+                <div>
+                  <div className="font-bold">Luna Collective</div>
+                  <div className="text-sm text-gray-400">Indie Band • 150K monthly listeners</div>
+                </div>
+              </div>
+              <p className="text-gray-300 mb-4">
+                "We spent our entire budget on recording. WZRD.STUDIO gave us Hollywood-level visuals for $29. 
+                Our song 'Neon Dreams' is now our biggest hit."
+              </p>
+              <div className="text-neon-purple text-sm font-semibold">🎵 #1 on indie charts for 6 weeks</div>
+            </motion.div>
+            
+            {/* Testimonial 3 */}
+            <motion.div 
+              data-reveal-id="testimonial-3"
+              className={cn(
+                "backdrop-blur-16 bg-white/5 border border-white/10 p-8 rounded-2xl hover:scale-105 transition-all duration-300",
+                scrollRevealed.includes('testimonial-3') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
+              )}
+            >
+              <div className="flex items-center mb-4">
+                <div className="w-12 h-12 bg-gradient-to-r from-cyber-pink to-electric rounded-full mr-4"></div>
+                <div>
+                  <div className="font-bold">DJ Quantum</div>
+                  <div className="text-sm text-gray-400">Electronic Producer • 890K followers</div>
+                </div>
+              </div>
+              <p className="text-gray-300 mb-4">
+                "The beat-sync is absolutely insane. Every drop, every build—perfectly matched. 
+                My fans think I hired a team of 20 people. It's just me and WZRD.STUDIO."
+              </p>
+              <div className="text-cyber-pink text-sm font-semibold">🔥 Featured on Beatport top 10</div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing */}
+      <section id="pricing" className="py-24 relative">
+        <div className="max-w-7xl mx-auto px-6">
+          <motion.div 
+            data-reveal-id="pricing-title"
+            className={cn(
+              "text-center mb-16 transition-all duration-800 ease-out",
+              scrollRevealed.includes('pricing-title') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
+            )}
+          >
+            <h2 className="text-5xl font-cyber font-bold mb-6 text-neon-purple" style={{ textShadow: '0 0 10px currentColor, 0 0 20px currentColor, 0 0 40px currentColor' }}>
+              PRICING THAT MAKES SENSE
+            </h2>
+            <p className="text-xl text-gray-300">
+              Professional results without the professional price tag
+            </p>
+          </motion.div>
+          
+          <div className="grid md:grid-cols-3 gap-8">
+            {/* Free Plan */}
+            <motion.div 
+              data-reveal-id="pricing-1"
+              className={cn(
+                "backdrop-blur-16 bg-white/5 border border-white/10 p-8 rounded-2xl transition-all duration-300 hover:-translate-y-2 hover:shadow-xl",
+                scrollRevealed.includes('pricing-1') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
+              )}
+            >
+              <div className="text-center mb-8">
+                <h3 className="text-2xl font-bold mb-2">Starter</h3>
+                <div className="text-5xl font-cyber font-bold text-electric">FREE</div>
+                <p className="text-gray-400 mt-2">Perfect for testing the magic</p>
+              </div>
+              <div className="space-y-4 mb-8">
+                <div className="flex items-center space-x-3">
+                  <div className="w-5 h-5 bg-electric/30 rounded-full flex items-center justify-center text-xs">✓</div>
+                  <span>100 free credits (2-3 videos)</span>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <div className="w-5 h-5 bg-electric/30 rounded-full flex items-center justify-center text-xs">✓</div>
+                  <span>720p HD output</span>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <div className="w-5 h-5 bg-electric/30 rounded-full flex items-center justify-center text-xs">✓</div>
+                  <span>Basic beat detection</span>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <div className="w-5 h-5 bg-electric/30 rounded-full flex items-center justify-center text-xs">✓</div>
+                  <span>3 style presets</span>
+                </div>
+              </div>
+              <GlassButton 
+                onClick={handleGetStarted}
+                className="w-full bg-gradient-to-r from-electric to-neon-purple py-3 hover:scale-105 transition-transform font-bold"
+              >
+                Start Creating Now
+              </GlassButton>
+            </motion.div>
+            
+            {/* Creator Plan */}
+            <motion.div 
+              data-reveal-id="pricing-2"
+              className={cn(
+                "backdrop-blur-16 bg-white/5 border-2 border-neon-purple p-8 rounded-2xl relative transition-all duration-300 hover:-translate-y-2",
+                scrollRevealed.includes('pricing-2') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
+              )}
+              style={{ boxShadow: '0 20px 40px rgba(191, 0, 255, 0.3)' }}
+            >
+              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-neon-purple px-4 py-1 rounded-full text-sm font-bold">
+                MOST POPULAR
+              </div>
+              <div className="text-center mb-8">
+                <h3 className="text-2xl font-bold mb-2">Creator</h3>
+                <div className="text-5xl font-cyber font-bold text-neon-purple">$29</div>
+                <p className="text-gray-400 mt-2">For serious musicians</p>
+              </div>
+              <div className="space-y-4 mb-8">
+                <div className="flex items-center space-x-3">
+                  <div className="w-5 h-5 bg-neon-purple/30 rounded-full flex items-center justify-center text-xs">✓</div>
+                  <span>2,500 credits/month (50+ videos)</span>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <div className="w-5 h-5 bg-neon-purple/30 rounded-full flex items-center justify-center text-xs">✓</div>
+                  <span>4K Ultra HD output</span>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <div className="w-5 h-5 bg-neon-purple/30 rounded-full flex items-center justify-center text-xs">✓</div>
+                  <span>Advanced lyric analysis</span>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <div className="w-5 h-5 bg-neon-purple/30 rounded-full flex items-center justify-center text-xs">✓</div>
+                  <span>50+ premium styles</span>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <div className="w-5 h-5 bg-neon-purple/30 rounded-full flex items-center justify-center text-xs">✓</div>
+                  <span>Social media formats</span>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <div className="w-5 h-5 bg-neon-purple/30 rounded-full flex items-center justify-center text-xs">✓</div>
+                  <span>Priority rendering</span>
+                </div>
+              </div>
+              <GlassButton 
+                onClick={handleGetStarted}
+                className="w-full bg-gradient-to-r from-neon-purple to-cyber-pink py-3 hover:scale-105 transition-transform font-bold"
+              >
+                Upgrade to Creator
+              </GlassButton>
+            </motion.div>
+            
+            {/* Studio Plan */}
+            <motion.div 
+              data-reveal-id="pricing-3"
+              className={cn(
+                "backdrop-blur-16 bg-white/5 border border-white/10 p-8 rounded-2xl transition-all duration-300 hover:-translate-y-2 hover:shadow-xl",
+                scrollRevealed.includes('pricing-3') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
+              )}
+            >
+              <div className="text-center mb-8">
+                <h3 className="text-2xl font-bold mb-2">Studio</h3>
+                <div className="text-5xl font-cyber font-bold text-cyber-pink">$99</div>
+                <p className="text-gray-400 mt-2">For labels & agencies</p>
+              </div>
+              <div className="space-y-4 mb-8">
+                <div className="flex items-center space-x-3">
+                  <div className="w-5 h-5 bg-cyber-pink/30 rounded-full flex items-center justify-center text-xs">✓</div>
+                  <span>10,000 credits/month (200+ videos)</span>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <div className="w-5 h-5 bg-cyber-pink/30 rounded-full flex items-center justify-center text-xs">✓</div>
+                  <span>8K cinema-grade output</span>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <div className="w-5 h-5 bg-cyber-pink/30 rounded-full flex items-center justify-center text-xs">✓</div>
+                  <span>Custom style training</span>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <div className="w-5 h-5 bg-cyber-pink/30 rounded-full flex items-center justify-center text-xs">✓</div>
+                  <span>Team collaboration</span>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <div className="w-5 h-5 bg-cyber-pink/30 rounded-full flex items-center justify-center text-xs">✓</div>
+                  <span>API access</span>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <div className="w-5 h-5 bg-cyber-pink/30 rounded-full flex items-center justify-center text-xs">✓</div>
+                  <span>White-label options</span>
+                </div>
+              </div>
+              <GlassButton 
+                onClick={handleGetStarted}
+                className="w-full bg-gradient-to-r from-cyber-pink to-electric py-3 hover:scale-105 transition-transform font-bold"
+              >
+                Contact Sales
+              </GlassButton>
+            </motion.div>
+          </div>
+          
+          {/* Money Back Guarantee */}
+          <motion.div 
+            data-reveal-id="guarantee"
+            className={cn(
+              "text-center mt-16 transition-all duration-800 ease-out",
+              scrollRevealed.includes('guarantee') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
+            )}
+          >
+            <div className="backdrop-blur-16 bg-white/5 border border-white/10 p-6 rounded-xl inline-block">
+              <div className="text-electric font-bold mb-2">🛡️ 30-Day Money-Back Guarantee</div>
+              <div className="text-gray-400">Not satisfied? Get a full refund, no questions asked.</div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Final CTA */}
+      <section className="py-24 relative bg-gradient-to-b from-deep-space to-void-black">
+        <div className="max-w-4xl mx-auto text-center px-6">
+          <motion.div
+            data-reveal-id="final-cta"
+            className={cn(
+              "transition-all duration-800 ease-out",
+              scrollRevealed.includes('final-cta') ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
+            )}
+          >
+            <h2 className="text-6xl font-cyber font-bold mb-6 text-electric" style={{ textShadow: '0 0 10px currentColor, 0 0 20px currentColor, 0 0 40px currentColor' }}>
+              YOUR MUSIC DESERVES MORE
+            </h2>
+            <p className="text-2xl text-gray-300 mb-12">
+              Join 50,000+ artists who chose to amplify their art with AI. 
+              <br/><span className="text-neon-purple">Your breakthrough moment is one video away.</span>
+            </p>
+            
+            <div className="space-y-4">
+              <GlassButton
+                onClick={handleGetStarted}
+                size="xl"
+                className="bg-gradient-to-r from-electric via-neon-purple to-cyber-pink px-12 py-6 animate-cyber-glow-pulse hover:scale-110 transition-all duration-300 shadow-2xl font-bold text-xl"
+              >
+                <TrendingUp className="w-6 h-6 mr-2" />
+                Start Your Free Trial Now
+              </GlassButton>
+              <p className="text-sm text-gray-400">
+                100 free credits • No credit card required • 2-minute setup
+              </p>
+            </div>
+            
+            {/* Trust indicators */}
+            <div className="mt-16 flex justify-center items-center space-x-8 opacity-60">
+              <div className="text-center">
+                <div className="text-2xl mb-1">🔒</div>
+                <div className="text-xs">Secure</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl mb-1">⚡</div>
+                <div className="text-xs">Instant</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl mb-1">🎯</div>
+                <div className="text-xs">Precise</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl mb-1">🎵</div>
+                <div className="text-xs">Musical</div>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="py-16 bg-void-black border-t border-white/10">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="grid md:grid-cols-4 gap-8 mb-12">
+            <div>
+              <div className="font-cyber text-2xl font-bold text-electric mb-4" style={{ textShadow: '0 0 10px currentColor, 0 0 20px currentColor, 0 0 40px currentColor' }}>
+                WZRD.STUDIO
+              </div>
+              <p className="text-gray-400 mb-4">
+                Transforming music into visual magic with revolutionary AI technology.
+              </p>
+              <div className="flex space-x-4">
+                <a href="#" className="text-gray-400 hover:text-electric transition-colors">📘</a>
+                <a href="#" className="text-gray-400 hover:text-electric transition-colors">🐦</a>
+                <a href="#" className="text-gray-400 hover:text-electric transition-colors">📷</a>
+                <a href="#" className="text-gray-400 hover:text-electric transition-colors">🎵</a>
               </div>
             </div>
             <div>
-              <h3 className="font-bold mb-3 text-white">Platform</h3>
-              <ul className="space-y-2">
-                <li><a href="#" className="hover:text-white transition-colors">Features</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Pricing</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Templates</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">API Access</a></li>
-              </ul>
+              <h3 className="font-bold mb-4">Platform</h3>
+              <div className="space-y-2 text-gray-400">
+                <a href="#features" className="block hover:text-white transition-colors">Features</a>
+                <a href="#pricing" className="block hover:text-white transition-colors">Pricing</a>
+                <a href="#" className="block hover:text-white transition-colors">API</a>
+                <a href="#" className="block hover:text-white transition-colors">Integrations</a>
+              </div>
             </div>
             <div>
-              <h3 className="font-bold mb-3 text-white">Resources</h3>
-              <ul className="space-y-2">
-                <li><a href="#" className="hover:text-white transition-colors">Documentation</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Tutorials</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Blog</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Community</a></li>
-              </ul>
+              <h3 className="font-bold mb-4">Resources</h3>
+              <div className="space-y-2 text-gray-400">
+                <a href="#" className="block hover:text-white transition-colors">Documentation</a>
+                <a href="#" className="block hover:text-white transition-colors">Tutorials</a>
+                <a href="#" className="block hover:text-white transition-colors">Community</a>
+                <a href="#" className="block hover:text-white transition-colors">Blog</a>
+              </div>
             </div>
             <div>
-              <h3 className="font-bold mb-3 text-white">Company</h3>
-              <ul className="space-y-2">
-                <li><a href="#" className="hover:text-white transition-colors">About Us</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Careers</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Contact</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Privacy Policy</a></li>
-              </ul>
+              <h3 className="font-bold mb-4">Company</h3>
+              <div className="space-y-2 text-gray-400">
+                <a href="#" className="block hover:text-white transition-colors">About</a>
+                <a href="#" className="block hover:text-white transition-colors">Careers</a>
+                <a href="#" className="block hover:text-white transition-colors">Contact</a>
+                <a href="#" className="block hover:text-white transition-colors">Privacy</a>
+              </div>
             </div>
           </div>
-          <div className="border-t border-zinc-800 pt-8 flex flex-col md:flex-row justify-between items-center">
-            <p className="text-sm text-zinc-500">© 2025 WZRD.STUDIO. All rights reserved.</p>
-            <div className="flex gap-4 mt-4 md:mt-0">
-              <a href="#" className="text-sm text-zinc-500 hover:text-white transition-colors">Terms</a>
-              <a href="#" className="text-sm text-zinc-500 hover:text-white transition-colors">Privacy</a>
-              <a href="#" className="text-sm text-zinc-500 hover:text-white transition-colors">Cookies</a>
+          <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center">
+            <p className="text-gray-400 text-sm">© 2025 WZRD.STUDIO. All rights reserved.</p>
+            <div className="flex space-x-6 mt-4 md:mt-0 text-sm text-gray-400">
+              <a href="#" className="hover:text-white transition-colors">Terms</a>
+              <a href="#" className="hover:text-white transition-colors">Privacy</a>
+              <a href="#" className="hover:text-white transition-colors">Security</a>
             </div>
           </div>
         </div>
       </footer>
-    </div>;
+
+      {/* Video Modal */}
+      <AnimatePresence>
+        {isVideoModalOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => setIsVideoModalOpen(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white/10 backdrop-blur-20 border border-white/20 rounded-2xl p-8 max-w-4xl w-full"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="aspect-video bg-gradient-to-br from-electric/20 to-neon-purple/20 rounded-xl flex items-center justify-center">
+                <div className="text-center">
+                  <Play className="w-20 h-20 text-white mb-4 mx-auto" />
+                  <p className="text-lg text-gray-300">Demo video coming soon</p>
+                </div>
+              </div>
+              <div className="mt-6 text-center">
+                <GlassButton
+                  onClick={() => setIsVideoModalOpen(false)}
+                  variant="ghost"
+                >
+                  Close
+                </GlassButton>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
 };
+
 export default Landing;

@@ -37,6 +37,13 @@
     --input: 240 20% 92%;
     --ring: 230 50% 25%;
 
+    /* Cyberpunk Neon Palette */
+    --electric: 183 100% 50%;
+    --neon-purple: 280 100% 75%;
+    --cyber-pink: 328 100% 54%;
+    --deep-space: 224 71% 10%;
+    --void-black: 224 71% 4%;
+    
     /* Odyssey Extended Palette */
     --cosmic-void: 220 25% 8%;
     --nebula-purple: 270 60% 50%;
