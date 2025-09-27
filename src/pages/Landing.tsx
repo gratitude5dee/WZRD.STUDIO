@@ -166,7 +166,7 @@ const Landing = () => {
                 </video>
               </div>
               <div className="mt-6 text-center">
-                <div className="text-white/80 font-semibold">AI Music Video Generator</div>
+                <div className="text-white/80 font-semibold">Generative Media Interface</div>
                 <div className="text-sm text-white/60 mt-1">Professional quality in minutes</div>
               </div>
             </div>
