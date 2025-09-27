@@ -119,7 +119,7 @@ const Landing = () => {
               Transform your audio tracks into stunning <span className="text-cosmic-stellar">music videos</span>, 
               <span className="text-cosmic-plasma"> lyrical visualizations</span>, and 
               <span className="text-cosmic-quantum"> promotional clips</span> with our cutting-edge generative media platform 
-              powered by <span className="glow-text-primary">intelligent audio analysis</span>.
+              powered by <span className="glow-text-primary">leading multi-modal image, audio, and video models</span>.
             </motion.p>
             
             {/* Cosmic CTA Buttons */}
