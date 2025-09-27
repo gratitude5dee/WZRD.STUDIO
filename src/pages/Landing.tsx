@@ -59,20 +59,12 @@ const Landing = () => {
       
       {/* Hero Section - Cosmic Portal */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-        {/* Cosmic Background Layers */}
-        <div className="absolute inset-0 bg-cosmic-void" />
-        <div className="absolute inset-0 bg-stellar-burst opacity-30" />
-        <div className="absolute inset-0 bg-quantum-flow opacity-20" />
-        
         {/* Background video with cosmic filter */}
-        <video autoPlay muted loop playsInline className="absolute inset-0 w-full h-full object-cover opacity-40" style={{
-        filter: 'brightness(0.3) saturate(1.2) hue-rotate(220deg)'
+        <video autoPlay muted loop playsInline className="absolute inset-0 w-full h-full object-cover opacity-70" style={{
+        filter: 'brightness(0.5) saturate(1.2) hue-rotate(220deg)'
       }}>
           <source src="/bgvid.mp4" type="video/mp4" />
         </video>
-
-        {/* Cosmic particles overlay */}
-        <div className="absolute inset-0 particle-field opacity-30 pointer-events-none" />
         
         {/* Content - Cosmic Portal Interface */}
         <div className="container mx-auto px-6 z-20 max-w-6xl relative">
@@ -115,7 +107,7 @@ const Landing = () => {
             </motion.h2>
             
             {/* Sub-headline with stellar accent */}
-            <motion.p variants={fadeInUp} className="text-xl md:text-2xl text-muted-foreground max-w-4xl mx-auto mb-12 font-light">
+            <motion.p variants={fadeInUp} className="text-xl md:text-2xl text-white max-w-4xl mx-auto mb-12 font-light">
               Transform your audio tracks into stunning <span className="text-cosmic-stellar">music videos</span>, 
               <span className="text-cosmic-plasma"> lyrical visualizations</span>, and 
               <span className="text-cosmic-quantum"> promotional clips</span> with our cutting-edge generative media platform 
