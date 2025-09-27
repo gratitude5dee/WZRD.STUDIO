@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import { GlassButton } from '@/components/ui/glass-button';
 import { GlassCard } from '@/components/ui/glass-card';
 import { Button } from '@/components/ui/button';
-import { Logo } from '@/components/ui/logo';
+import { AnimatedLogo } from '@/components/ui/animated-logo';
 
 const Landing = () => {
   const navigate = useNavigate();
@@ -70,7 +70,7 @@ const Landing = () => {
       <nav className="fixed top-0 w-full z-50 backdrop-blur-xl bg-white/5 border-b border-white/10">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <Logo size="lg" showVersion={false} />
+            <AnimatedLogo size="lg" showVersion={false} />
             <div className="hidden md:flex space-x-8">
               <a href="#features" className="text-white/80 hover:text-white transition-colors">Features</a>
               <a href="#how-it-works" className="text-white/80 hover:text-white transition-colors">How It Works</a>
