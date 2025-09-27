@@ -118,7 +118,7 @@ const Landing = () => {
             <motion.p variants={fadeInUp} className="text-xl md:text-2xl text-muted-foreground max-w-4xl mx-auto mb-12 font-light">
               Transform your audio tracks into stunning <span className="text-cosmic-stellar">music videos</span>, 
               <span className="text-cosmic-plasma"> lyrical visualizations</span>, and 
-              <span className="text-cosmic-quantum"> promotional clips</span> with our cutting-edge AI platform 
+              <span className="text-cosmic-quantum"> promotional clips</span> with our cutting-edge generative media platform 
               powered by <span className="glow-text-primary">intelligent audio analysis</span>.
             </motion.p>
             
