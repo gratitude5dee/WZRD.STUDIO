@@ -151,8 +151,19 @@ const Landing = () => {
             className="relative"
           >
             <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-3xl p-8 shadow-2xl">
-              <div className="aspect-video bg-gradient-to-br from-refined-rich/20 to-refined-pink/20 rounded-2xl flex items-center justify-center">
-                <div className="text-8xl animate-pulse">🎬</div>
+              <div className="aspect-video bg-gradient-to-br from-refined-rich/20 to-refined-pink/20 rounded-2xl overflow-hidden">
+                <video 
+                  className="w-full h-full object-cover rounded-2xl"
+                  autoPlay 
+                  loop 
+                  muted 
+                  playsInline
+                >
+                  <source src="/bgvid.mp4" type="video/mp4" />
+                  <div className="flex items-center justify-center h-full">
+                    <div className="text-8xl animate-pulse">🎬</div>
+                  </div>
+                </video>
               </div>
               <div className="mt-6 text-center">
                 <div className="text-white/80 font-semibold">AI Music Video Generator</div>
