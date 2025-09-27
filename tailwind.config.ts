@@ -62,12 +62,13 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				// Cyberpunk Neon Color Palette
-				electric: 'hsl(var(--electric))',
-				'neon-purple': 'hsl(var(--neon-purple))',
-				'cyber-pink': 'hsl(var(--cyber-pink))',
-				'deep-space': 'hsl(var(--deep-space))',
-				'void-black': 'hsl(var(--void-black))',
+				// Refined Purple Palette (Partiful-inspired)
+				'refined-deep': 'hsl(var(--refined-deep))',
+				'refined-rich': 'hsl(var(--refined-rich))',
+				'refined-lavender': 'hsl(var(--refined-lavender))',
+				'refined-pink': 'hsl(var(--refined-pink))',
+				'surface-dark': 'hsl(var(--surface-dark))',
+				'surface-light': 'hsl(var(--surface-light))',
 				cosmic: {
 					void: 'hsl(var(--cosmic-void))',
 					nebula: 'hsl(var(--nebula-purple))',
@@ -198,6 +199,11 @@ export default {
 				'gradient-dark': 'radial-gradient(ellipse at bottom, hsl(224, 71%, 10%) 0%, hsl(224, 71%, 4%) 100%)',
 				'gradient-hero': 'linear-gradient(135deg, rgba(76, 29, 149, 0.5) 0%, rgba(124, 58, 237, 0.5) 35%, rgba(139, 92, 246, 0.5) 75%, rgba(167, 139, 250, 0.3) 100%)',
 				'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+				// Refined gradients
+				'refined-gradient': 'linear-gradient(135deg, hsl(var(--refined-deep)) 0%, hsl(var(--refined-rich)) 50%, hsl(var(--refined-pink)) 100%)',
+				'surface-gradient': 'linear-gradient(135deg, hsl(var(--surface-dark)) 0%, hsl(var(--surface-light)) 100%)',
+				'glass-gradient': 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.04) 100%)',
+				'mesh-pattern': 'radial-gradient(circle at 50% 50%, hsl(var(--refined-rich) / 0.3) 0%, transparent 50%)',
 				// Odyssey Cosmic Gradients
 				'cosmic-void': 'radial-gradient(circle at center, hsl(var(--cosmic-void)) 0%, hsl(var(--background)) 100%)',
 				'nebula-field': 'linear-gradient(135deg, hsl(var(--glow-primary) / 0.2), hsl(var(--glow-secondary) / 0.3), hsl(var(--glow-accent) / 0.2))',
