@@ -1,7 +1,9 @@
 
 import React, { useState } from 'react';
-import { Upload, Play, Pause } from 'lucide-react';
+import { Upload, Play, Pause, Sparkles } from 'lucide-react';
 import BlockBase, { ConnectionPoint } from './BlockBase';
+import { useGeminiVideo } from '@/hooks/useGeminiVideo';
+import { geminiVideoModel } from '@/types/modelTypes';
 
 export interface VideoBlockProps {
   id: string;
@@ -26,9 +28,14 @@ const VideoBlock: React.FC<VideoBlockProps> = ({
   onShowHistory,
   onDragEnd
 }) => {
-  const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [prompt, setPrompt] = useState<string>("");
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
+  const { isGenerating, videoUrl, progress, generateVideo } = useGeminiVideo();
+
+  const handleGenerate = () => {
+    if (!prompt.trim()) return;
+    generateVideo(prompt);
+  };
 
   return (
     <BlockBase
@@ -46,50 +53,68 @@ const VideoBlock: React.FC<VideoBlockProps> = ({
       onDragEnd={onDragEnd}
     >
       <div className="space-y-4">
-        <div className="flex items-center justify-between text-xs text-zinc-500 mb-1">
-          <div>Try to...</div>
-          <div className="text-amber-400">Model: Pika</div>
-        </div>
-        
-        {!videoUrl ? (
-          <div className="border-2 border-dashed border-zinc-700 rounded-lg p-8 flex flex-col items-center justify-center gap-4 min-h-[150px] bg-zinc-800/20">
-            <div className="flex flex-wrap gap-2 justify-center">
-              <button className="flex items-center gap-1 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 rounded text-xs">
-                <Upload size={12} />
-                Upload video
-              </button>
-              <button className="flex items-center gap-1 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 rounded text-xs">
-                Generate from image
-              </button>
-            </div>
-            
-            <input
-              type="text"
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              className="w-full bg-zinc-800/50 border border-zinc-700 px-3 py-1.5 rounded text-sm focus:outline-none focus:border-amber-500"
-              placeholder="Try 'A whimsical animated clip about dreams'"
-            />
+        <div className="flex items-center justify-between text-xs mb-2">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-3 h-3 text-amber-400" />
+            <span className="text-zinc-400">{geminiVideoModel.name}</span>
           </div>
-        ) : (
+          <span className="text-amber-400 text-xs">{geminiVideoModel.time}</span>
+        </div>
+
+        {videoUrl ? (
           <div className="relative group">
             <video
               src={videoUrl}
               className="w-full h-auto rounded-lg"
               loop
-              autoPlay={isPlaying}
-              muted
+              controls
             />
-            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-              <button 
-                className="p-2 bg-zinc-800 hover:bg-zinc-700 rounded"
-                onClick={() => setIsPlaying(!isPlaying)}
-              >
-                {isPlaying ? <Pause size={16} /> : <Play size={16} />}
-              </button>
-            </div>
+          </div>
+        ) : (
+          <div className="border-2 border-dashed border-zinc-700 rounded-lg p-6 flex flex-col gap-3 min-h-[150px] bg-zinc-800/20">
+            <input
+              type="text"
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              className="w-full bg-zinc-800/50 border border-zinc-700 px-3 py-1.5 rounded text-sm focus:outline-none focus:border-amber-500"
+              placeholder="Describe the video you want to create..."
+              disabled={isGenerating}
+            />
+
+            {isGenerating && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-xs text-zinc-400">
+                  <span>Generating video...</span>
+                  <span>{progress}%</span>
+                </div>
+                <div className="w-full bg-zinc-800 rounded-full h-2">
+                  <div 
+                    className="bg-gradient-to-r from-amber-600 to-amber-400 h-2 rounded-full transition-all duration-500"
+                    style={{ width: `${progress}%` }}
+                  />
+                </div>
+              </div>
+            )}
           </div>
         )}
+
+        <button
+          onClick={handleGenerate}
+          disabled={isGenerating || !prompt.trim()}
+          className="w-full px-3 py-2 text-sm bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-white rounded shadow-glow-purple-sm hover:shadow-glow-purple-md transition-all-std disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+        >
+          {isGenerating ? (
+            <>
+              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              Generating Video...
+            </>
+          ) : (
+            <>
+              <Sparkles className="w-4 h-4" />
+              Generate Video
+            </>
+          )}
+        </button>
       </div>
     </BlockBase>
   );
