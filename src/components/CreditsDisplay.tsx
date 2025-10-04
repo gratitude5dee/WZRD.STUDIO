@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { useAuth } from '@/providers/AuthProvider';
@@ -41,16 +40,14 @@ const CreditsDisplay = ({ showTooltip = true, showButton = false }: CreditsDispl
   if (showTooltip) {
     return (
       <div className="flex items-center gap-2">
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              {content}
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Credits for AI generations</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            {content}
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Credits for AI generations</p>
+          </TooltipContent>
+        </Tooltip>
         {showButton && (
           <Button 
             variant="ghost" 
