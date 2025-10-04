@@ -143,7 +143,8 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
                 type="text"
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
-                className="w-full bg-zinc-800/50 border border-zinc-700 px-3 py-1.5 rounded text-sm focus:outline-none focus:border-purple-500"
+                onPointerDown={(e) => e.stopPropagation()}
+                className="w-full bg-zinc-800/50 border border-zinc-700 px-3 py-1.5 rounded text-sm focus:outline-none focus:border-purple-500 pointer-events-auto"
                 placeholder="Describe how to edit the image..."
               />
             )}
@@ -154,7 +155,8 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
               type="text"
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              className="w-full bg-zinc-800/50 border border-zinc-700 px-3 py-1.5 rounded text-sm focus:outline-none focus:border-purple-500"
+              onPointerDown={(e) => e.stopPropagation()}
+              className="w-full bg-zinc-800/50 border border-zinc-700 px-3 py-1.5 rounded text-sm focus:outline-none focus:border-purple-500 pointer-events-auto"
               placeholder="Describe the image you want to create..."
               disabled={isGenerating}
             />

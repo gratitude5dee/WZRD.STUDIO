@@ -105,6 +105,7 @@ const BlockBase: React.FC<BlockProps> = ({
       transition={{ duration: 0.3 }}
       layout
       drag
+      dragListener={false}
       dragControls={dragControls}
       dragMomentum={false}
       dragElastic={0.1}
