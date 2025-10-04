@@ -65,6 +65,16 @@
     --glow-secondary: 270 70% 65%;
     --glow-accent: 45 100% 70%;
     
+    /* AI Canvas Design Tokens */
+    --canvas-bg: 0 0% 7%;           /* #121212 - Very dark grey canvas */
+    --block-bg: 0 0% 12%;           /* #1E1E1E - Floating dark grey blocks */
+    --text-primary: 0 0% 96%;       /* #F5F5F5 - Off-white text */
+    --text-secondary: 0 0% 53%;     /* #888888 - Medium grey hints */
+    --accent-blue: 217 91% 60%;     /* #3B82F6 - Neutral blue */
+    --accent-purple: 258 90% 66%;   /* #8B5CF6 - Purple alternative */
+    --connector-default: 0 0% 27%;  /* #444444 - Subtle grey */
+    --connector-active: 217 91% 60%; /* #3B82F6 - Active connector */
+    
     --radius: 1rem;
   }
 
@@ -107,6 +117,16 @@
     --glass-secondary: 270 60% 50% / 0.12;
     --glass-accent: 45 95% 65% / 0.18;
     --glass-backdrop: 220 25% 6% / 0.6;
+    
+    /* AI Canvas Design Tokens (Dark Mode Optimized) */
+    --canvas-bg: 0 0% 7%;           /* #121212 - Very dark grey canvas */
+    --block-bg: 0 0% 12%;           /* #1E1E1E - Floating dark grey blocks */
+    --text-primary: 0 0% 96%;       /* #F5F5F5 - Off-white text */
+    --text-secondary: 0 0% 53%;     /* #888888 - Medium grey hints */
+    --accent-blue: 217 91% 60%;     /* #3B82F6 - Neutral blue */
+    --accent-purple: 258 90% 66%;   /* #8B5CF6 - Purple alternative */
+    --connector-default: 0 0% 27%;  /* #444444 - Subtle grey */
+    --connector-active: 217 91% 60%; /* #3B82F6 - Active connector */
   }
 }
 
@@ -148,6 +168,13 @@ body::after {
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
+}
+
+/* AI Canvas dot grid pattern */
+.canvas-dot-grid {
+  background-color: hsl(var(--canvas-bg));
+  background-image: radial-gradient(circle, hsl(var(--connector-default)) 1px, transparent 1px);
+  background-size: 20px 20px;
 }
 
 ::-webkit-scrollbar-track {

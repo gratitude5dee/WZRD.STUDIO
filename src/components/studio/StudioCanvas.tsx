@@ -231,12 +231,7 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock, onAddBlock }: St
   return (
     <div 
       ref={canvasRef}
-      className="flex-1 bg-black overflow-auto p-6 relative"
-      style={{ 
-        backgroundImage: 'radial-gradient(#333 1px, transparent 0)',
-        backgroundSize: '24px 24px',
-        backgroundPosition: '-12px -12px'
-      }}
+      className="flex-1 canvas-dot-grid overflow-auto p-6 relative"
       onClick={handleCanvasClick}
       onMouseMove={handleMouseMove}
       onMouseUp={() => {
@@ -263,23 +258,22 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock, onAddBlock }: St
               {/* Glow effect */}
               <path 
                 d={path}
-                stroke="#9b87f5"
-                strokeWidth="10"
+                stroke="hsl(217 91% 60%)"
+                strokeWidth="8"
                 fill="none"
-                opacity="0.15"
-                filter="blur(4px)"
+                opacity="0.2"
+                filter="blur(3px)"
               />
               {/* Main line */}
               <path 
                 d={path}
-                stroke="url(#gradient)"
-                strokeWidth="2.5"
+                stroke="hsl(217 91% 60%)"
+                strokeWidth="2"
                 fill="none"
-                opacity="0.9"
-                className="animate-pulse"
+                opacity="0.8"
               />
               {/* Animated data flow particles */}
-              <circle r="3" fill="#d487f5" opacity="0.8">
+              <circle r="2" fill="hsl(258 90% 66%)" opacity="0.9">
                 <animateMotion 
                   dur="3s" 
                   repeatCount="indefinite"
@@ -296,20 +290,20 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock, onAddBlock }: St
             {/* Glow effect */}
             <path 
               d={calculateConnectionPath(connectionStart, mousePosition)} 
-              stroke="#9b87f5"
-              strokeWidth="10"
+              stroke="hsl(217 91% 60%)"
+              strokeWidth="8"
               fill="none"
-              opacity="0.15"
-              filter="blur(4px)"
+              opacity="0.2"
+              filter="blur(3px)"
             />
             {/* Main line */}
             <path 
               d={calculateConnectionPath(connectionStart, mousePosition)}
-              stroke="#9b87f5"
-              strokeWidth="2.5"
+              stroke="hsl(217 91% 60%)"
+              strokeWidth="2"
               fill="none"
               strokeDasharray="5,5"
-              opacity="0.8"
+              opacity="0.6"
             />
           </g>
         )}

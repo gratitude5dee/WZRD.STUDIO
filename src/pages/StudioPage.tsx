@@ -70,7 +70,7 @@ const StudioPage = () => {
   const selectedBlockType = blocks.find(b => b.id === selectedBlockId)?.type || null;
   
   return (
-    <div className="h-screen flex flex-col bg-black text-white">
+    <div className="h-screen flex flex-col bg-canvas-bg text-canvas-text-primary">
       <AppHeader />
       
       <div className="flex-1 flex overflow-hidden">

@@ -95,8 +95,10 @@ const BlockBase: React.FC<BlockProps> = ({
   return (
     <motion.div
       ref={blockRef}
-      className={`w-full min-h-[16rem] rounded-lg bg-zinc-900 border ${isSelected ? 'border-blue-500' : 'border-zinc-800'} 
-                  overflow-hidden shadow-md mb-4 relative`}
+      className={cn(
+        "w-full min-h-[16rem] rounded-lg bg-canvas-block border overflow-hidden shadow-lg mb-4 relative",
+        isSelected ? 'border-canvas-accent-blue' : 'border-canvas-connector-default'
+      )}
       onClick={onSelect}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -116,16 +118,16 @@ const BlockBase: React.FC<BlockProps> = ({
       onMouseLeave={() => supportsConnections && setShowConnections(false)}
     >
       <div 
-        className="bg-zinc-800 px-4 py-2 flex items-center justify-between cursor-move"
+        className="bg-canvas-bg/50 px-4 py-2 flex items-center justify-between cursor-move border-b border-canvas-connector-default"
         onPointerDown={(e) => {
           dragControls.start(e);
           e.stopPropagation();
         }}
       >
         <div className="flex items-center">
-          <h3 className="text-xs font-semibold text-zinc-400">{title}</h3>
+          <h3 className="text-xs font-semibold text-canvas-text-primary uppercase tracking-wide">{title}</h3>
           {generationTime && (
-            <div className="ml-2 flex items-center text-xs text-zinc-500">
+            <div className="ml-2 flex items-center text-xs text-canvas-text-secondary">
               <Clock className="h-3 w-3 mr-1" />
               {generationTime}
             </div>
@@ -134,7 +136,7 @@ const BlockBase: React.FC<BlockProps> = ({
         <div className="flex items-center gap-2">
           {onShowHistory && (
             <button 
-              className="text-zinc-500 hover:text-zinc-300"
+              className="text-canvas-text-secondary hover:text-canvas-text-primary transition-colors"
               onClick={(e) => {
                 e.stopPropagation();
                 onShowHistory();
@@ -143,7 +145,7 @@ const BlockBase: React.FC<BlockProps> = ({
               <History className="h-4 w-4" />
             </button>
           )}
-          <button className="text-zinc-500 hover:text-zinc-300">
+          <button className="text-canvas-text-secondary hover:text-canvas-text-primary transition-colors">
             <HelpCircle className="h-4 w-4" />
           </button>
         </div>
@@ -156,7 +158,6 @@ const BlockBase: React.FC<BlockProps> = ({
       {/* Connection Points */}
       {(supportsConnections || showConnections) && connectionPoints.map(point => {
         let positionClasses = '';
-        let glowColor = point.type === 'input' ? 'shadow-[0_0_10px_rgba(155,135,245,0.5)]' : 'shadow-[0_0_10px_rgba(212,135,245,0.5)]';
         
         switch(point.position) {
           case 'top':
@@ -178,17 +179,18 @@ const BlockBase: React.FC<BlockProps> = ({
             key={point.id}
             ref={(el) => connectionPointRefs.current[point.id] = el}
             className={cn(
-              "absolute w-4 h-4 rounded-full z-10 cursor-pointer transition-all duration-300",
+              "absolute w-3 h-3 rounded-full z-10 cursor-pointer transition-all duration-200",
               positionClasses,
-              glowColor,
-              point.type === 'input' ? 'bg-[#9b87f5] hover:bg-[#a597f7]' : 'bg-[#d487f5] hover:bg-[#dc9ff8]'
+              point.type === 'input' 
+                ? 'bg-canvas-accent-blue hover:bg-canvas-accent-blue/80 hover:shadow-[0_0_8px_rgba(59,130,246,0.6)]' 
+                : 'bg-canvas-accent-purple hover:bg-canvas-accent-purple/80 hover:shadow-[0_0_8px_rgba(139,92,246,0.6)]'
             )}
             title={point.label}
             onMouseDown={(e) => point.type === 'output' && handleConnectionStart(point.id, e)}
             onClick={() => point.type === 'input' && handleConnectionEnd(point.id)}
           >
-            <span className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white text-xs font-bold">
-              {point.type === 'input' ? '+' : '→'}
+            <span className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white text-[10px] font-bold">
+              +
             </span>
           </div>
         );

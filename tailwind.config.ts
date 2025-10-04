@@ -88,6 +88,16 @@ export default {
 					primary: 'hsl(var(--glow-primary))',
 					secondary: 'hsl(var(--glow-secondary))',
 					accent: 'hsl(var(--glow-accent))'
+				},
+				canvas: {
+					bg: 'hsl(var(--canvas-bg))',
+					block: 'hsl(var(--block-bg))',
+					'text-primary': 'hsl(var(--text-primary))',
+					'text-secondary': 'hsl(var(--text-secondary))',
+					'accent-blue': 'hsl(var(--accent-blue))',
+					'accent-purple': 'hsl(var(--accent-purple))',
+					'connector-default': 'hsl(var(--connector-default))',
+					'connector-active': 'hsl(var(--connector-active))'
 				}
 			},
 			fontFamily: {
