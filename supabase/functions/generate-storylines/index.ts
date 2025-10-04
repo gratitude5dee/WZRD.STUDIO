@@ -59,10 +59,26 @@ serve(async (req) => {
       return errorResponse('Project not found or access denied', 404, projectError?.message);
     }
 
+    // Fetch existing storylines if generating an alternative
+    let existingStorylines: any[] = [];
+    if (generate_alternative) {
+      const { data: storylines, error: storylinesError } = await supabaseClient
+        .from('storylines')
+        .select('title, description')
+        .eq('project_id', project_id)
+        .order('created_at', { ascending: false })
+        .limit(5);
+      
+      if (!storylinesError && storylines) {
+        existingStorylines = storylines;
+        console.log(`Found ${existingStorylines.length} existing storylines to avoid duplicating`);
+      }
+    }
+
     // Step 1: Generate storyline and scenes using Gemini with structured output
     console.log('Generating storyline with Gemini AI (structured JSON output)...');
     const storylineSystemPrompt = getStorylineSystemPrompt(generate_alternative);
-    const storylineUserPrompt = getStorylineUserPrompt(project, generate_alternative);
+    const storylineUserPrompt = getStorylineUserPrompt(project, generate_alternative, existingStorylines);
     
     // Import schemas dynamically
     const { STORYLINE_RESPONSE_SCHEMA, ALTERNATIVE_STORYLINE_SCHEMA } = await import('./gemini-schemas.ts');
@@ -81,7 +97,7 @@ serve(async (req) => {
           prompt: storylineUserPrompt,
           model: generate_alternative ? 'google/gemini-2.5-flash' : 'google/gemini-2.5-pro',
           responseSchema: responseSchema,
-          temperature: generate_alternative ? 0.8 : 0.7
+          temperature: generate_alternative ? 1.0 : 0.7
         }),
       }
     );

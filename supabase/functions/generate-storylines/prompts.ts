@@ -63,7 +63,7 @@ CREATIVE EXCELLENCE STANDARDS:
 ${isAlternative ? 'Generate a DIFFERENT creative take on the same concept - explore alternative narrative approaches, tones, or visual styles.' : 'Generate between 5-10 scenes with 3-6 key shots per scene.'}`;
 }
 
-export function getStorylineUserPrompt(project: any, isAlternative: boolean): string {
+export function getStorylineUserPrompt(project: any, isAlternative: boolean, existingStorylines: any[] = []): string {
   const projectContext = `
 PROJECT DETAILS:
 ==============
@@ -88,15 +88,24 @@ Call to Action: ${project.call_to_action}` : ''}
 `;
 
   if (isAlternative) {
-    return `${projectContext}
+    const existingStorylinesText = existingStorylines.length > 0 
+      ? `\n\nEXISTING STORYLINES (DO NOT DUPLICATE):\n${existingStorylines.map((s, i) => 
+          `${i + 1}. "${s.title}": ${s.description}`
+        ).join('\n')}\n\nYou MUST create something distinctly different from these existing storylines.`
+      : '';
+    
+    return `${projectContext}${existingStorylinesText}
 
 TASK: Generate an ALTERNATIVE storyline that offers a completely different creative approach to the same project.
-- Take a different narrative angle or perspective
-- Explore a different emotional tone or pacing
-- Consider alternative visual styles or cinematography approaches
-- Maintain the core project requirements but be creatively bold
 
-Focus on creating a compelling alternative vision that stands apart from the primary storyline.`;
+REQUIREMENTS:
+- Take a different narrative angle or perspective than existing storylines
+- Explore a different emotional tone, pacing, or story structure
+- Consider alternative visual styles or cinematography approaches
+- Maintain the core project requirements but be creatively bold and unique
+- The title, concept, and approach MUST be distinctly different from existing versions
+
+Focus on creating a compelling alternative vision that stands COMPLETELY APART from any previous storylines.`;
   }
 
   return `${projectContext}
