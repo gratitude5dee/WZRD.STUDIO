@@ -26,6 +26,7 @@ export interface BlockProps {
   onFinishConnection?: (blockId: string, pointId: string) => void;
   position?: { x: number, y: number };
   onDragEnd?: (position: { x: number, y: number }) => void;
+  onRegisterRef?: (blockId: string, element: HTMLElement | null, connectionPoints: Record<string, { x: number; y: number }>) => void;
 }
 
 const BlockBase: React.FC<BlockProps> = ({ 
@@ -42,10 +43,32 @@ const BlockBase: React.FC<BlockProps> = ({
   onStartConnection,
   onFinishConnection,
   position = { x: 0, y: 0 },
-  onDragEnd
+  onDragEnd,
+  onRegisterRef
 }) => {
   const [showConnections, setShowConnections] = useState(false);
   const dragControls = useDragControls();
+  const blockRef = React.useRef<HTMLDivElement>(null);
+  const connectionPointRefs = React.useRef<Record<string, HTMLDivElement | null>>({});
+
+  // Register block and connection point positions with parent
+  React.useEffect(() => {
+    if (onRegisterRef && blockRef.current) {
+      const positions: Record<string, { x: number; y: number }> = {};
+      
+      Object.entries(connectionPointRefs.current).forEach(([pointId, element]) => {
+        if (element) {
+          const rect = element.getBoundingClientRect();
+          positions[pointId] = {
+            x: rect.left + rect.width / 2,
+            y: rect.top + rect.height / 2
+          };
+        }
+      });
+      
+      onRegisterRef(id, blockRef.current, positions);
+    }
+  }, [id, onRegisterRef, connectionPoints]);
 
   const handleConnectionStart = (pointId: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -62,6 +85,7 @@ const BlockBase: React.FC<BlockProps> = ({
 
   return (
     <motion.div
+      ref={blockRef}
       className={`w-full min-h-[16rem] rounded-lg bg-zinc-900 border ${isSelected ? 'border-blue-500' : 'border-zinc-800'} 
                   overflow-hidden shadow-md mb-4 relative`}
       onClick={onSelect}
@@ -143,6 +167,7 @@ const BlockBase: React.FC<BlockProps> = ({
         return (
           <div 
             key={point.id}
+            ref={(el) => connectionPointRefs.current[point.id] = el}
             className={cn(
               "absolute w-4 h-4 rounded-full z-10 cursor-pointer transition-all duration-300",
               positionClasses,

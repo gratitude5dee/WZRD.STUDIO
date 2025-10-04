@@ -15,6 +15,9 @@ export interface VideoBlockProps {
   onFinishConnection?: (blockId: string, pointId: string) => void;
   onShowHistory?: () => void;
   onDragEnd?: (position: { x: number, y: number }) => void;
+  onRegisterRef?: (blockId: string, element: HTMLElement | null, connectionPoints: Record<string, { x: number; y: number }>) => void;
+  getInput?: (blockId: string, inputId: string) => any;
+  setOutput?: (blockId: string, outputId: string, value: any) => void;
 }
 
 const VideoBlock: React.FC<VideoBlockProps> = ({ 
@@ -26,11 +29,31 @@ const VideoBlock: React.FC<VideoBlockProps> = ({
   onStartConnection,
   onFinishConnection,
   onShowHistory,
-  onDragEnd
+  onDragEnd,
+  onRegisterRef,
+  getInput,
+  setOutput
 }) => {
   const [prompt, setPrompt] = useState<string>("");
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const { isGenerating, videoUrl, progress, generateVideo } = useGeminiVideo();
+
+  // Check for connected input and use it as prompt if available
+  React.useEffect(() => {
+    if (getInput) {
+      const connectedInput = getInput(id, 'prompt-input');
+      if (connectedInput && typeof connectedInput === 'string') {
+        setPrompt(connectedInput);
+      }
+    }
+  }, [getInput, id]);
+
+  // Update output whenever video is generated
+  React.useEffect(() => {
+    if (videoUrl && setOutput) {
+      setOutput(id, 'video-output', videoUrl);
+    }
+  }, [videoUrl, setOutput, id]);
 
   const handleGenerate = () => {
     if (!prompt.trim()) return;
@@ -51,6 +74,7 @@ const VideoBlock: React.FC<VideoBlockProps> = ({
       onStartConnection={onStartConnection}
       onFinishConnection={onFinishConnection}
       onDragEnd={onDragEnd}
+      onRegisterRef={onRegisterRef}
     >
       <div className="space-y-4">
         <div className="flex items-center justify-between text-xs mb-2">

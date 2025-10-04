@@ -1,25 +1,17 @@
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import TextBlock from './blocks/TextBlock';
 import ImageBlock from './blocks/ImageBlock';
 import VideoBlock from './blocks/VideoBlock';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
-import { ConnectionPoint } from './blocks/BlockBase';
+import { ConnectionPoint } from '@/types/blockTypes';
+import { useBlockDataFlow } from '@/hooks/useBlockDataFlow';
 
 interface Block {
   id: string;
   type: 'text' | 'image' | 'video';
   position?: { x: number, y: number };
-}
-
-interface Connection {
-  id: string;
-  sourceBlockId: string;
-  sourcePointId: string;
-  targetBlockId: string;
-  targetPointId: string;
-  path?: string;
 }
 
 interface StudioCanvasProps {
@@ -30,45 +22,94 @@ interface StudioCanvasProps {
 
 type ViewMode = 'normal' | 'compact' | 'grid';
 
+interface BlockRef {
+  element: HTMLElement;
+  connectionPoints: Record<string, { x: number; y: number }>;
+}
+
 const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock }: StudioCanvasProps) => {
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
-  const [connections, setConnections] = useState<Connection[]>([]);
   const [isDraggingConnection, setIsDraggingConnection] = useState(false);
   const [connectionStart, setConnectionStart] = useState<{blockId: string, pointId: string, x: number, y: number} | null>(null);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const [blockPositions, setBlockPositions] = useState<Record<string, { x: number, y: number }>>({});
+  const [blockRefs, setBlockRefs] = useState<Record<string, BlockRef>>({});
   const canvasRef = useRef<HTMLDivElement>(null);
   
-  // Function to get the column span based on view mode
+  const {
+    connections,
+    updateBlockOutput,
+    getBlockInput,
+    addConnection,
+    removeConnection,
+    initializeBlock
+  } = useBlockDataFlow();
+
+  // Initialize blocks in data flow system
+  useEffect(() => {
+    blocks.forEach(block => {
+      initializeBlock(block.id, block.type, block.position || { x: 0, y: 0 });
+    });
+  }, [blocks, initializeBlock]);
+
+  // Register block element and its connection points
+  const registerBlockRef = useCallback((blockId: string, element: HTMLElement | null, connectionPoints: Record<string, { x: number; y: number }>) => {
+    if (element) {
+      setBlockRefs(prev => ({
+        ...prev,
+        [blockId]: { element, connectionPoints }
+      }));
+    }
+  }, []);
+
+  // Calculate connection path between two points
+  const calculateConnectionPath = (start: { x: number; y: number }, end: { x: number; y: number }): string => {
+    const dx = end.x - start.x;
+    const dy = end.y - start.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    const curvature = Math.min(distance * 0.5, 100);
+
+    // Horizontal curve
+    return `M${start.x},${start.y} C${start.x + curvature},${start.y} ${end.x - curvature},${end.y} ${end.x},${end.y}`;
+  };
+
+  // Get absolute position of a connection point
+  const getConnectionPointPosition = (blockId: string, pointId: string): { x: number; y: number } | null => {
+    const blockRef = blockRefs[blockId];
+    if (!blockRef || !canvasRef.current) return null;
+
+    const canvasRect = canvasRef.current.getBoundingClientRect();
+    const pointPosition = blockRef.connectionPoints[pointId];
+    
+    if (!pointPosition) return null;
+
+    return {
+      x: pointPosition.x - canvasRect.left + canvasRef.current.scrollLeft,
+      y: pointPosition.y - canvasRect.top + canvasRef.current.scrollTop
+    };
+  };
+  
   const getColSpan = (blockType: string, index: number): string => {
     if (viewMode === 'normal') {
-      // In normal view, each block takes full width
       return 'col-span-3';
     } else if (viewMode === 'compact') {
-      // In compact view, alternate between 2 and 1 columns
       return index % 3 === 0 ? 'col-span-2' : 'col-span-1';
     } else {
-      // In grid view, blocks are arranged in a 3-column grid
       return 'col-span-1';
     }
   };
 
   const handleCanvasClick = (e: React.MouseEvent) => {
-    // Only deselect if clicking directly on the canvas background
     if (e.target === e.currentTarget) {
       onSelectBlock('');
     }
   };
 
   const handleStartConnection = (blockId: string, pointId: string, e: React.MouseEvent) => {
-    if (canvasRef.current) {
-      const rect = canvasRef.current.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      
-      setConnectionStart({ blockId, pointId, x, y });
+    const position = getConnectionPointPosition(blockId, pointId);
+    if (position) {
+      setConnectionStart({ blockId, pointId, x: position.x, y: position.y });
       setIsDraggingConnection(true);
-      setMousePosition({ x, y });
+      setMousePosition(position);
     }
   };
 
@@ -76,8 +117,8 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock }: StudioCanvasPr
     if (isDraggingConnection && canvasRef.current) {
       const rect = canvasRef.current.getBoundingClientRect();
       setMousePosition({
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top
+        x: e.clientX - rect.left + canvasRef.current.scrollLeft,
+        y: e.clientY - rect.top + canvasRef.current.scrollTop
       });
     }
   };
@@ -92,18 +133,11 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock }: StudioCanvasPr
         targetPointId: pointId
       };
       
-      setConnections([...connections, newConnection]);
+      addConnection(newConnection);
     }
     
     setIsDraggingConnection(false);
     setConnectionStart(null);
-  };
-
-  const handleBlockDragEnd = (blockId: string, position: { x: number, y: number }) => {
-    setBlockPositions(prev => ({
-      ...prev,
-      [blockId]: position
-    }));
   };
 
   // Define connection points for each block type
@@ -114,20 +148,18 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock }: StudioCanvasPr
 
   const imageBlockConnectionPoints: ConnectionPoint[] = [
     { id: 'image-output', type: 'output', label: 'Image Output', position: 'right' },
-    { id: 'prompt-input', type: 'input', label: 'Prompt Input', position: 'left' },
-    { id: 'style-input', type: 'input', label: 'Style Input', position: 'top' }
+    { id: 'prompt-input', type: 'input', label: 'Prompt Input', position: 'left' }
   ];
 
   const videoBlockConnectionPoints: ConnectionPoint[] = [
     { id: 'video-output', type: 'output', label: 'Video Output', position: 'right' },
-    { id: 'image-input', type: 'input', label: 'Image Input', position: 'left' },
-    { id: 'prompt-input', type: 'input', label: 'Prompt Input', position: 'top' }
+    { id: 'prompt-input', type: 'input', label: 'Prompt Input', position: 'left' }
   ];
 
   return (
     <div 
       ref={canvasRef}
-      className="flex-1 bg-black overflow-auto p-6"
+      className="flex-1 bg-black overflow-auto p-6 relative"
       style={{ 
         backgroundImage: 'radial-gradient(#333 1px, transparent 0)',
         backgroundSize: '24px 24px',
@@ -135,61 +167,93 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock }: StudioCanvasPr
       }}
       onClick={handleCanvasClick}
       onMouseMove={handleMouseMove}
+      onMouseUp={() => {
+        setIsDraggingConnection(false);
+        setConnectionStart(null);
+      }}
     >
-      {/* Connection lines */}
-      <svg className="absolute top-0 left-0 w-full h-full pointer-events-none">
+      {/* Connection lines SVG */}
+      <svg 
+        className="absolute top-0 left-0 w-full h-full pointer-events-none z-10"
+        style={{ minHeight: '100%', minWidth: '100%' }}
+      >
         {/* Static connections */}
-        {connections.map((conn) => (
-          <g key={conn.id}>
-            {/* Glow effect */}
-            <path 
-              d={`M100,100 C150,150 250,250 300,300`} 
-              stroke="#9b87f5"
-              strokeWidth="10"
-              fill="none"
-              opacity="0.1"
-              filter="blur(3px)"
-            />
-            {/* Main line */}
-            <path 
-              d={`M100,100 C150,150 250,250 300,300`} 
-              stroke="#9b87f5"
-              strokeWidth="3"
-              fill="none"
-              strokeDasharray="none"
-              opacity="0.8"
-            />
-          </g>
-        ))}
+        {connections.map((conn) => {
+          const startPos = getConnectionPointPosition(conn.sourceBlockId, conn.sourcePointId);
+          const endPos = getConnectionPointPosition(conn.targetBlockId, conn.targetPointId);
+          
+          if (!startPos || !endPos) return null;
+          
+          const path = calculateConnectionPath(startPos, endPos);
+          
+          return (
+            <g key={conn.id}>
+              {/* Glow effect */}
+              <path 
+                d={path}
+                stroke="#9b87f5"
+                strokeWidth="10"
+                fill="none"
+                opacity="0.15"
+                filter="blur(4px)"
+              />
+              {/* Main line */}
+              <path 
+                d={path}
+                stroke="url(#gradient)"
+                strokeWidth="2.5"
+                fill="none"
+                opacity="0.9"
+                className="animate-pulse"
+              />
+              {/* Animated data flow particles */}
+              <circle r="3" fill="#d487f5" opacity="0.8">
+                <animateMotion 
+                  dur="3s" 
+                  repeatCount="indefinite"
+                  path={path}
+                />
+              </circle>
+            </g>
+          );
+        })}
         
         {/* Active dragging connection */}
         {isDraggingConnection && connectionStart && (
           <g>
             {/* Glow effect */}
             <path 
-              d={`M${connectionStart.x},${connectionStart.y} C${(connectionStart.x + mousePosition.x)/2},${connectionStart.y} ${(connectionStart.x + mousePosition.x)/2},${mousePosition.y} ${mousePosition.x},${mousePosition.y}`} 
+              d={calculateConnectionPath(connectionStart, mousePosition)} 
               stroke="#9b87f5"
               strokeWidth="10"
               fill="none"
-              opacity="0.1"
-              filter="blur(3px)"
+              opacity="0.15"
+              filter="blur(4px)"
             />
             {/* Main line */}
             <path 
-              d={`M${connectionStart.x},${connectionStart.y} C${(connectionStart.x + mousePosition.x)/2},${connectionStart.y} ${(connectionStart.x + mousePosition.x)/2},${mousePosition.y} ${mousePosition.x},${mousePosition.y}`} 
+              d={calculateConnectionPath(connectionStart, mousePosition)}
               stroke="#9b87f5"
-              strokeWidth="3"
+              strokeWidth="2.5"
               fill="none"
               strokeDasharray="5,5"
               opacity="0.8"
             />
           </g>
         )}
+        
+        {/* Gradient definitions */}
+        <defs>
+          <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#9b87f5" />
+            <stop offset="100%" stopColor="#d487f5" />
+          </linearGradient>
+        </defs>
       </svg>
 
       <div 
         className={cn(
-          "max-w-6xl mx-auto py-4 grid grid-cols-3 gap-6",
+          "max-w-6xl mx-auto py-4 grid grid-cols-3 gap-6 relative z-0",
           viewMode === 'normal' && "grid-cols-1", 
           viewMode === 'compact' && "grid-cols-3",
           viewMode === 'grid' && "grid-cols-3"
@@ -215,7 +279,9 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock }: StudioCanvasPr
                   connectionPoints={textBlockConnectionPoints}
                   onStartConnection={handleStartConnection}
                   onFinishConnection={handleFinishConnection}
-                  onDragEnd={(position) => handleBlockDragEnd(block.id, position)}
+                  onRegisterRef={registerBlockRef}
+                  getInput={getBlockInput}
+                  setOutput={updateBlockOutput}
                 />
               </motion.div>
             );
@@ -235,7 +301,9 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock }: StudioCanvasPr
                   connectionPoints={imageBlockConnectionPoints}
                   onStartConnection={handleStartConnection}
                   onFinishConnection={handleFinishConnection}
-                  onDragEnd={(position) => handleBlockDragEnd(block.id, position)}
+                  onRegisterRef={registerBlockRef}
+                  getInput={getBlockInput}
+                  setOutput={updateBlockOutput}
                 />
               </motion.div>
             );
@@ -255,7 +323,9 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock }: StudioCanvasPr
                   connectionPoints={videoBlockConnectionPoints}
                   onStartConnection={handleStartConnection}
                   onFinishConnection={handleFinishConnection}
-                  onDragEnd={(position) => handleBlockDragEnd(block.id, position)}
+                  onRegisterRef={registerBlockRef}
+                  getInput={getBlockInput}
+                  setOutput={updateBlockOutput}
                 />
               </motion.div>
             );
