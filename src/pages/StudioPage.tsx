@@ -13,6 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 interface Block {
   id: string;
   type: 'text' | 'image' | 'video';
+  position?: { x: number; y: number };
 }
 
 const StudioPage = () => {
@@ -53,8 +54,10 @@ const StudioPage = () => {
     initializeProjectContext();
   }, [projectId, setActiveProject]);
   
-  const handleAddBlock = (type: 'text' | 'image' | 'video') => {
-    const newBlock = { id: uuidv4(), type };
+  const handleAddBlock = (blockOrType: Block | 'text' | 'image' | 'video') => {
+    const newBlock = typeof blockOrType === 'string' 
+      ? { id: uuidv4(), type: blockOrType }
+      : blockOrType;
     setBlocks([...blocks, newBlock]);
     setSelectedBlockId(newBlock.id);
   };
@@ -77,6 +80,7 @@ const StudioPage = () => {
           blocks={blocks}
           selectedBlockId={selectedBlockId}
           onSelectBlock={handleSelectBlock}
+          onAddBlock={handleAddBlock}
         />
         
         <StudioRightPanel selectedBlockType={selectedBlockType} />

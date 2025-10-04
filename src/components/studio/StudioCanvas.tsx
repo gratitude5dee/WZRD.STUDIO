@@ -7,6 +7,8 @@ import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { ConnectionPoint } from '@/types/blockTypes';
 import { useBlockDataFlow } from '@/hooks/useBlockDataFlow';
+import { ActionTemplate } from '@/types/studioTypes';
+import { v4 as uuidv4 } from 'uuid';
 
 interface Block {
   id: string;
@@ -18,6 +20,7 @@ interface StudioCanvasProps {
   blocks: Block[];
   selectedBlockId: string | null;
   onSelectBlock: (id: string) => void;
+  onAddBlock?: (block: Block) => void;
 }
 
 type ViewMode = 'normal' | 'compact' | 'grid';
@@ -27,7 +30,7 @@ interface BlockRef {
   connectionPoints: Record<string, { x: number; y: number }>;
 }
 
-const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock }: StudioCanvasProps) => {
+const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock, onAddBlock }: StudioCanvasProps) => {
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [isDraggingConnection, setIsDraggingConnection] = useState(false);
   const [connectionStart, setConnectionStart] = useState<{blockId: string, pointId: string, x: number, y: number} | null>(null);
@@ -146,6 +149,68 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock }: StudioCanvasPr
     setIsDraggingConnection(false);
     setConnectionStart(null);
   };
+
+  // Create connected nodes based on template
+  const handleCreateConnectedNodes = useCallback((sourceBlockId: string, template: ActionTemplate) => {
+    if (!onAddBlock) return;
+    
+    const sourceBlock = blocks.find(b => b.id === sourceBlockId);
+    if (!sourceBlock) return;
+
+    const sourcePos = sourceBlock.position || { x: 0, y: 0 };
+    
+    // Calculate smart positions for new nodes
+    const getSmartPosition = (index: number, total: number, role: 'input' | 'output') => {
+      const spacing = 150;
+      const verticalSpread = (total - 1) * spacing;
+      const startY = sourcePos.y - verticalSpread / 2;
+      
+      return {
+        x: role === 'input' ? sourcePos.x - 400 : sourcePos.x + 400,
+        y: startY + (index * spacing)
+      };
+    };
+
+    // Create new blocks
+    const newBlockIds: string[] = [];
+    template.createNodes.forEach((type, index) => {
+      const newBlockId = uuidv4();
+      const position = getSmartPosition(index, template.createNodes.length, template.nodeRole);
+      
+      const newBlock: Block = {
+        id: newBlockId,
+        type,
+        position
+      };
+      
+      onAddBlock(newBlock);
+      initializeBlock(newBlockId, type, position);
+      newBlockIds.push(newBlockId);
+    });
+
+    // Auto-connect the new blocks after a brief delay to ensure they're rendered
+    setTimeout(() => {
+      newBlockIds.forEach((newBlockId, index) => {
+        const connection = template.nodeRole === 'input' 
+          ? {
+              id: uuidv4(),
+              sourceBlockId: newBlockId,
+              sourcePointId: 'output',
+              targetBlockId: sourceBlockId,
+              targetPointId: `input-${index}`
+            }
+          : {
+              id: uuidv4(),
+              sourceBlockId: sourceBlockId,
+              sourcePointId: 'output',
+              targetBlockId: newBlockId,
+              targetPointId: 'input'
+            };
+        
+        addConnection(connection);
+      });
+    }, 100);
+  }, [blocks, onAddBlock, addConnection, initializeBlock]);
 
   // Define connection points for each block type (memoized to prevent re-renders)
   const textBlockConnectionPoints = useMemo<ConnectionPoint[]>(() => [
@@ -289,6 +354,7 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock }: StudioCanvasPr
                   onRegisterRef={registerBlockRef}
                   getInput={getBlockInput}
                   setOutput={updateBlockOutput}
+                  onCreateConnectedNodes={handleCreateConnectedNodes}
                 />
               </motion.div>
             );
