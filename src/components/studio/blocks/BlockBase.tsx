@@ -96,7 +96,7 @@ const BlockBase: React.FC<BlockProps> = ({
     <motion.div
       ref={blockRef}
       className={cn(
-        "w-full min-h-[16rem] rounded-lg bg-canvas-block border overflow-hidden shadow-lg mb-4 relative",
+        "w-full min-h-[16rem] rounded-lg bg-canvas-block border overflow-hidden shadow-lg mb-4 relative pointer-events-auto",
         isSelected ? 'border-canvas-accent-blue' : 'border-canvas-connector-default'
       )}
       onClick={onSelect}

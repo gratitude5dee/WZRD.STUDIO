@@ -420,7 +420,7 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock, onAddBlock }: St
                   return (
                     <motion.div
                       key={block.id}
-                      className="absolute w-80"
+                      className="absolute w-80 pointer-events-none"
                       style={{
                         left: position.x,
                         top: position.y,
@@ -429,7 +429,9 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock, onAddBlock }: St
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ duration: 0.3 }}
                     >
-                      {blockElement}
+                      <div className="pointer-events-auto">
+                        {blockElement}
+                      </div>
                     </motion.div>
                   );
                 })}
