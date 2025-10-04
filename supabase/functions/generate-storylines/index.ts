@@ -65,28 +65,36 @@ serve(async (req) => {
     const storylineUserPrompt = getStorylineUserPrompt(project, generate_alternative);
     
     // Call Groq via the groq-chat Edge Function with internal request header
-    const { data: groqResponse, error: groqError } = await supabaseClient.functions.invoke('groq-chat', {
-      body: {
-        systemPrompt: storylineSystemPrompt,
-        prompt: storylineUserPrompt,
-        model: 'llama-3.3-70b-versatile', // Using the more powerful model for complex structured output
-        temperature: 0.7,
-        maxTokens: generate_alternative ? 1500 : 4000
-      },
-      headers: {
-        'x-internal-request': 'true'
+    const groqResponse = await fetch(
+      `${Deno.env.get('SUPABASE_URL')}/functions/v1/groq-chat`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-internal-request': 'true',
+        },
+        body: JSON.stringify({
+          systemPrompt: storylineSystemPrompt,
+          prompt: storylineUserPrompt,
+          model: 'llama-3.3-70b-versatile',
+          temperature: 0.7,
+          maxTokens: generate_alternative ? 1500 : 4000
+        }),
       }
-    });
+    );
 
-    if (groqError) {
-      console.error('Groq API error:', groqError);
-      return errorResponse('Failed to generate storyline', 500, groqError);
+    if (!groqResponse.ok) {
+      const errorData = await groqResponse.json().catch(() => ({ error: 'Unknown error' }));
+      console.error('Groq API error:', errorData);
+      return errorResponse('Failed to generate storyline', 500, errorData);
     }
 
-    const storylineData = safeParseJson<StorylineResponseData>(groqResponse.text);
+    const groqData = await groqResponse.json();
+
+    const storylineData = safeParseJson<StorylineResponseData>(groqData.text);
     if (!storylineData || !storylineData.primary_storyline) {
-      console.error('Failed to parse valid response from Groq:', { raw_content: groqResponse.text });
-      return errorResponse('Failed to parse valid storyline from Groq', 500, { raw_content: groqResponse.text });
+      console.error('Failed to parse valid response from Groq:', { raw_content: groqData.text });
+      return errorResponse('Failed to parse valid storyline from Groq', 500, { raw_content: groqData.text });
     }
 
     console.log('Successfully parsed storyline from Groq response');
@@ -101,22 +109,30 @@ serve(async (req) => {
         const analysisUserPrompt = getAnalysisUserPrompt(fullStoryText);
 
         // Call Groq again for analysis with internal request header
-        const { data: analysisResponse, error: analysisError } = await supabaseClient.functions.invoke('groq-chat', {
-          body: {
-            systemPrompt: analysisSystemPrompt,
-            prompt: analysisUserPrompt,
-            model: 'llama-3.3-70b-versatile',
-            temperature: 0.5, // Lower temperature for more consistent structured output
-            maxTokens: 1000
-          },
-          headers: {
-            'x-internal-request': 'true'
+        const analysisResponse = await fetch(
+          `${Deno.env.get('SUPABASE_URL')}/functions/v1/groq-chat`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-internal-request': 'true',
+            },
+            body: JSON.stringify({
+              systemPrompt: analysisSystemPrompt,
+              prompt: analysisUserPrompt,
+              model: 'llama-3.3-70b-versatile',
+              temperature: 0.5,
+              maxTokens: 1000
+            }),
           }
-        });
+        );
 
-        if (analysisError) throw analysisError;
+        if (!analysisResponse.ok) {
+          throw new Error(`Analysis call failed: ${analysisResponse.status}`);
+        }
         
-        analysisData = safeParseJson<AnalysisResponseData>(analysisResponse.text);
+        const analysisData_raw = await analysisResponse.json();
+        analysisData = safeParseJson<AnalysisResponseData>(analysisData_raw.text);
         console.log('Analysis complete.', analysisData ? 'Parsed successfully.' : 'Parsing failed.');
       } catch (analysisError) {
         console.warn('Failed to analyze storyline:', analysisError.message);
