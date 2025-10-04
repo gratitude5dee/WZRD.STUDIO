@@ -22,9 +22,9 @@ const StudioPage = () => {
   const { activeProjectId, setActiveProject } = useAppStore();
   
   const [blocks, setBlocks] = useState<Block[]>([
-    { id: uuidv4(), type: 'text' },
-    { id: uuidv4(), type: 'image' },
-    { id: uuidv4(), type: 'video' },
+    { id: uuidv4(), type: 'text', position: { x: 100, y: 100 } },
+    { id: uuidv4(), type: 'image', position: { x: 500, y: 100 } },
+    { id: uuidv4(), type: 'video', position: { x: 900, y: 100 } },
   ]);
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
   
@@ -56,7 +56,11 @@ const StudioPage = () => {
   
   const handleAddBlock = (blockOrType: Block | 'text' | 'image' | 'video') => {
     const newBlock = typeof blockOrType === 'string' 
-      ? { id: uuidv4(), type: blockOrType }
+      ? { 
+          id: uuidv4(), 
+          type: blockOrType,
+          position: { x: 400 + Math.random() * 200, y: 300 + Math.random() * 200 }
+        }
       : blockOrType;
     setBlocks([...blocks, newBlock]);
     setSelectedBlockId(newBlock.id);

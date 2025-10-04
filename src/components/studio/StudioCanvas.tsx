@@ -1,8 +1,11 @@
 
 import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
+import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
 import TextBlock from './blocks/TextBlock';
 import ImageBlock from './blocks/ImageBlock';
 import VideoBlock from './blocks/VideoBlock';
+import EmptyCanvasState from './EmptyCanvasState';
+import CanvasControls from './CanvasControls';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { ConnectionPoint } from '@/types/blockTypes';
@@ -23,20 +26,19 @@ interface StudioCanvasProps {
   onAddBlock?: (block: Block) => void;
 }
 
-type ViewMode = 'normal' | 'compact' | 'grid';
-
 interface BlockRef {
   element: HTMLElement;
   connectionPoints: Record<string, { x: number; y: number }>;
 }
 
 const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock, onAddBlock }: StudioCanvasProps) => {
-  const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [isDraggingConnection, setIsDraggingConnection] = useState(false);
   const [connectionStart, setConnectionStart] = useState<{blockId: string, pointId: string, x: number, y: number} | null>(null);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [blockRefs, setBlockRefs] = useState<Record<string, BlockRef>>({});
+  const [zoomLevel, setZoomLevel] = useState(1);
   const canvasRef = useRef<HTMLDivElement>(null);
+  const transformRef = useRef<any>(null);
   
   const {
     connections,
@@ -98,19 +100,27 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock, onAddBlock }: St
     };
   };
   
-  const getColSpan = (blockType: string, index: number): string => {
-    if (viewMode === 'normal') {
-      return 'col-span-3';
-    } else if (viewMode === 'compact') {
-      return index % 3 === 0 ? 'col-span-2' : 'col-span-1';
-    } else {
-      return 'col-span-1';
-    }
-  };
-
   const handleCanvasClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
       onSelectBlock('');
+    }
+  };
+
+  const handleCanvasDoubleClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget && onAddBlock) {
+      // Get click position relative to canvas
+      const rect = canvasRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      
+      const x = (e.clientX - rect.left) / zoomLevel;
+      const y = (e.clientY - rect.top) / zoomLevel;
+      
+      // Create a new text block at click position
+      onAddBlock({
+        id: uuidv4(),
+        type: 'text',
+        position: { x, y }
+      });
     }
   };
 
@@ -229,21 +239,52 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock, onAddBlock }: St
   ], []);
 
   return (
-    <div 
-      ref={canvasRef}
-      className="flex-1 canvas-dot-grid overflow-auto p-6 relative"
-      onClick={handleCanvasClick}
-      onMouseMove={handleMouseMove}
-      onMouseUp={() => {
-        setIsDraggingConnection(false);
-        setConnectionStart(null);
-      }}
+    <TransformWrapper
+      ref={transformRef}
+      initialScale={1}
+      minScale={0.25}
+      maxScale={4}
+      limitToBounds={false}
+      centerOnInit={true}
+      wheel={{ step: 0.1 }}
+      panning={{ disabled: isDraggingConnection }}
+      onTransformed={(ref) => setZoomLevel(ref.state.scale)}
     >
-      {/* Connection lines SVG */}
-      <svg 
-        className="absolute top-0 left-0 w-full h-full pointer-events-none z-10"
-        style={{ minHeight: '100%', minWidth: '100%' }}
-      >
+      {({ zoomIn, zoomOut, resetTransform }) => (
+        <>
+          <TransformComponent
+            wrapperStyle={{ width: '100%', height: '100%' }}
+            contentStyle={{ width: '100%', height: '100%' }}
+          >
+            <div 
+              ref={canvasRef}
+              className="canvas-dot-grid w-full h-full min-h-screen p-6 relative"
+              onClick={handleCanvasClick}
+              onDoubleClick={handleCanvasDoubleClick}
+              onMouseMove={handleMouseMove}
+              onMouseUp={() => {
+                setIsDraggingConnection(false);
+                setConnectionStart(null);
+              }}
+            >
+              {/* Empty state */}
+              {blocks.length === 0 && onAddBlock && (
+                <EmptyCanvasState 
+                  onAddBlock={(type) => {
+                    onAddBlock({
+                      id: uuidv4(),
+                      type,
+                      position: { x: 400, y: 300 }
+                    });
+                  }}
+                />
+              )}
+
+              {/* Connection lines SVG */}
+              <svg 
+                className="absolute top-0 left-0 w-full h-full pointer-events-none"
+                style={{ minHeight: '200vh', minWidth: '200vw' }}
+              >
         {/* Static connections */}
         {connections.map((conn) => {
           const startPos = getConnectionPointPosition(conn.sourceBlockId, conn.sourcePointId);
@@ -317,90 +358,91 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock, onAddBlock }: St
         </defs>
       </svg>
 
-      <div 
-        className={cn(
-          "max-w-6xl mx-auto py-4 grid grid-cols-3 gap-6 relative z-0",
-          viewMode === 'normal' && "grid-cols-1", 
-          viewMode === 'compact' && "grid-cols-3",
-          viewMode === 'grid' && "grid-cols-3"
-        )}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {blocks.map((block, index) => {
-          const colSpan = getColSpan(block.type, index);
-          
-          if (block.type === 'text') {
-            return (
-              <motion.div
-                key={block.id}
-                className={colSpan}
-                layout
-                transition={{ duration: 0.3 }}
-              >
-                <TextBlock 
-                  id={block.id}
-                  onSelect={() => onSelectBlock(block.id)}
-                  isSelected={selectedBlockId === block.id}
-                  supportsConnections={true}
-                  connectionPoints={textBlockConnectionPoints}
-                  onStartConnection={handleStartConnection}
-                  onFinishConnection={handleFinishConnection}
-                  onRegisterRef={registerBlockRef}
-                  getInput={getBlockInput}
-                  setOutput={updateBlockOutput}
-                  onCreateConnectedNodes={handleCreateConnectedNodes}
-                />
-              </motion.div>
-            );
-          } else if (block.type === 'image') {
-            return (
-              <motion.div
-                key={block.id}
-                className={colSpan}
-                layout
-                transition={{ duration: 0.3 }}
-              >
-                <ImageBlock 
-                  id={block.id}
-                  onSelect={() => onSelectBlock(block.id)}
-                  isSelected={selectedBlockId === block.id}
-                  supportsConnections={true}
-                  connectionPoints={imageBlockConnectionPoints}
-                  onStartConnection={handleStartConnection}
-                  onFinishConnection={handleFinishConnection}
-                  onRegisterRef={registerBlockRef}
-                  getInput={getBlockInput}
-                  setOutput={updateBlockOutput}
-                />
-              </motion.div>
-            );
-          } else if (block.type === 'video') {
-            return (
-              <motion.div
-                key={block.id}
-                className={colSpan}
-                layout
-                transition={{ duration: 0.3 }}
-              >
-                <VideoBlock 
-                  id={block.id}
-                  onSelect={() => onSelectBlock(block.id)}
-                  isSelected={selectedBlockId === block.id}
-                  supportsConnections={true}
-                  connectionPoints={videoBlockConnectionPoints}
-                  onStartConnection={handleStartConnection}
-                  onFinishConnection={handleFinishConnection}
-                  onRegisterRef={registerBlockRef}
-                  getInput={getBlockInput}
-                  setOutput={updateBlockOutput}
-                />
-              </motion.div>
-            );
-          }
-          return null;
-        })}
-      </div>
-    </div>
+              {/* Blocks with absolute positioning */}
+              <div className="relative w-full h-full">
+                {blocks.map((block) => {
+                  const position = block.position || { x: 100, y: 100 };
+                  
+                  const blockElement = (() => {
+                    if (block.type === 'text') {
+                      return (
+                        <TextBlock 
+                          id={block.id}
+                          onSelect={() => onSelectBlock(block.id)}
+                          isSelected={selectedBlockId === block.id}
+                          supportsConnections={true}
+                          connectionPoints={textBlockConnectionPoints}
+                          onStartConnection={handleStartConnection}
+                          onFinishConnection={handleFinishConnection}
+                          onRegisterRef={registerBlockRef}
+                          getInput={getBlockInput}
+                          setOutput={updateBlockOutput}
+                          onCreateConnectedNodes={handleCreateConnectedNodes}
+                        />
+                      );
+                    } else if (block.type === 'image') {
+                      return (
+                        <ImageBlock 
+                          id={block.id}
+                          onSelect={() => onSelectBlock(block.id)}
+                          isSelected={selectedBlockId === block.id}
+                          supportsConnections={true}
+                          connectionPoints={imageBlockConnectionPoints}
+                          onStartConnection={handleStartConnection}
+                          onFinishConnection={handleFinishConnection}
+                          onRegisterRef={registerBlockRef}
+                          getInput={getBlockInput}
+                          setOutput={updateBlockOutput}
+                        />
+                      );
+                    } else if (block.type === 'video') {
+                      return (
+                        <VideoBlock 
+                          id={block.id}
+                          onSelect={() => onSelectBlock(block.id)}
+                          isSelected={selectedBlockId === block.id}
+                          supportsConnections={true}
+                          connectionPoints={videoBlockConnectionPoints}
+                          onStartConnection={handleStartConnection}
+                          onFinishConnection={handleFinishConnection}
+                          onRegisterRef={registerBlockRef}
+                          getInput={getBlockInput}
+                          setOutput={updateBlockOutput}
+                        />
+                      );
+                    }
+                    return null;
+                  })();
+
+                  return (
+                    <motion.div
+                      key={block.id}
+                      className="absolute w-80"
+                      style={{
+                        left: position.x,
+                        top: position.y,
+                      }}
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      {blockElement}
+                    </motion.div>
+                  );
+                })}
+              </div>
+            </div>
+          </TransformComponent>
+
+          <CanvasControls
+            onZoomIn={() => zoomIn()}
+            onZoomOut={() => zoomOut()}
+            onResetTransform={() => resetTransform()}
+            zoomLevel={zoomLevel}
+          />
+        </>
+      )}
+    </TransformWrapper>
   );
 };
 
