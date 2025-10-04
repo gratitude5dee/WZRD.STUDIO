@@ -13,6 +13,7 @@ import { GlassButton } from '@/components/ui/glass-button';
 import { GlassCard } from '@/components/ui/glass-card';
 import { PortalHeader } from '@/components/ui/portal-header';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 const Home = () => {
   const navigate = useNavigate();
@@ -169,84 +170,136 @@ const Home = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 text-foreground relative overflow-hidden">
-      {/* Cosmic Background */}
-      <div className="fixed inset-0 bg-nebula-field opacity-30 pointer-events-none" />
-      <div className="fixed inset-0 particle-field opacity-20 pointer-events-none" />
+    <div className="min-h-screen bg-gradient-to-br from-[hsl(220_30%_8%)] via-[hsl(220_25%_6%)] to-[hsl(220_30%_4%)] text-foreground relative overflow-hidden">
+      {/* Animated Cosmic Background */}
+      <div className="fixed inset-0">
+        <div className="absolute inset-0 bg-gradient-to-b from-[hsl(200_85%_15%)]/10 via-transparent to-[hsl(270_60%_20%)]/10" />
+        
+        {/* Mesh Pattern */}
+        <div 
+          className="absolute inset-0 opacity-5"
+          style={{
+            backgroundImage: `
+              linear-gradient(hsl(var(--foreground) / 0.03) 1px, transparent 1px),
+              linear-gradient(90deg, hsl(var(--foreground) / 0.03) 1px, transparent 1px)
+            `,
+            backgroundSize: '50px 50px',
+          }}
+        />
+        
+        {/* Particle Field */}
+        <div className="absolute inset-0 particle-field opacity-10" />
+      </div>
       
       <Header />
       
-      <main className="relative z-10 container mx-auto px-4 py-8 space-y-8">
-        {/* Portal Header */}
-        <PortalHeader 
-          title="Discovery Portal" 
-          subtitle="Navigate your creative cosmos"
-          cosmic={true}
-          actions={
-            <div className="flex space-x-3">
-              <GlassButton variant="stellar" onClick={handleCreateProject}>
-                <Plus className="w-4 h-4" />
-                New Reality
-              </GlassButton>
-              <GlassButton variant="cosmic" onClick={() => navigate('/learning-studio')}>
-                <Brain className="w-4 h-4" />
-                Learning Studio
-              </GlassButton>
-              <GlassButton variant="void" size="icon">
-                <Star className="w-4 h-4" />
-              </GlassButton>
+      <main className="relative z-10 container mx-auto px-6 py-8 space-y-8 max-w-[1600px]">
+        {/* Discovery Portal Header */}
+        <GlassCard variant="cosmic" depth="deep" glow="medium" shimmer className="overflow-hidden border border-white/10">
+          <div className="p-8">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[hsl(var(--stellar-gold))] to-[hsl(var(--temporal-orange))] flex items-center justify-center shadow-lg shadow-[hsl(var(--stellar-gold))]/30">
+                  <Orbit className="w-7 h-7 text-[hsl(220_30%_8%)]" />
+                </div>
+                <div>
+                  <h1 className="text-3xl font-bold bg-gradient-to-r from-[hsl(var(--glow-primary))] via-[hsl(var(--glow-secondary))] to-[hsl(var(--glow-accent))] bg-clip-text text-transparent">
+                    Discovery Portal
+                  </h1>
+                  <p className="text-white/60 mt-1">Navigate your creative cosmos</p>
+                </div>
+              </div>
+              
+              <div className="flex gap-3">
+                <GlassButton variant="stellar" glow="medium" onClick={handleCreateProject} className="shadow-lg">
+                  <Plus className="w-4 h-4" />
+                  New Reality
+                </GlassButton>
+                <GlassButton variant="cosmic" glow="medium" onClick={() => navigate('/learning-studio')}>
+                  <Brain className="w-4 h-4" />
+                  Learning Studio
+                </GlassButton>
+              </div>
             </div>
-          }
-        />
-
-        {/* Cosmic Navigation */}
-        <GlassCard variant="nebula" depth="medium" glow="subtle" className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center space-x-4">
-              <Orbit className="w-6 h-6 text-cosmic-stellar" />
-              <h2 className="text-xl font-semibold glow-text-primary">Project Dimensions</h2>
-            </div>
-            <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-              <div className="w-2 h-2 rounded-full bg-cosmic-quantum animate-pulse" />
-              <span>{projects.length} Active Realities</span>
+            
+            {/* Status Indicators */}
+            <div className="flex items-center gap-6 text-sm">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-[hsl(var(--stellar-gold))] animate-pulse shadow-lg shadow-[hsl(var(--stellar-gold))]/50" />
+                <span className="text-white/70">Portal Active</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-[hsl(var(--quantum-green))] animate-pulse shadow-lg shadow-[hsl(var(--quantum-green))]/50" />
+                <span className="text-white/70">Neural Link Established</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-[hsl(var(--plasma-blue))] animate-pulse shadow-lg shadow-[hsl(var(--plasma-blue))]/50" />
+                <span className="text-white/70">Cosmic Sync Active</span>
+              </div>
             </div>
           </div>
+        </GlassCard>
 
-          <div className="flex space-x-1 bg-cosmic-void/30 p-1 rounded-lg backdrop-blur-sm">
-            <GlassButton
-              variant={activeTab === 'all' ? 'stellar' : 'ghost'}
-              size="sm"
-              onClick={() => setActiveTab('all')}
-              className="flex-1"
-            >
-              <Atom className="w-3 h-3" />
-              All Dimensions ({counts.all})
-            </GlassButton>
-            <GlassButton
-              variant={activeTab === 'private' ? 'stellar' : 'ghost'}
-              size="sm"
-              onClick={() => setActiveTab('private')}
-              className="flex-1"
-            >
-              <Zap className="w-3 h-3" />
-              Private ({counts.private})
-            </GlassButton>
-            <GlassButton
-              variant={activeTab === 'public' ? 'stellar' : 'ghost'}
-              size="sm"
-              onClick={() => setActiveTab('public')}
-              className="flex-1"
-            >
-              <Sparkles className="w-3 h-3" />
-              Public ({counts.public})
-            </GlassButton>
+        {/* Project Dimensions Section */}
+        <GlassCard variant="nebula" depth="deep" glow="subtle" className="overflow-hidden border border-white/5">
+          <div className="p-6">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <Orbit className="w-6 h-6 text-[hsl(var(--stellar-gold))]" />
+                <h2 className="text-2xl font-semibold text-white">Project Dimensions</h2>
+              </div>
+              <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-[hsl(var(--quantum-green))]/10 border border-[hsl(var(--quantum-green))]/20">
+                <div className="w-2 h-2 rounded-full bg-[hsl(var(--quantum-green))] animate-pulse" />
+                <span className="text-sm font-medium text-white/80">{projects.length} Active Realities</span>
+              </div>
+            </div>
+
+            {/* Filter Tabs */}
+            <div className="flex gap-3">
+              <button
+                onClick={() => setActiveTab('all')}
+                className={cn(
+                  "flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all duration-300",
+                  activeTab === 'all'
+                    ? "bg-gradient-to-r from-[hsl(var(--stellar-gold))]/30 to-[hsl(var(--temporal-orange))]/30 border-2 border-[hsl(var(--stellar-gold))]/50 text-white shadow-lg shadow-[hsl(var(--stellar-gold))]/20"
+                    : "bg-white/5 border border-white/10 text-white/60 hover:bg-white/10 hover:text-white/80"
+                )}
+              >
+                <Atom className="w-4 h-4" />
+                All Dimensions ({counts.all})
+              </button>
+              
+              <button
+                onClick={() => setActiveTab('private')}
+                className={cn(
+                  "px-6 py-3 rounded-xl font-medium transition-all duration-300",
+                  activeTab === 'private'
+                    ? "bg-[hsl(200_85%_55%)]/20 border-2 border-[hsl(200_85%_55%)]/50 text-[hsl(200_85%_65%)] shadow-lg"
+                    : "bg-white/5 border border-white/10 text-white/60 hover:bg-white/10 hover:text-white/80"
+                )}
+              >
+                Private ({counts.private})
+              </button>
+              
+              <button
+                onClick={() => setActiveTab('public')}
+                className={cn(
+                  "px-6 py-3 rounded-xl font-medium transition-all duration-300",
+                  activeTab === 'public'
+                    ? "bg-[hsl(160_70%_45%)]/20 border-2 border-[hsl(160_70%_45%)]/50 text-[hsl(160_70_55%)] shadow-lg"
+                    : "bg-white/5 border border-white/10 text-white/60 hover:bg-white/10 hover:text-white/80"
+                )}
+              >
+                Public ({counts.public})
+              </button>
+            </div>
           </div>
         </GlassCard>
         
         {/* Content Area */}
-        <GlassCard variant="cosmic" depth="deep" glow="medium" className="min-h-[400px]">
+        <div className="min-h-[400px] py-4">
           {renderContent()}
-        </GlassCard>
+        </div>
       </main>
     </div>
   );
