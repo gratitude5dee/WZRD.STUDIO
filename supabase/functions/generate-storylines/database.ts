@@ -278,33 +278,18 @@ export async function triggerCharacterImageGeneration(
   characters: any[]
 ) {
   if (characters.length > 0) {
-    console.log(`Queueing parallel image generation for ${characters.length} characters...`);
+    console.log(`🎨 Starting async image generation for ${characters.length} characters...`);
     
-    // Generate all character images in parallel using Promise.allSettled
-    const imagePromises = characters.map(char => 
+    // Fire all image generations in parallel without waiting (fire-and-forget)
+    characters.forEach(char => {
       supabaseClient.functions.invoke('generate-character-image', {
         body: { character_id: char.id, project_id: project_id }
-      })
-    );
-    
-    const results = await Promise.allSettled(imagePromises);
-    
-    // Log results for each character
-    results.forEach((result, index) => {
-      const char = characters[index];
-      if (result.status === 'fulfilled') {
-        if (result.value.error) {
-          console.error(`✗ Image generation failed for ${char.name} (${char.id}):`, result.value.error.message);
-        } else {
-          console.log(`✓ Successfully generated image for ${char.name} (${char.id})`);
-        }
-      } else {
-        console.error(`✗ Promise rejected for ${char.name} (${char.id}):`, result.reason);
-      }
+      }).catch(err => {
+        console.error(`Failed to start image generation for ${char.name}:`, err);
+      });
     });
     
-    const successCount = results.filter(r => r.status === 'fulfilled' && !r.value.error).length;
-    console.log(`Completed: ${successCount}/${characters.length} character images generated successfully`);
+    console.log(`✓ Image generation started for all characters (async stream mode)`);
   }
 }
 

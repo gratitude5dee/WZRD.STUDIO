@@ -59,6 +59,40 @@ const SettingsTab = ({ projectData, updateProjectData }: SettingsTabProps) => {
     };
 
     fetchCharacters();
+
+    // Set up realtime subscription for character image updates
+    if (!projectId) return;
+
+    console.log(`Setting up realtime subscription for project: ${projectId}`);
+    const channel = supabase
+      .channel(`characters-${projectId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'characters',
+          filter: `project_id=eq.${projectId}`
+        },
+        (payload) => {
+          console.log('Character updated via realtime:', payload.new);
+          // Update the character in the local state
+          setCharacters(prev => 
+            prev.map(char => 
+              char.id === payload.new.id 
+                ? { ...char, ...payload.new }
+                : char
+            )
+          );
+        }
+      )
+      .subscribe();
+
+    // Cleanup subscription on unmount
+    return () => {
+      console.log(`Cleaning up realtime subscription for project: ${projectId}`);
+      supabase.removeChannel(channel);
+    };
   }, [projectId, generationCompletedSignal]);
 
   // Update projectData when settings change

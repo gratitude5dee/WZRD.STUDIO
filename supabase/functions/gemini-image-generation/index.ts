@@ -13,70 +13,57 @@ serve(async (req) => {
       return errorResponse('Prompt is required', 400);
     }
 
-    const GOOGLE_API_KEY = Deno.env.get("GOOGLE_API_KEY");
-    if (!GOOGLE_API_KEY) {
-      return errorResponse('GOOGLE_API_KEY is not configured', 500);
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) {
+      return errorResponse('LOVABLE_API_KEY is not configured', 500);
     }
 
-    console.log('Generating image with Gemini REST API (gemini-2.5-flash-image)');
+    console.log('Generating image with Lovable AI Gateway (gemini-2.5-flash-image-preview)');
 
-    // Build the request body for Gemini REST API
-    const parts: any[] = [{ text: prompt }];
+    // Build message content for Lovable AI Gateway
+    const content: any[] = [{ type: "text", text: prompt }];
     
     if (editMode && imageUrl) {
-      // For edit mode, include the image in the request
-      const base64Data = imageUrl.replace(/^data:image\/[a-z]+;base64,/, '');
-      parts.push({
-        inlineData: {
-          mimeType: "image/png",
-          data: base64Data
-        }
+      // For edit mode, include the image
+      content.push({
+        type: "image_url",
+        image_url: { url: imageUrl }
       });
     }
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${GOOGLE_API_KEY}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          contents: [{
-            parts: parts
-          }]
-        }),
-      }
-    );
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash-image-preview",
+        messages: [{ role: "user", content }],
+        modalities: ["image", "text"]
+      })
+    });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("Gemini API error:", response.status, errorText);
-      return errorResponse(`Gemini API error: ${response.status}`, 500);
+      console.error("Lovable AI error:", response.status, errorText);
+      return errorResponse(`Lovable AI error: ${response.status}`, 500);
     }
 
     const data = await response.json();
 
     // Extract the generated image from the response
-    let imageBase64: string | null = null;
-    
-    const parts_response = data.candidates?.[0]?.content?.parts || [];
-    for (const part of parts_response) {
-      if (part.inlineData) {
-        imageBase64 = `data:image/png;base64,${part.inlineData.data}`;
-        break;
-      }
-    }
+    const imageUrl_result = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
 
-    if (!imageBase64) {
+    if (!imageUrl_result) {
       console.error("No image in response:", JSON.stringify(data));
       return errorResponse("No image generated", 500);
     }
 
-    console.log(`Successfully generated image (${imageBase64.length} bytes)`);
+    console.log(`Successfully generated image (${imageUrl_result.length} bytes)`);
 
     return new Response(JSON.stringify({ 
-      imageUrl: imageBase64,
+      imageUrl: imageUrl_result,
       prompt 
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
