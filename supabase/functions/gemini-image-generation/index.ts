@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { GoogleGenAI } from "npm:@google/genai@0.21.0";
 import { corsHeaders, errorResponse, handleCors } from '../_shared/response.ts';
 
 serve(async (req) => {
@@ -13,53 +14,50 @@ serve(async (req) => {
       return errorResponse('Prompt is required', 400);
     }
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      return errorResponse('LOVABLE_API_KEY is not configured', 500);
+    const GOOGLE_API_KEY = Deno.env.get("GOOGLE_API_KEY");
+    if (!GOOGLE_API_KEY) {
+      return errorResponse('GOOGLE_API_KEY is not configured', 500);
     }
 
-    console.log('Generating image with Nano banana model');
+    console.log('Generating image with native Google GenAI SDK (gemini-2.5-flash-image)');
 
-    const content: any[] = [{ type: "text", text: prompt }];
-    
+    const ai = new GoogleGenAI({ apiKey: GOOGLE_API_KEY });
+
+    // Build content based on edit mode
+    let content: any = prompt;
     if (editMode && imageUrl) {
-      content.push({
-        type: "image_url",
-        image_url: { url: imageUrl }
-      });
+      // For edit mode, include the image in the request
+      content = [
+        { text: prompt },
+        { 
+          inlineData: {
+            mimeType: "image/png",
+            data: imageUrl.replace(/^data:image\/[a-z]+;base64,/, '')
+          }
+        }
+      ];
     }
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash-image-preview",
-        messages: [{ role: "user", content }],
-        modalities: ["image", "text"]
-      }),
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash-image",
+      contents: content,
     });
 
-    if (!response.ok) {
-      if (response.status === 429) {
-        return errorResponse("Rate limits exceeded, please try again later.", 429);
+    // Extract the generated image from the response
+    let imageBase64: string | null = null;
+    
+    for (const part of response.candidates[0].content.parts) {
+      if (part.inlineData) {
+        imageBase64 = `data:image/png;base64,${part.inlineData.data}`;
+        break;
       }
-      if (response.status === 402) {
-        return errorResponse("Payment required, please add funds to your Lovable AI workspace.", 402);
-      }
-      const errorText = await response.text();
-      console.error("AI gateway error:", response.status, errorText);
-      return errorResponse("AI gateway error", 500);
     }
-
-    const data = await response.json();
-    const imageBase64 = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
 
     if (!imageBase64) {
       return errorResponse("No image generated", 500);
     }
+
+    console.log(`Successfully generated image (${imageBase64.length} bytes)`);
 
     return new Response(JSON.stringify({ 
       imageUrl: imageBase64,

@@ -278,26 +278,33 @@ export async function triggerCharacterImageGeneration(
   characters: any[]
 ) {
   if (characters.length > 0) {
-    console.log(`Queueing image generation for ${characters.length} characters...`);
-    for (const char of characters) {
-      try {
-        // Invoke the character image generation function asynchronously
-        const { error: invokeError } = await supabaseClient.functions.invoke(
-          'generate-character-image',
-          {
-            body: { character_id: char.id, project_id: project_id }
-          }
-        );
-        
-        if (invokeError) {
-          console.error(`Failed to invoke generate-character-image for ${char.name} (${char.id}):`, invokeError.message);
+    console.log(`Queueing parallel image generation for ${characters.length} characters...`);
+    
+    // Generate all character images in parallel using Promise.allSettled
+    const imagePromises = characters.map(char => 
+      supabaseClient.functions.invoke('generate-character-image', {
+        body: { character_id: char.id, project_id: project_id }
+      })
+    );
+    
+    const results = await Promise.allSettled(imagePromises);
+    
+    // Log results for each character
+    results.forEach((result, index) => {
+      const char = characters[index];
+      if (result.status === 'fulfilled') {
+        if (result.value.error) {
+          console.error(`✗ Image generation failed for ${char.name} (${char.id}):`, result.value.error.message);
         } else {
-          console.log(`Successfully invoked image generation for ${char.name} (${char.id}).`);
+          console.log(`✓ Successfully generated image for ${char.name} (${char.id})`);
         }
-      } catch (invocationError) {
-        console.error(`Caught error during invocation for ${char.name} (${char.id}):`, invocationError.message);
+      } else {
+        console.error(`✗ Promise rejected for ${char.name} (${char.id}):`, result.reason);
       }
-    }
+    });
+    
+    const successCount = results.filter(r => r.status === 'fulfilled' && !r.value.error).length;
+    console.log(`Completed: ${successCount}/${characters.length} character images generated successfully`);
   }
 }
 

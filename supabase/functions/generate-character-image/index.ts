@@ -106,24 +106,45 @@ serve(async (req) => {
     const imageUrl = imageResponse.imageUrl;
     console.log(`Generated Image URL (base64): ${imageUrl.substring(0, 50)}...`);
 
-    // 4. Update Character Record
-    const { error: updateError } = await supabaseClient
-      .from('characters')
-      .update({ image_url: imageUrl })
-      .eq('id', character_id);
-
-    if (updateError) {
-      console.error(`Failed to update character ${character_id} with image URL:`, updateError);
-      return errorResponse('Failed to save generated image URL', 500, updateError.message);
-    }
-
-    console.log(`Successfully updated character ${character_id} with image URL`);
-    return successResponse({ 
+    // 4. Return immediate response and update DB in background
+    const successResponseData = { 
       success: true, 
       character_id: character_id, 
       image_url: imageUrl,
-      visual_prompt: visualPrompt // Including the prompt for transparency
-    });
+      visual_prompt: visualPrompt
+    };
+
+    // Update character record in background using waitUntil
+    // @ts-ignore - EdgeRuntime is available in Deno Deploy
+    if (typeof EdgeRuntime !== 'undefined' && EdgeRuntime.waitUntil) {
+      // @ts-ignore
+      EdgeRuntime.waitUntil(
+        (async () => {
+          const { error: updateError } = await supabaseClient
+            .from('characters')
+            .update({ image_url: imageUrl })
+            .eq('id', character_id);
+
+          if (updateError) {
+            console.error(`Background update failed for character ${character_id}:`, updateError);
+          } else {
+            console.log(`Successfully updated character ${character_id} with image URL`);
+          }
+        })()
+      );
+    } else {
+      // Fallback for environments without EdgeRuntime.waitUntil
+      const { error: updateError } = await supabaseClient
+        .from('characters')
+        .update({ image_url: imageUrl })
+        .eq('id', character_id);
+
+      if (updateError) {
+        console.error(`Failed to update character ${character_id} with image URL:`, updateError);
+      }
+    }
+
+    return successResponse(successResponseData);
 
   } catch (error) {
     console.error(`Error in generate-character-image:`, error);
