@@ -7,6 +7,7 @@ import { GlassButton } from '@/components/ui/glass-button';
 import { GlassCard } from '@/components/ui/glass-card';
 import { Button } from '@/components/ui/button';
 import { AnimatedLogo } from '@/components/ui/animated-logo';
+import { CinematicIntro } from '@/components/landing/CinematicIntro';
 
 const Landing = () => {
   const navigate = useNavigate();
@@ -14,6 +15,7 @@ const Landing = () => {
   const [activeDemo, setActiveDemo] = useState('emotional');
   const [scrollProgress, setScrollProgress] = useState(0);
   const [scrollRevealed, setScrollRevealed] = useState<string[]>([]);
+  const [showIntro, setShowIntro] = useState(true);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -60,8 +62,14 @@ const Landing = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-surface-dark via-refined-deep to-surface-light text-white overflow-x-hidden">
-      {/* Refined mesh background */}
+    <>
+      {/* Cinematic Intro */}
+      {showIntro && (
+        <CinematicIntro onComplete={() => setShowIntro(false)} />
+      )}
+
+      <div className="min-h-screen bg-gradient-to-br from-surface-dark via-refined-deep to-surface-light text-white overflow-x-hidden">
+        {/* Refined mesh background */}
       <div className="fixed inset-0 opacity-20 pointer-events-none">
         <div className="absolute inset-0 bg-mesh-pattern"></div>
       </div>
@@ -810,7 +818,8 @@ const Landing = () => {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+      </div>
+    </>
   );
 };
 
