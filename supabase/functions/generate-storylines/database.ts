@@ -15,9 +15,8 @@ interface SaveResult {
   inserted_shot_ids: string[];
 }
 
-interface SceneWithId extends Omit<SceneInfo, 'shot_ideas'> {
+interface SceneWithId extends SceneInfo {
   id: string;
-  shot_ideas?: string[];
 }
 
 export async function saveStorylineData(
@@ -63,7 +62,7 @@ export async function saveStorylineData(
       full_story: storylineData.primary_storyline.full_story,
       tags: storylineData.primary_storyline.tags,
       is_selected: isSelected,
-      generated_by: 'claude-3-5-sonnet'
+      generated_by: 'gemini-2.5'
     })
     .select()
     .single();
@@ -109,28 +108,53 @@ export async function saveStorylineData(
       results.scene_count = scenes.length;
       console.log(`${results.scene_count} scenes inserted successfully.`);
       
-      // --- UPDATED: Create shots from shot_ideas ---
+      // Create enhanced shots from shot_ideas with full metadata
       if (scenes.length > 0) {
-        console.log(`Creating shots based on ideas for ${scenes.length} scenes...`);
+        console.log(`Creating enhanced shots with visual prompts for ${scenes.length} scenes...`);
         const shotsToInsert: any[] = [];
         
         scenes.forEach(scene => {
-          // Use shot_ideas if available, otherwise create a default shot
-          const ideas = scene.shot_ideas && scene.shot_ideas.length > 0
-            ? scene.shot_ideas
-            : [`Scene ${scene.scene_number}: ${scene.description?.substring(0, 80) || scene.title || 'Initial shot'}`];
-          
-          // Create a shot for each idea
-          ideas.forEach((idea, index) => {
+          // Use shot_ideas if available with enhanced structure
+          if (scene.shot_ideas && scene.shot_ideas.length > 0) {
+            scene.shot_ideas.forEach((shotIdea, index) => {
+              // Handle both new structure (ShotIdea object) and legacy structure (string)
+              if (typeof shotIdea === 'string') {
+                // Legacy string format - convert to object
+                shotsToInsert.push({
+                  scene_id: scene.id,
+                  project_id: project_id,
+                  shot_number: index + 1,
+                  shot_type: getShotTypeFromIdea(shotIdea),
+                  prompt_idea: shotIdea,
+                  image_status: 'pending'
+                });
+              } else {
+                // New enhanced structure with full metadata
+                shotsToInsert.push({
+                  scene_id: scene.id,
+                  project_id: project_id,
+                  shot_number: index + 1,
+                  shot_type: shotIdea.shot_type || 'medium',
+                  prompt_idea: shotIdea.description,
+                  visual_prompt: shotIdea.visual_prompt,
+                  camera_movement: shotIdea.camera_movement,
+                  duration_seconds: shotIdea.duration_seconds,
+                  composition_notes: shotIdea.composition_notes,
+                  image_status: 'prompt_ready' // Mark as ready since we have the visual prompt
+                });
+              }
+            });
+          } else {
+            // No shot ideas provided - create a default shot
             shotsToInsert.push({
               scene_id: scene.id,
               project_id: project_id,
-              shot_number: index + 1,
-              shot_type: getShotTypeFromIdea(idea),
-              prompt_idea: idea,
+              shot_number: 1,
+              shot_type: 'medium',
+              prompt_idea: `Scene ${scene.scene_number}: ${scene.description?.substring(0, 80) || scene.title || 'Initial shot'}`,
               image_status: 'pending'
             });
-          });
+          }
         });
         
         if (shotsToInsert.length > 0) {
@@ -143,11 +167,10 @@ export async function saveStorylineData(
             console.error('Error inserting shots:', shotsError);
           } else if (newShots) {
             results.inserted_shot_ids = newShots.map(s => s.id);
-            console.log(`Created ${results.inserted_shot_ids.length} shots from ideas.`);
+            console.log(`Created ${results.inserted_shot_ids.length} enhanced shots with visual prompts.`);
           }
         }
       }
-      // --- END UPDATED ---
     }
   }
 

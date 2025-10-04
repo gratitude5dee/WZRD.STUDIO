@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.gemini-video-generation]
 verify_jwt = false
+
+[functions.gemini-storyline-generation]
+verify_jwt = false

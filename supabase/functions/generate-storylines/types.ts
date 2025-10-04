@@ -24,6 +24,17 @@ export interface StorylineInfo {
   description: string;
   full_story: string;
   tags: string[];
+  visual_style_notes?: string;
+  cinematography_notes?: string;
+}
+
+export interface ShotIdea {
+  shot_type: string;
+  description: string;
+  visual_prompt: string;
+  camera_movement: string;
+  duration_seconds: number;
+  composition_notes?: string;
 }
 
 export interface SceneInfo {
@@ -33,7 +44,9 @@ export interface SceneInfo {
   location?: string;
   lighting?: string;
   weather?: string;
-  shot_ideas?: string[]; // Add this line for shot ideas
+  emotional_tone?: string;
+  color_palette?: string;
+  shot_ideas?: ShotIdea[];
 }
 
 export interface CharacterInfo {

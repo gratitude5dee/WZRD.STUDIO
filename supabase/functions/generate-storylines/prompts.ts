@@ -1,76 +1,165 @@
 
 /**
- * Prompt templates for Claude API
+ * Enhanced Prompt Templates for Gemini AI with Visual Storytelling Focus
+ * Optimized for structured JSON output and AI image generation
  */
 
 export function getStorylineSystemPrompt(isAlternative: boolean): string {
-  return `You are a professional screenwriter and AI assistant specialized in creative storytelling and video production planning. 
-Your task is to generate ONE compelling storyline based on the provided project details.
-**YOUR RESPONSE MUST BE VALID JSON.**
+  return `You are a world-class screenwriter AND professional cinematographer with deep expertise in:
+- Narrative structure and compelling character development
+- Visual storytelling and mise-en-scène
+- AI image generation prompt engineering (Flux, Stable Diffusion, DALL-E, Midjourney)
+- Professional cinematography (camera angles, lighting design, color theory, composition)
+- Video production workflows and storyboarding
 
-Follow these instructions precisely:
-1.  **Storyline Generation:** Create ONE unique storyline. Do NOT provide multiple options unless specifically asked for an alternative.
-    *   The storyline should align with the provided concept, genre, tone, and format.
-    *   It must have a clear beginning, middle, and end.
+Your mission: Generate ${isAlternative ? 'an alternative' : 'a complete'} storyline ${!isAlternative ? 'with detailed scene breakdown ' : ''}optimized for AI-powered video production.
+
 ${!isAlternative ? `
-2.  **Scene Breakdown:** Based ONLY on the storyline you generated, create a detailed scene breakdown.
-    *   Number the scenes sequentially starting from 1.
-    *   Generate between 5 and 10 scenes, appropriate for the story's length and format.
-    *   For each scene, provide: \`scene_number\`, \`title\`, \`description\`, optional \`location\`, \`lighting\`, \`weather\`.
-    *   **Crucially, for each scene, also include a \`shot_ideas\` array containing 2-4 brief descriptions (max 25 words each) for potential key shots within that scene (e.g., "Establishing shot of the location", "Close-up on the character's reaction", "Medium shot showing the interaction").**
-` : '' }
-3.  **Output Format:** Your entire response MUST be a single JSON object and nothing else. Do NOT include any text outside the JSON structure. The JSON structure must be exactly:
+CRITICAL VISUAL REQUIREMENTS:
+For EVERY shot in EVERY scene, you MUST provide a highly optimized visual prompt that includes:
 
-{
-  "primary_storyline": {
-    "title": "Storyline Title",
-    "description": "One-paragraph summary (max 200 characters).",
-    "tags": ["relevant", "keyword", "tags"],
-    "full_story": "Detailed story outline (3-5 paragraphs)."
-  }${!isAlternative ? `,
-  "scene_breakdown": [
-    {
-      "scene_number": 1,
-      "title": "Scene 1 Title",
-      "description": "Detailed scene description...",
-      "location": "Location details...",
-      "lighting": "Lighting details...",
-      "weather": "Weather details...",
-      "shot_ideas": [
-        "Brief description for shot 1...",
-        "Brief description for shot 2...",
-        "Brief description for shot 3..."
-      ]
-    }
-  ]` : '' }
-}
+1. **Art Style/Medium**: Specify the visual aesthetic (e.g., "cinematic photography", "anime style", "3D render", "watercolor illustration")
+2. **Shot Type & Angle**: Camera perspective (e.g., "wide angle low shot", "extreme close-up", "aerial drone view")
+3. **Lighting**: Precise lighting conditions (e.g., "golden hour backlight", "dramatic rim lighting", "soft diffused studio light", "harsh noon sun")
+4. **Color Palette**: Specific color grading (e.g., "teal and orange color grade", "muted pastel tones", "high contrast noir", "vibrant saturated colors")
+5. **Composition**: Technical framing notes (e.g., "rule of thirds", "leading lines", "symmetrical composition", "negative space")
+6. **Quality Keywords**: Industry terms for AI image generation (e.g., "8K ultra detailed", "professional photography", "photorealistic", "volumetric lighting", "sharp focus")
+7. **Mood/Atmosphere**: Emotional ambiance (e.g., "dramatic", "peaceful", "tense", "dreamlike")
 
-Ensure the \`description\` in \`primary_storyline\` is concise (max 200 chars). Make \`full_story\` comprehensive. Tags should be relevant keywords.${!isAlternative ? ' Ensure all fields in the `scene_breakdown` array adhere to the specified types, including the new `shot_ideas` array.' : ''}`;
+VISUAL PROMPT FORMAT RULES:
+- Be specific and technical (60-300 characters)
+- Front-load the most important visual elements
+- Use proven AI image generation keywords
+- Avoid vague terms like "beautiful", "nice", "good"
+- Include camera and lens details when relevant (e.g., "85mm portrait lens", "wide angle 24mm")
+- Specify depth of field when important (e.g., "shallow depth of field", "f/1.4", "bokeh background")
+
+CINEMATOGRAPHY EXCELLENCE:
+- Provide overall visual style notes for the entire project
+- Suggest camera movements that enhance storytelling
+- Recommend shot durations based on content complexity
+- Consider emotional pacing and visual rhythm
+- Ensure visual consistency across scenes
+
+SHOT DURATION GUIDELINES:
+- Establishing shots: 4-6 seconds
+- Action/movement: 2-4 seconds  
+- Dialogue close-ups: 3-5 seconds
+- Emotional beats: 4-7 seconds
+- Transitions: 2-3 seconds
+` : ''}
+
+OUTPUT STRUCTURE:
+Your response is guaranteed to follow the JSON schema provided. Focus on creative content quality.
+
+CREATIVE EXCELLENCE STANDARDS:
+- Storylines must have compelling narrative arcs
+- Scenes must build emotional progression
+- Visual descriptions must be technically precise
+- Shot prompts must be optimized for AI image generation
+- Maintain visual coherence across the entire project
+- Each shot should contribute to storytelling
+
+${isAlternative ? 'Generate a DIFFERENT creative take on the same concept - explore alternative narrative approaches, tones, or visual styles.' : 'Generate between 5-10 scenes with 3-6 key shots per scene.'}`;
 }
 
 export function getStorylineUserPrompt(project: any, isAlternative: boolean): string {
-  return `${isAlternative ? 'Please generate a *different* storyline based on the same project details provided previously. Ensure it offers a distinct take or variation. Do NOT include a scene breakdown unless explicitly asked.\n\n' : 'Generate a storyline and scene breakdown for the following project:\n\n'}Project Title: ${project.title || 'Untitled Project'}
-Concept/Input: ${project.concept_text || 'No concept provided. Create something imaginative based on other details.'}
-Genre: ${project.genre || 'Not specified'}
-Tone: ${project.tone || 'Not specified'}
-Format: ${project.format || 'Not specified'}
-${project.format === 'custom' && project.custom_format_description ? `Custom Format Details: ${project.custom_format_description}\n` : ''}${project.special_requests ? `Special Requests: ${project.special_requests}\n` : ''}${project.product_name ? `Product/Service: ${project.product_name}\n` : ''}${project.target_audience ? `Target Audience: ${project.target_audience}\n` : ''}${project.main_message ? `Main Message: ${project.main_message}\n` : ''}${project.call_to_action ? `Call to Action: ${project.call_to_action}\n` : ''}
-Generate ONE storyline ${!isAlternative ? 'and its corresponding scene breakdown ' : ''}in the specified JSON format.
+  const projectContext = `
+PROJECT DETAILS:
+==============
+Title: ${project.title || 'Untitled Project'}
 
-REMEMBER: Your ENTIRE response must be a valid JSON object with no text or explanation before or after it. No markdown, no code blocks, JUST the raw JSON.`;
+Concept: ${project.concept_text || 'No concept provided. Create something imaginative based on the other details.'}
+
+Genre: ${project.genre || 'Not specified - choose appropriate genre'}
+Tone: ${project.tone || 'Not specified - determine appropriate tone'}
+Format: ${project.format || 'Not specified'}${project.format === 'custom' && project.custom_format_description ? `
+Custom Format: ${project.custom_format_description}` : ''}
+${project.special_requests ? `
+Special Creative Requests: ${project.special_requests}` : ''}
+${project.product_name ? `
+Product/Service Name: ${project.product_name}` : ''}
+${project.target_audience ? `
+Target Audience: ${project.target_audience}` : ''}
+${project.main_message ? `
+Key Message: ${project.main_message}` : ''}
+${project.call_to_action ? `
+Call to Action: ${project.call_to_action}` : ''}
+`;
+
+  if (isAlternative) {
+    return `${projectContext}
+
+TASK: Generate an ALTERNATIVE storyline that offers a completely different creative approach to the same project.
+- Take a different narrative angle or perspective
+- Explore a different emotional tone or pacing
+- Consider alternative visual styles or cinematography approaches
+- Maintain the core project requirements but be creatively bold
+
+Focus on creating a compelling alternative vision that stands apart from the primary storyline.`;
+  }
+
+  return `${projectContext}
+
+TASK: Create a complete storyline with detailed scene breakdown and shot-by-shot visual planning.
+
+DELIVERABLES:
+1. Primary Storyline:
+   - Compelling title and description
+   - Full story outline (3-5 engaging paragraphs)
+   - Visual style notes for the overall project aesthetic
+   - Cinematography notes for consistent visual language
+   - Relevant tags for categorization
+
+2. Scene Breakdown:
+   - 5-10 scenes with clear progression
+   - Each scene includes: title, description, location, lighting, weather, emotional tone, color palette
+   - 3-6 key shots per scene with:
+     * Shot type and camera movement
+     * Narrative description
+     * AI-optimized visual prompt for image generation
+     * Composition notes
+     * Suggested duration
+
+VISUAL PROMPT QUALITY EXAMPLES:
+
+❌ Poor: "A person walking in a park"
+✅ Excellent: "cinematic medium shot, woman walking through autumn park, golden hour side lighting, teal and orange color grade, fallen leaves framing, 35mm lens, shallow depth of field, professional photography, warm backlight, peaceful atmosphere"
+
+❌ Poor: "Close-up of face looking sad"  
+✅ Excellent: "extreme close-up portrait, tear rolling down weathered face, dramatic side lighting, high contrast noir style, 85mm f/1.4, sharp focus on eyes, bokeh background, emotional intensity, film grain, professional cinematography"
+
+❌ Poor: "Wide shot of city at night"
+✅ Excellent: "aerial wide angle establishing shot, cyberpunk city at night, neon lights reflecting on wet streets, blue and purple color palette, volumetric fog, cinematic composition, leading lines from roads, 8K ultra detailed, blade runner aesthetic"
+
+Remember: Every visual prompt should be optimized for AI image generation while maintaining narrative coherence.`;
 }
 
 export function getAnalysisSystemPrompt(): string {
-  return `Analyze the provided story text. Identify the main characters (max 5) and provide a brief description for each (1-2 sentences based *only* on the text). Optionally, list relevant setting/style keywords (max 10), potential genre, and potential tone if strongly implied. Output MUST be a single JSON object matching this exact structure:
+  return `You are an expert story analyst and character profiler.
 
-{
-  "characters": [ { "name": "...", "description": "..." } ],
-  "setting_keywords": [ "...", "..." ],
-  "potential_genre": "...",
-  "potential_tone": "..."
-}
+TASK: Analyze the provided story text and extract structured information:
 
-If no characters are found, return an empty array for "characters". If optional fields cannot be determined, omit them or set them to null.`;
+1. **Characters**: Identify up to 8 main characters with:
+   - Name
+   - Description (2-3 sentences capturing personality, role, and key characteristics)
+
+2. **Settings**: Extract environmental context:
+   - Key locations mentioned
+   - Time period (if specified)
+   - Weather conditions referenced
+
+3. **Genre & Tone**: Infer the:
+   - Primary genre (if strongly indicated)
+   - Overall tone (if clearly established)
+
+ANALYSIS GUIDELINES:
+- Base ALL findings strictly on the provided text
+- Character descriptions should be detailed enough for visual reference
+- Location names should be specific when mentioned
+- Genre/tone should only be specified if clearly evident
+
+Your response will follow the JSON schema provided automatically.`;
 }
 
 export function getAnalysisUserPrompt(fullStoryText: string): string {
