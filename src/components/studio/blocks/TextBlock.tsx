@@ -167,7 +167,9 @@ const TextBlock: React.FC<TextBlockProps> = ({
           <Textarea
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
-            className="min-h-[80px] text-sm bg-zinc-800/50 border border-zinc-700 focus:border-blue-500 resize-none"
+            onMouseDown={(e) => e.stopPropagation()}
+            onPointerDown={(e) => e.stopPropagation()}
+            className="min-h-[80px] text-sm bg-zinc-800/50 border border-zinc-700 focus:border-blue-500 resize-none pointer-events-auto cursor-text"
             placeholder="Enter your prompt here..."
             disabled={isGenerating}
           />
