@@ -20,6 +20,8 @@ export interface ImageBlockProps {
   onRegisterRef?: (blockId: string, element: HTMLElement | null, connectionPoints: Record<string, { x: number; y: number }>) => void;
   getInput?: (blockId: string, inputId: string) => any;
   setOutput?: (blockId: string, outputId: string, value: any) => void;
+  onInputFocus?: () => void;
+  onInputBlur?: () => void;
 }
 
 const ImageBlock: React.FC<ImageBlockProps> = ({ 
@@ -34,7 +36,9 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
   onDragEnd,
   onRegisterRef,
   getInput,
-  setOutput
+  setOutput,
+  onInputFocus,
+  onInputBlur
 }) => {
   const [prompt, setPrompt] = useState<string>("");
   const [editMode, setEditMode] = useState(false);
@@ -147,11 +151,14 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
                 type="text"
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
-                onPointerDown={(e) => e.stopPropagation()}
                 onMouseDown={(e) => e.stopPropagation()}
                 onClick={(e) => e.stopPropagation()}
-                onFocus={(e) => e.stopPropagation()}
-                className="w-full bg-zinc-800/50 border border-zinc-700 px-3 py-1.5 rounded text-sm focus:outline-none focus:border-purple-500 pointer-events-auto cursor-text"
+                onFocus={(e) => {
+                  e.stopPropagation();
+                  onInputFocus?.();
+                }}
+                onBlur={() => onInputBlur?.()}
+                className="w-full bg-zinc-800/50 border border-zinc-700 px-3 py-1.5 rounded text-sm focus:outline-none focus:border-purple-500 cursor-text"
                 placeholder="Describe how to edit the image..."
               />
             )}
@@ -162,11 +169,14 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
               type="text"
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              onPointerDown={(e) => e.stopPropagation()}
               onMouseDown={(e) => e.stopPropagation()}
               onClick={(e) => e.stopPropagation()}
-              onFocus={(e) => e.stopPropagation()}
-              className="w-full bg-zinc-800/50 border border-zinc-700 px-3 py-1.5 rounded text-sm focus:outline-none focus:border-purple-500 pointer-events-auto cursor-text"
+              onFocus={(e) => {
+                e.stopPropagation();
+                onInputFocus?.();
+              }}
+              onBlur={() => onInputBlur?.()}
+              className="w-full bg-zinc-800/50 border border-zinc-700 px-3 py-1.5 rounded text-sm focus:outline-none focus:border-purple-500 cursor-text"
               placeholder="Describe the image you want to create..."
               disabled={isGenerating}
             />

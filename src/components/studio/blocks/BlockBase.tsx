@@ -93,36 +93,21 @@ const BlockBase: React.FC<BlockProps> = ({
   };
 
   return (
-    <motion.div
+    <div
       ref={blockRef}
       className={cn(
-        "w-full min-h-[16rem] rounded-lg bg-canvas-block border overflow-hidden shadow-lg mb-4 relative pointer-events-auto",
+        "w-full min-h-[16rem] rounded-lg bg-canvas-block border overflow-hidden shadow-lg mb-4 relative",
         isSelected ? 'border-canvas-accent-blue' : 'border-canvas-connector-default'
       )}
       onClick={onSelect}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      layout
-      drag
-      dragListener={false}
-      dragControls={dragControls}
-      dragMomentum={false}
-      dragElastic={0.1}
-      onDragEnd={(e, info) => {
-        if (onDragEnd) {
-          onDragEnd({ x: info.point.x, y: info.point.y });
-        }
-      }}
-      dragConstraints={{ left: -500, right: 500, top: -500, bottom: 500 }}
       onMouseEnter={() => supportsConnections && setShowConnections(true)}
       onMouseLeave={() => supportsConnections && setShowConnections(false)}
     >
       <div 
-        className="bg-canvas-bg/50 px-4 py-2 flex items-center justify-between cursor-move border-b border-canvas-connector-default"
-        onPointerDown={(e) => {
-          dragControls.start(e);
+        className="bg-canvas-bg/50 px-4 py-2 flex items-center justify-between cursor-move border-b border-canvas-connector-default select-none"
+        onMouseDown={(e) => {
           e.stopPropagation();
+          // This div is the drag handle - no special action needed, parent handles movement
         }}
       >
         <div className="flex items-center">
@@ -153,8 +138,8 @@ const BlockBase: React.FC<BlockProps> = ({
       </div>
       
       <div 
-        className="p-4 pointer-events-auto"
-        onPointerDown={(e) => e.stopPropagation()}
+        className="p-4"
+        onMouseDown={(e) => e.stopPropagation()}
         onClick={(e) => e.stopPropagation()}
       >
         {children}
@@ -200,7 +185,7 @@ const BlockBase: React.FC<BlockProps> = ({
           </div>
         );
       })}
-    </motion.div>
+    </div>
   );
 };
 

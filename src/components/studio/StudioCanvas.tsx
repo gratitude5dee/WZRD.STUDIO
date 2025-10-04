@@ -37,6 +37,7 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock, onAddBlock }: St
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [blockRefs, setBlockRefs] = useState<Record<string, BlockRef>>({});
   const [zoomLevel, setZoomLevel] = useState(1);
+  const [isInputFocused, setIsInputFocused] = useState(false);
   const canvasRef = useRef<HTMLDivElement>(null);
   const transformRef = useRef<any>(null);
   
@@ -248,9 +249,8 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock, onAddBlock }: St
       centerOnInit={true}
       wheel={{ step: 0.1 }}
       panning={{ 
-        disabled: isDraggingConnection,
-        velocityDisabled: true,
-        excluded: ['input', 'textarea', 'button', 'select']
+        disabled: isDraggingConnection || isInputFocused,
+        velocityDisabled: true
       }}
       onTransformed={(ref) => setZoomLevel(ref.state.scale)}
     >
@@ -382,6 +382,8 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock, onAddBlock }: St
                           getInput={getBlockInput}
                           setOutput={updateBlockOutput}
                           onCreateConnectedNodes={handleCreateConnectedNodes}
+                          onInputFocus={() => setIsInputFocused(true)}
+                          onInputBlur={() => setIsInputFocused(false)}
                         />
                       );
                     } else if (block.type === 'image') {
@@ -397,6 +399,8 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock, onAddBlock }: St
                           onRegisterRef={registerBlockRef}
                           getInput={getBlockInput}
                           setOutput={updateBlockOutput}
+                          onInputFocus={() => setIsInputFocused(true)}
+                          onInputBlur={() => setIsInputFocused(false)}
                         />
                       );
                     } else if (block.type === 'video') {
@@ -412,6 +416,8 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock, onAddBlock }: St
                           onRegisterRef={registerBlockRef}
                           getInput={getBlockInput}
                           setOutput={updateBlockOutput}
+                          onInputFocus={() => setIsInputFocused(true)}
+                          onInputBlur={() => setIsInputFocused(false)}
                         />
                       );
                     }
@@ -421,7 +427,7 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock, onAddBlock }: St
                   return (
                     <motion.div
                       key={block.id}
-                      className="absolute w-80 pointer-events-none"
+                      className="absolute w-80"
                       style={{
                         left: position.x,
                         top: position.y,
@@ -430,9 +436,7 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock, onAddBlock }: St
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ duration: 0.3 }}
                     >
-                      <div className="pointer-events-auto">
-                        {blockElement}
-                      </div>
+                      {blockElement}
                     </motion.div>
                   );
                 })}
