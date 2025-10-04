@@ -176,7 +176,10 @@ const TextBlock: React.FC<TextBlockProps> = ({
           
           <div className="flex justify-between items-center">
             <button
-              onClick={handleClear}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleClear();
+              }}
               className="px-3 py-1 text-xs text-zinc-400 hover:text-zinc-200 transition-colors flex items-center gap-1"
               disabled={isGenerating}
             >
@@ -184,7 +187,11 @@ const TextBlock: React.FC<TextBlockProps> = ({
               Reset
             </button>
             <button
-              onClick={handleGenerate}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleGenerate();
+              }}
+              onPointerDown={(e) => e.stopPropagation()}
               disabled={isGenerating || !prompt.trim()}
               className="px-3 py-1 text-xs bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white rounded shadow-glow-purple-sm hover:shadow-glow-purple-md transition-all-std disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
@@ -222,20 +229,32 @@ const TextBlock: React.FC<TextBlockProps> = ({
           
           <div className="flex justify-between items-center">
             <button
-              onClick={handleBackToPrompt}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleBackToPrompt();
+              }}
+              onPointerDown={(e) => e.stopPropagation()}
               className="px-3 py-1 text-xs text-zinc-400 hover:text-zinc-200 transition-colors"
             >
               Edit Prompt
             </button>
             <div className="flex gap-2">
               <button
-                onClick={() => navigator.clipboard.writeText(output || '')}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigator.clipboard.writeText(output || '');
+                }}
+                onPointerDown={(e) => e.stopPropagation()}
                 className="px-3 py-1 text-xs bg-zinc-800 hover:bg-zinc-700 text-white rounded"
               >
                 Copy
               </button>
               <button
-                onClick={handleGenerate}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleGenerate();
+                }}
+                onPointerDown={(e) => e.stopPropagation()}
                 disabled={isGenerating}
                 className="px-3 py-1 text-xs bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white rounded flex items-center gap-2 disabled:opacity-50"
               >

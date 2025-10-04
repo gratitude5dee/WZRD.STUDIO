@@ -100,7 +100,8 @@ const VideoBlock: React.FC<VideoBlockProps> = ({
               type="text"
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              className="w-full bg-zinc-800/50 border border-zinc-700 px-3 py-1.5 rounded text-sm focus:outline-none focus:border-amber-500"
+              onPointerDown={(e) => e.stopPropagation()}
+              className="w-full bg-zinc-800/50 border border-zinc-700 px-3 py-1.5 rounded text-sm focus:outline-none focus:border-amber-500 pointer-events-auto"
               placeholder="Describe the video you want to create..."
               disabled={isGenerating}
             />
@@ -123,7 +124,11 @@ const VideoBlock: React.FC<VideoBlockProps> = ({
         )}
 
         <button
-          onClick={handleGenerate}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleGenerate();
+          }}
+          onPointerDown={(e) => e.stopPropagation()}
           disabled={isGenerating || !prompt.trim()}
           className="w-full px-3 py-2 text-sm bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-white rounded shadow-glow-purple-sm hover:shadow-glow-purple-md transition-all-std disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >

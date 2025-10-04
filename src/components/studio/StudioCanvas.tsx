@@ -247,7 +247,10 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock, onAddBlock }: St
       limitToBounds={false}
       centerOnInit={true}
       wheel={{ step: 0.1 }}
-      panning={{ disabled: isDraggingConnection }}
+      panning={{ 
+        disabled: isDraggingConnection,
+        velocityDisabled: true
+      }}
       onTransformed={(ref) => setZoomLevel(ref.state.scale)}
     >
       {({ zoomIn, zoomOut, resetTransform }) => (

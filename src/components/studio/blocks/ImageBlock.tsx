@@ -130,7 +130,11 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
               />
               <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                 <button 
-                  onClick={() => setEditMode(true)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setEditMode(true);
+                  }}
+                  onPointerDown={(e) => e.stopPropagation()}
                   className="p-2 bg-zinc-800 hover:bg-zinc-700 rounded"
                 >
                   <Edit size={16} />
@@ -173,7 +177,11 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
               />
               <button
                 type="button"
-                onClick={() => document.getElementById(`image-upload-${id}`)?.click()}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  document.getElementById(`image-upload-${id}`)?.click();
+                }}
+                onPointerDown={(e) => e.stopPropagation()}
                 disabled={isUploading}
                 className="w-full px-3 py-2 text-sm bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 text-zinc-300 rounded transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
@@ -202,7 +210,11 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
                       className="w-full h-20 object-cover"
                     />
                     <button
-                      onClick={() => removeUploadedImage(index)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeUploadedImage(index);
+                      }}
+                      onPointerDown={(e) => e.stopPropagation()}
                       className="absolute top-1 right-1 p-1 bg-red-500/90 hover:bg-red-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
                     >
                       <X className="h-3 w-3 text-white" />
@@ -215,7 +227,11 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
         )}
 
         <button
-          onClick={handleGenerate}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleGenerate();
+          }}
+          onPointerDown={(e) => e.stopPropagation()}
           disabled={isGenerating || !prompt.trim()}
           className="w-full px-3 py-2 text-sm bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white rounded shadow-glow-purple-sm hover:shadow-glow-purple-md transition-all-std disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >

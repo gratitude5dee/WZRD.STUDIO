@@ -152,7 +152,11 @@ const BlockBase: React.FC<BlockProps> = ({
         </div>
       </div>
       
-      <div className="p-4">
+      <div 
+        className="p-4 pointer-events-auto"
+        onPointerDown={(e) => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
+      >
         {children}
       </div>
       
