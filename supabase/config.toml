@@ -1,1 +1,10 @@
 project_id = "ixkkrousepsiorwlaycp"
+
+[functions.gemini-text-generation]
+verify_jwt = false
+
+[functions.gemini-image-generation]
+verify_jwt = false
+
+[functions.gemini-video-generation]
+verify_jwt = false
