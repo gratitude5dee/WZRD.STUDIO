@@ -54,21 +54,30 @@ const BlockBase: React.FC<BlockProps> = ({
   // Register block and connection point positions with parent
   React.useEffect(() => {
     if (onRegisterRef && blockRef.current) {
-      const positions: Record<string, { x: number; y: number }> = {};
-      
-      Object.entries(connectionPointRefs.current).forEach(([pointId, element]) => {
-        if (element) {
-          const rect = element.getBoundingClientRect();
-          positions[pointId] = {
-            x: rect.left + rect.width / 2,
-            y: rect.top + rect.height / 2
-          };
-        }
-      });
-      
-      onRegisterRef(id, blockRef.current, positions);
+      const updatePositions = () => {
+        const positions: Record<string, { x: number; y: number }> = {};
+        
+        Object.entries(connectionPointRefs.current).forEach(([pointId, element]) => {
+          if (element) {
+            const rect = element.getBoundingClientRect();
+            positions[pointId] = {
+              x: rect.left + rect.width / 2,
+              y: rect.top + rect.height / 2
+            };
+          }
+        });
+        
+        onRegisterRef(id, blockRef.current, positions);
+      };
+
+      // Initial registration
+      updatePositions();
+
+      // Update on window resize or scroll
+      window.addEventListener('resize', updatePositions);
+      return () => window.removeEventListener('resize', updatePositions);
     }
-  }, [id, onRegisterRef, connectionPoints]);
+  }, [id, onRegisterRef]);
 
   const handleConnectionStart = (pointId: string, e: React.MouseEvent) => {
     e.stopPropagation();

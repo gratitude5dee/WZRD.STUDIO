@@ -1,5 +1,5 @@
 
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import TextBlock from './blocks/TextBlock';
 import ImageBlock from './blocks/ImageBlock';
 import VideoBlock from './blocks/VideoBlock';
@@ -54,10 +54,17 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock }: StudioCanvasPr
   // Register block element and its connection points
   const registerBlockRef = useCallback((blockId: string, element: HTMLElement | null, connectionPoints: Record<string, { x: number; y: number }>) => {
     if (element) {
-      setBlockRefs(prev => ({
-        ...prev,
-        [blockId]: { element, connectionPoints }
-      }));
+      setBlockRefs(prev => {
+        // Only update if positions have actually changed
+        const existing = prev[blockId];
+        if (existing && JSON.stringify(existing.connectionPoints) === JSON.stringify(connectionPoints)) {
+          return prev;
+        }
+        return {
+          ...prev,
+          [blockId]: { element, connectionPoints }
+        };
+      });
     }
   }, []);
 
@@ -140,21 +147,21 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock }: StudioCanvasPr
     setConnectionStart(null);
   };
 
-  // Define connection points for each block type
-  const textBlockConnectionPoints: ConnectionPoint[] = [
+  // Define connection points for each block type (memoized to prevent re-renders)
+  const textBlockConnectionPoints = useMemo<ConnectionPoint[]>(() => [
     { id: 'output', type: 'output', label: 'Text Output', position: 'right' },
     { id: 'input', type: 'input', label: 'Text Input', position: 'left' }
-  ];
+  ], []);
 
-  const imageBlockConnectionPoints: ConnectionPoint[] = [
+  const imageBlockConnectionPoints = useMemo<ConnectionPoint[]>(() => [
     { id: 'image-output', type: 'output', label: 'Image Output', position: 'right' },
     { id: 'prompt-input', type: 'input', label: 'Prompt Input', position: 'left' }
-  ];
+  ], []);
 
-  const videoBlockConnectionPoints: ConnectionPoint[] = [
+  const videoBlockConnectionPoints = useMemo<ConnectionPoint[]>(() => [
     { id: 'video-output', type: 'output', label: 'Video Output', position: 'right' },
     { id: 'prompt-input', type: 'input', label: 'Prompt Input', position: 'left' }
-  ];
+  ], []);
 
   return (
     <div 
