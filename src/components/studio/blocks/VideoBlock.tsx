@@ -101,7 +101,10 @@ const VideoBlock: React.FC<VideoBlockProps> = ({
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               onPointerDown={(e) => e.stopPropagation()}
-              className="w-full bg-zinc-800/50 border border-zinc-700 px-3 py-1.5 rounded text-sm focus:outline-none focus:border-amber-500 pointer-events-auto"
+              onMouseDown={(e) => e.stopPropagation()}
+              onClick={(e) => e.stopPropagation()}
+              onFocus={(e) => e.stopPropagation()}
+              className="w-full bg-zinc-800/50 border border-zinc-700 px-3 py-1.5 rounded text-sm focus:outline-none focus:border-amber-500 pointer-events-auto cursor-text"
               placeholder="Describe the video you want to create..."
               disabled={isGenerating}
             />

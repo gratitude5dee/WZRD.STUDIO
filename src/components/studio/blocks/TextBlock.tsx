@@ -169,6 +169,8 @@ const TextBlock: React.FC<TextBlockProps> = ({
             onChange={(e) => setPrompt(e.target.value)}
             onMouseDown={(e) => e.stopPropagation()}
             onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
+            onFocus={(e) => e.stopPropagation()}
             className="min-h-[80px] text-sm bg-zinc-800/50 border border-zinc-700 focus:border-blue-500 resize-none pointer-events-auto cursor-text"
             placeholder="Enter your prompt here..."
             disabled={isGenerating}
