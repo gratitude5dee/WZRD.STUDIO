@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Upload, Sparkles, Edit } from 'lucide-react';
+import { Sparkles, Edit } from 'lucide-react';
 import BlockBase, { ConnectionPoint } from './BlockBase';
 import { useGeminiImage } from '@/hooks/useGeminiImage';
 import { geminiImageModel } from '@/types/modelTypes';
