@@ -71,7 +71,7 @@ export const Sidebar = ({ activeView, onViewChange }: SidebarProps) => {
 
       {/* Bottom Section */}
       <div className="p-4 border-t border-white/[0.08] space-y-3">
-        <CreditsDisplay />
+        <CreditsDisplay showTooltip={false} />
         
         <div className="flex items-center gap-2">
           <button className="flex items-center justify-center w-9 h-9 rounded-lg text-white/60 hover:text-white hover:bg-white/[0.04] transition-colors">
