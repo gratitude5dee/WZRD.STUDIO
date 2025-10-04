@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { GoogleGenAI } from "npm:@google/genai@0.21.0";
 import { corsHeaders, errorResponse, handleCors } from '../_shared/response.ts';
 
 serve(async (req) => {
@@ -19,34 +18,50 @@ serve(async (req) => {
       return errorResponse('GOOGLE_API_KEY is not configured', 500);
     }
 
-    console.log('Generating image with native Google GenAI SDK (gemini-2.5-flash-image)');
+    console.log('Generating image with Gemini REST API (gemini-2.5-flash-image)');
 
-    const ai = new GoogleGenAI({ apiKey: GOOGLE_API_KEY });
-
-    // Build content based on edit mode
-    let content: any = prompt;
+    // Build the request body for Gemini REST API
+    const parts: any[] = [{ text: prompt }];
+    
     if (editMode && imageUrl) {
       // For edit mode, include the image in the request
-      content = [
-        { text: prompt },
-        { 
-          inlineData: {
-            mimeType: "image/png",
-            data: imageUrl.replace(/^data:image\/[a-z]+;base64,/, '')
-          }
+      const base64Data = imageUrl.replace(/^data:image\/[a-z]+;base64,/, '');
+      parts.push({
+        inlineData: {
+          mimeType: "image/png",
+          data: base64Data
         }
-      ];
+      });
     }
 
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash-image",
-      contents: content,
-    });
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${GOOGLE_API_KEY}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          contents: [{
+            parts: parts
+          }]
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Gemini API error:", response.status, errorText);
+      return errorResponse(`Gemini API error: ${response.status}`, 500);
+    }
+
+    const data = await response.json();
 
     // Extract the generated image from the response
     let imageBase64: string | null = null;
     
-    for (const part of response.candidates[0].content.parts) {
+    const parts_response = data.candidates?.[0]?.content?.parts || [];
+    for (const part of parts_response) {
       if (part.inlineData) {
         imageBase64 = `data:image/png;base64,${part.inlineData.data}`;
         break;
@@ -54,6 +69,7 @@ serve(async (req) => {
     }
 
     if (!imageBase64) {
+      console.error("No image in response:", JSON.stringify(data));
       return errorResponse("No image generated", 500);
     }
 
