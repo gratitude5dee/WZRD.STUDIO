@@ -42,7 +42,7 @@ serve(async (req) => {
       return errorResponse('Prompt is required', 400);
     }
 
-    console.log('Generating video with Luma (Veo 3-like)');
+    console.log('Generating video with Google Veo 3 via Luma');
 
     const body: any = {
       prompt,

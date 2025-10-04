@@ -26,7 +26,7 @@ export type GeminiTextModel =
 
 export type GeminiImageModel = 'google/gemini-2.5-flash-image-preview';
 
-export type GeminiVideoModel = 'luma/dream-machine';
+export type GeminiVideoModel = 'google/veo-3';
 
 export const models: { value: ModelType; label: string }[] = [
   { value: 'google/gemini-2.5-flash', label: 'Gemini 2.5 Flash (FREE)' },
@@ -64,8 +64,8 @@ export const geminiImageModel = {
 };
 
 export const geminiVideoModel = {
-  id: 'luma/dream-machine',
-  name: 'Luma Dream Machine (Veo 3-like)',
+  id: 'google/veo-3',
+  name: 'Google Veo 3',
   description: 'High-quality video generation',
   time: '~3-5min'
 };
