@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { User, Edit, Trash2, Image as ImageIcon, Loader2 } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 export interface Character {
   id: string;
@@ -49,18 +49,16 @@ const CharacterCard: React.FC<CharacterCardProps> = ({ character, onEdit, onDele
               <Edit className="w-4 h-4 mr-2" /> Edit
             </Button>
             {/* Future: Button for AI Image Gen */}
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="ghost" size="sm" className="text-white hover:bg-white/10 mb-2 w-full" disabled>
-                    <ImageIcon className="w-4 h-4 mr-2" /> Generate Image
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Coming soon</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="sm" className="text-white hover:bg-white/10 mb-2 w-full" disabled>
+                  <ImageIcon className="w-4 h-4 mr-2" /> Generate Image
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Coming soon</p>
+              </TooltipContent>
+            </Tooltip>
             <Button variant="destructive" size="sm" className="bg-red-700/80 hover:bg-red-600 w-full" onClick={() => onDelete(character.id)}>
               <Trash2 className="w-4 h-4 mr-2" /> Delete
             </Button>

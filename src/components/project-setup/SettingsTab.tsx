@@ -11,7 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { supabaseService } from '@/services/supabaseService';
 import CharacterCard from './CharacterCard';
 import { toast } from 'sonner';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Card } from '@/components/ui/card';
 
 interface SettingsTabProps {
@@ -223,16 +223,14 @@ const SettingsTab = ({ projectData, updateProjectData }: SettingsTabProps) => {
           <div className="space-y-2">
             <div className="flex items-center text-sm font-medium text-gray-400 uppercase">
               <span>STYLE REFERENCE</span>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <HelpCircle className="ml-2 h-4 w-4 text-gray-500 cursor-help" />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Upload an image to guide the visual style.</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <HelpCircle className="ml-2 h-4 w-4 text-gray-500 cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Upload an image to guide the visual style.</p>
+                </TooltipContent>
+              </Tooltip>
             </div>
             
             <div className="relative border border-zinc-700 rounded p-8 flex flex-col items-center justify-center gap-2 bg-[#18191E] cursor-pointer hover:border-gray-500 transition-colors">

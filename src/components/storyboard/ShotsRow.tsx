@@ -6,7 +6,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Plus, Trash2, AlertCircle } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { ShotCard } from './shot'; // Updated import path
 import { supabaseService } from '@/services/supabaseService';
 import { toast } from 'sonner';
@@ -205,28 +205,26 @@ const ShotsRow = ({ sceneId, sceneNumber, projectId, onSceneDelete, isSelected =
           </Button>
           
           {onSceneDelete && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button 
-                    variant="destructive" 
-                    size="icon"
-                    disabled={isDeleting}
-                    onClick={handleDeleteScene}
-                    className="transition-all-std"
-                  >
-                    {isDeleting ? (
-                      <span className="animate-spin">◌</span>
-                    ) : (
-                      <Trash2 className="w-4 h-4" />
-                    )}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Delete scene and all its shots</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="destructive" 
+                  size="icon"
+                  disabled={isDeleting}
+                  onClick={handleDeleteScene}
+                  className="transition-all-std"
+                >
+                  {isDeleting ? (
+                    <span className="animate-spin">◌</span>
+                  ) : (
+                    <Trash2 className="w-4 h-4" />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Delete scene and all its shots</p>
+              </TooltipContent>
+            </Tooltip>
           )}
         </div>
       </div>
