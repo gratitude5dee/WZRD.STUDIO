@@ -88,27 +88,23 @@ serve(async (req) => {
     const visualPrompt = groqResponse.text.trim();
     console.log(`Generated visual prompt: ${visualPrompt}`);
 
-    // 3. Generate Image using FAL.AI or OpenAI
-    console.log('Calling image generation service...');
+    // 3. Generate Image using Gemini Nano banana
+    console.log('Calling Gemini image generation (Nano banana)...');
     
-    const { data: imageResponse, error: imageError } = await supabaseClient.functions.invoke('falai-image-generation', {
+    const { data: imageResponse, error: imageError } = await supabaseClient.functions.invoke('gemini-image-generation', {
       body: {
         prompt: visualPrompt,
-        image_size: '1024x1024',
-        model_id: 'fal-ai/flux/dev'
-      },
-      headers: {
-        'x-internal-request': 'true'
+        editMode: false
       }
     });
 
-    if (imageError || !imageResponse?.data?.images?.[0]?.url) {
+    if (imageError || !imageResponse?.imageUrl) {
       console.error('Failed to generate character image:', imageError || 'No image URL returned');
       return errorResponse('Failed to generate character image', 500, imageError);
     }
 
-    const imageUrl = imageResponse.data.images[0].url;
-    console.log(`Generated Image URL: ${imageUrl}`);
+    const imageUrl = imageResponse.imageUrl;
+    console.log(`Generated Image URL (base64): ${imageUrl.substring(0, 50)}...`);
 
     // 4. Update Character Record
     const { error: updateError } = await supabaseClient

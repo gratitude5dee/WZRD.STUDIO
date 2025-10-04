@@ -48,17 +48,38 @@ const CharacterCard: React.FC<CharacterCardProps> = ({ character, onEdit, onDele
             <Button variant="ghost" size="sm" className="text-white hover:bg-white/10 mb-2 w-full" onClick={() => onEdit(character)}>
               <Edit className="w-4 h-4 mr-2" /> Edit
             </Button>
-            {/* Future: Button for AI Image Gen */}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="sm" className="text-white hover:bg-white/10 mb-2 w-full" disabled>
-                  <ImageIcon className="w-4 h-4 mr-2" /> Generate Image
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Coming soon</p>
-              </TooltipContent>
-            </Tooltip>
+            {/* AI Image Generation Button */}
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="text-white hover:bg-white/10 mb-2 w-full" 
+              onClick={async (e) => {
+                e.stopPropagation();
+                try {
+                  const { supabase } = await import('@/integrations/supabase/client');
+                  const { toast } = await import('sonner');
+                  
+                  toast.info('Generating character image...');
+                  
+                  const { data, error } = await supabase.functions.invoke('generate-character-image', {
+                    body: { character_id: character.id }
+                  });
+                  
+                  if (error) throw error;
+                  
+                  if (data?.success) {
+                    toast.success('Character image generated!');
+                  } else {
+                    throw new Error('Failed to generate image');
+                  }
+                } catch (err) {
+                  const { toast } = await import('sonner');
+                  toast.error(err instanceof Error ? err.message : 'Failed to generate image');
+                }
+              }}
+            >
+              <ImageIcon className="w-4 h-4 mr-2" /> Generate Image
+            </Button>
             <Button variant="destructive" size="sm" className="bg-red-700/80 hover:bg-red-600 w-full" onClick={() => onDelete(character.id)}>
               <Trash2 className="w-4 h-4 mr-2" /> Delete
             </Button>
