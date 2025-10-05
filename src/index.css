@@ -401,6 +401,19 @@ body::after {
   }
 }
 
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite linear;
+}
+
 @keyframes noise {
   0% { transform: translate(0, 0); }
   10% { transform: translate(-5%, -5%); }

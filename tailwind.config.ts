@@ -134,6 +134,10 @@ export default {
 						height: '0'
 					}
 				},
+				'shimmer': {
+					'0%': { backgroundPosition: '-200% 0' },
+					'100%': { backgroundPosition: '200% 0' }
+				},
 				'glow-pulse': {
 					'0%, 100%': { 
 						boxShadow: '0 0 5px rgba(147, 51, 234, 0.3), 0 0 10px rgba(147, 51, 234, 0.1)' 
@@ -188,6 +192,7 @@ export default {
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out',
+				'shimmer': 'shimmer 2s infinite linear',
 				'glow-pulse': 'glow-pulse 3s ease-in-out infinite',
 				'text-glow-pulse': 'text-glow-pulse 3s ease-in-out infinite',
 				'noise': 'noise-animation 0.2s infinite',
