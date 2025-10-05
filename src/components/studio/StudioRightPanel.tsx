@@ -5,17 +5,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import ModelSelector from './ModelSelector';
 import { useFalModels } from '@/hooks/useFalModels';
-import TextBlockSuggestions from './blocks/TextBlockSuggestions';
-import { ActionTemplate } from '@/types/studioTypes';
 interface StudioRightPanelProps {
   selectedBlockType: 'text' | 'image' | 'video' | null;
   selectedBlockId?: string | null;
-  onTemplateSelect?: (template: ActionTemplate) => void;
 }
 const StudioRightPanel = ({
   selectedBlockType,
-  selectedBlockId,
-  onTemplateSelect
+  selectedBlockId
 }: StudioRightPanelProps) => {
   // State for model selection per block type
   const [textModelId, setTextModelId] = useState<string>('');
@@ -128,20 +124,15 @@ const StudioRightPanel = ({
         </h2>
       </div>
       
-      <div className="flex-1 overflow-y-auto space-y-6">
-        {/* Text Block Suggestions */}
-        {selectedBlockType === 'text' && onTemplateSelect && (
-          <TextBlockSuggestions onSelectAction={onTemplateSelect} />
-        )}
+      <div className="flex-1 overflow-y-auto p-4 space-y-6">
+        {/* Model Selection */}
+        <div className="space-y-3">
+          <Label className="text-xs font-medium text-zinc-400">Model</Label>
+          {isLoading ? <div className="text-zinc-500 text-sm">Loading models...</div> : error ? <div className="text-red-400 text-sm">Error loading models: {error}</div> : <ModelSelector models={availableModels} selectedModelId={selectedModelId} onModelSelect={handleModelSelect} modelType={selectedBlockType} isOpen={getDropdownState()} toggleOpen={toggleModelDropdown} />}
+        </div>
 
-        {/* Model Selection - for image and video blocks */}
-        {(selectedBlockType === 'image' || selectedBlockType === 'video') && (
-          <div className="p-4 space-y-6">
-            <div className="space-y-3">
-              <Label className="text-xs font-medium text-zinc-400">Model</Label>
-              {isLoading ? <div className="text-zinc-500 text-sm">Loading models...</div> : error ? <div className="text-red-400 text-sm">Error loading models: {error}</div> : <ModelSelector models={availableModels} selectedModelId={selectedModelId} onModelSelect={handleModelSelect} modelType={selectedBlockType} isOpen={getDropdownState()} toggleOpen={toggleModelDropdown} />}
-            </div>
-
+        {/* Settings for Image and Video */}
+        {(selectedBlockType === 'image' || selectedBlockType === 'video') && <>
             {/* Quality Slider */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
@@ -166,8 +157,7 @@ const StudioRightPanel = ({
               <Label className="text-xs font-medium text-zinc-400">Seed</Label>
               <Input value={seed} onChange={e => setSeed(e.target.value)} placeholder="Random seed (optional)" className="text-sm" />
             </div>
-          </div>
-        )}
+          </>}
       </div>
     </div>;
 };

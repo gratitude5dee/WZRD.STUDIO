@@ -3,9 +3,9 @@ import BlockBase, { ConnectionPoint } from './BlockBase';
 import { Textarea } from '@/components/ui/textarea';
 import { useGeminiText } from '@/hooks/useGeminiText';
 import { Sparkles } from 'lucide-react';
+import TextBlockSuggestions from './TextBlockSuggestions';
 import { ActionTemplate, BlockMode, ConnectedInput } from '@/types/studioTypes';
 import { BlockFloatingToolbar } from './BlockFloatingToolbar';
-import { toast } from 'sonner';
 
 export interface TextBlockProps {
   id: string;
@@ -20,12 +20,10 @@ export interface TextBlockProps {
   onRegisterRef?: (blockId: string, element: HTMLElement | null, connectionPoints: Record<string, { x: number; y: number }>) => void;
   getInput?: (blockId: string, inputId: string) => any;
   setOutput?: (blockId: string, outputId: string, value: any) => void;
-  onCreateConnectedNodes?: (template: ActionTemplate, targetBlockId: string) => void;
+  onCreateConnectedNodes?: (sourceBlockId: string, template: ActionTemplate) => void;
   connectedInputs?: ConnectedInput[];
   onInputFocus?: () => void;
   onInputBlur?: () => void;
-  onTemplateApplied?: (template: ActionTemplate) => void;
-  selectedTemplate?: ActionTemplate | null;
 }
 
 const TextBlock: React.FC<TextBlockProps> = ({ 
@@ -44,22 +42,13 @@ const TextBlock: React.FC<TextBlockProps> = ({
   onCreateConnectedNodes,
   connectedInputs = [],
   onInputFocus,
-  onInputBlur,
-  onTemplateApplied,
-  selectedTemplate: externalTemplate
+  onInputBlur
 }) => {
   const [mode, setMode] = useState<BlockMode>('suggestions');
   const [prompt, setPrompt] = useState<string>("");
   const [selectedModel, setSelectedModel] = useState('Gemini 2.5 Flash');
   const [selectedTemplate, setSelectedTemplate] = useState<ActionTemplate | null>(null);
   const { isGenerating, output, generateText } = useGeminiText();
-
-  // Handle external template selection from right panel
-  React.useEffect(() => {
-    if (externalTemplate && isSelected) {
-      handleSelectAction(externalTemplate);
-    }
-  }, [externalTemplate, isSelected]);
 
   // Check for connected input and use it as prompt if available
   React.useEffect(() => {
@@ -81,17 +70,12 @@ const TextBlock: React.FC<TextBlockProps> = ({
   const handleSelectAction = (template: ActionTemplate) => {
     setSelectedTemplate(template);
     setPrompt(template.defaultPrompt);
+    
+    if (template.createNodes.length > 0 && onCreateConnectedNodes) {
+      onCreateConnectedNodes(id, template);
+    }
+    
     setMode('prompt');
-    
-    // Notify parent that template was applied
-    if (onTemplateApplied) {
-      onTemplateApplied(template);
-    }
-    
-    // If template requires inputs, create connected nodes
-    if (template.requiredInputs > 0 && onCreateConnectedNodes) {
-      onCreateConnectedNodes(template, id);
-    }
   };
 
   const handleGenerate = () => {
@@ -146,13 +130,9 @@ const TextBlock: React.FC<TextBlockProps> = ({
     >
       {/* Suggestions Mode */}
       {mode === 'suggestions' && (
-        <div className="p-6 text-center">
-          <div className="flex flex-col items-center gap-3">
-            <Sparkles className="w-8 h-8 text-zinc-600" />
-            <p className="text-sm text-zinc-400">
-              Select from suggestions in the right panel →
-            </p>
-          </div>
+        <div className="space-y-2">
+          <p className="text-xs text-zinc-500">Try to...</p>
+          <TextBlockSuggestions onSelectAction={handleSelectAction} />
         </div>
       )}
 

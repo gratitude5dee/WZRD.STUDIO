@@ -9,8 +9,6 @@ import EmptyCanvasState from './EmptyCanvasState';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
 import { toast } from 'sonner';
-import BlockConnector from './blocks/BlockConnector';
-import { ActionTemplate } from '@/types/studioTypes';
 
 interface Block {
   id: string;
@@ -18,21 +16,11 @@ interface Block {
   position: { x: number; y: number };
 }
 
-interface Connection {
-  id: string;
-  sourceBlockId: string;
-  targetBlockId: string;
-  sourcePosition: { x: number; y: number };
-  targetPosition: { x: number; y: number };
-}
-
 interface StudioCanvasProps {
   blocks: Block[];
   selectedBlockId: string | null;
   onSelectBlock: (id: string) => void;
   onAddBlock: (block: Block) => void;
-  onTemplateApplied?: (template: ActionTemplate) => void;
-  selectedTemplate?: ActionTemplate | null;
 }
 
 const GRID_SIZE = 20; // Snap-to-grid size
@@ -40,7 +28,7 @@ const GRID_SIZE = 20; // Snap-to-grid size
 // Helper function to snap position to grid
 const snapToGrid = (value: number) => Math.round(value / GRID_SIZE) * GRID_SIZE;
 
-const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock, onAddBlock, onTemplateApplied, selectedTemplate }: StudioCanvasProps) => {
+const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock, onAddBlock }: StudioCanvasProps) => {
   const [showAddBlockDialog, setShowAddBlockDialog] = useState(false);
   const [addBlockPosition, setAddBlockPosition] = useState({ x: 0, y: 0 });
   const [showGrid, setShowGrid] = useState(true);
@@ -49,7 +37,6 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock, onAddBlock, onTe
   const canvasRef = useRef<HTMLDivElement>(null);
   const transformRef = useRef<any>(null);
   const [localBlocks, setLocalBlocks] = useState(blocks);
-  const [connections, setConnections] = useState<Connection[]>([]);
 
   // Zoom controls visibility
   const [showZoomControls, setShowZoomControls] = useState(false);
@@ -209,40 +196,6 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock, onAddBlock, onTe
     setDraggedBlockId(null);
   };
 
-  // Handle creating connected nodes when a template is selected
-  const handleCreateConnectedNodes = (template: ActionTemplate, targetBlockId: string) => {
-    if (template.id === 'image-question') {
-      // Create an image block to the left of the text block
-      const targetBlock = localBlocks.find(b => b.id === targetBlockId);
-      if (!targetBlock) return;
-
-      const imageBlock: Block = {
-        id: uuidv4(),
-        type: 'image',
-        position: {
-          x: targetBlock.position.x - 450, // Position to the left
-          y: targetBlock.position.y
-        }
-      };
-
-      // Add the image block
-      setLocalBlocks(prev => [...prev, imageBlock]);
-      onAddBlock(imageBlock);
-
-      // Create a connection from image block to text block
-      const newConnection: Connection = {
-        id: uuidv4(),
-        sourceBlockId: imageBlock.id,
-        targetBlockId: targetBlockId,
-        sourcePosition: imageBlock.position,
-        targetPosition: targetBlock.position
-      };
-
-      setConnections(prev => [...prev, newConnection]);
-      toast.success('Image block connected');
-    }
-  };
-
   return (
     <div className="flex-1 relative overflow-hidden bg-black" ref={canvasRef}>
       <TransformWrapper
@@ -309,9 +262,6 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock, onAddBlock, onTe
                 onMouseUp={handleMouseUp}
                 onMouseLeave={handleMouseUp}
               >
-                {/* Connections */}
-                <BlockConnector connections={connections} blocks={localBlocks} />
-
                 {/* Empty Canvas State */}
                 {localBlocks.length === 0 && (
                   <EmptyCanvasState onAddBlock={handleSelectBlockType} />
@@ -334,9 +284,6 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock, onAddBlock, onTe
                         id={block.id}
                         onSelect={() => onSelectBlock(block.id)}
                         isSelected={selectedBlockId === block.id}
-                        onCreateConnectedNodes={handleCreateConnectedNodes}
-                        onTemplateApplied={onTemplateApplied}
-                        selectedTemplate={selectedBlockId === block.id ? selectedTemplate : null}
                       />
                     )}
                     {block.type === 'image' && (
