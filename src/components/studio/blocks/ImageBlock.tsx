@@ -540,7 +540,7 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
                             <span className="text-xs">Download</span>
                           </Button>
                         </TooltipTrigger>
-                        <TooltipContent>Download Image</TooltipContent>
+                        <TooltipContent side="top">Download Image</TooltipContent>
                       </Tooltip>
 
                       <Tooltip>
@@ -559,7 +559,7 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
                             <span className="text-xs">Copy</span>
                           </Button>
                         </TooltipTrigger>
-                        <TooltipContent>Copy to Clipboard</TooltipContent>
+                        <TooltipContent side="top">Copy to Clipboard</TooltipContent>
                       </Tooltip>
 
                       <Tooltip>
@@ -575,7 +575,7 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
                             <span className="text-xs">Zoom</span>
                           </Button>
                         </TooltipTrigger>
-                        <TooltipContent>View Full Size</TooltipContent>
+                        <TooltipContent side="top">View Full Size</TooltipContent>
                       </Tooltip>
 
                       <Tooltip>
@@ -591,7 +591,7 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
                             <span className="text-xs">Edit</span>
                           </Button>
                         </TooltipTrigger>
-                        <TooltipContent>Edit Image</TooltipContent>
+                        <TooltipContent side="top">Edit Image</TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
                   </div>
