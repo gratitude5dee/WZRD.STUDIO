@@ -5,6 +5,7 @@ import TextBlock from './blocks/TextBlock';
 import ImageBlock from './blocks/ImageBlock';
 import VideoBlock from './blocks/VideoBlock';
 import { AddBlockDialog } from './AddBlockDialog';
+import EmptyCanvasState from './EmptyCanvasState';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -261,6 +262,11 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock, onAddBlock }: St
                 onMouseUp={handleMouseUp}
                 onMouseLeave={handleMouseUp}
               >
+                {/* Empty Canvas State */}
+                {localBlocks.length === 0 && (
+                  <EmptyCanvasState onAddBlock={handleSelectBlockType} />
+                )}
+
                 {/* Render Blocks */}
                 {localBlocks.map((block) => (
                   <div

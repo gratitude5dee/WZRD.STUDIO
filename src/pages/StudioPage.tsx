@@ -21,11 +21,7 @@ const StudioPage = () => {
   const { projectId } = useParams<{ projectId?: string }>();
   const { activeProjectId, setActiveProject } = useAppStore();
   
-  const [blocks, setBlocks] = useState<Block[]>([
-    { id: uuidv4(), type: 'text', position: { x: 100, y: 100 } },
-    { id: uuidv4(), type: 'image', position: { x: 500, y: 100 } },
-    { id: uuidv4(), type: 'video', position: { x: 900, y: 100 } },
-  ]);
+  const [blocks, setBlocks] = useState<Block[]>([]);
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
   
   // When the component mounts or projectId changes, update the app store

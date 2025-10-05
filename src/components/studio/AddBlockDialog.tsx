@@ -73,7 +73,15 @@ export const AddBlockDialog: React.FC<AddBlockDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md bg-zinc-900/95 backdrop-blur-sm border border-zinc-800 p-0 gap-0">
+      <DialogContent 
+        className="sm:max-w-md bg-zinc-900/95 backdrop-blur-xl border-zinc-800/50 p-0 gap-0 animate-in fade-in-0 zoom-in-95 duration-200"
+        style={{
+          position: 'fixed',
+          left: `${position.x}px`,
+          top: `${position.y}px`,
+          transform: 'translate(-50%, -50%)',
+        }}
+      >
         <div className="p-4 space-y-3">
           {/* Header */}
           <div className="pb-2">
