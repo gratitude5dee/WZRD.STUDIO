@@ -129,7 +129,7 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock, onAddBlock }: St
     if (e.target === e.currentTarget || (e.target as HTMLElement).classList.contains('canvas-bg')) {
       const rect = canvasRef.current?.getBoundingClientRect();
       if (rect && transformRef.current) {
-        const transform = transformRef.current.state;
+        const transform = transformRef.current?.state || { positionX: 0, positionY: 0, scale: 1 };
         const x = (e.clientX - rect.left - transform.positionX) / transform.scale;
         const y = (e.clientY - rect.top - transform.positionY) / transform.scale;
         
@@ -157,7 +157,7 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock, onAddBlock }: St
       const block = localBlocks.find(b => b.id === blockId);
       if (block && canvasRef.current && transformRef.current) {
         const rect = canvasRef.current.getBoundingClientRect();
-        const transform = transformRef.current.state;
+        const transform = transformRef.current?.state || { positionX: 0, positionY: 0, scale: 1 };
         const mouseX = (e.clientX - rect.left - transform.positionX) / transform.scale;
         const mouseY = (e.clientY - rect.top - transform.positionY) / transform.scale;
         
@@ -173,7 +173,7 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock, onAddBlock }: St
   const handleMouseMove = (e: React.MouseEvent) => {
     if (draggedBlockId && canvasRef.current && transformRef.current) {
       const rect = canvasRef.current.getBoundingClientRect();
-      const transform = transformRef.current.state;
+      const transform = transformRef.current?.state || { positionX: 0, positionY: 0, scale: 1 };
       const mouseX = (e.clientX - rect.left - transform.positionX) / transform.scale;
       const mouseY = (e.clientY - rect.top - transform.positionY) / transform.scale;
       
