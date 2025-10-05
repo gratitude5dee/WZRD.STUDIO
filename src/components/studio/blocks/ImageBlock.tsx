@@ -399,12 +399,9 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
         )}
 
         {/* Model Info */}
-        <div className="flex items-center justify-between text-xs mb-2">
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-3 h-3 text-purple-400" />
-            <span className="text-zinc-400">Gemini 2.5 Flash Image</span>
-          </div>
-          <span className="text-green-400 text-xs">FREE</span>
+        <div className="flex items-center gap-2 text-xs mb-1">
+          <Sparkles className="w-3 h-3 text-purple-400" />
+          <span className="text-zinc-500">Gemini 2.5 Flash Image</span>
         </div>
 
         {/* Empty State with Suggestions */}
@@ -447,8 +444,8 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
             onBlur={() => onInputBlur?.()}
             onMouseDown={(e) => e.stopPropagation()}
             onClick={(e) => e.stopPropagation()}
-            placeholder=""
-            className="min-h-[140px] resize-none cursor-text bg-zinc-900/50 border-zinc-700/50 text-white placeholder:text-zinc-500 focus:border-zinc-600 pr-12"
+            placeholder="Describe the image you want to generate..."
+            className="min-h-[100px] resize-none cursor-text bg-zinc-950/50 border-zinc-800/50 text-zinc-200 placeholder:text-zinc-600 focus:border-purple-500/50 text-sm"
             disabled={isGenerating}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey && !isGenerating) {
@@ -457,27 +454,6 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
               }
             }}
           />
-          
-          {/* Prompt suggestion overlay */}
-          {!prompt && images.length === 0 && !isGenerating && (
-            <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-zinc-500">Try </span>
-                <span className="text-sm text-zinc-400">"A 3D render of a futuristic hovercar"</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1 px-2 py-1 bg-zinc-800/50 border border-zinc-700/50 rounded text-xs text-zinc-500">
-                  <span>⇧</span>
-                  <span>TAB</span>
-                </div>
-                <button className="p-1.5 bg-zinc-800/50 border border-zinc-700/50 rounded hover:bg-zinc-700/50 transition-colors">
-                  <svg className="h-4 w-4 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 11l5-5m0 0l5 5m-5-5v12" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Loading State - Grid of Placeholders */}

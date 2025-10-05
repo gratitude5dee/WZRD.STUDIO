@@ -247,10 +247,10 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock, onAddBlock }: St
               contentStyle={{ width: '100%', height: '100%' }}
             >
               <div 
-                className="canvas-bg w-full h-full relative"
+                className="canvas-bg w-full h-full relative bg-zinc-950"
                 style={{
                   backgroundImage: showGrid 
-                    ? `radial-gradient(circle, rgba(113, 113, 122, 0.3) 1px, transparent 1px)`
+                    ? `radial-gradient(circle, rgba(113, 113, 122, 0.15) 1px, transparent 1px)`
                     : 'none',
                   backgroundSize: showGrid ? `${GRID_SIZE}px ${GRID_SIZE}px` : 'auto',
                   minWidth: '4000px',

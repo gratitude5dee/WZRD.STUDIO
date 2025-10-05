@@ -127,7 +127,7 @@ const TextBlock: React.FC<TextBlockProps> = ({
 
       {/* Prompt Mode */}
       {mode === 'prompt' && (
-        <div className="space-y-3">
+        <div className="space-y-2.5">
           <Textarea
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
@@ -138,16 +138,19 @@ const TextBlock: React.FC<TextBlockProps> = ({
               onInputFocus?.();
             }}
             onBlur={() => onInputBlur?.()}
-            className="min-h-[120px] text-sm bg-zinc-800/50 border border-zinc-700 focus:border-blue-500 resize-none cursor-text"
-            placeholder="Type your prompt..."
+            className="min-h-[100px] text-sm bg-zinc-950/50 border-zinc-800/50 text-zinc-200 placeholder:text-zinc-600 focus:border-blue-500/50 resize-none cursor-text"
+            placeholder="Describe what you want to generate..."
             disabled={isGenerating}
+            onKeyDown={(e) => {
+              if (e.key === 'Tab' && !e.shiftKey) {
+                e.preventDefault();
+                handleGenerate();
+              }
+            }}
           />
           
-          <div className="flex items-center justify-between pt-2 border-t border-zinc-800">
-            <div className="flex items-center gap-2 text-xs text-zinc-500">
-              <span>TAB</span>
-              <span>to send</span>
-            </div>
+          <div className="flex items-center justify-between pt-1.5 border-t border-zinc-800/30">
+            <span className="text-[9px] text-zinc-600 uppercase tracking-wider font-medium">TAB to send</span>
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -155,13 +158,13 @@ const TextBlock: React.FC<TextBlockProps> = ({
               }}
               onPointerDown={(e) => e.stopPropagation()}
               disabled={isGenerating || !prompt.trim()}
-              className="p-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="w-5 h-5 rounded-md bg-blue-500 hover:bg-blue-600 flex items-center justify-center transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
               title="Send"
             >
               {isGenerating ? (
-                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <div className="w-2.5 h-2.5 border border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
                 </svg>
               )}
@@ -172,39 +175,37 @@ const TextBlock: React.FC<TextBlockProps> = ({
 
       {/* Output Mode */}
       {mode === 'output' && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between text-xs mb-2">
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-3 h-3 text-green-400" />
-              <span className="text-zinc-400">Generated Text</span>
-            </div>
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 text-xs mb-1">
+            <Sparkles className="w-3 h-3 text-green-400" />
+            <span className="text-zinc-500">Generated Text</span>
           </div>
 
           {output && (
-            <div className="p-3 bg-zinc-900/50 rounded border border-zinc-700 max-h-60 overflow-y-auto">
-              <pre className="text-sm text-zinc-300 whitespace-pre-wrap">{output}</pre>
+            <div className="p-3 bg-zinc-950/50 rounded-lg border border-zinc-800/50 max-h-60 overflow-y-auto">
+              <pre className="text-sm text-zinc-300 leading-relaxed whitespace-pre-wrap">{output}</pre>
             </div>
           )}
           
-          <div className="flex justify-between items-center">
+          <div className="flex justify-between items-center pt-1.5 border-t border-zinc-800/30">
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 handleBackToPrompt();
               }}
               onPointerDown={(e) => e.stopPropagation()}
-              className="px-3 py-1 text-xs text-zinc-400 hover:text-zinc-200 transition-colors"
+              className="px-2 py-1 text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
             >
               Edit Prompt
             </button>
-            <div className="flex gap-2">
+            <div className="flex gap-1.5">
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   navigator.clipboard.writeText(output || '');
                 }}
                 onPointerDown={(e) => e.stopPropagation()}
-                className="px-3 py-1 text-xs bg-zinc-800 hover:bg-zinc-700 text-white rounded"
+                className="px-2.5 py-1 text-[10px] bg-zinc-800/50 hover:bg-zinc-800 text-zinc-300 rounded transition-colors"
               >
                 Copy
               </button>
@@ -215,17 +216,17 @@ const TextBlock: React.FC<TextBlockProps> = ({
                 }}
                 onPointerDown={(e) => e.stopPropagation()}
                 disabled={isGenerating}
-                className="px-3 py-1 text-xs bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white rounded flex items-center gap-2 disabled:opacity-50"
+                className="px-2.5 py-1 text-[10px] bg-blue-500 hover:bg-blue-600 text-white rounded flex items-center gap-1.5 disabled:opacity-50 transition-all"
               >
                 {isGenerating ? (
                   <>
-                    <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    Regenerating...
+                    <div className="w-2.5 h-2.5 border border-white/30 border-t-white rounded-full animate-spin" />
+                    <span>Regenerating...</span>
                   </>
                 ) : (
                   <>
-                    <Sparkles className="w-3 h-3" />
-                    Regenerate
+                    <Sparkles className="w-2.5 h-2.5" />
+                    <span>Regenerate</span>
                   </>
                 )}
               </button>

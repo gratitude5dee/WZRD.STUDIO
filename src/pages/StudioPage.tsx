@@ -75,12 +75,14 @@ const StudioPage = () => {
   
   return (
     <div className="h-screen flex flex-col bg-black text-white">
-      {/* Simplified header or remove entirely */}
+      {/* Simplified header */}
       <div className="h-12 bg-black border-b border-zinc-800 flex items-center px-4">
         <span className="text-sm font-semibold text-zinc-400">Studio</span>
       </div>
       
       <div className="flex-1 flex overflow-hidden">
+        <StudioSidebar onAddBlock={handleAddBlock} />
+        
         <StudioCanvas 
           blocks={blocks}
           selectedBlockId={selectedBlockId}
