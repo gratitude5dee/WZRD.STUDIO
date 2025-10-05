@@ -79,16 +79,29 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
       return;
     }
     
+    console.log('🎨 Generation started:', { generationCount, prompt, aspectRatio });
+    
     if (generationCount === 1) {
+      console.log('📸 Generating single image');
       const results = await generateImage(prompt, 1, aspectRatio);
+      console.log('✅ Single image result:', results);
       if (results && results.length > 0) {
         setGeneratedImage({ 
           url: results[0].url, 
           generationTime: results[0].generationTime 
         });
+        toast.success('Image generated!');
       }
-    } else if (generationCount > 1 && onSpawnBlocks) {
+    } else if (generationCount > 1) {
+      console.log(`🎭 Generating ${generationCount} images for spawning`);
+      
+      if (!onSpawnBlocks) {
+        toast.error('Multi-image generation not supported in this context');
+        return;
+      }
+      
       const results = await generateImage(prompt, generationCount, aspectRatio);
+      console.log(`✅ Received ${results?.length || 0} images from generation`);
       
       if (results && results.length > 0) {
         const BLOCK_SPACING = 400;
@@ -98,7 +111,7 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
           const row = Math.floor(index / BLOCKS_PER_ROW);
           const col = index % BLOCKS_PER_ROW;
           
-          return {
+          const newBlock = {
             id: uuidv4(),
             type: 'image' as const,
             position: {
@@ -112,10 +125,22 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
               aspectRatio: aspectRatio
             }
           };
+          
+          console.log(`📦 Created block ${index + 1}:`, {
+            id: newBlock.id,
+            position: newBlock.position,
+            hasImage: !!newBlock.initialData?.imageUrl
+          });
+          
+          return newBlock;
         });
         
+        console.log(`🚀 Spawning ${newBlocks.length} blocks`);
         onSpawnBlocks(newBlocks);
-        toast.success(`Spawned ${generationCount} image blocks`);
+        toast.success(`Spawned ${newBlocks.length} image blocks!`);
+      } else {
+        console.error('❌ No images generated');
+        toast.error('Failed to generate images');
       }
     }
   };

@@ -72,8 +72,8 @@ const BlockBase: React.FC<BlockProps> = ({
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Floating Toolbar */}
-      {(isHovered || isSelected) && toolbar && (
-        <div className="absolute -top-14 left-0 right-0">
+      {toolbar && (isHovered || isSelected) && (
+        <div className="absolute -top-14 left-0 right-0 z-20">
           {toolbar}
         </div>
       )}
