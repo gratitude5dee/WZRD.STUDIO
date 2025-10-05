@@ -20,11 +20,13 @@ serve(async (req) => {
 
     console.log('Generating image with Lovable AI Gateway (gemini-2.5-flash-image-preview)');
 
-    // Enhance prompt to force image generation instead of text responses
+    // Enhance prompt to force image generation (trim to avoid whitespace issues)
+    const cleanPrompt = prompt.trim();
     const enhancedPrompt = editMode 
-      ? prompt 
-      : `Generate a detailed, high-quality, photorealistic image of: ${prompt}. Create a stunning visual representation with vibrant colors and clear details. Do not ask questions, just create the image.`;
+      ? cleanPrompt 
+      : `Create a high-quality image: ${cleanPrompt}`;
 
+    console.log('Original prompt:', prompt);
     console.log('Enhanced prompt:', enhancedPrompt);
 
     // Build message content for Lovable AI Gateway
