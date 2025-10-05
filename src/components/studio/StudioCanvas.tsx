@@ -14,6 +14,12 @@ interface Block {
   id: string;
   type: 'text' | 'image' | 'video';
   position: { x: number; y: number };
+  initialData?: {
+    prompt?: string;
+    imageUrl?: string;
+    generationTime?: number;
+    aspectRatio?: string;
+  };
 }
 
 interface StudioCanvasProps {
@@ -152,6 +158,11 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock, onAddBlock, bloc
     setShowAddBlockDialog(false);
     onSelectBlock(newBlock.id);
   };
+
+  const handleSpawnBlocks = useCallback((newBlocks: Block[]) => {
+    setLocalBlocks(prev => [...prev, ...newBlocks]);
+    newBlocks.forEach(block => onAddBlock(block));
+  }, [onAddBlock]);
 
   const handleBlockMouseDown = (blockId: string, e: React.MouseEvent) => {
     if ((e.target as HTMLElement).classList.contains('cursor-move') || 
@@ -297,6 +308,9 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock, onAddBlock, bloc
                         isSelected={selectedBlockId === block.id}
                         selectedModel={blockModels[block.id]}
                         onModelChange={(modelId) => onModelChange(block.id, modelId)}
+                        onSpawnBlocks={handleSpawnBlocks}
+                        blockPosition={block.position}
+                        initialData={block.initialData}
                       />
                     )}
                     {block.type === 'video' && (

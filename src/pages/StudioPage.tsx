@@ -10,10 +10,16 @@ import StudioBottomBar from '@/components/studio/StudioBottomBar';
 import BlockSettingsModal from '@/components/studio/BlockSettingsModal';
 import { supabase } from '@/integrations/supabase/client';
 
-interface Block {
+export interface Block {
   id: string;
   type: 'text' | 'image' | 'video';
   position: { x: number; y: number };
+  initialData?: {
+    prompt?: string;
+    imageUrl?: string;
+    generationTime?: number;
+    aspectRatio?: string;
+  };
 }
 
 const StudioPage = () => {

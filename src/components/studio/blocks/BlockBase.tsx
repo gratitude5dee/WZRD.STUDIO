@@ -25,6 +25,7 @@ export interface BlockProps {
   model?: string;
   onModelChange?: (model: string) => void;
   toolbar?: React.ReactNode;
+  generationTime?: number;
 }
 
 const BlockBase: React.FC<BlockProps> = ({ 
@@ -40,7 +41,8 @@ const BlockBase: React.FC<BlockProps> = ({
   onAddConnectedBlock,
   model,
   onModelChange,
-  toolbar
+  toolbar,
+  generationTime
 }) => {
   const blockRef = React.useRef<HTMLDivElement>(null);
   const [isHovered, setIsHovered] = useState(false);
@@ -107,9 +109,14 @@ const BlockBase: React.FC<BlockProps> = ({
       <div className="px-4 py-2.5 border-b border-zinc-800/50 cursor-move">
         <div className="flex items-center justify-between">
           <span className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider">{title}</span>
-          {model && (
-            <span className="text-[10px] font-medium text-zinc-400">{model}</span>
-          )}
+          <div className="flex items-center gap-2">
+            {generationTime && (
+              <span className="text-[10px] text-zinc-500">~{generationTime}s</span>
+            )}
+            {model && (
+              <span className="text-[10px] font-medium text-zinc-400">{model}</span>
+            )}
+          </div>
         </div>
       </div>
 
