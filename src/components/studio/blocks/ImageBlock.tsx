@@ -42,6 +42,8 @@ export interface ImageBlockProps {
   setOutput?: (blockId: string, outputId: string, value: any) => void;
   onInputFocus?: () => void;
   onInputBlur?: () => void;
+  selectedModel?: string;
+  onModelChange?: (modelId: string) => void;
 }
 
 const ASPECT_RATIOS = [
@@ -79,7 +81,9 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
   getInput,
   setOutput,
   onInputFocus,
-  onInputBlur
+  onInputBlur,
+  selectedModel: externalSelectedModel,
+  onModelChange: externalOnModelChange
 }) => {
   const [prompt, setPrompt] = useState('');
   const [aspectRatio, setAspectRatio] = useState('1:1');
@@ -87,8 +91,16 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
   const [isHovered, setIsHovered] = useState(false);
   const [hoveredImageId, setHoveredImageId] = useState<string | null>(null);
   const [zoomLevel, setZoomLevel] = useState(1);
-  const [selectedModel, setSelectedModel] = useState('Gemini 2.5');
   const { isGenerating, images, generateImage, clearImages } = useGeminiImage();
+
+  // Use external model if provided, otherwise use default
+  const selectedModel = externalSelectedModel || 'gemini-2.5-flash-image';
+  const getModelDisplayName = (modelId: string) => {
+    if (modelId === 'gemini-2.5-flash-image') return 'Gemini 2.5';
+    if (modelId === 'flux-dev') return 'Flux Dev';
+    if (modelId === 'flux-schnell') return 'Flux Schnell';
+    return 'Gemini 2.5';
+  };
 
   // Sync prompt from connected inputs
   useEffect(() => {
@@ -171,9 +183,9 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
   };
 
   const handleModelChange = (modelId: string) => {
-    const modelName = modelId === 'gemini-2.5-flash-image' ? 'Gemini 2.5' :
-                      modelId === 'flux-dev' ? 'Flux Dev' : 'Flux Schnell';
-    setSelectedModel(modelName);
+    if (externalOnModelChange) {
+      externalOnModelChange(modelId);
+    }
   };
 
   return (
@@ -186,7 +198,7 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
             title="Image"
             onSelect={onSelect}
             isSelected={isSelected}
-            model={selectedModel}
+            model={getModelDisplayName(selectedModel)}
             toolbar={
               <BlockFloatingToolbar
                 blockType="image"

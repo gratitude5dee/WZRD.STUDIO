@@ -20,6 +20,8 @@ export interface VideoBlockProps {
   setOutput?: (blockId: string, outputId: string, value: any) => void;
   onInputFocus?: () => void;
   onInputBlur?: () => void;
+  selectedModel?: string;
+  onModelChange?: (modelId: string) => void;
 }
 
 const VideoBlock: React.FC<VideoBlockProps> = ({ 
@@ -36,13 +38,22 @@ const VideoBlock: React.FC<VideoBlockProps> = ({
   getInput,
   setOutput,
   onInputFocus,
-  onInputBlur
+  onInputBlur,
+  selectedModel: externalSelectedModel,
+  onModelChange: externalOnModelChange
 }) => {
   const [prompt, setPrompt] = useState<string>("");
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
-  const [selectedModel, setSelectedModel] = useState('Gemini 2.5');
   const [aspectRatio, setAspectRatio] = useState('16:9');
   const { isGenerating, videoUrl, progress, generateVideo } = useGeminiVideo();
+
+  // Use external model if provided, otherwise use default
+  const selectedModel = externalSelectedModel || 'gemini-2.5-flash-video';
+  const getModelDisplayName = (modelId: string) => {
+    if (modelId === 'gemini-2.5-flash-video') return 'Gemini 2.5';
+    if (modelId === 'luma-dream') return 'Luma Dream';
+    return 'Gemini 2.5';
+  };
 
   // Check for connected input and use it as prompt if available
   React.useEffect(() => {
@@ -67,8 +78,9 @@ const VideoBlock: React.FC<VideoBlockProps> = ({
   };
 
   const handleModelChange = (modelId: string) => {
-    const modelName = modelId === 'gemini-2.5-flash-video' ? 'Gemini 2.5' : 'Luma Dream';
-    setSelectedModel(modelName);
+    if (externalOnModelChange) {
+      externalOnModelChange(modelId);
+    }
   };
 
   return (
@@ -78,7 +90,7 @@ const VideoBlock: React.FC<VideoBlockProps> = ({
       title="Video"
       onSelect={onSelect}
       isSelected={isSelected}
-      model={selectedModel}
+      model={getModelDisplayName(selectedModel)}
       toolbar={
         <BlockFloatingToolbar
           blockType="video"

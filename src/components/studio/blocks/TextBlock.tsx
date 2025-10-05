@@ -24,6 +24,8 @@ export interface TextBlockProps {
   connectedInputs?: ConnectedInput[];
   onInputFocus?: () => void;
   onInputBlur?: () => void;
+  selectedModel?: string;
+  onModelChange?: (modelId: string) => void;
 }
 
 const TextBlock: React.FC<TextBlockProps> = ({ 
@@ -42,13 +44,23 @@ const TextBlock: React.FC<TextBlockProps> = ({
   onCreateConnectedNodes,
   connectedInputs = [],
   onInputFocus,
-  onInputBlur
+  onInputBlur,
+  selectedModel: externalSelectedModel,
+  onModelChange: externalOnModelChange
 }) => {
   const [mode, setMode] = useState<BlockMode>('suggestions');
   const [prompt, setPrompt] = useState<string>("");
-  const [selectedModel, setSelectedModel] = useState('Gemini 2.5 Flash');
   const [selectedTemplate, setSelectedTemplate] = useState<ActionTemplate | null>(null);
   const { isGenerating, output, generateText } = useGeminiText();
+
+  // Use external model if provided, otherwise use default
+  const selectedModel = externalSelectedModel || 'google/gemini-2.5-flash';
+  const getModelDisplayName = (modelId: string) => {
+    if (modelId === 'google/gemini-2.5-flash') return 'Gemini 2.5 Flash';
+    if (modelId === 'openai/gpt-5') return 'GPT-5';
+    if (modelId === 'openai/gpt-5-mini') return 'GPT-5 Mini';
+    return 'Gemini 2.5 Flash';
+  };
 
   // Check for connected input and use it as prompt if available
   React.useEffect(() => {
@@ -90,16 +102,14 @@ const TextBlock: React.FC<TextBlockProps> = ({
       });
     }
     
-    const modelId = selectedModel === 'Gemini 2.5 Flash' ? 'google/gemini-2.5-flash' : 
-                    selectedModel === 'GPT-5' ? 'openai/gpt-5' : 'openai/gpt-5-mini';
-    generateText(fullPrompt, modelId);
+    generateText(fullPrompt, selectedModel);
     setMode('output');
   };
 
   const handleModelChange = (modelId: string) => {
-    const modelName = modelId === 'gemini-2.5-flash' ? 'Gemini 2.5 Flash' :
-                      modelId === 'gpt-5' ? 'GPT-5' : 'GPT-5 Mini';
-    setSelectedModel(modelName);
+    if (externalOnModelChange) {
+      externalOnModelChange(modelId);
+    }
   };
 
   const handleClear = () => {
@@ -119,7 +129,7 @@ const TextBlock: React.FC<TextBlockProps> = ({
       title="Text"
       onSelect={onSelect}
       isSelected={isSelected}
-      model={selectedModel}
+      model={getModelDisplayName(selectedModel)}
       toolbar={
         <BlockFloatingToolbar
           blockType="text"

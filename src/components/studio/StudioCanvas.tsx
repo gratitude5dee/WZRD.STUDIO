@@ -21,6 +21,8 @@ interface StudioCanvasProps {
   selectedBlockId: string | null;
   onSelectBlock: (id: string) => void;
   onAddBlock: (block: Block) => void;
+  blockModels: Record<string, string>;
+  onModelChange: (blockId: string, modelId: string) => void;
 }
 
 const GRID_SIZE = 20; // Snap-to-grid size
@@ -28,7 +30,7 @@ const GRID_SIZE = 20; // Snap-to-grid size
 // Helper function to snap position to grid
 const snapToGrid = (value: number) => Math.round(value / GRID_SIZE) * GRID_SIZE;
 
-const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock, onAddBlock }: StudioCanvasProps) => {
+const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock, onAddBlock, blockModels, onModelChange }: StudioCanvasProps) => {
   const [showAddBlockDialog, setShowAddBlockDialog] = useState(false);
   const [addBlockPosition, setAddBlockPosition] = useState({ x: 0, y: 0 });
   const [showGrid, setShowGrid] = useState(true);
@@ -284,6 +286,8 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock, onAddBlock }: St
                         id={block.id}
                         onSelect={() => onSelectBlock(block.id)}
                         isSelected={selectedBlockId === block.id}
+                        selectedModel={blockModels[block.id]}
+                        onModelChange={(modelId) => onModelChange(block.id, modelId)}
                       />
                     )}
                     {block.type === 'image' && (
@@ -291,6 +295,8 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock, onAddBlock }: St
                         id={block.id}
                         onSelect={() => onSelectBlock(block.id)}
                         isSelected={selectedBlockId === block.id}
+                        selectedModel={blockModels[block.id]}
+                        onModelChange={(modelId) => onModelChange(block.id, modelId)}
                       />
                     )}
                     {block.type === 'video' && (
@@ -298,6 +304,8 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock, onAddBlock }: St
                         id={block.id}
                         onSelect={() => onSelectBlock(block.id)}
                         isSelected={selectedBlockId === block.id}
+                        selectedModel={blockModels[block.id]}
+                        onModelChange={(modelId) => onModelChange(block.id, modelId)}
                       />
                     )}
                   </div>

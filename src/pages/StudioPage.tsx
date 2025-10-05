@@ -7,7 +7,7 @@ import AppHeader from '@/components/AppHeader';
 import StudioSidebar from '@/components/studio/StudioSidebar';
 import StudioCanvas from '@/components/studio/StudioCanvas';
 import StudioBottomBar from '@/components/studio/StudioBottomBar';
-import StudioRightPanel from '@/components/studio/StudioRightPanel';
+import BlockSettingsModal from '@/components/studio/BlockSettingsModal';
 import { supabase } from '@/integrations/supabase/client';
 
 interface Block {
@@ -23,6 +23,8 @@ const StudioPage = () => {
   
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
+  const [blockModels, setBlockModels] = useState<Record<string, string>>({});
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   
   // When the component mounts or projectId changes, update the app store
   useEffect(() => {
@@ -64,10 +66,21 @@ const StudioPage = () => {
   
   const handleSelectBlock = (id: string) => {
     setSelectedBlockId(id || null);
+    setIsSettingsModalOpen(!!id);
+  };
+
+  const handleModelChange = (blockId: string, modelId: string) => {
+    setBlockModels(prev => ({ ...prev, [blockId]: modelId }));
+  };
+
+  const handleCloseModal = () => {
+    setIsSettingsModalOpen(false);
   };
   
-  // Get the type of the currently selected block
-  const selectedBlockType = blocks.find(b => b.id === selectedBlockId)?.type || null;
+  // Get the type and model of the currently selected block
+  const selectedBlock = blocks.find(b => b.id === selectedBlockId);
+  const selectedBlockType = selectedBlock?.type || null;
+  const selectedModel = selectedBlockId ? blockModels[selectedBlockId] : '';
   
   return (
     <div className="h-screen flex flex-col bg-black text-white">
@@ -84,13 +97,23 @@ const StudioPage = () => {
           selectedBlockId={selectedBlockId}
           onSelectBlock={handleSelectBlock}
           onAddBlock={handleAddBlock}
-        />
-        
-        <StudioRightPanel 
-          selectedBlockType={selectedBlockType}
-          selectedBlockId={selectedBlockId}
+          blockModels={blockModels}
+          onModelChange={handleModelChange}
         />
       </div>
+
+      {/* Block Settings Modal */}
+      <BlockSettingsModal
+        isOpen={isSettingsModalOpen}
+        onClose={handleCloseModal}
+        blockType={selectedBlockType}
+        selectedModel={selectedModel}
+        onModelChange={(modelId) => {
+          if (selectedBlockId) {
+            handleModelChange(selectedBlockId, modelId);
+          }
+        }}
+      />
     </div>
   );
 };
