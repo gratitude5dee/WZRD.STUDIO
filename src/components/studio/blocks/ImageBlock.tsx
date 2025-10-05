@@ -142,7 +142,7 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
     return Array.from({ length: generationCount }).map((_, i) => (
       <div
         key={`loading-${i}`}
-        className="relative aspect-square rounded-xl border border-zinc-700 bg-zinc-900 overflow-hidden"
+        className="relative aspect-square rounded-lg border border-zinc-700/50 bg-zinc-900/50 overflow-hidden"
         style={{
           animationDelay: `${i * 100}ms`
         }}
@@ -151,21 +151,15 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
         <div 
           className="absolute inset-0 animate-shimmer"
           style={{
-            background: 'linear-gradient(90deg, transparent, rgba(113, 113, 122, 0.2), transparent)',
+            background: 'linear-gradient(90deg, transparent, rgba(113, 113, 122, 0.15), transparent)',
             backgroundSize: '200% 100%',
           }}
         />
         
-        {/* Model badge */}
-        <div className="absolute top-3 right-3 px-2 py-1 rounded-md bg-zinc-800/90 backdrop-blur-sm border border-zinc-700">
-          <span className="text-xs text-zinc-300">{selectedModel}</span>
-        </div>
-        
-        {/* Progress text */}
+        {/* Progress text - centered */}
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="text-center">
-            <Loader2 className="h-8 w-8 animate-spin text-zinc-400 mx-auto mb-2" />
-            <p className="text-sm text-zinc-400">Generating image {i + 1} of {generationCount}...</p>
+            <Loader2 className="h-6 w-6 animate-spin text-zinc-500 mx-auto" />
           </div>
         </div>
       </div>
@@ -187,6 +181,8 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
       onFinishConnection={onFinishConnection}
       onDragEnd={onDragEnd}
       onRegisterRef={onRegisterRef}
+      promptDisplay={isGenerating && prompt ? prompt : undefined}
+      estimatedTime={isGenerating ? "~4s" : undefined}
     >
       <div 
         className="space-y-4 relative"
@@ -362,50 +358,41 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
           </div>
         )}
 
-        {/* Zoom Controls - Only show when images exist */}
-        {images.length > 0 && (isHovered || isToolbarHovered) && (
-          <div className="absolute -right-14 top-1/2 -translate-y-1/2 flex flex-col gap-1 bg-zinc-900/95 backdrop-blur-sm border border-zinc-700 rounded-lg p-1 z-50 animate-fade-in">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="h-8 w-8 p-0"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setZoomLevel(Math.min(3, zoomLevel + 0.5));
-                    }}
-                    onPointerDown={(e) => e.stopPropagation()}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="right">Zoom In</TooltipContent>
-              </Tooltip>
+        {/* Zoom Controls - Positioned on the right side of the block */}
+        {(isHovered || isToolbarHovered) && (
+          <div className="absolute -right-12 bottom-4 flex flex-col gap-0 bg-background/95 backdrop-blur-sm border border-zinc-700 rounded-lg overflow-hidden z-50 animate-fade-in">
+            <button 
+              className="h-10 w-10 flex items-center justify-center hover:bg-zinc-800 transition-colors text-zinc-300 hover:text-white border-b border-zinc-700"
+              onClick={(e) => {
+                e.stopPropagation();
+                setZoomLevel(Math.min(3, zoomLevel + 0.5));
+              }}
+              onPointerDown={(e) => e.stopPropagation()}
+            >
+              <Plus className="h-4 w-4" />
+            </button>
+            
+            <div className="h-10 w-10 flex items-center justify-center text-sm text-zinc-300 border-b border-zinc-700 font-medium">
+              {generationCount}
+            </div>
+            
+            <button 
+              className="h-10 w-10 flex items-center justify-center hover:bg-zinc-800 transition-colors text-zinc-300 hover:text-white"
+              onClick={(e) => {
+                e.stopPropagation();
+                setZoomLevel(Math.max(0.5, zoomLevel - 0.5));
+              }}
+              onPointerDown={(e) => e.stopPropagation()}
+            >
+              <Minus className="h-4 w-4" />
+            </button>
+          </div>
+        )}
 
-              <div className="h-8 w-8 flex items-center justify-center text-xs text-zinc-400">
-                {zoomLevel}×
-              </div>
-
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="h-8 w-8 p-0"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setZoomLevel(Math.max(0.5, zoomLevel - 0.5));
-                    }}
-                    onPointerDown={(e) => e.stopPropagation()}
-                  >
-                    <Minus className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="right">Zoom Out</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+        {/* Generation Multiplier Badge - Bottom Right Corner */}
+        {!isGenerating && images.length === 0 && (
+          <div className="absolute -bottom-2 -right-2 px-2 py-1 rounded-md bg-background/95 backdrop-blur-sm border border-zinc-700 shadow-lg z-50">
+            <span className="text-xs text-zinc-400 font-medium">{generationCount}×</span>
           </div>
         )}
 
@@ -420,25 +407,25 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
 
         {/* Empty State with Suggestions */}
         {images.length === 0 && !isGenerating && (
-          <div className="space-y-4">
+          <div className="space-y-3">
             {/* Learn Banner */}
-            <div className="flex items-center gap-2 p-3 bg-zinc-900 border border-zinc-700 rounded-lg">
-              <Info className="h-4 w-4 text-zinc-400 flex-shrink-0" />
-              <span className="text-xs text-zinc-300">Learn about Image Blocks</span>
+            <div className="flex items-center gap-2 p-2.5 bg-zinc-900/50 border border-zinc-700/50 rounded-lg">
+              <Info className="h-3.5 w-3.5 text-zinc-500 flex-shrink-0" />
+              <span className="text-xs text-zinc-400">Learn about Image Blocks</span>
             </div>
 
             {/* Try to... Suggestions */}
             <div className="space-y-2">
-              <p className="text-xs text-zinc-400 px-1">Try to...</p>
+              <p className="text-xs text-zinc-500 px-1">Try to...</p>
               <div className="grid grid-cols-2 gap-2">
                 {SUGGESTIONS.map((suggestion, idx) => (
                   <button
                     key={idx}
                     disabled={suggestion.disabled}
-                    className="flex items-center gap-2 p-3 bg-zinc-900 border border-zinc-700 rounded-lg hover:bg-zinc-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-left"
+                    className="flex items-center gap-2 p-2.5 bg-zinc-900/30 border border-zinc-700/50 rounded-lg hover:bg-zinc-800/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-left"
                   >
-                    <suggestion.icon className="h-4 w-4 text-zinc-400 flex-shrink-0" />
-                    <span className="text-xs text-zinc-300">{suggestion.label}</span>
+                    <suggestion.icon className="h-3.5 w-3.5 text-zinc-500 flex-shrink-0" />
+                    <span className="text-xs text-zinc-400">{suggestion.label}</span>
                   </button>
                 ))}
               </div>
@@ -458,8 +445,8 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
             onBlur={() => onInputBlur?.()}
             onMouseDown={(e) => e.stopPropagation()}
             onClick={(e) => e.stopPropagation()}
-            placeholder="Describe the image you want to generate... Try 'A 3D render of a futuristic hovercar'"
-            className="min-h-[100px] resize-none cursor-text bg-zinc-800/50 border-zinc-700 text-white placeholder:text-zinc-500 focus:border-zinc-600"
+            placeholder=""
+            className="min-h-[140px] resize-none cursor-text bg-zinc-900/50 border-zinc-700/50 text-white placeholder:text-zinc-500 focus:border-zinc-600 pr-12"
             disabled={isGenerating}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey && !isGenerating) {
@@ -468,62 +455,56 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
               }
             }}
           />
-          {!prompt && images.length === 0 && (
-            <div className="absolute bottom-3 right-3 flex items-center gap-2 text-xs text-zinc-500">
-              <kbd className="px-2 py-1 bg-zinc-800 border border-zinc-700 rounded">TAB</kbd>
-              <span>to autocomplete</span>
+          
+          {/* Prompt suggestion overlay */}
+          {!prompt && images.length === 0 && !isGenerating && (
+            <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-zinc-500">Try </span>
+                <span className="text-sm text-zinc-400">"A 3D render of a futuristic hovercar"</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 px-2 py-1 bg-zinc-800/50 border border-zinc-700/50 rounded text-xs text-zinc-500">
+                  <span>⇧</span>
+                  <span>TAB</span>
+                </div>
+                <button className="p-1.5 bg-zinc-800/50 border border-zinc-700/50 rounded hover:bg-zinc-700/50 transition-colors">
+                  <svg className="h-4 w-4 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 11l5-5m0 0l5 5m-5-5v12" />
+                  </svg>
+                </button>
+              </div>
             </div>
           )}
         </div>
 
         {/* Loading State - Grid of Placeholders */}
         {isGenerating && (
-          <div>
-            {/* Prompt Display */}
-            {prompt && (
-              <div className="mb-3 p-3 bg-zinc-900 border border-zinc-700 rounded-lg">
-                <p className="text-sm text-zinc-300 mb-1">{prompt}</p>
-                <div className="flex items-center gap-2 text-xs text-zinc-500">
-                  <span>{selectedModel}</span>
-                  <span>•</span>
-                  <span>{aspectRatio}</span>
-                  <span>•</span>
-                  <span>Generating {generationCount}×...</span>
-                </div>
-              </div>
-            )}
-            
-            <div className={cn("grid gap-4", getGridClass())}>
+          <div className="space-y-3">
+            <div className={cn("grid gap-3", getGridClass())}>
               {getLoadingPlaceholders()}
             </div>
+            
+            {/* Prompt Display at Bottom */}
+            {prompt && (
+              <div className="p-2.5 bg-zinc-900/50 border border-zinc-700/50 rounded-lg">
+                <p className="text-sm text-zinc-400">{prompt}</p>
+              </div>
+            )}
           </div>
         )}
 
         {/* Generated Images with Enhanced Cards */}
         {images.length > 0 && !isGenerating && (
           <div className="space-y-3">
-            {/* Prompt Display Header */}
-            {prompt && (
-              <div className="p-3 bg-zinc-900 border border-zinc-700 rounded-lg">
-                <p className="text-sm text-zinc-300 mb-1">{prompt}</p>
-                <div className="flex items-center gap-2 text-xs text-zinc-500">
-                  <span>{selectedModel}</span>
-                  <span>•</span>
-                  <span>{aspectRatio}</span>
-                  <span>•</span>
-                  <span>{new Date(images[0].timestamp).toLocaleTimeString()}</span>
-                </div>
-              </div>
-            )}
-
             <div 
-              className={cn("grid gap-4 transition-transform duration-300", getGridClass())}
+              className={cn("grid gap-3 transition-transform duration-300", getGridClass())}
               style={{ transform: `scale(${zoomLevel})`, transformOrigin: 'center' }}
             >
               {images.map((image, index) => (
                 <div
                   key={image.id}
-                  className="relative group aspect-square rounded-xl overflow-hidden border border-zinc-700 bg-zinc-900 hover:border-zinc-600 transition-all hover:shadow-lg hover:shadow-blue-500/10 animate-fade-in"
+                  className="relative group aspect-square rounded-lg overflow-hidden border border-zinc-700/50 bg-zinc-900 hover:border-zinc-600 transition-all animate-fade-in"
                   style={{
                     animationDelay: `${index * 100}ms`
                   }}
@@ -536,16 +517,6 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
                     alt={image.prompt}
                     className="w-full h-full object-cover"
                   />
-                  
-                  {/* Top Left - Title Overlay (always visible) */}
-                  <div className="absolute top-3 left-3 px-2 py-1 rounded-md bg-zinc-900/90 backdrop-blur-sm border border-zinc-700">
-                    <span className="text-xs text-zinc-300">Image {index + 1}</span>
-                  </div>
-
-                  {/* Top Right - Model Badge (always visible) */}
-                  <div className="absolute top-3 right-3 px-2 py-1 rounded-md bg-zinc-900/90 backdrop-blur-sm border border-zinc-700">
-                    <span className="text-xs text-zinc-300">{selectedModel}</span>
-                  </div>
                   
                   {/* Hover Overlay with Actions */}
                   <div className={cn(
@@ -628,6 +599,13 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
               ))}
             </div>
 
+            {/* Prompt Display at Bottom */}
+            {prompt && (
+              <div className="p-2.5 bg-zinc-900/50 border border-zinc-700/50 rounded-lg">
+                <p className="text-sm text-zinc-400">{prompt}</p>
+              </div>
+            )}
+
             {/* Generate More Button */}
             <Button
               onClick={(e) => {
@@ -647,25 +625,18 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
 
         {/* Generate Button - Prominent when no images */}
         {!isGenerating && images.length === 0 && (
-          <div className="relative">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleGenerate();
-              }}
-              onPointerDown={(e) => e.stopPropagation()}
-              disabled={!prompt || isGenerating}
-              className="w-full h-12 text-base px-3 py-2 bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white rounded shadow-glow-purple-sm hover:shadow-glow-purple-md transition-all-std disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            >
-              <Sparkles className="h-5 w-5" />
-              Generate {generationCount}× Image{generationCount > 1 ? 's' : ''}
-            </button>
-            
-            {/* Generation Count Badge */}
-            <div className="absolute -bottom-2 -right-2 px-2 py-1 rounded-md bg-background border border-zinc-700 shadow-lg">
-              <span className="text-xs text-zinc-400">{generationCount}×</span>
-            </div>
-          </div>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              handleGenerate();
+            }}
+            onPointerDown={(e) => e.stopPropagation()}
+            disabled={!prompt || isGenerating}
+            className="w-full h-11 text-sm px-3 py-2 bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white rounded shadow-glow-purple-sm hover:shadow-glow-purple-md transition-all-std disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            <Sparkles className="h-4 w-4" />
+            Generate {generationCount}× Image{generationCount > 1 ? 's' : ''}
+          </button>
         )}
       </div>
     </BlockBase>

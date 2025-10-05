@@ -27,6 +27,8 @@ export interface BlockProps {
   position?: { x: number, y: number };
   onDragEnd?: (position: { x: number, y: number }) => void;
   onRegisterRef?: (blockId: string, element: HTMLElement | null, connectionPoints: Record<string, { x: number; y: number }>) => void;
+  promptDisplay?: string;
+  estimatedTime?: string;
 }
 
 const BlockBase: React.FC<BlockProps> = ({ 
@@ -44,7 +46,9 @@ const BlockBase: React.FC<BlockProps> = ({
   onFinishConnection,
   position = { x: 0, y: 0 },
   onDragEnd,
-  onRegisterRef
+  onRegisterRef,
+  promptDisplay,
+  estimatedTime
 }) => {
   const [showConnections, setShowConnections] = useState(false);
   const dragControls = useDragControls();
@@ -112,7 +116,7 @@ const BlockBase: React.FC<BlockProps> = ({
       >
         <div className="flex items-center">
           <h3 className="text-xs font-semibold text-canvas-text-primary uppercase tracking-wide">{title}</h3>
-          {generationTime && (
+          {generationTime && !promptDisplay && (
             <div className="ml-2 flex items-center text-xs text-canvas-text-secondary">
               <Clock className="h-3 w-3 mr-1" />
               {generationTime}
@@ -136,6 +140,16 @@ const BlockBase: React.FC<BlockProps> = ({
           </button>
         </div>
       </div>
+
+      {/* Prompt Display - Shows when generating */}
+      {promptDisplay && (
+        <div className="px-4 py-2.5 bg-canvas-bg/30 border-b border-canvas-connector-default flex items-center justify-between">
+          <span className="text-sm text-canvas-text-primary font-medium">{promptDisplay}</span>
+          {estimatedTime && (
+            <span className="text-sm text-canvas-text-secondary">{estimatedTime}</span>
+          )}
+        </div>
+      )}
       
       <div 
         className="p-4"
