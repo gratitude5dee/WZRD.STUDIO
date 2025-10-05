@@ -183,19 +183,17 @@ const BlockBase: React.FC<BlockProps> = ({
             key={point.id}
             ref={(el) => connectionPointRefs.current[point.id] = el}
             className={cn(
-              "absolute w-3 h-3 rounded-full z-10 cursor-pointer transition-all duration-200",
+              "absolute w-6 h-6 rounded-full z-20 cursor-pointer transition-all duration-200 flex items-center justify-center border-2",
               positionClasses,
               point.type === 'input' 
-                ? 'bg-canvas-accent-blue hover:bg-canvas-accent-blue/80 hover:shadow-[0_0_8px_rgba(59,130,246,0.6)]' 
-                : 'bg-canvas-accent-purple hover:bg-canvas-accent-purple/80 hover:shadow-[0_0_8px_rgba(139,92,246,0.6)]'
+                ? 'bg-zinc-800 border-zinc-600 hover:bg-zinc-700 hover:border-zinc-500 hover:scale-110' 
+                : 'bg-zinc-800 border-zinc-600 hover:bg-zinc-700 hover:border-zinc-500 hover:scale-110'
             )}
             title={point.label}
             onMouseDown={(e) => point.type === 'output' && handleConnectionStart(point.id, e)}
             onClick={() => point.type === 'input' && handleConnectionEnd(point.id)}
           >
-            <span className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white text-[10px] font-bold">
-              +
-            </span>
+            <Plus className="w-4 h-4 text-zinc-300" />
           </div>
         );
       })}

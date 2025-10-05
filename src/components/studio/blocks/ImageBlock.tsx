@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useGeminiImage } from '@/hooks/useGeminiImage';
 import { 
   Loader2, Download, Wand2, Sparkles, Copy, ZoomIn, ChevronDown, Settings, 
-  Info, Upload, Combine, Video, Menu, Plus, Minus, MoreHorizontal 
+  Info, Upload, Combine, Video, Menu, Plus, Minus, MoreHorizontal, Type, Image as ImageIcon
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -17,6 +17,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+  ContextMenuSeparator,
+} from "@/components/ui/context-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export interface ImageBlockProps {
@@ -167,23 +174,26 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
   };
 
   return (
-    <BlockBase
-      id={id}
-      type="image"
-      title="IMAGE"
-      onSelect={onSelect}
-      isSelected={isSelected}
-      generationTime={images.length > 0 ? new Date(images[images.length - 1].timestamp).toLocaleTimeString() : "~8s"}
-      supportsConnections={supportsConnections}
-      connectionPoints={connectionPoints}
-      onShowHistory={onShowHistory}
-      onStartConnection={onStartConnection}
-      onFinishConnection={onFinishConnection}
-      onDragEnd={onDragEnd}
-      onRegisterRef={onRegisterRef}
-      promptDisplay={isGenerating && prompt ? prompt : undefined}
-      estimatedTime={isGenerating ? "~4s" : undefined}
-    >
+    <ContextMenu>
+      <ContextMenuTrigger asChild>
+        <div>
+          <BlockBase
+            id={id}
+            type="image"
+            title="IMAGE"
+            onSelect={onSelect}
+            isSelected={isSelected}
+            generationTime={images.length > 0 ? new Date(images[images.length - 1].timestamp).toLocaleTimeString() : "~8s"}
+            supportsConnections={supportsConnections}
+            connectionPoints={connectionPoints}
+            onShowHistory={onShowHistory}
+            onStartConnection={onStartConnection}
+            onFinishConnection={onFinishConnection}
+            onDragEnd={onDragEnd}
+            onRegisterRef={onRegisterRef}
+            promptDisplay={isGenerating && prompt ? prompt : undefined}
+            estimatedTime={isGenerating ? "~4s" : undefined}
+          >
       <div 
         className="space-y-4 relative"
         onMouseEnter={() => setIsHovered(true)}
@@ -266,16 +276,17 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
                         <ChevronDown className="h-3 w-3" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start">
-                      <DropdownMenuLabel>Generate</DropdownMenuLabel>
-                      <DropdownMenuSeparator />
+                    <DropdownMenuContent align="start" className="w-32 bg-zinc-900/95 border-zinc-700 p-1">
                       {GENERATION_COUNTS.map((count) => (
                         <DropdownMenuItem 
                           key={count.value} 
                           onClick={() => setGenerationCount(count.value)}
-                          className={cn(generationCount === count.value && "bg-zinc-800")}
+                          className={cn(
+                            "h-9 rounded-md justify-center cursor-pointer text-zinc-300 hover:bg-zinc-800 hover:text-white focus:bg-zinc-800 focus:text-white",
+                            generationCount === count.value && "bg-zinc-800 text-white"
+                          )}
                         >
-                          {count.label}
+                          <span className="font-medium">{count.label}</span>
                         </DropdownMenuItem>
                       ))}
                     </DropdownMenuContent>
@@ -360,27 +371,27 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
 
         {/* Zoom Controls - Positioned on the right side of the block */}
         {(isHovered || isToolbarHovered) && (
-          <div className="absolute -right-12 bottom-4 flex flex-col gap-0 bg-background/95 backdrop-blur-sm border border-zinc-700 rounded-lg overflow-hidden z-50 animate-fade-in">
+          <div className="absolute right-4 top-4 flex flex-col gap-0 bg-white/90 backdrop-blur-sm border border-zinc-300 rounded-full overflow-hidden shadow-lg z-50 animate-fade-in">
             <button 
-              className="h-10 w-10 flex items-center justify-center hover:bg-zinc-800 transition-colors text-zinc-300 hover:text-white border-b border-zinc-700"
+              className="h-9 w-9 flex items-center justify-center hover:bg-zinc-100 transition-colors text-zinc-700 hover:text-zinc-900"
               onClick={(e) => {
                 e.stopPropagation();
-                setZoomLevel(Math.min(3, zoomLevel + 0.5));
+                setGenerationCount(Math.min(4, generationCount === 1 ? 2 : 4));
               }}
               onPointerDown={(e) => e.stopPropagation()}
             >
               <Plus className="h-4 w-4" />
             </button>
             
-            <div className="h-10 w-10 flex items-center justify-center text-sm text-zinc-300 border-b border-zinc-700 font-medium">
-              {generationCount}
+            <div className="h-9 w-9 flex items-center justify-center text-xs text-zinc-900 font-semibold">
+              {generationCount}×
             </div>
             
             <button 
-              className="h-10 w-10 flex items-center justify-center hover:bg-zinc-800 transition-colors text-zinc-300 hover:text-white"
+              className="h-9 w-9 flex items-center justify-center hover:bg-zinc-100 transition-colors text-zinc-700 hover:text-zinc-900"
               onClick={(e) => {
                 e.stopPropagation();
-                setZoomLevel(Math.max(0.5, zoomLevel - 0.5));
+                setGenerationCount(Math.max(1, generationCount === 4 ? 2 : 1));
               }}
               onPointerDown={(e) => e.stopPropagation()}
             >
@@ -640,6 +651,57 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
         )}
       </div>
     </BlockBase>
+    </div>
+      </ContextMenuTrigger>
+      
+      <ContextMenuContent className="w-52 bg-zinc-900/95 backdrop-blur-sm border-zinc-700">
+        <ContextMenuItem 
+          className="text-zinc-300 hover:bg-zinc-800 hover:text-white focus:bg-zinc-800 focus:text-white cursor-pointer"
+          onClick={() => toast.info('Converting to Text block...')}
+        >
+          <Type className="mr-2 h-4 w-4" />
+          <span>Text</span>
+          <span className="ml-auto text-xs text-zinc-500">T</span>
+        </ContextMenuItem>
+        
+        <ContextMenuItem 
+          className="text-zinc-300 hover:bg-zinc-800 hover:text-white focus:bg-zinc-800 focus:text-white cursor-pointer"
+          disabled
+        >
+          <ImageIcon className="mr-2 h-4 w-4" />
+          <span>Image</span>
+          <span className="ml-auto text-xs text-zinc-500">I</span>
+        </ContextMenuItem>
+        
+        <ContextMenuItem 
+          className="text-zinc-300 hover:bg-zinc-800 hover:text-white focus:bg-zinc-800 focus:text-white cursor-pointer"
+          onClick={() => toast.info('Converting to Video block...')}
+        >
+          <Video className="mr-2 h-4 w-4" />
+          <span>Video</span>
+          <span className="ml-auto text-xs text-zinc-500">V</span>
+        </ContextMenuItem>
+        
+        <ContextMenuSeparator className="bg-zinc-700" />
+        
+        <div className="px-2 py-1.5 text-xs text-zinc-500">
+          <div className="flex items-center justify-center gap-2">
+            <span>↕ Navigate</span>
+            <span>⏎ Select</span>
+          </div>
+        </div>
+        
+        <ContextMenuSeparator className="bg-zinc-700" />
+        
+        <ContextMenuItem 
+          className="text-zinc-400 hover:bg-zinc-800 hover:text-white focus:bg-zinc-800 focus:text-white cursor-pointer"
+          onClick={() => window.open('https://docs.example.com/blocks', '_blank')}
+        >
+          <Info className="mr-2 h-4 w-4" />
+          <span>Learn about Blocks</span>
+        </ContextMenuItem>
+      </ContextMenuContent>
+    </ContextMenu>
   );
 };
 
