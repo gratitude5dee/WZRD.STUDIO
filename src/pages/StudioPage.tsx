@@ -94,7 +94,7 @@ const StudioPage = () => {
   
   const handleViewModeChange = (mode: 'studio' | 'timeline' | 'editor') => {
     if (mode === 'timeline') {
-      navigate(`/project/${projectId}/timeline`);
+      navigate(`/project/${projectId}/storyboard`);
     } else if (mode === 'editor') {
       navigate(`/project/${projectId}/editor`);
     }
@@ -102,7 +102,7 @@ const StudioPage = () => {
 
   const getCurrentView = (): 'studio' | 'timeline' | 'editor' => {
     const path = location.pathname;
-    if (path.includes('/timeline')) return 'timeline';
+    if (path.includes('/storyboard') || path.includes('/timeline')) return 'timeline';
     if (path.includes('/editor')) return 'editor';
     return 'studio';
   };
