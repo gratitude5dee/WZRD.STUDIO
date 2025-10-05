@@ -1,9 +1,9 @@
-
 import React, { useState } from 'react';
 import { Upload, Play, Pause, Sparkles } from 'lucide-react';
 import BlockBase, { ConnectionPoint } from './BlockBase';
 import { useGeminiVideo } from '@/hooks/useGeminiVideo';
 import { geminiVideoModel } from '@/types/modelTypes';
+import { BlockFloatingToolbar } from './BlockFloatingToolbar';
 
 export interface VideoBlockProps {
   id: string;
@@ -40,6 +40,8 @@ const VideoBlock: React.FC<VideoBlockProps> = ({
 }) => {
   const [prompt, setPrompt] = useState<string>("");
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
+  const [selectedModel, setSelectedModel] = useState('Gemini 2.5');
+  const [aspectRatio, setAspectRatio] = useState('16:9');
   const { isGenerating, videoUrl, progress, generateVideo } = useGeminiVideo();
 
   // Check for connected input and use it as prompt if available
@@ -64,6 +66,11 @@ const VideoBlock: React.FC<VideoBlockProps> = ({
     generateVideo(prompt);
   };
 
+  const handleModelChange = (modelId: string) => {
+    const modelName = modelId === 'gemini-2.5-flash-video' ? 'Gemini 2.5' : 'Luma Dream';
+    setSelectedModel(modelName);
+  };
+
   return (
     <BlockBase
       id={id}
@@ -71,7 +78,16 @@ const VideoBlock: React.FC<VideoBlockProps> = ({
       title="Video"
       onSelect={onSelect}
       isSelected={isSelected}
-      model="Gemini 2.5"
+      model={selectedModel}
+      toolbar={
+        <BlockFloatingToolbar
+          blockType="video"
+          selectedModel={selectedModel}
+          onModelChange={handleModelChange}
+          aspectRatio={aspectRatio}
+          onAspectRatioChange={setAspectRatio}
+        />
+      }
     >
       <div className="space-y-3">
         <div className="flex items-center gap-2 text-xs mb-1">

@@ -1,6 +1,6 @@
 
-import React from 'react';
-import { Plus, ChevronDown } from 'lucide-react';
+import React, { useState } from 'react';
+import { Plus, ChevronDown, GripVertical } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
@@ -24,6 +24,7 @@ export interface BlockProps {
   onAddConnectedBlock?: (side: 'left' | 'right') => void;
   model?: string;
   onModelChange?: (model: string) => void;
+  toolbar?: React.ReactNode;
 }
 
 const BlockBase: React.FC<BlockProps> = ({ 
@@ -38,9 +39,11 @@ const BlockBase: React.FC<BlockProps> = ({
   onRegisterRef,
   onAddConnectedBlock,
   model,
-  onModelChange
+  onModelChange,
+  toolbar
 }) => {
   const blockRef = React.useRef<HTMLDivElement>(null);
+  const [isHovered, setIsHovered] = useState(false);
 
   // Register block with parent
   React.useEffect(() => {
@@ -63,7 +66,15 @@ const BlockBase: React.FC<BlockProps> = ({
         "shadow-[0_4px_20px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.03)]"
       )}
       onClick={onSelect}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
+      {/* Floating Toolbar */}
+      {(isHovered || isSelected) && toolbar && (
+        <div className="absolute -top-14 left-0 right-0">
+          {toolbar}
+        </div>
+      )}
       {/* Left Connector */}
       {onAddConnectedBlock && (
         <button

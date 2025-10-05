@@ -25,6 +25,7 @@ import {
   ContextMenuSeparator,
 } from "@/components/ui/context-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { BlockFloatingToolbar } from './BlockFloatingToolbar';
 
 export interface ImageBlockProps {
   id: string;
@@ -84,7 +85,6 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
   const [aspectRatio, setAspectRatio] = useState('1:1');
   const [generationCount, setGenerationCount] = useState(1);
   const [isHovered, setIsHovered] = useState(false);
-  const [isToolbarHovered, setIsToolbarHovered] = useState(false);
   const [hoveredImageId, setHoveredImageId] = useState<string | null>(null);
   const [zoomLevel, setZoomLevel] = useState(1);
   const [selectedModel, setSelectedModel] = useState('Gemini 2.5');
@@ -154,7 +154,6 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
           animationDelay: `${i * 100}ms`
         }}
       >
-        {/* Shimmer animation */}
         <div 
           className="absolute inset-0 animate-shimmer"
           style={{
@@ -162,8 +161,6 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
             backgroundSize: '200% 100%',
           }}
         />
-        
-        {/* Progress text - centered */}
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="text-center">
             <Loader2 className="h-6 w-6 animate-spin text-zinc-500 mx-auto" />
@@ -171,6 +168,12 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
         </div>
       </div>
     ));
+  };
+
+  const handleModelChange = (modelId: string) => {
+    const modelName = modelId === 'gemini-2.5-flash-image' ? 'Gemini 2.5' :
+                      modelId === 'flux-dev' ? 'Flux Dev' : 'Flux Schnell';
+    setSelectedModel(modelName);
   };
 
   return (
@@ -183,221 +186,22 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
             title="Image"
             onSelect={onSelect}
             isSelected={isSelected}
-            model="Gemini 2.5"
+            model={selectedModel}
+            toolbar={
+              <BlockFloatingToolbar
+                blockType="image"
+                selectedModel={selectedModel}
+                onModelChange={handleModelChange}
+                aspectRatio={aspectRatio}
+                onAspectRatioChange={setAspectRatio}
+              />
+            }
           >
       <div 
         className="space-y-4 relative"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        {/* Floating Hover Toolbar - Only show when we have content */}
-        {(isHovered || isToolbarHovered) && (images.length > 0 || isGenerating) && (
-          <div 
-            className="absolute -top-14 left-0 right-0 h-12 flex items-center gap-2 px-3 bg-zinc-900/95 backdrop-blur-sm border border-zinc-700 rounded-lg z-50 animate-fade-in"
-            onMouseEnter={() => setIsToolbarHovered(true)}
-            onMouseLeave={() => setIsToolbarHovered(false)}
-          >
-            <TooltipProvider>
-              {/* Model Selector */}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm" className="h-8 gap-2 text-zinc-300 hover:text-white">
-                        <Sparkles className="h-4 w-4" />
-                        <span className="text-xs">{selectedModel}</span>
-                        <ChevronDown className="h-3 w-3" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start" className="w-48">
-                      <DropdownMenuLabel>Select Model</DropdownMenuLabel>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={() => setSelectedModel('Gemini 2.5')}>
-                        Gemini 2.5 Flash
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setSelectedModel('Flux Dev')}>
-                        Flux Dev
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setSelectedModel('Flux Schnell')}>
-                        Flux Schnell
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TooltipTrigger>
-                <TooltipContent>Model Selection</TooltipContent>
-              </Tooltip>
-
-              <div className="h-6 w-px bg-zinc-700" />
-
-              {/* Aspect Ratio Selector */}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm" className="h-8 gap-2 text-zinc-300 hover:text-white">
-                        <span className="text-xs">{aspectRatio}</span>
-                        <ChevronDown className="h-3 w-3" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start">
-                      <DropdownMenuLabel>Aspect Ratio</DropdownMenuLabel>
-                      <DropdownMenuSeparator />
-                      {ASPECT_RATIOS.map((ar) => (
-                        <DropdownMenuItem 
-                          key={ar.value} 
-                          onClick={() => setAspectRatio(ar.value)}
-                          className={cn(aspectRatio === ar.value && "bg-zinc-800")}
-                        >
-                          {ar.label}
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TooltipTrigger>
-                <TooltipContent>Aspect Ratio</TooltipContent>
-              </Tooltip>
-
-              {/* Generation Count */}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm" className="h-8 gap-2 text-zinc-300 hover:text-white">
-                        <span className="text-xs">{generationCount}×</span>
-                        <ChevronDown className="h-3 w-3" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start" className="w-32 bg-zinc-900/95 border-zinc-700 p-1">
-                      {GENERATION_COUNTS.map((count) => (
-                        <DropdownMenuItem 
-                          key={count.value} 
-                          onClick={() => setGenerationCount(count.value)}
-                          className={cn(
-                            "h-9 rounded-md justify-center cursor-pointer text-zinc-300 hover:bg-zinc-800 hover:text-white focus:bg-zinc-800 focus:text-white",
-                            generationCount === count.value && "bg-zinc-800 text-white"
-                          )}
-                        >
-                          <span className="font-medium">{count.label}</span>
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TooltipTrigger>
-                <TooltipContent>Generation Count</TooltipContent>
-              </Tooltip>
-
-              <div className="flex-1" />
-
-              {/* Settings */}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="h-8 w-8 p-0"
-                    onClick={(e) => e.stopPropagation()}
-                    onPointerDown={(e) => e.stopPropagation()}
-                  >
-                    <Settings className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Settings</TooltipContent>
-              </Tooltip>
-
-              {/* Download All */}
-              {images.length > 1 && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="h-8 gap-2"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        images.forEach(img => handleDownload(img.url, `image-${img.id}`));
-                        toast.success(`Downloaded ${images.length} images`);
-                      }}
-                      onPointerDown={(e) => e.stopPropagation()}
-                    >
-                      <Download className="h-4 w-4" />
-                      <span className="text-xs">All</span>
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Download All Images</TooltipContent>
-                </Tooltip>
-              )}
-
-              {/* More Options */}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="h-8 w-8 p-0"
-                        onClick={(e) => e.stopPropagation()}
-                        onPointerDown={(e) => e.stopPropagation()}
-                      >
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={(e) => {
-                        e.stopPropagation();
-                        clearImages();
-                      }}>
-                        Clear All Images
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>Export Settings</DropdownMenuItem>
-                      <DropdownMenuItem>View History</DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TooltipTrigger>
-                <TooltipContent>More Options</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
-        )}
-
-        {/* Zoom Controls - Positioned on the right side of the block */}
-        {(isHovered || isToolbarHovered) && (
-          <div className="absolute right-4 top-4 flex flex-col gap-0 bg-white/90 backdrop-blur-sm border border-zinc-300 rounded-full overflow-hidden shadow-lg z-50 animate-fade-in">
-            <button 
-              className="h-9 w-9 flex items-center justify-center hover:bg-zinc-100 transition-colors text-zinc-700 hover:text-zinc-900"
-              onClick={(e) => {
-                e.stopPropagation();
-                setGenerationCount(Math.min(4, generationCount === 1 ? 2 : 4));
-              }}
-              onPointerDown={(e) => e.stopPropagation()}
-            >
-              <Plus className="h-4 w-4" />
-            </button>
-            
-            <div className="h-9 w-9 flex items-center justify-center text-xs text-zinc-900 font-semibold">
-              {generationCount}×
-            </div>
-            
-            <button 
-              className="h-9 w-9 flex items-center justify-center hover:bg-zinc-100 transition-colors text-zinc-700 hover:text-zinc-900"
-              onClick={(e) => {
-                e.stopPropagation();
-                setGenerationCount(Math.max(1, generationCount === 4 ? 2 : 1));
-              }}
-              onPointerDown={(e) => e.stopPropagation()}
-            >
-              <Minus className="h-4 w-4" />
-            </button>
-          </div>
-        )}
-
-        {/* Generation Multiplier Badge - Bottom Right Corner */}
-        {!isGenerating && images.length === 0 && (
-          <div className="absolute -bottom-2 -right-2 px-2 py-1 rounded-md bg-background/95 backdrop-blur-sm border border-zinc-700 shadow-lg z-50">
-            <span className="text-xs text-zinc-400 font-medium">{generationCount}×</span>
-          </div>
-        )}
-
         {/* Model Info */}
         <div className="flex items-center gap-2 text-xs mb-1">
           <Sparkles className="w-3 h-3 text-purple-400" />

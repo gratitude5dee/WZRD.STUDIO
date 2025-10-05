@@ -1,14 +1,11 @@
-
 import React, { useState } from 'react';
 import BlockBase, { ConnectionPoint } from './BlockBase';
 import { Textarea } from '@/components/ui/textarea';
 import { useGeminiText } from '@/hooks/useGeminiText';
-import ModelSelector from '../ModelSelector';
-import { geminiTextModels } from '@/types/modelTypes';
-import { Sparkles, X } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 import TextBlockSuggestions from './TextBlockSuggestions';
 import { ActionTemplate, BlockMode, ConnectedInput } from '@/types/studioTypes';
-import { Badge } from '@/components/ui/badge';
+import { BlockFloatingToolbar } from './BlockFloatingToolbar';
 
 export interface TextBlockProps {
   id: string;
@@ -49,8 +46,7 @@ const TextBlock: React.FC<TextBlockProps> = ({
 }) => {
   const [mode, setMode] = useState<BlockMode>('suggestions');
   const [prompt, setPrompt] = useState<string>("");
-  const [selectedModel, setSelectedModel] = useState('google/gemini-2.5-flash');
-  const [isModelSelectorOpen, setIsModelSelectorOpen] = useState(false);
+  const [selectedModel, setSelectedModel] = useState('Gemini 2.5 Flash');
   const [selectedTemplate, setSelectedTemplate] = useState<ActionTemplate | null>(null);
   const { isGenerating, output, generateText } = useGeminiText();
 
@@ -94,8 +90,16 @@ const TextBlock: React.FC<TextBlockProps> = ({
       });
     }
     
-    generateText(fullPrompt, selectedModel);
+    const modelId = selectedModel === 'Gemini 2.5 Flash' ? 'google/gemini-2.5-flash' : 
+                    selectedModel === 'GPT-5' ? 'openai/gpt-5' : 'openai/gpt-5-mini';
+    generateText(fullPrompt, modelId);
     setMode('output');
+  };
+
+  const handleModelChange = (modelId: string) => {
+    const modelName = modelId === 'gemini-2.5-flash' ? 'Gemini 2.5 Flash' :
+                      modelId === 'gpt-5' ? 'GPT-5' : 'GPT-5 Mini';
+    setSelectedModel(modelName);
   };
 
   const handleClear = () => {
@@ -116,6 +120,13 @@ const TextBlock: React.FC<TextBlockProps> = ({
       onSelect={onSelect}
       isSelected={isSelected}
       model={selectedModel}
+      toolbar={
+        <BlockFloatingToolbar
+          blockType="text"
+          selectedModel={selectedModel}
+          onModelChange={handleModelChange}
+        />
+      }
     >
       {/* Suggestions Mode */}
       {mode === 'suggestions' && (
