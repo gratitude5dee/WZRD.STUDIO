@@ -6,6 +6,7 @@ import ImageBlock from './blocks/ImageBlock';
 import VideoBlock from './blocks/VideoBlock';
 import EmptyCanvasState from './EmptyCanvasState';
 import CanvasControls from './CanvasControls';
+import { AddBlockDialog } from './AddBlockDialog';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { ConnectionPoint } from '@/types/blockTypes';
@@ -38,6 +39,8 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock, onAddBlock }: St
   const [blockRefs, setBlockRefs] = useState<Record<string, BlockRef>>({});
   const [zoomLevel, setZoomLevel] = useState(1);
   const [isInputFocused, setIsInputFocused] = useState(false);
+  const [showAddBlockDialog, setShowAddBlockDialog] = useState(false);
+  const [addBlockPosition, setAddBlockPosition] = useState({ x: 0, y: 0 });
   const canvasRef = useRef<HTMLDivElement>(null);
   const transformRef = useRef<any>(null);
   
@@ -113,16 +116,30 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock, onAddBlock }: St
       const rect = canvasRef.current?.getBoundingClientRect();
       if (!rect) return;
       
-      const x = (e.clientX - rect.left) / zoomLevel;
-      const y = (e.clientY - rect.top) / zoomLevel;
+      // Calculate position accounting for zoom and pan
+      const transform = transformRef.current?.instance?.transformState;
+      if (!transform) return;
+
+      const x = (e.clientX - rect.left - transform.positionX) / transform.scale;
+      const y = (e.clientY - rect.top - transform.positionY) / transform.scale;
       
-      // Create a new text block at click position
-      onAddBlock({
-        id: uuidv4(),
-        type: 'text',
-        position: { x, y }
-      });
+      // Store the position and open the dialog
+      setAddBlockPosition({ x, y });
+      setShowAddBlockDialog(true);
     }
+  };
+
+  const handleSelectBlockType = (type: 'text' | 'image' | 'video') => {
+    if (!onAddBlock) return;
+    
+    // Create block at the stored position
+    onAddBlock({
+      id: uuidv4(),
+      type,
+      position: { x: addBlockPosition.x - 150, y: addBlockPosition.y - 40 }
+    });
+    
+    setShowAddBlockDialog(false);
   };
 
   const handleStartConnection = (blockId: string, pointId: string, e: React.MouseEvent) => {
@@ -240,29 +257,30 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock, onAddBlock }: St
   ], []);
 
   return (
-    <TransformWrapper
-      ref={transformRef}
-      initialScale={1}
-      minScale={0.1}
-      maxScale={4}
-      limitToBounds={false}
-      centerOnInit={false}
-      initialPositionX={-49400}
-      initialPositionY={-49400}
-      wheel={{ step: 0.1 }}
-      panning={{ 
-        disabled: isDraggingConnection || isInputFocused,
-        velocityDisabled: true
-      }}
-      onTransformed={(ref) => setZoomLevel(ref.state.scale)}
-    >
-      {({ zoomIn, zoomOut, resetTransform }) => (
-        <>
-          <TransformComponent
-            wrapperStyle={{ width: '100%', height: '100%' }}
-            contentStyle={{ width: '100%', height: '100%' }}
-          >
-            <div 
+    <>
+      <TransformWrapper
+        ref={transformRef}
+        initialScale={1}
+        minScale={0.1}
+        maxScale={4}
+        limitToBounds={false}
+        centerOnInit={false}
+        initialPositionX={-49400}
+        initialPositionY={-49400}
+        wheel={{ step: 0.1 }}
+        panning={{ 
+          disabled: isDraggingConnection || isInputFocused,
+          velocityDisabled: true
+        }}
+        onTransformed={(ref) => setZoomLevel(ref.state.scale)}
+      >
+        {({ zoomIn, zoomOut, resetTransform }) => (
+          <>
+            <TransformComponent
+              wrapperStyle={{ width: '100%', height: '100%' }}
+              contentStyle={{ width: '100%', height: '100%' }}
+            >
+              <div
               ref={canvasRef}
               className="canvas-dot-grid relative"
               style={{
@@ -454,15 +472,23 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock, onAddBlock }: St
             </div>
           </TransformComponent>
 
-          <CanvasControls
-            onZoomIn={() => zoomIn()}
-            onZoomOut={() => zoomOut()}
-            onResetTransform={() => resetTransform()}
-            zoomLevel={zoomLevel}
-          />
-        </>
-      )}
-    </TransformWrapper>
+            <CanvasControls
+              onZoomIn={() => zoomIn()}
+              onZoomOut={() => zoomOut()}
+              onResetTransform={() => resetTransform()}
+              zoomLevel={zoomLevel}
+            />
+          </>
+        )}
+      </TransformWrapper>
+      
+      <AddBlockDialog
+        isOpen={showAddBlockDialog}
+        onClose={() => setShowAddBlockDialog(false)}
+        onSelectBlockType={handleSelectBlockType}
+        position={addBlockPosition}
+      />
+    </>
   );
 };
 
