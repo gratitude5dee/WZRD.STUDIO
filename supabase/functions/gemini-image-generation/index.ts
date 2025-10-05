@@ -20,8 +20,15 @@ serve(async (req) => {
 
     console.log('Generating image with Lovable AI Gateway (gemini-2.5-flash-image-preview)');
 
+    // Enhance prompt to force image generation instead of text responses
+    const enhancedPrompt = editMode 
+      ? prompt 
+      : `Generate a detailed, high-quality, photorealistic image of: ${prompt}. Create a stunning visual representation with vibrant colors and clear details. Do not ask questions, just create the image.`;
+
+    console.log('Enhanced prompt:', enhancedPrompt);
+
     // Build message content for Lovable AI Gateway
-    const content: any[] = [{ type: "text", text: prompt }];
+    const content: any[] = [{ type: "text", text: enhancedPrompt }];
     
     if (editMode && imageUrl) {
       // For edit mode, include the image
@@ -52,12 +59,19 @@ serve(async (req) => {
 
     const data = await response.json();
 
+    // Check if we got text instead of an image
+    const textContent = data.choices?.[0]?.message?.content;
+    if (textContent && !data.choices?.[0]?.message?.images) {
+      console.error("Received text instead of image:", textContent);
+      return errorResponse("AI responded with text instead of generating an image. Try a more specific prompt.", 500);
+    }
+
     // Extract the generated image from the response
     const imageUrl_result = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
 
     if (!imageUrl_result) {
       console.error("No image in response:", JSON.stringify(data));
-      return errorResponse("No image generated", 500);
+      return errorResponse("No image generated. The AI may need a more descriptive prompt.", 500);
     }
 
     console.log(`Successfully generated image (${imageUrl_result.length} bytes)`);
