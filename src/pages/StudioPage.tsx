@@ -94,9 +94,9 @@ const StudioPage = () => {
   
   const handleViewModeChange = (mode: 'studio' | 'timeline' | 'editor') => {
     if (mode === 'timeline') {
-      navigate(`/project/${projectId}/storyboard`);
+      navigate(`/timeline/${projectId}`);
     } else if (mode === 'editor') {
-      navigate(`/project/${projectId}/editor`);
+      navigate(`/editor/${projectId}`);
     }
   };
 

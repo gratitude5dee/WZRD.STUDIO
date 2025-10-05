@@ -37,7 +37,7 @@ export const ProjectCard = ({ project, onOpen, onDelete }: ProjectCardProps) => 
   };
 
   const handleCardClick = () => {
-    navigate(`/project/${project.id}/timeline`);
+    navigate(`/timeline/${project.id}`);
   };
 
   const handleDeleteClick = (e: React.MouseEvent) => {
