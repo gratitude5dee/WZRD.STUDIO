@@ -2,7 +2,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { 
   Sparkles, ChevronDown, Settings, Image as ImageIcon, 
-  Type, Video, Wand2 
+  Type, Video, Wand2, Check
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -14,11 +14,15 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from '@/lib/utils';
+import { ModelListItem } from '../StudioUtils';
 
 interface Model {
   id: string;
   name: string;
   description?: string;
+  credits?: number;
+  time?: string;
+  icon?: string;
 }
 
 interface BlockFloatingToolbarProps {
@@ -42,18 +46,23 @@ const ASPECT_RATIOS = [
 
 const DEFAULT_MODELS = {
   text: [
-    { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash' },
-    { id: 'gpt-5', name: 'GPT-5' },
-    { id: 'gpt-5-mini', name: 'GPT-5 Mini' },
+    { id: 'google/gemini-2.5-flash', name: 'Gemini 2.5 Flash', description: 'Fast and efficient', credits: 1, time: '~2s', icon: 'sparkles-blue' },
+    { id: 'google/gemini-2.0-flash', name: 'Gemini 2.0 Flash', description: 'Previous generation', credits: 1, time: '~3s', icon: 'sparkles-blue' },
+    { id: 'google/gemini-2.5-pro', name: 'Gemini 2.5 Pro', description: 'Most capable Gemini', credits: 5, time: '~8s', icon: 'sparkles-blue' },
+    { id: 'openai/gpt-5', name: 'GPT-5', description: 'Most capable', credits: 26, time: '~12s', icon: 'sparkles' },
+    { id: 'openai/gpt-5-mini', name: 'GPT-5 Mini', description: 'Balanced performance', credits: 8, time: '~6s', icon: 'sparkles' },
+    { id: 'openai/gpt-4o-mini', name: 'GPT 4o Mini', description: 'Fast and affordable', credits: 2, time: '~3s', icon: 'sparkles' },
+    { id: 'anthropic/claude-opus-4', name: 'Claude Opus 4', description: 'Top-tier reasoning', credits: 20, time: '~10s', icon: 'sparkles-orange' },
+    { id: 'anthropic/claude-haiku-3.5', name: 'Claude Haiku 3.5', description: 'Fast Claude model', credits: 3, time: '~4s', icon: 'sparkles-orange' },
   ],
   image: [
-    { id: 'gemini-2.5-flash-image', name: 'Gemini 2.5' },
-    { id: 'flux-dev', name: 'Flux Dev' },
-    { id: 'flux-schnell', name: 'Flux Schnell' },
+    { id: 'gemini-2.5-flash-image', name: 'Gemini 2.5', description: 'Fast image generation', credits: 2, time: '~4s', icon: 'image' },
+    { id: 'flux-schnell', name: 'Flux Schnell', description: 'Ultra-fast quality', credits: 3, time: '~3s', icon: 'image' },
+    { id: 'flux-dev', name: 'Flux Dev', description: 'Highest quality', credits: 5, time: '~8s', icon: 'image' },
   ],
   video: [
-    { id: 'gemini-2.5-flash-video', name: 'Gemini 2.5' },
-    { id: 'luma', name: 'Luma Dream' },
+    { id: 'gemini-2.5-flash-video', name: 'Gemini 2.5', description: 'Video generation', credits: 10, time: '~30s', icon: 'video' },
+    { id: 'luma-dream', name: 'Luma Dream', description: 'Cinematic quality', credits: 25, time: '~90s', icon: 'video' },
   ],
 };
 
@@ -63,6 +72,15 @@ const getBlockIcon = (type: 'text' | 'image' | 'video') => {
     case 'image': return ImageIcon;
     case 'video': return Video;
   }
+};
+
+const getModelIcon = (iconType?: string) => {
+  if (iconType === 'sparkles-blue') return <Sparkles className="h-4 w-4 text-blue-400" />;
+  if (iconType === 'sparkles-orange') return <Sparkles className="h-4 w-4 text-orange-400" />;
+  if (iconType === 'sparkles') return <Sparkles className="h-4 w-4 text-zinc-400" />;
+  if (iconType === 'image') return <ImageIcon className="h-4 w-4 text-purple-400" />;
+  if (iconType === 'video') return <Video className="h-4 w-4 text-amber-400" />;
+  return <Sparkles className="h-4 w-4 text-zinc-400" />;
 };
 
 export const BlockFloatingToolbar: React.FC<BlockFloatingToolbarProps> = ({
@@ -112,18 +130,24 @@ export const BlockFloatingToolbar: React.FC<BlockFloatingToolbarProps> = ({
                   <ChevronDown className="h-3 w-3" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-48">
-                <DropdownMenuLabel>Select Model</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {availableModels.map((model) => (
-                  <DropdownMenuItem 
-                    key={model.id} 
-                    onClick={() => onModelChange(model.id)}
-                    className={cn(selectedModel === model.name && "bg-zinc-800")}
-                  >
-                    {model.name}
-                  </DropdownMenuItem>
-                ))}
+              <DropdownMenuContent align="start" className="w-80 bg-[#1a1a1a] border-zinc-800 p-2">
+                <DropdownMenuLabel className="text-xs text-zinc-500 uppercase tracking-wider px-2">Select Model</DropdownMenuLabel>
+                <DropdownMenuSeparator className="bg-zinc-800" />
+                <div className="space-y-1 max-h-[400px] overflow-y-auto">
+                  {availableModels.map((model) => (
+                    <div key={model.id} onClick={() => onModelChange(model.id)}>
+                      <ModelListItem
+                        icon={getModelIcon(model.icon)}
+                        name={model.name}
+                        description={model.description}
+                        credits={model.credits || 1}
+                        time={model.time || '~5s'}
+                        isSelected={selectedModel === model.name}
+                        onClick={() => onModelChange(model.id)}
+                      />
+                    </div>
+                  ))}
+                </div>
               </DropdownMenuContent>
             </DropdownMenu>
           </TooltipTrigger>
