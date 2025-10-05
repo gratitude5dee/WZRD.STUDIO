@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAppStore } from '@/store/appStore';
@@ -9,6 +9,7 @@ import StudioCanvas from '@/components/studio/StudioCanvas';
 import StudioBottomBar from '@/components/studio/StudioBottomBar';
 import StudioRightPanel from '@/components/studio/StudioRightPanel';
 import { supabase } from '@/integrations/supabase/client';
+import { ActionTemplate } from '@/types/studioTypes';
 
 interface Block {
   id: string;
@@ -23,6 +24,8 @@ const StudioPage = () => {
   
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
+  const [selectedTemplate, setSelectedTemplate] = useState<ActionTemplate | null>(null);
+  const templateTriggerRef = useRef<number>(0);
   
   // When the component mounts or projectId changes, update the app store
   useEffect(() => {
@@ -65,6 +68,12 @@ const StudioPage = () => {
   const handleSelectBlock = (id: string) => {
     setSelectedBlockId(id || null);
   };
+
+  const handleTemplateSelect = (template: ActionTemplate) => {
+    setSelectedTemplate(template);
+    // Increment the trigger to force the canvas to pass this down
+    templateTriggerRef.current += 1;
+  };
   
   // Get the type of the currently selected block
   const selectedBlockType = blocks.find(b => b.id === selectedBlockId)?.type || null;
@@ -84,11 +93,17 @@ const StudioPage = () => {
           selectedBlockId={selectedBlockId}
           onSelectBlock={handleSelectBlock}
           onAddBlock={handleAddBlock}
+          onTemplateApplied={(template) => {
+            // Clear the template after it's been applied
+            setSelectedTemplate(null);
+          }}
+          selectedTemplate={selectedTemplate}
         />
         
         <StudioRightPanel 
           selectedBlockType={selectedBlockType}
           selectedBlockId={selectedBlockId}
+          onTemplateSelect={handleTemplateSelect}
         />
       </div>
     </div>
