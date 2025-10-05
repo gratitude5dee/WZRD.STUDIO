@@ -7,9 +7,11 @@ import ModelSelector from './ModelSelector';
 import { useFalModels } from '@/hooks/useFalModels';
 interface StudioRightPanelProps {
   selectedBlockType: 'text' | 'image' | 'video' | null;
+  selectedBlockId?: string | null;
 }
 const StudioRightPanel = ({
-  selectedBlockType
+  selectedBlockType,
+  selectedBlockId
 }: StudioRightPanelProps) => {
   // State for model selection per block type
   const [textModelId, setTextModelId] = useState<string>('');

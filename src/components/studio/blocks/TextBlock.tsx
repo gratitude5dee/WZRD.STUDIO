@@ -112,62 +112,22 @@ const TextBlock: React.FC<TextBlockProps> = ({
     <BlockBase
       id={id}
       type="text"
-      title="TEXT"
+      title="Text"
       onSelect={onSelect}
       isSelected={isSelected}
-      generationTime="~2s"
-      supportsConnections={supportsConnections}
-      connectionPoints={connectionPoints}
-      onShowHistory={onShowHistory}
-      onStartConnection={onStartConnection}
-      onFinishConnection={onFinishConnection}
-      onDragEnd={onDragEnd}
-      onRegisterRef={onRegisterRef}
+      model={selectedModel}
     >
       {/* Suggestions Mode */}
       {mode === 'suggestions' && (
-        <TextBlockSuggestions onSelectAction={handleSelectAction} />
+        <div className="space-y-2">
+          <p className="text-xs text-zinc-500">Try to...</p>
+          <TextBlockSuggestions onSelectAction={handleSelectAction} />
+        </div>
       )}
 
       {/* Prompt Mode */}
       {mode === 'prompt' && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between text-xs mb-2">
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-3 h-3 text-blue-400" />
-              <span className="text-zinc-400">Gemini AI</span>
-            </div>
-            <span className="text-green-400 text-xs">FREE until Oct 6</span>
-          </div>
-
-          {/* Connected Inputs Display */}
-          {connectedInputs.length > 0 && (
-            <div className="space-y-2">
-              <div className="text-xs text-zinc-400">Connected Inputs: {connectedInputs.length}</div>
-              <div className="space-y-1">
-                {connectedInputs.map((input, idx) => (
-                  <div key={idx} className="flex items-center gap-2 text-xs">
-                    <Badge variant="outline" className="text-xs">
-                      {input.type}
-                    </Badge>
-                    <span className="text-zinc-500 truncate">
-                      {input.value ? String(input.value).substring(0, 30) + '...' : 'Waiting for data'}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <ModelSelector
-            models={geminiTextModels}
-            selectedModelId={selectedModel}
-            onModelSelect={setSelectedModel}
-            modelType="text"
-            isOpen={isModelSelectorOpen}
-            toggleOpen={() => setIsModelSelectorOpen(!isModelSelectorOpen)}
-          />
-          
+        <div className="space-y-3">
           <Textarea
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
@@ -178,23 +138,16 @@ const TextBlock: React.FC<TextBlockProps> = ({
               onInputFocus?.();
             }}
             onBlur={() => onInputBlur?.()}
-            className="min-h-[80px] text-sm bg-zinc-800/50 border border-zinc-700 focus:border-blue-500 resize-none cursor-text"
-            placeholder="Enter your prompt here..."
+            className="min-h-[120px] text-sm bg-zinc-800/50 border border-zinc-700 focus:border-blue-500 resize-none cursor-text"
+            placeholder="Type your prompt..."
             disabled={isGenerating}
           />
           
-          <div className="flex justify-between items-center">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleClear();
-              }}
-              className="px-3 py-1 text-xs text-zinc-400 hover:text-zinc-200 transition-colors flex items-center gap-1"
-              disabled={isGenerating}
-            >
-              <X className="w-3 h-3" />
-              Reset
-            </button>
+          <div className="flex items-center justify-between pt-2 border-t border-zinc-800">
+            <div className="flex items-center gap-2 text-xs text-zinc-500">
+              <span>TAB</span>
+              <span>to send</span>
+            </div>
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -202,18 +155,15 @@ const TextBlock: React.FC<TextBlockProps> = ({
               }}
               onPointerDown={(e) => e.stopPropagation()}
               disabled={isGenerating || !prompt.trim()}
-              className="px-3 py-1 text-xs bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white rounded shadow-glow-purple-sm hover:shadow-glow-purple-md transition-all-std disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className="p-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              title="Send"
             >
               {isGenerating ? (
-                <>
-                  <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Generating...
-                </>
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
-                <>
-                  <Sparkles className="w-3 h-3" />
-                  Generate
-                </>
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                </svg>
               )}
             </button>
           </div>

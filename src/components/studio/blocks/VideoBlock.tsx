@@ -68,17 +68,10 @@ const VideoBlock: React.FC<VideoBlockProps> = ({
     <BlockBase
       id={id}
       type="video"
-      title="VIDEO"
+      title="Video"
       onSelect={onSelect}
       isSelected={isSelected}
-      generationTime="~3m"
-      supportsConnections={supportsConnections}
-      connectionPoints={connectionPoints}
-      onShowHistory={onShowHistory}
-      onStartConnection={onStartConnection}
-      onFinishConnection={onFinishConnection}
-      onDragEnd={onDragEnd}
-      onRegisterRef={onRegisterRef}
+      model="Gemini 2.5"
     >
       <div className="space-y-4">
         <div className="flex items-center justify-between text-xs mb-2">

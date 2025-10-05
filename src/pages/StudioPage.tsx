@@ -13,7 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 interface Block {
   id: string;
   type: 'text' | 'image' | 'video';
-  position?: { x: number; y: number };
+  position: { x: number; y: number };
 }
 
 const StudioPage = () => {
@@ -74,12 +74,13 @@ const StudioPage = () => {
   const selectedBlockType = blocks.find(b => b.id === selectedBlockId)?.type || null;
   
   return (
-    <div className="h-screen flex flex-col bg-canvas-bg text-canvas-text-primary">
-      <AppHeader />
+    <div className="h-screen flex flex-col bg-black text-white">
+      {/* Simplified header or remove entirely */}
+      <div className="h-12 bg-black border-b border-zinc-800 flex items-center px-4">
+        <span className="text-sm font-semibold text-zinc-400">Studio</span>
+      </div>
       
       <div className="flex-1 flex overflow-hidden">
-        <StudioSidebar onAddBlock={handleAddBlock} />
-        
         <StudioCanvas 
           blocks={blocks}
           selectedBlockId={selectedBlockId}
@@ -87,10 +88,11 @@ const StudioPage = () => {
           onAddBlock={handleAddBlock}
         />
         
-        <StudioRightPanel selectedBlockType={selectedBlockType} />
+        <StudioRightPanel 
+          selectedBlockType={selectedBlockType}
+          selectedBlockId={selectedBlockId}
+        />
       </div>
-      
-      <StudioBottomBar />
     </div>
   );
 };

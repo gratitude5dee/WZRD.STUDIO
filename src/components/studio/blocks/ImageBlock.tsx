@@ -180,19 +180,10 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
           <BlockBase
             id={id}
             type="image"
-            title="IMAGE"
+            title="Image"
             onSelect={onSelect}
             isSelected={isSelected}
-            generationTime={images.length > 0 ? new Date(images[images.length - 1].timestamp).toLocaleTimeString() : "~8s"}
-            supportsConnections={supportsConnections}
-            connectionPoints={connectionPoints}
-            onShowHistory={onShowHistory}
-            onStartConnection={onStartConnection}
-            onFinishConnection={onFinishConnection}
-            onDragEnd={onDragEnd}
-            onRegisterRef={onRegisterRef}
-            promptDisplay={isGenerating && prompt ? prompt : undefined}
-            estimatedTime={isGenerating ? "~4s" : undefined}
+            model="Gemini 2.5"
           >
       <div 
         className="space-y-4 relative"
