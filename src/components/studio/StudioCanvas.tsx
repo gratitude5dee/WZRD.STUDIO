@@ -243,10 +243,12 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock, onAddBlock }: St
     <TransformWrapper
       ref={transformRef}
       initialScale={1}
-      minScale={0.25}
+      minScale={0.1}
       maxScale={4}
       limitToBounds={false}
-      centerOnInit={true}
+      centerOnInit={false}
+      initialPositionX={-9600}
+      initialPositionY={-9600}
       wheel={{ step: 0.1 }}
       panning={{ 
         disabled: isDraggingConnection || isInputFocused,
@@ -262,7 +264,12 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock, onAddBlock }: St
           >
             <div 
               ref={canvasRef}
-              className="canvas-dot-grid w-full h-full min-h-screen p-6 relative"
+              className="canvas-dot-grid relative"
+              style={{
+                width: '20000px',
+                height: '20000px',
+                padding: '24px'
+              }}
               onClick={handleCanvasClick}
               onDoubleClick={handleCanvasDoubleClick}
               onMouseMove={handleMouseMove}
@@ -275,19 +282,22 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock, onAddBlock }: St
               {blocks.length === 0 && onAddBlock && (
                 <EmptyCanvasState 
                   onAddBlock={(type) => {
-                    onAddBlock({
-                      id: uuidv4(),
-                      type,
-                      position: { x: 400, y: 300 }
-                    });
+                  onAddBlock({
+                    id: uuidv4(),
+                    type,
+                    position: { x: 10000, y: 10000 }
+                  });
                   }}
                 />
               )}
 
               {/* Connection lines SVG */}
               <svg 
-                className="absolute top-0 left-0 w-full h-full pointer-events-none"
-                style={{ minHeight: '200vh', minWidth: '200vw' }}
+                className="absolute top-0 left-0 pointer-events-none"
+                style={{ 
+                  width: '20000px', 
+                  height: '20000px'
+                }}
               >
         {/* Static connections */}
         {connections.map((conn) => {
@@ -363,7 +373,7 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock, onAddBlock }: St
       </svg>
 
               {/* Blocks with absolute positioning */}
-              <div className="relative w-full h-full">
+              <div className="relative" style={{ width: '20000px', height: '20000px' }}>
                 {blocks.map((block) => {
                   const position = block.position || { x: 100, y: 100 };
                   
