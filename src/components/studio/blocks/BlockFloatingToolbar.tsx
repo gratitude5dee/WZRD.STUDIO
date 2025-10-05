@@ -2,8 +2,9 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { 
   Sparkles, ChevronDown, Settings, Image as ImageIcon, 
-  Type, Video, Wand2, Check
+  Type, Video, Wand2, Check, MoreHorizontal
 } from 'lucide-react';
+import { ImageCountSelector } from './ImageCountSelector';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,6 +35,8 @@ interface BlockFloatingToolbarProps {
   onSettingsClick?: () => void;
   models?: Model[];
   className?: string;
+  generationCount?: number;
+  onGenerationCountChange?: (count: number) => void;
 }
 
 const ASPECT_RATIOS = [
@@ -92,6 +95,8 @@ export const BlockFloatingToolbar: React.FC<BlockFloatingToolbarProps> = ({
   onSettingsClick,
   models,
   className,
+  generationCount = 1,
+  onGenerationCountChange
 }) => {
   const BlockIcon = getBlockIcon(blockType);
   const availableModels = models || DEFAULT_MODELS[blockType];
@@ -100,115 +105,91 @@ export const BlockFloatingToolbar: React.FC<BlockFloatingToolbarProps> = ({
   return (
     <div 
       className={cn(
-        "absolute -top-14 left-0 right-0 h-12 flex items-center gap-2 px-3",
-        "bg-zinc-900/95 backdrop-blur-sm border border-zinc-700 rounded-lg z-50 animate-fade-in",
+        "flex items-center gap-2 px-3 py-2 bg-[#1a1a1a] border border-zinc-800 rounded-lg shadow-lg",
         className
       )}
       onMouseDown={(e) => e.stopPropagation()}
       onClick={(e) => e.stopPropagation()}
     >
       <TooltipProvider>
-        {/* Block Type Icon */}
-        <div className="flex items-center justify-center w-8 h-8 rounded bg-zinc-800/50">
-          <BlockIcon className="h-4 w-4 text-zinc-400" />
-        </div>
-
-        <div className="h-6 w-px bg-zinc-700" />
-
-        {/* Model Selector */}
+        {/* Magic Wand Icon */}
         <Tooltip>
           <TooltipTrigger asChild>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="h-8 gap-2 text-zinc-300 hover:text-white hover:bg-zinc-800"
-                >
-                  <Sparkles className="h-4 w-4" />
-                  <span className="text-xs">{selectedModel}</span>
-                  <ChevronDown className="h-3 w-3" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-80 bg-[#1a1a1a] border-zinc-800 p-2">
-                <DropdownMenuLabel className="text-xs text-zinc-500 uppercase tracking-wider px-2">Select Model</DropdownMenuLabel>
-                <DropdownMenuSeparator className="bg-zinc-800" />
-                <div className="space-y-1 max-h-[400px] overflow-y-auto">
-                  {availableModels.map((model) => (
-                    <div key={model.id} onClick={() => onModelChange(model.id)}>
-                      <ModelListItem
-                        icon={getModelIcon(model.icon)}
-                        name={model.name}
-                        description={model.description}
-                        credits={model.credits || 1}
-                        time={model.time || '~5s'}
-                        isSelected={selectedModel === model.name}
-                        onClick={() => onModelChange(model.id)}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <button
+              className="p-1.5 hover:bg-zinc-800/50 rounded-md transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+              }}
+            >
+              <Wand2 className="w-4 h-4 text-zinc-400" />
+            </button>
           </TooltipTrigger>
-          <TooltipContent>Model Selection</TooltipContent>
+          <TooltipContent>AI Suggestions</TooltipContent>
         </Tooltip>
 
-        {/* Aspect Ratio Selector (Image/Video only) */}
-        {showAspectRatio && (
+        {/* Count Selector for Image/Video blocks */}
+        {(blockType === 'image' || blockType === 'video') && onGenerationCountChange && (
           <>
-            <div className="h-6 w-px bg-zinc-700" />
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="h-8 gap-2 text-zinc-300 hover:text-white hover:bg-zinc-800"
-                    >
-                      <span className="text-xs">{aspectRatio}</span>
-                      <ChevronDown className="h-3 w-3" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start">
-                    <DropdownMenuLabel>Aspect Ratio</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    {ASPECT_RATIOS.map((ar) => (
-                      <DropdownMenuItem 
-                        key={ar.value} 
-                        onClick={() => onAspectRatioChange?.(ar.value)}
-                        className={cn(aspectRatio === ar.value && "bg-zinc-800")}
-                      >
-                        {ar.label}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </TooltipTrigger>
-              <TooltipContent>Aspect Ratio</TooltipContent>
-            </Tooltip>
+            <div className="w-px h-5 bg-zinc-800" />
+            <ImageCountSelector
+              value={generationCount}
+              onChange={onGenerationCountChange}
+              min={1}
+              max={20}
+            />
           </>
         )}
 
-        <div className="flex-1" />
+        <div className="w-px h-5 bg-zinc-800" />
 
-        {/* Settings Button */}
-        {onSettingsClick && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="h-8 w-8 p-0 hover:bg-zinc-800"
-                onClick={onSettingsClick}
-              >
-                <Settings className="h-4 w-4 text-zinc-400" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Block Settings</TooltipContent>
-          </Tooltip>
-        )}
+        {/* Model Selector */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="flex items-center gap-2 px-2.5 py-1.5 hover:bg-zinc-800/50 rounded-md transition-colors">
+              <span className="text-xs font-medium text-zinc-300">
+                {availableModels.find(m => m.id === selectedModel)?.name || selectedModel}
+              </span>
+              <ChevronDown className="h-3 w-3 text-zinc-400" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-80 bg-[#1a1a1a] border-zinc-800 p-2">
+            <DropdownMenuLabel className="text-xs text-zinc-500 uppercase tracking-wider px-2">Select Model</DropdownMenuLabel>
+            <DropdownMenuSeparator className="bg-zinc-800" />
+            <div className="space-y-1 max-h-[400px] overflow-y-auto">
+              {availableModels.map((model) => (
+                <div key={model.id} onClick={() => onModelChange(model.id)}>
+                  <ModelListItem
+                    icon={getModelIcon(model.icon)}
+                    name={model.name}
+                    description={model.description}
+                    credits={model.credits || 1}
+                    time={model.time || '~5s'}
+                    isSelected={selectedModel === model.id}
+                    onClick={() => onModelChange(model.id)}
+                  />
+                </div>
+              ))}
+            </div>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <div className="w-px h-5 bg-zinc-800" />
+
+        {/* More Options Button */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onSettingsClick?.();
+              }}
+              className="p-1.5 hover:bg-zinc-800/50 rounded-md transition-colors"
+            >
+              <MoreHorizontal className="w-4 h-4 text-zinc-400" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent>More Options</TooltipContent>
+        </Tooltip>
       </TooltipProvider>
     </div>
   );

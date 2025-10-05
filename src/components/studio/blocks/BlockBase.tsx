@@ -107,11 +107,8 @@ const BlockBase: React.FC<BlockProps> = ({
       <div className="px-4 py-2.5 border-b border-zinc-800/50 cursor-move">
         <div className="flex items-center justify-between">
           <span className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider">{title}</span>
-          {model && onModelChange && (
-            <button className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-zinc-800/30 hover:bg-zinc-800/50 transition-colors text-[10px] text-zinc-400 border border-zinc-700/30">
-              {model}
-              <ChevronDown className="w-2.5 h-2.5" />
-            </button>
+          {model && (
+            <span className="text-[10px] font-medium text-zinc-400">{model}</span>
           )}
         </div>
       </div>

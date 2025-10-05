@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useGeminiImage } from '@/hooks/useGeminiImage';
 import { 
   Loader2, Download, Wand2, Sparkles, Copy, ZoomIn, ChevronDown, Settings, 
-  Info, Upload, Combine, Video, Menu, Plus, Minus, MoreHorizontal, Type, Image as ImageIcon
+  Info, Upload, Combine, Video, Menu, Plus, Minus, MoreHorizontal, Type, Image as ImageIcon, ArrowRight
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -54,11 +54,10 @@ const ASPECT_RATIOS = [
   { label: '3:4 Portrait', value: '3:4' },
 ];
 
-const GENERATION_COUNTS = [
-  { label: '1×', value: 1 },
-  { label: '2×', value: 2 },
-  { label: '4×', value: 4 },
-];
+const GENERATION_COUNTS = Array.from({ length: 20 }, (_, i) => ({
+  label: `${i + 1}×`,
+  value: i + 1,
+}));
 
 const SUGGESTIONS = [
   { icon: Upload, label: 'Upload an image', disabled: true },
@@ -200,47 +199,46 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
             isSelected={isSelected}
             model={getModelDisplayName(selectedModel)}
             toolbar={
-              <BlockFloatingToolbar
+            <BlockFloatingToolbar
                 blockType="image"
                 selectedModel={selectedModel}
                 onModelChange={handleModelChange}
                 aspectRatio={aspectRatio}
                 onAspectRatioChange={setAspectRatio}
+                generationCount={generationCount}
+                onGenerationCountChange={setGenerationCount}
               />
             }
           >
       <div 
-        className="space-y-4 relative"
+        className="space-y-3 relative"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        {/* Model Info */}
-        <div className="flex items-center gap-2 text-xs mb-1">
-          <Sparkles className="w-3 h-3 text-purple-400" />
-          <span className="text-zinc-500">Gemini 2.5 Flash Image</span>
-        </div>
-
         {/* Empty State with Suggestions */}
         {images.length === 0 && !isGenerating && (
           <div className="space-y-3">
             {/* Learn Banner */}
-            <div className="flex items-center gap-2 p-2.5 bg-zinc-900/50 border border-zinc-700/50 rounded-lg">
-              <Info className="h-3.5 w-3.5 text-zinc-500 flex-shrink-0" />
-              <span className="text-xs text-zinc-400">Learn about Image Blocks</span>
+            <div className="flex items-center justify-between gap-2 p-2.5 bg-zinc-900/40 border border-zinc-800/50 rounded-lg">
+              <div className="flex items-center gap-2">
+                <Info className="h-3.5 w-3.5 text-blue-400/70 flex-shrink-0" />
+                <span className="text-xs text-zinc-400">Learn about Image Blocks</span>
+              </div>
+              <ArrowRight className="h-3 w-3 text-zinc-600" />
             </div>
 
             {/* Try to... Suggestions */}
             <div className="space-y-2">
-              <p className="text-xs text-zinc-500 px-1">Try to...</p>
+              <p className="text-xs text-zinc-500 font-medium">Try to...</p>
               <div className="grid grid-cols-2 gap-2">
                 {SUGGESTIONS.map((suggestion, idx) => (
                   <button
                     key={idx}
                     disabled={suggestion.disabled}
-                    className="flex items-center gap-2 p-2.5 bg-zinc-900/30 border border-zinc-700/50 rounded-lg hover:bg-zinc-800/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-left"
+                    className="flex items-center gap-2 p-2.5 bg-zinc-900/20 border border-zinc-800/50 rounded-lg hover:bg-zinc-800/30 hover:border-zinc-700/50 transition-all disabled:opacity-40 disabled:cursor-not-allowed text-left group"
                   >
-                    <suggestion.icon className="h-3.5 w-3.5 text-zinc-500 flex-shrink-0" />
-                    <span className="text-xs text-zinc-400">{suggestion.label}</span>
+                    <suggestion.icon className="h-3.5 w-3.5 text-zinc-500 group-hover:text-zinc-400 flex-shrink-0 transition-colors" />
+                    <span className="text-xs text-zinc-400 group-hover:text-zinc-300 transition-colors">{suggestion.label}</span>
                   </button>
                 ))}
               </div>
@@ -260,8 +258,8 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
             onBlur={() => onInputBlur?.()}
             onMouseDown={(e) => e.stopPropagation()}
             onClick={(e) => e.stopPropagation()}
-            placeholder="Describe the image you want to generate..."
-            className="min-h-[100px] resize-none cursor-text bg-zinc-950/50 border-zinc-800/50 text-zinc-200 placeholder:text-zinc-600 focus:border-purple-500/50 text-sm"
+            placeholder="Try 'A vintage poster of a travelling circus'"
+            className="min-h-[90px] resize-none cursor-text bg-zinc-950/30 border-zinc-800/50 text-zinc-200 placeholder:text-zinc-600 focus:border-blue-500/50 focus:bg-zinc-950/50 text-sm transition-all"
             disabled={isGenerating}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey && !isGenerating) {
@@ -270,6 +268,20 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
               }
             }}
           />
+          {/* Circular Action Button */}
+          {prompt && !isGenerating && images.length === 0 && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleGenerate();
+              }}
+              onPointerDown={(e) => e.stopPropagation()}
+              className="absolute bottom-3 right-3 w-8 h-8 rounded-full bg-blue-500 hover:bg-blue-600 flex items-center justify-center transition-all shadow-lg hover:shadow-blue-500/20"
+              title="Generate"
+            >
+              <ArrowRight className="w-4 h-4 text-white" />
+            </button>
+          )}
         </div>
 
         {/* Loading State - Grid of Placeholders */}
@@ -298,7 +310,7 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
               {images.map((image, index) => (
                 <div
                   key={image.id}
-                  className="relative group aspect-square rounded-lg overflow-hidden border border-zinc-700/50 bg-zinc-900 hover:border-zinc-600 transition-all animate-fade-in"
+                  className="relative group aspect-square rounded-lg overflow-hidden border border-zinc-800/50 bg-zinc-900 hover:border-zinc-700/50 transition-all animate-fade-in"
                   style={{
                     animationDelay: `${index * 100}ms`
                   }}
@@ -311,6 +323,14 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
                     alt={image.prompt}
                     className="w-full h-full object-cover"
                   />
+
+                  {/* Generation Counter Badge */}
+                  <div className={cn(
+                    "absolute bottom-2 right-2 px-2 py-1 bg-zinc-900/90 backdrop-blur-sm border border-zinc-800 rounded-md transition-opacity",
+                    hoveredImageId === image.id ? "opacity-100" : "opacity-0"
+                  )}>
+                    <span className="text-xs font-medium text-zinc-300">{generationCount}×</span>
+                  </div>
                   
                   {/* Hover Overlay with Actions */}
                   <div className={cn(
@@ -417,21 +437,6 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
           </div>
         )}
 
-        {/* Generate Button - Prominent when no images */}
-        {!isGenerating && images.length === 0 && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              handleGenerate();
-            }}
-            onPointerDown={(e) => e.stopPropagation()}
-            disabled={!prompt || isGenerating}
-            className="w-full h-11 text-sm px-3 py-2 bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white rounded shadow-glow-purple-sm hover:shadow-glow-purple-md transition-all-std disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-          >
-            <Sparkles className="h-4 w-4" />
-            Generate {generationCount}× Image{generationCount > 1 ? 's' : ''}
-          </button>
-        )}
       </div>
     </BlockBase>
     </div>
