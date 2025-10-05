@@ -41,8 +41,10 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock, onAddBlock }: St
   const [isInputFocused, setIsInputFocused] = useState(false);
   const [showAddBlockDialog, setShowAddBlockDialog] = useState(false);
   const [addBlockPosition, setAddBlockPosition] = useState({ x: 0, y: 0 });
+  const [showZoomControls, setShowZoomControls] = useState(false);
   const canvasRef = useRef<HTMLDivElement>(null);
   const transformRef = useRef<any>(null);
+  const zoomControlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   const {
     connections,
@@ -141,6 +143,29 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock, onAddBlock }: St
     
     setShowAddBlockDialog(false);
   };
+
+  const showZoomControlsTemporarily = useCallback(() => {
+    setShowZoomControls(true);
+    
+    // Clear existing timeout
+    if (zoomControlsTimeoutRef.current) {
+      clearTimeout(zoomControlsTimeoutRef.current);
+    }
+    
+    // Hide after 2 seconds
+    zoomControlsTimeoutRef.current = setTimeout(() => {
+      setShowZoomControls(false);
+    }, 2000);
+  }, []);
+
+  // Clean up timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (zoomControlsTimeoutRef.current) {
+        clearTimeout(zoomControlsTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleStartConnection = (blockId: string, pointId: string, e: React.MouseEvent) => {
     const position = getConnectionPointPosition(blockId, pointId);
@@ -473,10 +498,20 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock, onAddBlock }: St
           </TransformComponent>
 
             <CanvasControls
-              onZoomIn={() => zoomIn()}
-              onZoomOut={() => zoomOut()}
-              onResetTransform={() => resetTransform()}
+              onZoomIn={() => {
+                zoomIn();
+                showZoomControlsTemporarily();
+              }}
+              onZoomOut={() => {
+                zoomOut();
+                showZoomControlsTemporarily();
+              }}
+              onResetTransform={() => {
+                resetTransform();
+                showZoomControlsTemporarily();
+              }}
               zoomLevel={zoomLevel}
+              isVisible={showZoomControls}
             />
           </>
         )}
