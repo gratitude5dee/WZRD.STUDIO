@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Type, Image, Video, Upload, ArrowUp, ArrowDown } from 'lucide-react';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Type, Image, Video, Upload, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface AddBlockDialogProps {
@@ -73,92 +73,76 @@ export const AddBlockDialog: React.FC<AddBlockDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent 
-        className="bg-zinc-900/95 backdrop-blur-sm border-zinc-800 p-0 max-w-md"
-        style={{
-          position: 'fixed',
-          left: '50%',
-          top: '50%',
-          transform: 'translate(-50%, -50%)',
-        }}
-      >
-        <DialogHeader className="px-6 pt-6 pb-4 border-b border-zinc-800">
-          <DialogTitle className="text-white text-lg font-medium">Add Block</DialogTitle>
-        </DialogHeader>
+      <DialogContent className="sm:max-w-md bg-zinc-900/95 backdrop-blur-sm border border-zinc-800 p-0 gap-0">
+        <div className="p-4 space-y-3">
+          {/* Header */}
+          <div className="pb-2">
+            <h3 className="text-sm font-medium text-zinc-400">Add Block</h3>
+          </div>
 
-        <div className="px-6 py-4">
-          <div className="space-y-1 mb-6">
+          {/* Block Options */}
+          <div className="space-y-1">
             {blockOptions.map((option, index) => {
               const Icon = option.icon;
               return (
                 <button
                   key={option.type}
                   onClick={() => onSelectBlockType(option.type)}
+                  onMouseEnter={() => setSelectedIndex(index)}
                   className={cn(
-                    "w-full flex items-center justify-between px-4 py-3 rounded-lg transition-colors",
+                    "w-full flex items-center justify-between px-3 py-2.5 rounded-md transition-colors",
                     selectedIndex === index
-                      ? "bg-zinc-800 text-white"
-                      : "text-zinc-300 hover:bg-zinc-800/50 hover:text-white"
+                      ? 'bg-zinc-800 text-white'
+                      : 'text-zinc-300 hover:bg-zinc-800/50 hover:text-white'
                   )}
                 >
                   <div className="flex items-center gap-3">
-                    <Icon className="w-5 h-5" />
-                    <span className="text-sm font-medium">{option.label}</span>
+                    <div className="w-5 h-5 flex items-center justify-center">
+                      <Icon className="w-4 h-4" />
+                    </div>
+                    <span className="text-sm font-normal">{option.label}</span>
                   </div>
-                  <kbd className="px-2 py-1 text-xs bg-zinc-800 rounded border border-zinc-700 text-zinc-400">
-                    {option.shortcut}
-                  </kbd>
+                  <span className="text-xs text-zinc-500 font-mono">{option.shortcut}</span>
                 </button>
               );
             })}
           </div>
 
-          <div className="mb-6">
-            <h3 className="text-xs font-medium text-zinc-400 uppercase tracking-wider mb-2">
-              Add Source
-            </h3>
+          {/* Add Source Section */}
+          <div className="pt-2">
+            <h4 className="text-xs font-medium text-zinc-500 mb-2 px-1">Add Source</h4>
             <button
-              className="w-full flex items-center justify-between px-4 py-3 rounded-lg text-zinc-300 hover:bg-zinc-800/50 hover:text-white transition-colors"
               onClick={() => {
                 // Future upload functionality
                 onClose();
               }}
+              className="w-full flex items-center justify-between px-3 py-2.5 rounded-md text-zinc-300 hover:bg-zinc-800/50 hover:text-white transition-colors"
             >
               <div className="flex items-center gap-3">
-                <Upload className="w-5 h-5" />
-                <span className="text-sm font-medium">Upload</span>
+                <div className="w-5 h-5 flex items-center justify-center">
+                  <Upload className="w-4 h-4" />
+                </div>
+                <span className="text-sm font-normal">Upload</span>
               </div>
-              <kbd className="px-2 py-1 text-xs bg-zinc-800 rounded border border-zinc-700 text-zinc-400">
-                U
-              </kbd>
+              <span className="text-xs text-zinc-500 font-mono">U</span>
             </button>
           </div>
-        </div>
 
-        <div className="px-6 py-4 border-t border-zinc-800 flex items-center justify-between">
-          <div className="flex items-center gap-4 text-xs text-zinc-400">
-            <div className="flex items-center gap-1">
-              <ArrowUp className="w-3 h-3" />
-              <ArrowDown className="w-3 h-3" />
-              <span>to navigate</span>
+          {/* Footer */}
+          <div className="pt-3 border-t border-zinc-800 space-y-2.5">
+            <div className="flex items-center justify-center gap-4 text-[11px] text-zinc-500">
+              <span className="flex items-center gap-1">
+                <span className="font-mono">↑↓</span> Navigate
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="font-mono">↵</span> Select
+              </span>
             </div>
-            <div className="flex items-center gap-1">
-              <kbd className="px-1.5 py-0.5 bg-zinc-800 rounded text-[10px]">Enter</kbd>
-              <span>to select</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <kbd className="px-1.5 py-0.5 bg-zinc-800 rounded text-[10px]">Esc</kbd>
-              <span>to close</span>
-            </div>
+            <button className="w-full flex items-center justify-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-400 transition-colors py-1">
+              <Info className="w-3 h-3" />
+              <span>Learn about Blocks</span>
+            </button>
           </div>
-          <a
-            href="https://docs.lovable.dev"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
-          >
-            Learn about Blocks
-          </a>
         </div>
       </DialogContent>
     </Dialog>
