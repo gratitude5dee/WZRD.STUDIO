@@ -247,8 +247,8 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock, onAddBlock }: St
       maxScale={4}
       limitToBounds={false}
       centerOnInit={false}
-      initialPositionX={-9600}
-      initialPositionY={-9600}
+      initialPositionX={-49400}
+      initialPositionY={-49400}
       wheel={{ step: 0.1 }}
       panning={{ 
         disabled: isDraggingConnection || isInputFocused,
@@ -266,8 +266,8 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock, onAddBlock }: St
               ref={canvasRef}
               className="canvas-dot-grid relative"
               style={{
-                width: '20000px',
-                height: '20000px',
+                width: '100000px',
+                height: '100000px',
                 padding: '24px'
               }}
               onClick={handleCanvasClick}
@@ -285,7 +285,7 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock, onAddBlock }: St
                   onAddBlock({
                     id: uuidv4(),
                     type,
-                    position: { x: 10000, y: 10000 }
+                    position: { x: 50000, y: 50000 }
                   });
                   }}
                 />
@@ -295,8 +295,8 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock, onAddBlock }: St
               <svg 
                 className="absolute top-0 left-0 pointer-events-none"
                 style={{ 
-                  width: '20000px', 
-                  height: '20000px'
+                  width: '100000px', 
+                  height: '100000px'
                 }}
               >
         {/* Static connections */}
@@ -373,7 +373,7 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock, onAddBlock }: St
       </svg>
 
               {/* Blocks with absolute positioning */}
-              <div className="relative" style={{ width: '20000px', height: '20000px' }}>
+              <div className="relative" style={{ width: '100000px', height: '100000px' }}>
                 {blocks.map((block) => {
                   const position = block.position || { x: 100, y: 100 };
                   
