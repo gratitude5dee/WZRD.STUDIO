@@ -28,8 +28,8 @@ export const ImageCountSelector: React.FC<ImageCountSelectorProps> = ({
   return (
     <div className={cn("flex items-center gap-1", className)}>
       <div className="flex items-center gap-0.5 px-2 py-1 bg-zinc-900/50 border border-zinc-800 rounded-md">
-        <span className="text-xs font-medium text-zinc-300 min-w-[24px] text-center">
-          {value}:{value}
+        <span className="text-xs font-medium text-zinc-300 min-w-[20px] text-center">
+          {value}
         </span>
       </div>
       <div className="flex flex-col">
