@@ -66,7 +66,7 @@ const StudioPage = () => {
           position: { x: 400 + Math.random() * 200, y: 300 + Math.random() * 200 }
         }
       : blockOrType;
-    setBlocks([...blocks, newBlock]);
+    setBlocks(prev => [...prev, newBlock]);
     setSelectedBlockId(newBlock.id);
   };
   
