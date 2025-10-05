@@ -1,11 +1,17 @@
-
-import React, { useState } from 'react';
-import { Sparkles, Edit, Upload, X } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
 import BlockBase, { ConnectionPoint } from './BlockBase';
+import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
 import { useGeminiImage } from '@/hooks/useGeminiImage';
-import { geminiImageModel } from '@/types/modelTypes';
-import { uploadFile } from '@/utils/uploadFile';
+import { Loader2, Download, Wand2, Sparkles, Copy, ZoomIn, ChevronDown, Settings } from 'lucide-react';
 import { toast } from 'sonner';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export interface ImageBlockProps {
   id: string;
@@ -24,9 +30,23 @@ export interface ImageBlockProps {
   onInputBlur?: () => void;
 }
 
-const ImageBlock: React.FC<ImageBlockProps> = ({ 
-  id, 
-  onSelect, 
+const ASPECT_RATIOS = [
+  { label: '1:1 Square', value: '1:1' },
+  { label: '16:9 Landscape', value: '16:9' },
+  { label: '9:16 Portrait', value: '9:16' },
+  { label: '4:3 Standard', value: '4:3' },
+  { label: '3:4 Portrait', value: '3:4' },
+];
+
+const GENERATION_COUNTS = [
+  { label: '1× Single', value: 1 },
+  { label: '2× Pair', value: 2 },
+  { label: '4× Grid', value: 4 },
+];
+
+const ImageBlock: React.FC<ImageBlockProps> = ({
+  id,
+  onSelect,
   isSelected,
   supportsConnections,
   connectionPoints,
@@ -40,14 +60,15 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
   onInputFocus,
   onInputBlur
 }) => {
-  const [prompt, setPrompt] = useState<string>("");
-  const [editMode, setEditMode] = useState(false);
-  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
-  const [isUploading, setIsUploading] = useState(false);
-  const { isGenerating, imageUrl, generateImage, editImage } = useGeminiImage();
+  const [prompt, setPrompt] = useState('');
+  const [aspectRatio, setAspectRatio] = useState('1:1');
+  const [generationCount, setGenerationCount] = useState(1);
+  const [isHovered, setIsHovered] = useState(false);
+  const [hoveredImageId, setHoveredImageId] = useState<string | null>(null);
+  const { isGenerating, images, generateImage } = useGeminiImage();
 
-  // Check for connected input and use it as prompt if available
-  React.useEffect(() => {
+  // Sync prompt from connected inputs
+  useEffect(() => {
     if (getInput) {
       const connectedInput = getInput(id, 'prompt-input');
       if (connectedInput && typeof connectedInput === 'string') {
@@ -56,47 +77,48 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
     }
   }, [getInput, id]);
 
-  // Update output whenever image is generated
-  React.useEffect(() => {
-    if (imageUrl && setOutput) {
-      setOutput(id, 'image-output', imageUrl);
+  // Send images to outputs
+  useEffect(() => {
+    if (images.length > 0 && setOutput) {
+      setOutput(id, 'image-output', images);
     }
-  }, [imageUrl, setOutput, id]);
+  }, [images, id, setOutput]);
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
+  const handleGenerate = async () => {
+    if (!prompt.trim()) {
+      toast.error('Please enter a prompt');
+      return;
+    }
+    await generateImage(prompt, generationCount, aspectRatio);
+  };
 
-    setIsUploading(true);
+  const handleDownload = (imageUrl: string, imageName: string) => {
+    const link = document.createElement('a');
+    link.href = imageUrl;
+    link.download = imageName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleCopy = async (imageUrl: string) => {
     try {
-      const uploadPromises = Array.from(files).map(file => uploadFile(file));
-      const results = await Promise.all(uploadPromises);
-      const urls = results.map(result => result.url);
-      setUploadedImages(prev => [...prev, ...urls]);
-      toast.success(`${files.length} image(s) uploaded successfully`);
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
+      await navigator.clipboard.write([
+        new ClipboardItem({ [blob.type]: blob })
+      ]);
+      toast.success('Image copied to clipboard');
     } catch (error) {
-      console.error('Upload failed:', error);
-      toast.error('Failed to upload images');
-    } finally {
-      setIsUploading(false);
+      toast.error('Failed to copy image');
     }
   };
 
-  const removeUploadedImage = (index: number) => {
-    setUploadedImages(prev => prev.filter((_, i) => i !== index));
-  };
-
-  const handleGenerate = () => {
-    if (!prompt.trim()) return;
-    
-    // If we have uploaded images, use them with the prompt
-    if (uploadedImages.length > 0) {
-      editImage(uploadedImages[0], prompt);
-    } else if (editMode && imageUrl) {
-      editImage(imageUrl, prompt);
-    } else {
-      generateImage(prompt);
-    }
+  const getGridClass = () => {
+    if (images.length === 1) return 'grid-cols-1';
+    if (images.length === 2) return 'grid-cols-2';
+    if (images.length >= 4) return 'grid-cols-2';
+    return 'grid-cols-1';
   };
 
   return (
@@ -106,7 +128,7 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
       title="IMAGE"
       onSelect={onSelect}
       isSelected={isSelected}
-      generationTime="~8s"
+      generationTime={images.length > 0 ? new Date(images[images.length - 1].timestamp).toLocaleTimeString() : "~8s"}
       supportsConnections={supportsConnections}
       connectionPoints={connectionPoints}
       onShowHistory={onShowHistory}
@@ -115,159 +137,326 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
       onDragEnd={onDragEnd}
       onRegisterRef={onRegisterRef}
     >
-      <div className="space-y-4">
+      <div 
+        className="space-y-4"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
+        {/* Hover Toolbar */}
+        {isHovered && (
+          <div className="absolute -top-12 left-0 right-0 flex items-center justify-center gap-2 animate-fade-in z-50">
+            <div className="bg-background/95 backdrop-blur-sm border border-border rounded-lg shadow-lg px-3 py-2 flex items-center gap-2">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm" className="h-8 gap-2">
+                          <Sparkles className="h-4 w-4" />
+                          <span className="text-xs">Gemini 2.5</span>
+                          <ChevronDown className="h-3 w-3" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent>
+                        <DropdownMenuItem>Gemini 2.5 Flash</DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TooltipTrigger>
+                  <TooltipContent>Model Selection</TooltipContent>
+                </Tooltip>
+
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm" className="h-8 gap-2">
+                          <span className="text-xs">{aspectRatio}</span>
+                          <ChevronDown className="h-3 w-3" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent>
+                        {ASPECT_RATIOS.map(ratio => (
+                          <DropdownMenuItem
+                            key={ratio.value}
+                            onClick={() => setAspectRatio(ratio.value)}
+                          >
+                            {ratio.label}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TooltipTrigger>
+                  <TooltipContent>Aspect Ratio</TooltipContent>
+                </Tooltip>
+
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm" className="h-8 gap-2">
+                          <span className="text-xs">{generationCount}×</span>
+                          <ChevronDown className="h-3 w-3" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent>
+                        {GENERATION_COUNTS.map(count => (
+                          <DropdownMenuItem
+                            key={count.value}
+                            onClick={() => setGenerationCount(count.value)}
+                          >
+                            {count.label}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TooltipTrigger>
+                  <TooltipContent>Generation Count</TooltipContent>
+                </Tooltip>
+
+                <div className="h-4 w-px bg-border" />
+
+                {images.length > 0 && (
+                  <>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-8 w-8 p-0"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            images.forEach((img, i) => handleDownload(img.url, `image-${i + 1}.png`));
+                          }}
+                          onPointerDown={(e) => e.stopPropagation()}
+                        >
+                          <Download className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Download All</TooltipContent>
+                    </Tooltip>
+
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-8 w-8 p-0"
+                          onClick={(e) => e.stopPropagation()}
+                          onPointerDown={(e) => e.stopPropagation()}
+                        >
+                          <Settings className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Settings</TooltipContent>
+                    </Tooltip>
+                  </>
+                )}
+              </TooltipProvider>
+            </div>
+          </div>
+        )}
+
+        {/* Model Info */}
         <div className="flex items-center justify-between text-xs mb-2">
           <div className="flex items-center gap-2">
             <Sparkles className="w-3 h-3 text-purple-400" />
-            <span className="text-zinc-400">{geminiImageModel.name}</span>
+            <span className="text-zinc-400">Gemini 2.5 Flash Image</span>
           </div>
           <span className="text-green-400 text-xs">FREE</span>
         </div>
 
-        {imageUrl ? (
-          <div className="space-y-3">
-            <div className="relative group">
-              <img
-                src={imageUrl}
-                alt="Generated"
-                className="w-full h-auto rounded-lg"
-              />
-              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                <button 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setEditMode(true);
-                  }}
-                  onPointerDown={(e) => e.stopPropagation()}
-                  className="p-2 bg-zinc-800 hover:bg-zinc-700 rounded"
-                >
-                  <Edit size={16} />
-                </button>
-              </div>
-            </div>
-
-            {editMode && (
-              <input
-                type="text"
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                onMouseDown={(e) => e.stopPropagation()}
-                onClick={(e) => e.stopPropagation()}
-                onFocus={(e) => {
-                  e.stopPropagation();
-                  onInputFocus?.();
-                }}
-                onBlur={() => onInputBlur?.()}
-                className="w-full bg-zinc-800/50 border border-zinc-700 px-3 py-1.5 rounded text-sm focus:outline-none focus:border-purple-500 cursor-text"
-                placeholder="Describe how to edit the image..."
-              />
-            )}
+        {/* Prompt Input */}
+        <div className="space-y-2">
+          <Textarea
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            onFocus={(e) => {
+              e.stopPropagation();
+              onInputFocus?.();
+            }}
+            onBlur={() => onInputBlur?.()}
+            onMouseDown={(e) => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
+            placeholder="Describe the image you want to generate..."
+            className="min-h-[80px] resize-none cursor-text bg-zinc-800/50 border-zinc-700"
+            disabled={isGenerating}
+          />
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <span>{prompt.length} characters</span>
           </div>
-        ) : (
-          <div className="border-2 border-dashed border-zinc-700 rounded-lg p-6 flex flex-col gap-3 min-h-[150px] bg-zinc-800/20">
-            <input
-              type="text"
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              onMouseDown={(e) => e.stopPropagation()}
-              onClick={(e) => e.stopPropagation()}
-              onFocus={(e) => {
-                e.stopPropagation();
-                onInputFocus?.();
-              }}
-              onBlur={() => onInputBlur?.()}
-              className="w-full bg-zinc-800/50 border border-zinc-700 px-3 py-1.5 rounded text-sm focus:outline-none focus:border-purple-500 cursor-text"
-              placeholder="Describe the image you want to create..."
-              disabled={isGenerating}
-            />
-            
-            {/* Upload Button */}
-            <label className="block">
-              <input
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={handleFileUpload}
-                className="hidden"
-                id={`image-upload-${id}`}
-              />
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  document.getElementById(`image-upload-${id}`)?.click();
-                }}
-                onPointerDown={(e) => e.stopPropagation()}
-                disabled={isUploading}
-                className="w-full px-3 py-2 text-sm bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 text-zinc-300 rounded transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              >
-                {isUploading ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-zinc-500/30 border-t-zinc-300 rounded-full animate-spin" />
-                    Uploading...
-                  </>
-                ) : (
-                  <>
-                    <Upload className="w-4 h-4" />
-                    Upload Images
-                  </>
-                )}
-              </button>
-            </label>
+        </div>
 
-            {/* Display Uploaded Images */}
-            {uploadedImages.length > 0 && (
-              <div className="grid grid-cols-2 gap-2 pt-2">
-                {uploadedImages.map((url, index) => (
-                  <div key={index} className="relative group rounded-lg overflow-hidden bg-zinc-800 border border-zinc-700">
-                    <img 
-                      src={url} 
-                      alt={`Uploaded ${index + 1}`} 
-                      className="w-full h-20 object-cover"
-                    />
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removeUploadedImage(index);
-                      }}
-                      onPointerDown={(e) => e.stopPropagation()}
-                      className="absolute top-1 right-1 p-1 bg-red-500/90 hover:bg-red-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <X className="h-3 w-3 text-white" />
-                    </button>
+        {/* Generated Images Grid */}
+        {images.length > 0 && (
+          <div className={`grid ${getGridClass()} gap-3`}>
+            {images.map((image) => (
+              <div
+                key={image.id}
+                className="relative group rounded-lg overflow-hidden border border-zinc-700 bg-zinc-800/50 aspect-square"
+                onMouseEnter={() => setHoveredImageId(image.id)}
+                onMouseLeave={() => setHoveredImageId(null)}
+              >
+                <img
+                  src={image.url}
+                  alt={image.prompt}
+                  className="w-full h-full object-cover"
+                />
+                
+                {/* Image Hover Overlay */}
+                {hoveredImageId === image.id && (
+                  <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] flex items-center justify-center gap-2 animate-fade-in">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            className="h-9 w-9 p-0"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDownload(image.url, `image-${image.id}.png`);
+                            }}
+                            onPointerDown={(e) => e.stopPropagation()}
+                          >
+                            <Download className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Download</TooltipContent>
+                      </Tooltip>
+
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            className="h-9 w-9 p-0"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleCopy(image.url);
+                            }}
+                            onPointerDown={(e) => e.stopPropagation()}
+                          >
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Copy</TooltipContent>
+                      </Tooltip>
+
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            className="h-9 w-9 p-0"
+                            onClick={(e) => e.stopPropagation()}
+                            onPointerDown={(e) => e.stopPropagation()}
+                          >
+                            <ZoomIn className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>View Full Size</TooltipContent>
+                      </Tooltip>
+
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            className="h-9 w-9 p-0"
+                            onClick={(e) => e.stopPropagation()}
+                            onPointerDown={(e) => e.stopPropagation()}
+                          >
+                            <Wand2 className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Edit</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </div>
-                ))}
+                )}
+
+                {/* Generation Badge */}
+                {images.length > 1 && (
+                  <div className="absolute top-2 right-2 bg-background/90 backdrop-blur-sm border border-border rounded-md px-2 py-1 text-xs font-medium">
+                    {images.indexOf(image) + 1}/{images.length}
+                  </div>
+                )}
               </div>
-            )}
+            ))}
           </div>
         )}
 
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            handleGenerate();
-          }}
-          onPointerDown={(e) => e.stopPropagation()}
-          disabled={isGenerating || !prompt.trim()}
-          className="w-full px-3 py-2 text-sm bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white rounded shadow-glow-purple-sm hover:shadow-glow-purple-md transition-all-std disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-        >
-          {isGenerating ? (
-            <>
-              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              Generating...
-            </>
-          ) : uploadedImages.length > 0 ? (
-            <>
-              <Sparkles className="w-4 h-4" />
-              Generate from Upload
-            </>
-          ) : (
-            <>
-              <Sparkles className="w-4 h-4" />
-              {editMode ? 'Edit Image' : 'Generate Image'}
-            </>
+        {/* Loading State */}
+        {isGenerating && (
+          <div className={`grid ${getGridClass()} gap-3`}>
+            {Array.from({ length: generationCount }).map((_, i) => (
+              <div
+                key={i}
+                className="relative rounded-lg border border-zinc-700 bg-zinc-800/50 aspect-square flex items-center justify-center animate-pulse"
+              >
+                <div className="text-center space-y-2">
+                  <Loader2 className="h-8 w-8 animate-spin text-purple-400 mx-auto" />
+                  <p className="text-sm text-muted-foreground">Generating...</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Empty State */}
+        {images.length === 0 && !isGenerating && (
+          <div className="border-2 border-dashed border-zinc-700 rounded-lg p-6 text-center space-y-3 bg-zinc-800/20">
+            <div className="w-12 h-12 rounded-full bg-purple-500/10 flex items-center justify-center mx-auto">
+              <Sparkles className="h-6 w-6 text-purple-400" />
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-foreground">No images generated yet</p>
+              <p className="text-xs text-muted-foreground">
+                Enter a prompt and click generate to create images
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Generate Button */}
+        <div className="flex gap-2">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              handleGenerate();
+            }}
+            onPointerDown={(e) => e.stopPropagation()}
+            disabled={isGenerating || !prompt.trim()}
+            className="flex-1 px-3 py-2 text-sm bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white rounded shadow-glow-purple-sm hover:shadow-glow-purple-md transition-all-std disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            {isGenerating ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Generating {generationCount}× images...
+              </>
+            ) : (
+              <>
+                <Wand2 className="h-4 w-4" />
+                Generate {generationCount}× {generationCount === 1 ? 'Image' : 'Images'}
+              </>
+            )}
+          </button>
+
+          {images.length > 0 && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleGenerate();
+              }}
+              onPointerDown={(e) => e.stopPropagation()}
+              disabled={isGenerating || !prompt.trim()}
+              className="px-3 py-2 text-sm bg-zinc-800 hover:bg-zinc-700 border border-zinc-600 text-zinc-300 rounded transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              <Sparkles className="h-4 w-4" />
+              More
+            </button>
           )}
-        </button>
+        </div>
       </div>
     </BlockBase>
   );
