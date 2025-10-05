@@ -37,6 +37,7 @@ interface BlockFloatingToolbarProps {
   className?: string;
   generationCount?: number;
   onGenerationCountChange?: (count: number) => void;
+  onAISuggestion?: () => void;
 }
 
 const ASPECT_RATIOS = [
@@ -96,7 +97,8 @@ export const BlockFloatingToolbar: React.FC<BlockFloatingToolbarProps> = ({
   models,
   className,
   generationCount = 1,
-  onGenerationCountChange
+  onGenerationCountChange,
+  onAISuggestion
 }) => {
   const BlockIcon = getBlockIcon(blockType);
   const availableModels = models || DEFAULT_MODELS[blockType];
@@ -119,6 +121,7 @@ export const BlockFloatingToolbar: React.FC<BlockFloatingToolbarProps> = ({
               className="p-1.5 hover:bg-zinc-800/50 rounded-md transition-colors"
               onClick={(e) => {
                 e.stopPropagation();
+                onAISuggestion?.();
               }}
             >
               <Wand2 className="w-4 h-4 text-zinc-400" />

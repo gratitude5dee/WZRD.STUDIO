@@ -90,6 +90,7 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
   const [isHovered, setIsHovered] = useState(false);
   const [hoveredImageId, setHoveredImageId] = useState<string | null>(null);
   const [zoomLevel, setZoomLevel] = useState(1);
+  const [isGeneratingPrompt, setIsGeneratingPrompt] = useState(false);
   const { isGenerating, images, generateImage, clearImages } = useGeminiImage();
 
   // Use external model if provided, otherwise use default
@@ -187,6 +188,49 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
     }
   };
 
+  const handleAISuggestion = async () => {
+    if (isGeneratingPrompt) return;
+    
+    setIsGeneratingPrompt(true);
+    try {
+      const supabase = (await import('@/integrations/supabase/client')).supabase;
+      
+      let systemPrompt: string;
+      let userPrompt: string;
+      
+      if (!prompt.trim()) {
+        // Generate a new creative prompt
+        systemPrompt = "You are a creative AI assistant that generates detailed, vivid image prompts. Generate a single creative and detailed prompt for an AI image generator. Be specific about style, lighting, composition, and subject matter.";
+        userPrompt = "Generate a creative image prompt";
+      } else {
+        // Improve existing prompt
+        systemPrompt = "You are an expert at improving image generation prompts. Enhance the given prompt by adding specific details about style, lighting, composition, colors, and atmosphere while keeping the core concept. Return only the improved prompt text.";
+        userPrompt = prompt;
+      }
+      
+      const { data, error } = await supabase.functions.invoke('gemini-text-generation', {
+        body: {
+          prompt: userPrompt,
+          systemPrompt,
+          model: 'google/gemini-2.5-flash'
+        }
+      });
+
+      if (error) throw error;
+      
+      const generatedText = data?.choices?.[0]?.message?.content;
+      if (generatedText) {
+        setPrompt(generatedText.trim());
+        toast.success(prompt ? 'Prompt improved!' : 'Prompt generated!');
+      }
+    } catch (error) {
+      console.error('Error generating prompt:', error);
+      toast.error('Failed to generate prompt suggestion');
+    } finally {
+      setIsGeneratingPrompt(false);
+    }
+  };
+
   return (
     <ContextMenu>
       <ContextMenuTrigger asChild>
@@ -207,6 +251,7 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
                 onAspectRatioChange={setAspectRatio}
                 generationCount={generationCount}
                 onGenerationCountChange={setGenerationCount}
+                onAISuggestion={handleAISuggestion}
               />
             }
           >
@@ -258,9 +303,9 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
             onBlur={() => onInputBlur?.()}
             onMouseDown={(e) => e.stopPropagation()}
             onClick={(e) => e.stopPropagation()}
-            placeholder="Try 'A vintage poster of a travelling circus'"
+            placeholder={isGeneratingPrompt ? "Generating prompt..." : "Try 'A vintage poster of a travelling circus'"}
             className="min-h-[90px] resize-none cursor-text bg-zinc-950/30 border-zinc-800/50 text-zinc-200 placeholder:text-zinc-600 focus:border-blue-500/50 focus:bg-zinc-950/50 text-sm transition-all"
-            disabled={isGenerating}
+            disabled={isGenerating || isGeneratingPrompt}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey && !isGenerating) {
                 e.preventDefault();
@@ -269,7 +314,7 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
             }}
           />
           {/* Circular Action Button */}
-          {prompt && !isGenerating && images.length === 0 && (
+          {prompt && !isGenerating && images.length === 0 && !isGeneratingPrompt && (
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -281,6 +326,12 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
             >
               <ArrowRight className="w-4 h-4 text-white" />
             </button>
+          )}
+          {/* Loading indicator for prompt generation */}
+          {isGeneratingPrompt && (
+            <div className="absolute bottom-3 right-3 w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center">
+              <Loader2 className="w-4 h-4 text-blue-400 animate-spin" />
+            </div>
           )}
         </div>
 
