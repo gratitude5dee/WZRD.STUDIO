@@ -1,5 +1,4 @@
-import React from 'react';
-import { Dialog, DialogContent, DialogOverlay } from '@/components/ui/dialog';
+import React, { useEffect, useRef } from 'react';
 import { Sparkles, Image as ImageIcon, Video, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ModelListItem } from './StudioUtils';
@@ -68,48 +67,62 @@ const BlockSettingsModal: React.FC<BlockSettingsModalProps> = ({
 }) => {
   const models = getModelsForBlockType(blockType);
   const currentModel = models.find(m => m.id === selectedModel);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogOverlay className="bg-transparent pointer-events-none" />
-      <DialogContent 
-        className="fixed top-4 right-4 max-w-sm w-80 bg-[#1a1a1a] border border-zinc-800 text-white p-0 shadow-2xl translate-x-0 translate-y-0"
-        style={{ transform: 'none' }}
-        onPointerDownOutside={(e) => {
-          e.preventDefault();
-          onClose();
-        }}
-      >
-        <div className="p-4 space-y-4">
-          {/* Header */}
-          <div className="space-y-1">
-            <h3 className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Model</h3>
-            <div className="flex items-center gap-2">
-              {currentModel && getModelIcon(currentModel.icon)}
-              <span className="text-sm font-semibold text-white">
-                {currentModel?.name || 'Select Model'}
-              </span>
-            </div>
-          </div>
-
-          {/* Model List */}
-          <div className="space-y-1 max-h-[400px] overflow-y-auto">
-            {models.map((model) => (
-              <ModelListItem
-                key={model.id}
-                icon={getModelIcon(model.icon)}
-                name={model.name}
-                description={model.description}
-                credits={model.credits}
-                time={model.time}
-                isSelected={selectedModel === model.id}
-                onClick={() => onModelChange(model.id)}
-              />
-            ))}
+    <div 
+      ref={dropdownRef}
+      className="fixed top-4 right-4 w-80 bg-[#1a1a1a] border border-zinc-800 text-white shadow-2xl rounded-lg z-[100]"
+      onMouseDown={(e) => e.stopPropagation()}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div className="p-4 space-y-4">
+        {/* Header */}
+        <div className="space-y-1">
+          <h3 className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Model</h3>
+          <div className="flex items-center gap-2">
+            {currentModel && getModelIcon(currentModel.icon)}
+            <span className="text-sm font-semibold text-white">
+              {currentModel?.name || 'Select Model'}
+            </span>
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
+
+        {/* Model List */}
+        <div className="space-y-1 max-h-[400px] overflow-y-auto">
+          {models.map((model) => (
+            <ModelListItem
+              key={model.id}
+              icon={getModelIcon(model.icon)}
+              name={model.name}
+              description={model.description}
+              credits={model.credits}
+              time={model.time}
+              isSelected={selectedModel === model.id}
+              onClick={() => onModelChange(model.id)}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
   );
 };
 
