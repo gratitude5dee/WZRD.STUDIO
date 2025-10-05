@@ -1,5 +1,5 @@
 import React from 'react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogOverlay } from '@/components/ui/dialog';
 import { Sparkles, Image as ImageIcon, Video, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ModelListItem } from './StudioUtils';
@@ -22,9 +22,14 @@ interface BlockSettingsModalProps {
 }
 
 const TEXT_MODELS: Model[] = [
-  { id: 'google/gemini-2.5-flash', name: 'Gemini 2.5 Flash', description: 'Fast and efficient', credits: 1, time: '~2s', icon: 'sparkles' },
+  { id: 'google/gemini-2.5-flash', name: 'Gemini 2.5 Flash', description: 'Fast and efficient', credits: 1, time: '~2s', icon: 'sparkles-blue' },
+  { id: 'google/gemini-2.0-flash', name: 'Gemini 2.0 Flash', description: 'Previous generation', credits: 1, time: '~3s', icon: 'sparkles-blue' },
+  { id: 'google/gemini-2.5-pro', name: 'Gemini 2.5 Pro', description: 'Most capable Gemini', credits: 5, time: '~8s', icon: 'sparkles-blue' },
   { id: 'openai/gpt-5', name: 'GPT-5', description: 'Most capable', credits: 26, time: '~12s', icon: 'sparkles' },
   { id: 'openai/gpt-5-mini', name: 'GPT-5 Mini', description: 'Balanced performance', credits: 8, time: '~6s', icon: 'sparkles' },
+  { id: 'openai/gpt-4o-mini', name: 'GPT 4o Mini', description: 'Fast and affordable', credits: 2, time: '~3s', icon: 'sparkles' },
+  { id: 'anthropic/claude-opus-4', name: 'Claude Opus 4', description: 'Top-tier reasoning', credits: 20, time: '~10s', icon: 'sparkles-orange' },
+  { id: 'anthropic/claude-haiku-3.5', name: 'Claude Haiku 3.5', description: 'Fast Claude model', credits: 3, time: '~4s', icon: 'sparkles-orange' },
 ];
 
 const IMAGE_MODELS: Model[] = [
@@ -46,7 +51,9 @@ const getModelsForBlockType = (blockType: 'text' | 'image' | 'video' | null): Mo
 };
 
 const getModelIcon = (iconType: string) => {
-  if (iconType === 'sparkles') return <Sparkles className="h-4 w-4 text-blue-400" />;
+  if (iconType === 'sparkles-blue') return <Sparkles className="h-4 w-4 text-blue-400" />;
+  if (iconType === 'sparkles-orange') return <Sparkles className="h-4 w-4 text-orange-400" />;
+  if (iconType === 'sparkles') return <Sparkles className="h-4 w-4 text-zinc-400" />;
   if (iconType === 'image') return <ImageIcon className="h-4 w-4 text-purple-400" />;
   if (iconType === 'video') return <Video className="h-4 w-4 text-amber-400" />;
   return <Sparkles className="h-4 w-4 text-zinc-400" />;
@@ -64,8 +71,9 @@ const BlockSettingsModal: React.FC<BlockSettingsModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogOverlay className="bg-transparent pointer-events-none" />
       <DialogContent 
-        className="fixed top-4 right-4 max-w-sm w-80 bg-zinc-900/95 backdrop-blur-md border border-zinc-800 text-white p-0 shadow-2xl translate-x-0 translate-y-0"
+        className="fixed top-4 right-4 max-w-sm w-80 bg-[#1a1a1a] border border-zinc-800 text-white p-0 shadow-2xl translate-x-0 translate-y-0"
         style={{ transform: 'none' }}
         onPointerDownOutside={(e) => {
           e.preventDefault();
