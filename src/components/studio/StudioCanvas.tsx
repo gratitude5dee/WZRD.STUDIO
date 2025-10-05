@@ -310,8 +310,9 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock, onAddBlock, bloc
                         onModelChange={(modelId) => onModelChange(block.id, modelId)}
                         onSpawnBlocks={handleSpawnBlocks}
                         blockPosition={block.position}
-                        initialData={block.initialData}
-                      />
+            initialData={block.initialData}
+            displayMode={block.initialData?.imageUrl ? 'display' : 'input'}
+          />
                     )}
                     {block.type === 'video' && (
                       <VideoBlock

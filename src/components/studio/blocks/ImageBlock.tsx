@@ -35,6 +35,7 @@ interface ImageBlockProps {
     generationTime?: number;
     aspectRatio?: string;
   };
+  displayMode?: 'input' | 'display';
 }
 
 const ImageBlock: React.FC<ImageBlockProps> = ({
@@ -48,13 +49,17 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
   onModelChange,
   onSpawnBlocks,
   blockPosition = { x: 0, y: 0 },
-  initialData
+  initialData,
+  displayMode: initialDisplayMode
 }) => {
   const blockRef = useRef<HTMLDivElement>(null);
   const [prompt, setPrompt] = useState(initialData?.prompt || '');
   const [aspectRatio, setAspectRatio] = useState(initialData?.aspectRatio || '1:1');
   const [generationCount, setGenerationCount] = useState(1);
   const [isGeneratingPrompt, setIsGeneratingPrompt] = useState(false);
+  const [displayMode, setDisplayMode] = useState<'input' | 'display'>(
+    initialDisplayMode || (initialData?.imageUrl ? 'display' : 'input')
+  );
   const [generatedImage, setGeneratedImage] = useState<{ url: string; generationTime?: number } | null>(
     initialData?.imageUrl ? { url: initialData.imageUrl, generationTime: initialData.generationTime } : null
   );
@@ -189,12 +194,86 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
     }
   };
 
+  // Display mode - prominent image with overlay
+  if (displayMode === 'display' && generatedImage) {
+    return (
+      <div 
+        ref={blockRef}
+        className="relative w-80 h-80 rounded-2xl overflow-hidden cursor-pointer group"
+        onClick={() => {
+          setDisplayMode('input');
+          onSelect();
+        }}
+      >
+        <img
+          src={generatedImage.url}
+          alt={prompt}
+          className="w-full h-full object-cover"
+        />
+        
+        {/* Top gradient overlay with title */}
+        <div className="absolute inset-x-0 top-0 bg-gradient-to-b from-black/80 via-black/40 to-transparent p-4">
+          <div className="flex items-start justify-between">
+            <h3 className="text-white font-medium text-sm leading-tight max-w-[200px]">
+              {generateShortTitle(prompt)}
+            </h3>
+            {generatedImage.generationTime && (
+              <span className="text-white/90 text-xs font-medium px-2 py-1 bg-white/10 rounded-md backdrop-blur-sm">
+                ~{generatedImage.generationTime}s
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Hover actions overlay */}
+        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+          <Button
+            size="sm"
+            variant="secondary"
+            className="bg-white/90 hover:bg-white text-black"
+            onClick={(e) => handleDownload(generatedImage.url, e)}
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            <Download className="w-4 h-4" />
+          </Button>
+          <Button
+            size="sm"
+            variant="secondary"
+            className="bg-white/90 hover:bg-white text-black"
+            onClick={(e) => handleCopy(generatedImage.url, e)}
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            <Copy className="w-4 h-4" />
+          </Button>
+          <Button
+            size="sm"
+            variant="secondary"
+            className="bg-white/90 hover:bg-white text-black"
+            onClick={(e) => {
+              e.stopPropagation();
+              setDisplayMode('input');
+            }}
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            <Maximize2 className="w-4 h-4" />
+          </Button>
+        </div>
+
+        {/* Selection indicator */}
+        {isSelected && (
+          <div className="absolute inset-0 border-2 border-blue-500 rounded-2xl pointer-events-none" />
+        )}
+      </div>
+    );
+  }
+
+  // Input mode - full editing interface
   return (
     <div ref={blockRef}>
       <BlockBase
         id={id}
         type="image"
-        title={initialData?.prompt ? generateShortTitle(initialData.prompt) : "Image"}
+        title={prompt ? generateShortTitle(prompt) : "Image Generation"}
         onSelect={onSelect}
         isSelected={isSelected}
         model={selectedModel}
@@ -283,6 +362,10 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
                   size="sm"
                   variant="ghost"
                   className="text-white hover:bg-white/20"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setDisplayMode('input');
+                  }}
                   onMouseDown={(e) => e.stopPropagation()}
                 >
                   <Maximize2 className="w-4 h-4" />
