@@ -74,7 +74,7 @@ export const AddBlockDialog: React.FC<AddBlockDialogProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent 
-        className="sm:max-w-md bg-zinc-900/95 backdrop-blur-xl border-zinc-800/50 p-0 gap-0 animate-in fade-in-0 zoom-in-95 duration-200"
+        className="sm:max-w-md bg-zinc-900 backdrop-blur-xl border-zinc-800 p-0 gap-0 animate-in fade-in-0 zoom-in-95 duration-200"
         style={{
           position: 'fixed',
           left: `${position.x}px`,
@@ -85,7 +85,7 @@ export const AddBlockDialog: React.FC<AddBlockDialogProps> = ({
         <div className="p-4 space-y-3">
           {/* Header */}
           <div className="pb-2">
-            <h3 className="text-sm font-medium text-zinc-400">Add Block</h3>
+            <h3 className="text-sm font-medium text-zinc-200">Add Block</h3>
           </div>
 
           {/* Block Options */}
@@ -98,19 +98,19 @@ export const AddBlockDialog: React.FC<AddBlockDialogProps> = ({
                   onClick={() => onSelectBlockType(option.type)}
                   onMouseEnter={() => setSelectedIndex(index)}
                   className={cn(
-                    "w-full flex items-center justify-between px-3 py-2.5 rounded-md transition-colors",
+                    "w-full flex items-center justify-between px-3 py-2.5 rounded-md transition-all duration-150",
                     selectedIndex === index
                       ? 'bg-zinc-800 text-white'
-                      : 'text-zinc-300 hover:bg-zinc-800/50 hover:text-white'
+                      : 'text-white hover:bg-zinc-800/50'
                   )}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-5 h-5 flex items-center justify-center">
+                    <div className="w-8 h-8 flex items-center justify-center bg-zinc-800/50 border border-zinc-700/50 rounded">
                       <Icon className="w-4 h-4" />
                     </div>
                     <span className="text-sm font-normal">{option.label}</span>
                   </div>
-                  <span className="text-xs text-zinc-500 font-mono">{option.shortcut}</span>
+                  <span className="text-xs text-zinc-400 font-mono">{option.shortcut}</span>
                 </button>
               );
             })}
@@ -118,27 +118,27 @@ export const AddBlockDialog: React.FC<AddBlockDialogProps> = ({
 
           {/* Add Source Section */}
           <div className="pt-2">
-            <h4 className="text-xs font-medium text-zinc-500 mb-2 px-1">Add Source</h4>
+            <h4 className="text-xs font-medium text-zinc-400 mb-2 px-1">Add Source</h4>
             <button
               onClick={() => {
                 // Future upload functionality
                 onClose();
               }}
-              className="w-full flex items-center justify-between px-3 py-2.5 rounded-md text-zinc-300 hover:bg-zinc-800/50 hover:text-white transition-colors"
+              className="w-full flex items-center justify-between px-3 py-2.5 rounded-md text-white hover:bg-zinc-800/50 transition-all duration-150"
             >
               <div className="flex items-center gap-3">
-                <div className="w-5 h-5 flex items-center justify-center">
+                <div className="w-8 h-8 flex items-center justify-center bg-zinc-800/50 border border-zinc-700/50 rounded">
                   <Upload className="w-4 h-4" />
                 </div>
                 <span className="text-sm font-normal">Upload</span>
               </div>
-              <span className="text-xs text-zinc-500 font-mono">U</span>
+              <span className="text-xs text-zinc-400 font-mono">U</span>
             </button>
           </div>
 
           {/* Footer */}
           <div className="pt-3 border-t border-zinc-800 space-y-2.5">
-            <div className="flex items-center justify-center gap-4 text-[11px] text-zinc-500">
+            <div className="flex items-center justify-center gap-4 text-[11px] text-zinc-400">
               <span className="flex items-center gap-1">
                 <span className="font-mono">↑↓</span> Navigate
               </span>
@@ -146,7 +146,7 @@ export const AddBlockDialog: React.FC<AddBlockDialogProps> = ({
                 <span className="font-mono">↵</span> Select
               </span>
             </div>
-            <button className="w-full flex items-center justify-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-400 transition-colors py-1">
+            <button className="w-full flex items-center justify-center gap-1.5 text-xs text-zinc-400 hover:text-zinc-300 transition-all duration-150 py-1">
               <Info className="w-3 h-3" />
               <span>Learn about Blocks</span>
             </button>
