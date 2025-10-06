@@ -538,18 +538,22 @@ const StudioCanvas = ({
                     </feMerge>
                   </filter>
                 </defs>
+                {/* Enhanced dashed preview line with marching ants */}
                 <path
                   d={getPreviewPath(activeConnection)}
                   stroke="url(#preview-gradient)"
-                  strokeWidth="3"
-                  strokeDasharray="8,4"
+                  strokeWidth="2.5"
+                  strokeDasharray="8 4"
                   fill="none"
+                  strokeLinecap="round"
                   filter="url(#preview-glow)"
+                  opacity="0.8"
                   style={{
                     animation: 'dash 20s linear infinite'
                   }}
                 />
-                {/* Pulsing source point indicator */}
+                
+                {/* Enhanced pulsing source point indicator */}
                 <circle
                   cx={(() => {
                     const sourceBlock = blockRefs[activeConnection.sourceBlockId];
@@ -559,33 +563,38 @@ const StudioCanvas = ({
                     const sourceBlock = blockRefs[activeConnection.sourceBlockId];
                     return sourceBlock?.points[activeConnection.sourcePoint]?.y || 0;
                   })()}
-                  r="8"
-                  fill="#3b82f6"
-                  opacity="0.4"
-                  style={{
-                    animation: 'pulse 1s ease-in-out infinite'
-                  }}
-                />
-                {/* Endpoint indicator with plus icon */}
-                <circle
-                  cx={activeConnection.cursorPosition.x}
-                  cy={activeConnection.cursorPosition.y}
-                  r="8"
-                  fill="#3b82f6"
-                  opacity="0.7"
-                />
-                <circle
-                  cx={activeConnection.cursorPosition.x}
-                  cy={activeConnection.cursorPosition.y}
                   r="12"
-                  fill="none"
-                  stroke="#3b82f6"
-                  strokeWidth="2"
-                  opacity="0.5"
-                  style={{
-                    animation: 'pulse 1.5s ease-in-out infinite'
-                  }}
-                />
+                  fill="url(#preview-gradient)"
+                  opacity="0.4"
+                  filter="url(#preview-glow)"
+                >
+                  <animate attributeName="r" values="8;16;8" dur="1.5s" repeatCount="indefinite" />
+                  <animate attributeName="opacity" values="0.6;0.2;0.6" dur="1.5s" repeatCount="indefinite" />
+                </circle>
+                
+                {/* Animated dot following the cursor with glow */}
+                <circle
+                  cx={activeConnection.cursorPosition.x}
+                  cy={activeConnection.cursorPosition.y}
+                  r="5"
+                  fill="#60a5fa"
+                  filter="url(#preview-glow)"
+                >
+                  <animate attributeName="r" values="4;6;4" dur="1s" repeatCount="indefinite" />
+                  <animate attributeName="opacity" values="0.9;1;0.9" dur="1s" repeatCount="indefinite" />
+                </circle>
+                
+                {/* Cursor hint badge */}
+                <foreignObject
+                  x={activeConnection.cursorPosition.x + 15}
+                  y={activeConnection.cursorPosition.y - 12}
+                  width="150"
+                  height="30"
+                >
+                  <div className="bg-zinc-900/95 backdrop-blur-md border border-zinc-700 rounded-lg px-2 py-1 text-[10px] text-zinc-300 font-medium shadow-lg whitespace-nowrap">
+                    Release to create block
+                  </div>
+                </foreignObject>
               </svg>
             )}
 

@@ -219,9 +219,27 @@ const TextBlock: React.FC<TextBlockProps> = ({
         </div>
       )}
       
-      {/* Suggestions Mode */}
+      {/* Suggestions Mode - Enhanced Empty State */}
       {mode === 'suggestions' && !isVisualIntelligence && (
-        <TextBlockSuggestions onSelectAction={handleSelectAction} />
+        <div className="space-y-1.5">
+          <button 
+            className="w-full flex items-center gap-3 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50 p-3 rounded-lg transition-all text-left text-xs group border border-transparent hover:border-zinc-700/50"
+            onClick={() => toast.info('Documentation coming soon')}
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            <div className="w-7 h-7 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-500/20 transition-colors">
+              <Info className="w-3.5 h-3.5 text-blue-400" />
+            </div>
+            <span className="flex-1">Learn about Text Blocks</span>
+            <span className="text-zinc-600 group-hover:text-zinc-400 transition-colors">→</span>
+          </button>
+          
+          <div className="pt-2 pb-1 px-2">
+            <p className="text-[10px] uppercase tracking-wider text-zinc-500 font-semibold">Try to...</p>
+          </div>
+          
+          <TextBlockSuggestions onSelectAction={handleSelectAction} />
+        </div>
       )}
 
       {/* Prompt Mode */}

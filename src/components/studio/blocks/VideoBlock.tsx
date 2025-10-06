@@ -172,49 +172,66 @@ const VideoBlock: React.FC<VideoBlockProps> = ({
         />
       }
     >
-      {/* Suggestions Mode - Empty State */}
+      {/* Suggestions Mode - Enhanced Empty State */}
       {mode === 'suggestions' && (
-        <div className="space-y-2 mb-3">
+        <div className="space-y-1.5 mb-3">
           <button 
-            className="w-full flex items-center gap-2 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50 p-2 rounded-lg transition-colors text-left text-xs"
+            className="w-full flex items-center gap-3 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50 p-3 rounded-lg transition-all text-left text-xs group border border-transparent hover:border-zinc-700/50"
             onClick={() => toast.info('Documentation coming soon')}
             onMouseDown={(e) => e.stopPropagation()}
           >
-            <Info className="w-3.5 h-3.5" />
-            <span>Learn about Video Blocks</span>
+            <div className="w-7 h-7 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-500/20 transition-colors">
+              <Info className="w-3.5 h-3.5 text-blue-400" />
+            </div>
+            <span className="flex-1">Learn about Video Blocks</span>
+            <span className="text-zinc-600 group-hover:text-zinc-400 transition-colors">→</span>
           </button>
+          
+          <div className="pt-2 pb-1 px-2">
+            <p className="text-[10px] uppercase tracking-wider text-zinc-500 font-semibold">Try to...</p>
+          </div>
+          
           <button 
-            className="w-full flex items-center gap-2 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50 p-2 rounded-lg transition-colors text-left text-xs"
+            className="w-full flex items-center gap-3 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50 p-3 rounded-lg transition-all text-left text-xs group border border-transparent hover:border-zinc-700/50"
             onClick={() => {
               setPrompt('Cinematic drone shot flying over a misty mountain range at golden hour');
               setMode('prompt');
             }}
             onMouseDown={(e) => e.stopPropagation()}
           >
-            <span className="text-sm">🏔️</span>
-            <span>Cinematic drone shot over mountains</span>
+            <div className="w-7 h-7 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center flex-shrink-0 group-hover:bg-purple-500/20 transition-colors text-base">
+              🏔️
+            </div>
+            <span className="flex-1">Create cinematic drone footage</span>
+            <span className="text-zinc-600 group-hover:text-zinc-400 transition-colors">→</span>
           </button>
           <button 
-            className="w-full flex items-center gap-2 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50 p-2 rounded-lg transition-colors text-left text-xs"
+            className="w-full flex items-center gap-3 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50 p-3 rounded-lg transition-all text-left text-xs group border border-transparent hover:border-zinc-700/50"
             onClick={() => {
               setPrompt('Time-lapse of a sunset over a calm ocean with vibrant colors');
               setMode('prompt');
             }}
             onMouseDown={(e) => e.stopPropagation()}
           >
-            <span className="text-sm">🌅</span>
-            <span>Time-lapse of sunset over ocean</span>
+            <div className="w-7 h-7 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center flex-shrink-0 group-hover:bg-amber-500/20 transition-colors text-base">
+              🌅
+            </div>
+            <span className="flex-1">Generate time-lapse sequence</span>
+            <span className="text-zinc-600 group-hover:text-zinc-400 transition-colors">→</span>
           </button>
           <button 
-            className="w-full flex items-center gap-2 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50 p-2 rounded-lg transition-colors text-left text-xs"
+            className="w-full flex items-center gap-3 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50 p-3 rounded-lg transition-all text-left text-xs group border border-transparent hover:border-zinc-700/50"
             onClick={() => {
               setPrompt('Abstract morphing shapes with neon colors in a dark environment');
               setMode('prompt');
             }}
             onMouseDown={(e) => e.stopPropagation()}
           >
-            <span className="text-sm">✨</span>
-            <span>Abstract morphing shapes with neon</span>
+            <div className="w-7 h-7 rounded-lg bg-pink-500/10 border border-pink-500/20 flex items-center justify-center flex-shrink-0 group-hover:bg-pink-500/20 transition-colors text-base">
+              ✨
+            </div>
+            <span className="flex-1">Create abstract visual effects</span>
+            <span className="text-zinc-600 group-hover:text-zinc-400 transition-colors">→</span>
           </button>
         </div>
       )}

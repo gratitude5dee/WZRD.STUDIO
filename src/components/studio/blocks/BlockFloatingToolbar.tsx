@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { 
   Sparkles, ChevronDown, Settings, Image as ImageIcon, 
-  Type, Video, Wand2, Check, MoreHorizontal
+  Type, Video, Wand2, Check, MoreHorizontal, Zap, TrendingUp, Target
 } from 'lucide-react';
 import { ImageCountSelector } from './ImageCountSelector';
 import {
@@ -14,8 +14,29 @@ import {
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { ModelListItem } from '../StudioUtils';
+import { motion } from 'framer-motion';
+
+// Model configurations with enhanced metadata
+const MODEL_METADATA = {
+  text: [
+    { id: 'google/gemini-2.5-flash', name: 'Gemini 2.5 Flash', description: 'Fast & balanced', badge: 'Free', icon: Zap, color: 'text-green-400' },
+    { id: 'google/gemini-2.5-pro', name: 'Gemini 2.5 Pro', description: 'Best reasoning & context', badge: 'Premium', icon: Target, color: 'text-purple-400' },
+    { id: 'openai/gpt-5-mini', name: 'GPT-5 Mini', description: 'Efficient & affordable', badge: 'Paid', icon: TrendingUp, color: 'text-blue-400' },
+    { id: 'openai/gpt-5', name: 'GPT-5', description: 'Top performance', badge: 'Paid', icon: Target, color: 'text-orange-400' }
+  ],
+  image: [
+    { id: 'fal-ai/flux-pro/v1.1', name: 'Flux Pro', description: 'Highest quality', badge: 'Premium', icon: Target, color: 'text-purple-400' },
+    { id: 'fal-ai/flux-dev', name: 'Flux Dev', description: 'Best for creative work', badge: 'Free', icon: Zap, color: 'text-green-400' },
+    { id: 'fal-ai/recraft-v3', name: 'Recraft V3', description: 'Fast generation', badge: 'Free', icon: Zap, color: 'text-blue-400' }
+  ],
+  video: [
+    { id: 'gemini-2.5-flash-video', name: 'Gemini 2.5 Video', description: 'Fast video generation', badge: 'Free', icon: Zap, color: 'text-green-400' },
+    { id: 'luma-dream', name: 'Luma Dream', description: 'Cinematic quality', badge: 'Premium', icon: Target, color: 'text-purple-400' }
+  ]
+};
 
 interface Model {
   id: string;
@@ -100,14 +121,21 @@ export const BlockFloatingToolbar: React.FC<BlockFloatingToolbarProps> = ({
   onGenerationCountChange,
   onAISuggestion
 }) => {
+  const [isModelMenuOpen, setIsModelMenuOpen] = useState(false);
   const BlockIcon = getBlockIcon(blockType);
   const availableModels = models || DEFAULT_MODELS[blockType];
+  const metadataModels = MODEL_METADATA[blockType];
+  const currentModel = metadataModels?.find(m => m.id === selectedModel) || metadataModels?.[0];
   const showAspectRatio = (blockType === 'image' || blockType === 'video') && aspectRatio && onAspectRatioChange;
 
   return (
-    <div 
+    <motion.div 
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
+      transition={{ duration: 0.2 }}
       className={cn(
-        "flex items-center gap-2 px-3 py-2 bg-[#1a1a1a] border border-zinc-800 rounded-lg shadow-lg",
+        "flex items-center gap-2 px-3 py-2 bg-zinc-900/95 backdrop-blur-md border border-zinc-800 rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.4)]",
         className
       )}
       onMouseDown={(e) => e.stopPropagation()}
@@ -145,72 +173,61 @@ export const BlockFloatingToolbar: React.FC<BlockFloatingToolbarProps> = ({
 
         <div className="w-px h-5 bg-zinc-800" />
 
-        {/* Model Selector with Credit Badge */}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-2 px-3 py-1.5 hover:bg-zinc-800/50 rounded-md transition-colors group">
-                  <span className="text-xs font-medium text-zinc-300">
-                    {availableModels.find(m => m.id === selectedModel)?.name || selectedModel}
-                  </span>
-                  <div className="flex items-center gap-1 px-1.5 py-0.5 bg-yellow-500/10 border border-yellow-500/20 rounded-full">
-                    <Sparkles className="w-2.5 h-2.5 text-yellow-500" />
-                    <span className="text-[10px] font-medium text-yellow-500">
-                      {availableModels.find(m => m.id === selectedModel)?.credits || 0}
-                    </span>
-                  </div>
-                  <ChevronDown className="h-3 w-3 text-zinc-400 group-hover:text-zinc-300 transition-colors" />
-                </button>
-              </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-80 bg-[#1a1a1a] border-zinc-800 p-2">
-            <DropdownMenuLabel className="text-xs text-zinc-500 uppercase tracking-wider px-2">Select Model</DropdownMenuLabel>
-            <DropdownMenuSeparator className="bg-zinc-800" />
-            <div className="space-y-1 max-h-[400px] overflow-y-auto">
-              {availableModels.map((model) => (
-                <button
-                  key={model.id}
-                  onClick={() => onModelChange(model.id)}
-                  className="w-full flex items-center justify-between gap-4 py-3 px-3 hover:bg-zinc-800/60 rounded-lg transition-all group"
+        {/* Enhanced Model Selector Dropdown */}
+        <DropdownMenu open={isModelMenuOpen} onOpenChange={setIsModelMenuOpen}>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              className="h-8 px-3 text-xs font-medium text-zinc-300 hover:text-white hover:bg-zinc-800 flex items-center gap-2"
+            >
+              {currentModel && <currentModel.icon className={`w-3.5 h-3.5 ${currentModel.color}`} />}
+              <span>{currentModel?.name || 'Select Model'}</span>
+              <ChevronDown className="w-3 h-3 text-zinc-500" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent 
+            className="w-64 bg-zinc-900/98 backdrop-blur-md border-zinc-800 shadow-[0_8px_32px_rgba(0,0,0,0.6)]"
+            align="start"
+            sideOffset={8}
+          >
+            {metadataModels?.map((model, index) => (
+              <React.Fragment key={model.id}>
+                {index > 0 && <DropdownMenuSeparator className="bg-zinc-800" />}
+                <DropdownMenuItem
+                  className="flex items-start gap-3 p-3 cursor-pointer focus:bg-zinc-800 group"
+                  onClick={() => {
+                    onModelChange(model.id);
+                    setIsModelMenuOpen(false);
+                  }}
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500/20 to-purple-500/20 border border-blue-500/30 flex items-center justify-center flex-shrink-0 group-hover:border-blue-400/50 transition-colors">
-                      {getModelIcon(model.icon)}
-                    </div>
-                    <div className="flex flex-col text-left">
-                      <span className="text-sm font-medium text-zinc-100">
-                        {model.name}
-                      </span>
-                      {model.description && (
-                        <span className="text-xs text-zinc-400">
-                          {model.description}
-                        </span>
+                  <div className={`w-8 h-8 rounded-lg bg-zinc-800/60 border border-zinc-700/50 flex items-center justify-center flex-shrink-0 group-hover:bg-zinc-700 transition-colors`}>
+                    <model.icon className={`w-4 h-4 ${model.color}`} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <span className="font-semibold text-sm text-white">{model.name}</span>
+                      {selectedModel === model.id && (
+                        <Check className="w-3.5 h-3.5 text-blue-400 ml-auto flex-shrink-0" />
                       )}
                     </div>
+                    <p className="text-xs text-zinc-400 leading-tight">{model.description}</p>
+                    <Badge 
+                      className={`mt-1.5 text-[10px] h-4 px-1.5 ${
+                        model.badge === 'Free' 
+                          ? 'bg-green-500/10 text-green-400 border-green-500/20' 
+                          : model.badge === 'Premium'
+                          ? 'bg-purple-500/10 text-purple-400 border-purple-500/20'
+                          : 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                      }`}
+                    >
+                      {model.badge}
+                    </Badge>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-1 px-2 py-1 bg-yellow-500/10 border border-yellow-500/20 rounded-full">
-                      <Sparkles className="w-3 h-3 text-yellow-500" />
-                      <span className="text-xs font-medium text-yellow-500">{model.credits || 1}</span>
-                    </div>
-                    <span className="text-xs text-zinc-500">{model.time || '~5s'}</span>
-                    {selectedModel === model.id && (
-                      <Check className="w-4 h-4 text-blue-500" />
-                    )}
-                  </div>
-                </button>
-              ))}
-            </div>
+                </DropdownMenuItem>
+              </React.Fragment>
+            ))}
           </DropdownMenuContent>
-            </DropdownMenu>
-          </TooltipTrigger>
-          <TooltipContent>
-            <div className="flex items-center gap-2">
-              <span>Current model</span>
-              <span className="text-yellow-500">{availableModels.find(m => m.id === selectedModel)?.credits || 0} credits</span>
-            </div>
-          </TooltipContent>
-        </Tooltip>
+        </DropdownMenu>
 
         <div className="w-px h-5 bg-zinc-800" />
 
@@ -230,6 +247,6 @@ export const BlockFloatingToolbar: React.FC<BlockFloatingToolbarProps> = ({
           <TooltipContent>More Options</TooltipContent>
         </Tooltip>
       </TooltipProvider>
-    </div>
+    </motion.div>
   );
 };
