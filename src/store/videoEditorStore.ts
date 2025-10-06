@@ -12,6 +12,21 @@ export interface MediaItem {
   endTime?: number;
 }
 
+export interface ClipConnection {
+  id: string;
+  sourceId: string;
+  targetId: string;
+  sourcePoint: 'left' | 'right';
+  targetPoint: 'left' | 'right';
+}
+
+export interface ActiveConnection {
+  sourceId: string;
+  sourcePoint: 'left' | 'right';
+  cursorX: number;
+  cursorY: number;
+}
+
 export interface Keyframe {
   id: string;
   mediaId: string;
@@ -48,6 +63,10 @@ export interface VideoEditorState {
   mediaItems: MediaItem[];
   selectedMediaIds: string[];
   
+  // Timeline connections
+  clipConnections: ClipConnection[];
+  activeConnection: ActiveConnection | null;
+  
   // Keyframes
   keyframes: Keyframe[];
   selectedKeyframeIds: string[];
@@ -78,6 +97,12 @@ export interface VideoEditorState {
   selectMediaItem: (id: string, addToSelection?: boolean) => void;
   deselectMediaItem: (id: string) => void;
   clearMediaSelection: () => void;
+  
+  // Connection management
+  addClipConnection: (connection: ClipConnection) => void;
+  removeClipConnection: (id: string) => void;
+  setActiveConnection: (connection: ActiveConnection | null) => void;
+  updateActiveConnectionCursor: (x: number, y: number) => void;
   
   // Keyframe management
   addKeyframe: (keyframe: Keyframe) => void;
@@ -116,6 +141,10 @@ const initialState = {
   // Media and timeline
   mediaItems: [],
   selectedMediaIds: [],
+  
+  // Timeline connections
+  clipConnections: [],
+  activeConnection: null,
   
   // Keyframes
   keyframes: [],
@@ -177,6 +206,20 @@ export const useVideoEditorStore = create<VideoEditorState>((set) => ({
     selectedMediaIds: state.selectedMediaIds.filter((itemId) => itemId !== id),
   })),
   clearMediaSelection: () => set({ selectedMediaIds: [] }),
+  
+  // Connection management
+  addClipConnection: (connection) => set((state) => ({
+    clipConnections: [...state.clipConnections, connection]
+  })),
+  removeClipConnection: (id) => set((state) => ({
+    clipConnections: state.clipConnections.filter((conn) => conn.id !== id)
+  })),
+  setActiveConnection: (connection) => set({ activeConnection: connection }),
+  updateActiveConnectionCursor: (x, y) => set((state) => 
+    state.activeConnection 
+      ? { activeConnection: { ...state.activeConnection, cursorX: x, cursorY: y } }
+      : {}
+  ),
   
   // Keyframe management
   addKeyframe: (keyframe) => set((state) => ({ 

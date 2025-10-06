@@ -1,6 +1,21 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@keyframes dash {
+  to {
+    stroke-dashoffset: -240;
+  }
+}
+
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 16px rgba(59, 130, 246, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 24px rgba(59, 130, 246, 0.8);
+  }
+}
  
 @layer base {
   :root {
