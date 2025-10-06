@@ -256,10 +256,18 @@ const StudioCanvas = ({
     const { x: x2, y: y2 } = activeConn.cursorPosition;
 
     const dx = x2 - x1;
-    const curvature = 0.8;
-    const offset = Math.abs(dx) * curvature;
+    const dy = y2 - y1;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    const controlOffset = Math.min(distance * 0.4, 150);
+    
+    // Enhanced direction-aware control points
+    const isHorizontal = Math.abs(dx) > Math.abs(dy);
+    const cx1 = isHorizontal ? x1 + controlOffset : x1 + dx * 0.25;
+    const cy1 = isHorizontal ? y1 + dy * 0.25 : y1 + controlOffset;
+    const cx2 = isHorizontal ? x2 - controlOffset : x2 - dx * 0.25;
+    const cy2 = isHorizontal ? y2 - dy * 0.25 : y2 - controlOffset;
 
-    return `M ${x1},${y1} C ${x1 + offset},${y1} ${x2 - offset},${y2} ${x2},${y2}`;
+    return `M ${x1},${y1} C ${cx1},${cy1} ${cx2},${cy2} ${x2},${y2}`;
   };
 
   // Keyboard shortcuts
@@ -514,14 +522,21 @@ const StudioCanvas = ({
               onSelectConnection={setSelectedConnectionId}
             />
 
-            {/* Preview Line During Connection Drawing */}
+            {/* Active Connection Preview */}
             {activeConnection && (
               <svg className="absolute inset-0 pointer-events-none z-30" style={{ width: '100%', height: '100%' }}>
                 <defs>
                   <linearGradient id="preview-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.6" />
+                    <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.8" />
                     <stop offset="100%" stopColor="#8b5cf6" stopOpacity="0.6" />
                   </linearGradient>
+                  <filter id="preview-glow">
+                    <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                    <feMerge>
+                      <feMergeNode in="coloredBlur"/>
+                      <feMergeNode in="SourceGraphic"/>
+                    </feMerge>
+                  </filter>
                 </defs>
                 <path
                   d={getPreviewPath(activeConnection)}
@@ -529,8 +544,47 @@ const StudioCanvas = ({
                   strokeWidth="3"
                   strokeDasharray="8,4"
                   fill="none"
-                  opacity="0.8"
-                  className="animate-dash"
+                  filter="url(#preview-glow)"
+                  style={{
+                    animation: 'dash 20s linear infinite'
+                  }}
+                />
+                {/* Pulsing source point indicator */}
+                <circle
+                  cx={(() => {
+                    const sourceBlock = blockRefs[activeConnection.sourceBlockId];
+                    return sourceBlock?.points[activeConnection.sourcePoint]?.x || 0;
+                  })()}
+                  cy={(() => {
+                    const sourceBlock = blockRefs[activeConnection.sourceBlockId];
+                    return sourceBlock?.points[activeConnection.sourcePoint]?.y || 0;
+                  })()}
+                  r="8"
+                  fill="#3b82f6"
+                  opacity="0.4"
+                  style={{
+                    animation: 'pulse 1s ease-in-out infinite'
+                  }}
+                />
+                {/* Endpoint indicator with plus icon */}
+                <circle
+                  cx={activeConnection.cursorPosition.x}
+                  cy={activeConnection.cursorPosition.y}
+                  r="8"
+                  fill="#3b82f6"
+                  opacity="0.7"
+                />
+                <circle
+                  cx={activeConnection.cursorPosition.x}
+                  cy={activeConnection.cursorPosition.y}
+                  r="12"
+                  fill="none"
+                  stroke="#3b82f6"
+                  strokeWidth="2"
+                  opacity="0.5"
+                  style={{
+                    animation: 'pulse 1.5s ease-in-out infinite'
+                  }}
                 />
               </svg>
             )}

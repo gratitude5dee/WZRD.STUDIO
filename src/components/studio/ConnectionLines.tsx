@@ -41,27 +41,24 @@ export const ConnectionLines: React.FC<ConnectionLinesProps> = ({
     const startPos = getPointPosition(sourceRect, connection.sourcePoint);
     const endPos = getPointPosition(targetRect, connection.targetPoint);
     
-    // Calculate control points for smooth Bezier curve
+    // Enhanced Bezier curve with direction-aware control points
     const dx = endPos.x - startPos.x;
     const dy = endPos.y - startPos.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    
+    const isHorizontal = Math.abs(dx) > Math.abs(dy);
+    const controlOffset = Math.min(distance * 0.4, 150);
     
     let controlPoint1, controlPoint2;
     
-    if (connection.sourcePoint === 'right' && connection.targetPoint === 'left') {
-      // Horizontal connection
-      const offset = Math.abs(dx) * 0.5;
-      controlPoint1 = { x: startPos.x + offset, y: startPos.y };
-      controlPoint2 = { x: endPos.x - offset, y: endPos.y };
-    } else if (connection.sourcePoint === 'bottom' && connection.targetPoint === 'top') {
-      // Vertical connection
-      const offset = Math.abs(dy) * 0.5;
-      controlPoint1 = { x: startPos.x, y: startPos.y + offset };
-      controlPoint2 = { x: endPos.x, y: endPos.y - offset };
+    if (isHorizontal) {
+      // Horizontal-dominant connections
+      controlPoint1 = { x: startPos.x + controlOffset, y: startPos.y + dy * 0.25 };
+      controlPoint2 = { x: endPos.x - controlOffset, y: endPos.y - dy * 0.25 };
     } else {
-      // Default smooth curve
-      const offset = Math.max(Math.abs(dx), Math.abs(dy)) * 0.3;
-      controlPoint1 = { x: startPos.x + offset, y: startPos.y };
-      controlPoint2 = { x: endPos.x - offset, y: endPos.y };
+      // Vertical-dominant connections
+      controlPoint1 = { x: startPos.x + dx * 0.25, y: startPos.y + controlOffset };
+      controlPoint2 = { x: endPos.x - dx * 0.25, y: endPos.y - controlOffset };
     }
     
     return `M ${startPos.x} ${startPos.y} C ${controlPoint1.x} ${controlPoint1.y}, ${controlPoint2.x} ${controlPoint2.y}, ${endPos.x} ${endPos.y}`;
@@ -111,9 +108,9 @@ export const ConnectionLines: React.FC<ConnectionLinesProps> = ({
             <path
               d={path}
               fill="none"
-              stroke={`url(#${getGradientId(connection)})`}
-              strokeWidth="10"
-              opacity="0.25"
+              stroke={isSelected ? '#3b82f6' : `url(#${getGradientId(connection)})`}
+              strokeWidth={isSelected ? "6" : "5"}
+              opacity="0.4"
               filter={`url(#glow-${connection.id})`}
               pointerEvents="none"
             />
@@ -122,19 +119,21 @@ export const ConnectionLines: React.FC<ConnectionLinesProps> = ({
             <path
               d={path}
               fill="none"
-              stroke={`url(#${getGradientId(connection)})`}
-              strokeWidth={isSelected ? "3.5" : "2"}
+              stroke={isSelected ? '#60a5fa' : `url(#${getGradientId(connection)})`}
+              strokeWidth={isSelected ? "3.5" : "2.5"}
               strokeLinecap="round"
               className="pointer-events-auto cursor-pointer transition-all duration-300"
               style={{
-                strokeWidth: isSelected ? '3.5px' : '2px'
+                strokeWidth: isSelected ? '3.5px' : '2.5px'
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.strokeWidth = '3.5px';
+                e.currentTarget.style.strokeWidth = '4px';
+                e.currentTarget.style.filter = 'drop-shadow(0 0 8px rgba(96, 165, 250, 0.6))';
               }}
               onMouseLeave={(e) => {
                 if (!isSelected) {
-                  e.currentTarget.style.strokeWidth = '2px';
+                  e.currentTarget.style.strokeWidth = '2.5px';
+                  e.currentTarget.style.filter = 'none';
                 }
               }}
               onClick={(e) => {

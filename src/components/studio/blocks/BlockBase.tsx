@@ -69,19 +69,19 @@ const BlockBase: React.FC<BlockProps> = ({
   
   const getConnectionPointStyle = (point: 'top' | 'right' | 'bottom' | 'left') => {
     const isConnected = connectedPoints.includes(point);
-    const baseStyle = "absolute rounded-full border-2 transition-all duration-300 z-20";
+    const baseStyle = "absolute rounded-full flex items-center justify-center transition-all duration-300 z-20 backdrop-blur-sm";
     const positionStyles = {
-      top: "left-1/2 -translate-x-1/2 -top-2",
+      top: "left-1/2 -translate-x-1/2 -top-3",
       right: "right-0 translate-x-1/2 top-1/2 -translate-y-1/2",
-      bottom: "left-1/2 -translate-x-1/2 -bottom-2",
+      bottom: "left-1/2 -translate-x-1/2 -bottom-3",
       left: "left-0 -translate-x-1/2 top-1/2 -translate-y-1/2"
     };
     
     if (isConnected) {
-      return `${baseStyle} ${positionStyles[point]} w-2 h-2 bg-green-500 border-green-400 shadow-[0_0_12px_rgba(34,197,94,0.8)] animate-pulse`;
+      return `${baseStyle} ${positionStyles[point]} w-3.5 h-3.5 bg-emerald-500/90 border-2 border-emerald-400 shadow-[0_0_16px_rgba(16,185,129,0.8)] animate-pulse`;
     }
     
-    return `${baseStyle} ${positionStyles[point]} w-1.5 h-1.5 bg-zinc-700/50 border-zinc-600/50 opacity-0 group-hover:opacity-100 hover:w-2 hover:h-2 hover:bg-blue-500 hover:border-blue-400 hover:scale-125 hover:shadow-[0_0_12px_rgba(59,130,246,0.8)] cursor-pointer`;
+    return `${baseStyle} ${positionStyles[point]} w-3 h-3 bg-zinc-800/80 border-2 border-zinc-600/50 opacity-0 group-hover:opacity-100 hover:w-3.5 hover:h-3.5 hover:bg-blue-500/90 hover:border-blue-400 hover:scale-110 hover:shadow-[0_0_16px_rgba(59,130,246,0.9)] cursor-crosshair`;
   };
 
   return (
@@ -117,7 +117,17 @@ const BlockBase: React.FC<BlockProps> = ({
             onConnectionPointClick?.(id, point, e);
           }}
           title={`Connect ${point}`}
-        />
+        >
+          {connectedPoints.includes(point) ? (
+            <svg className="w-2 h-2 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+          ) : (
+            <svg className="w-2 h-2 text-zinc-400 group-hover:text-blue-300 opacity-0 group-hover:opacity-100" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+          )}
+        </div>
       ))}
 
       {/* Header with Drag Handle */}

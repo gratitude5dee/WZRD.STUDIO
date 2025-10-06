@@ -24,17 +24,23 @@ export const ConnectionNodeSelector: React.FC<ConnectionNodeSelectorProps> = ({
 }) => {
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.95, y: -10 }}
+      initial={{ opacity: 0, scale: 0.9, y: -10 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95, y: -10 }}
+      transition={{ 
+        type: "spring",
+        stiffness: 300,
+        damping: 25,
+        duration: 0.2
+      }}
       className="absolute z-50 w-64"
       style={{ left: position.x, top: position.y }}
       onClick={(e) => e.stopPropagation()}
     >
-      <div className="bg-zinc-900/95 backdrop-blur-sm border border-zinc-800 rounded-lg shadow-xl overflow-hidden">
+      <div className="bg-zinc-900/95 backdrop-blur-md border border-zinc-800 rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.4)] overflow-hidden">
         {/* Header */}
-        <div className="px-4 py-2.5 border-b border-zinc-800/50 bg-zinc-800/30">
-          <div className="text-xs font-semibold text-zinc-400 tracking-wider">
+        <div className="px-4 py-3 border-b border-zinc-800/50 bg-gradient-to-b from-zinc-800/40 to-transparent">
+          <div className="text-xs font-bold text-zinc-400 tracking-wider">
             TURN INTO
           </div>
         </div>
@@ -42,75 +48,78 @@ export const ConnectionNodeSelector: React.FC<ConnectionNodeSelectorProps> = ({
         {/* Block Type Options */}
         <div className="p-2 space-y-1">
           {blockTypes.map((block) => (
-            <button
+            <motion.button
               key={block.type}
               onClick={() => onSelectType(block.type)}
+              whileHover={{ x: 2 }}
               className={cn(
-                "w-full flex items-center gap-3 px-3 py-2.5 rounded-md",
+                "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg",
                 "text-left text-sm text-zinc-300",
-                "hover:bg-zinc-800 hover:text-white",
+                "hover:bg-zinc-800/80 hover:text-white",
                 "transition-all duration-200 group"
               )}
             >
-              <div className="w-8 h-8 rounded-md bg-zinc-800 flex items-center justify-center group-hover:bg-zinc-700 transition-colors">
-                <block.icon className="w-4 h-4" />
+              <div className="w-8 h-8 rounded-lg bg-zinc-800/60 border border-zinc-700/50 flex items-center justify-center group-hover:bg-zinc-700 group-hover:border-zinc-600 transition-all duration-200">
+                <block.icon className="w-4 h-4 text-zinc-400 group-hover:text-zinc-200" />
               </div>
               <span className="flex-1 font-medium">{block.label}</span>
               <div className="flex items-center gap-2">
-                <kbd className="px-2 py-0.5 text-xs bg-zinc-800 rounded border border-zinc-700 group-hover:border-zinc-600">
+                <kbd className="px-2 py-0.5 text-[10px] font-semibold bg-zinc-800/60 text-zinc-400 rounded border border-zinc-700/50 group-hover:border-zinc-600 group-hover:text-zinc-300">
                   {block.shortcut}
                 </kbd>
-                <ArrowRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <ArrowRight className="w-3.5 h-3.5 text-zinc-600 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" />
               </div>
-            </button>
+            </motion.button>
           ))}
         </div>
 
         {/* Divider */}
-        <div className="border-t border-zinc-800/50 my-2" />
+        <div className="border-t border-zinc-800/50 my-1" />
 
         {/* Navigate & Select Options */}
         <div className="p-2 space-y-1">
-          <button
+          <motion.button
             onClick={onNavigate}
+            whileHover={{ x: 2 }}
             className={cn(
-              "w-full flex items-center gap-3 px-3 py-2.5 rounded-md",
-              "text-left text-sm text-zinc-300",
-              "hover:bg-zinc-800 hover:text-white",
+              "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg",
+              "text-left text-sm text-zinc-400",
+              "hover:bg-zinc-800/60 hover:text-zinc-200",
               "transition-all duration-200 group"
             )}
           >
             <Navigation className="w-4 h-4" />
             <span className="flex-1">Navigate</span>
-            <ArrowRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity" />
-          </button>
+            <ArrowRight className="w-3.5 h-3.5 text-zinc-600 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" />
+          </motion.button>
 
-          <button
+          <motion.button
             onClick={onCancel}
+            whileHover={{ x: 2 }}
             className={cn(
-              "w-full flex items-center gap-3 px-3 py-2.5 rounded-md",
-              "text-left text-sm text-zinc-300",
-              "hover:bg-zinc-800 hover:text-white",
+              "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg",
+              "text-left text-sm text-zinc-400",
+              "hover:bg-zinc-800/60 hover:text-zinc-200",
               "transition-all duration-200 group"
             )}
           >
             <MousePointer className="w-4 h-4" />
             <span className="flex-1">Select</span>
-            <ArrowRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity" />
-          </button>
+            <ArrowRight className="w-3.5 h-3.5 text-zinc-600 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" />
+          </motion.button>
         </div>
 
         {/* Footer */}
-        <div className="border-t border-zinc-800/50 px-4 py-2.5 bg-zinc-800/20">
+        <div className="border-t border-zinc-800/50 px-4 py-3 bg-gradient-to-t from-zinc-800/30 to-transparent">
           <a
             href="#"
             onClick={(e) => {
               e.preventDefault();
               // TODO: Open help documentation
             }}
-            className="flex items-center gap-2 text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
+            className="flex items-center gap-2 text-xs text-zinc-500 hover:text-zinc-300 transition-colors group"
           >
-            <BookOpen className="w-3.5 h-3.5" />
+            <BookOpen className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
             <span>Learn about Blocks</span>
           </a>
         </div>
