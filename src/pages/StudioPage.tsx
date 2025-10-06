@@ -1,8 +1,8 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { MoreVertical, User, Share2 } from 'lucide-react';
+import { MoreVertical, User, Share2, Save, Loader2 } from 'lucide-react';
 import { useAppStore } from '@/store/appStore';
 import { Logo } from '@/components/ui/logo';
 import CreditsDisplay from '@/components/CreditsDisplay';
@@ -11,6 +11,8 @@ import StudioCanvas from '@/components/studio/StudioCanvas';
 import StudioBottomBar from '@/components/studio/StudioBottomBar';
 import BlockSettingsModal from '@/components/studio/BlockSettingsModal';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
 
 export interface Block {
   id: string;
@@ -33,34 +35,119 @@ const StudioPage = () => {
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
   const [blockModels, setBlockModels] = useState<Record<string, string>>({});
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
-  // When the component mounts or projectId changes, update the app store
+  // Load project state on mount
   useEffect(() => {
-    const initializeProjectContext = async () => {
-      // If we have a project ID from the URL, fetch its details and store it
-      if (projectId) {
-        try {
-          const { data, error } = await supabase
-            .from('projects')
-            .select('title')
-            .eq('id', projectId)
-            .single();
-            
-          if (error) {
-            throw error;
-          }
+    const initializeProject = async () => {
+      if (!projectId) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        // Fetch project details
+        const { data: projectData, error: projectError } = await supabase
+          .from('projects')
+          .select('title')
+          .eq('id', projectId)
+          .single();
           
-          setActiveProject(projectId, data?.title || 'Untitled');
-        } catch (error) {
-          console.error('Error fetching project details:', error);
+        if (projectError) throw projectError;
+        setActiveProject(projectId, projectData?.title || 'Untitled');
+
+        // Load studio state from backend
+        const { data: stateData, error: stateError } = await supabase.functions.invoke(
+          'studio-load-state',
+          { body: { projectId } }
+        );
+
+        if (stateError) throw stateError;
+
+        if (stateData?.blocks) {
+          console.log('📥 Loaded blocks from backend:', stateData.blocks.length);
+          setBlocks(stateData.blocks);
+          
+          // Restore block models
+          const models: Record<string, string> = {};
+          stateData.blocks.forEach((block: Block) => {
+            if (block.initialData?.imageUrl) {
+              models[block.id] = 'google/gemini-2.5-flash-image-preview';
+            }
+          });
+          setBlockModels(models);
         }
+      } catch (error) {
+        console.error('Error initializing project:', error);
+        toast.error('Failed to load project state');
+      } finally {
+        setIsLoading(false);
       }
     };
     
-    initializeProjectContext();
+    initializeProject();
   }, [projectId, setActiveProject]);
+
+  // Auto-save with debounce
+  const saveState = useCallback(async () => {
+    if (!projectId || blocks.length === 0) return;
+
+    setIsSaving(true);
+    try {
+      console.log('💾 Auto-saving state...', { blockCount: blocks.length });
+      
+      const { error } = await supabase.functions.invoke('studio-save-state', {
+        body: {
+          projectId,
+          blocks,
+          canvasState: { viewport: { x: 0, y: 0, zoom: 1 }, settings: { showGrid: true } }
+        }
+      });
+
+      if (error) throw error;
+      
+      setLastSaved(new Date());
+      console.log('✅ State saved successfully');
+    } catch (error) {
+      console.error('Error saving state:', error);
+      toast.error('Failed to save changes');
+    } finally {
+      setIsSaving(false);
+    }
+  }, [projectId, blocks]);
+
+  // Debounced auto-save effect
+  useEffect(() => {
+    if (isLoading || !projectId) return;
+
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+
+    saveTimeoutRef.current = setTimeout(() => {
+      saveState();
+    }, 1000); // Save after 1 second of inactivity
+
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, [blocks, projectId, isLoading, saveState]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, []);
   
-  const handleAddBlock = (blockOrType: Block | 'text' | 'image' | 'video') => {
+  const handleAddBlock = useCallback((blockOrType: Block | 'text' | 'image' | 'video') => {
     const newBlock = typeof blockOrType === 'string' 
       ? { 
           id: uuidv4(), 
@@ -70,7 +157,26 @@ const StudioPage = () => {
       : blockOrType;
     setBlocks(prev => [...prev, newBlock]);
     setSelectedBlockId(newBlock.id);
-  };
+  }, []);
+
+  const handleDeleteBlock = useCallback((blockId: string) => {
+    setBlocks(prev => prev.filter(b => b.id !== blockId));
+    if (selectedBlockId === blockId) {
+      setSelectedBlockId(null);
+    }
+  }, [selectedBlockId]);
+
+  const handleUpdateBlockPosition = useCallback((blockId: string, position: { x: number; y: number }) => {
+    setBlocks(prev => prev.map(b => 
+      b.id === blockId ? { ...b, position } : b
+    ));
+  }, []);
+
+  const handleUpdateBlockData = useCallback((blockId: string, data: Partial<Block>) => {
+    setBlocks(prev => prev.map(b => 
+      b.id === blockId ? { ...b, ...data } : b
+    ));
+  }, []);
   
   const handleSelectBlock = (id: string) => {
     setSelectedBlockId(id || null);
@@ -158,6 +264,23 @@ const StudioPage = () => {
 
         {/* Right Section */}
         <div className="flex items-center gap-3">
+          {/* Save indicator */}
+          {projectId && (
+            <div className="flex items-center gap-2 text-xs text-zinc-400">
+              {isSaving ? (
+                <>
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                  <span>Saving...</span>
+                </>
+              ) : lastSaved ? (
+                <>
+                  <Save className="w-3 h-3" />
+                  <span>Saved {new Date(lastSaved).toLocaleTimeString()}</span>
+                </>
+              ) : null}
+            </div>
+          )}
+          
           <CreditsDisplay showTooltip={false} showButton={false} />
           <button className="p-2 hover:bg-zinc-800 rounded-full transition-colors">
             <User className="w-5 h-5 text-zinc-400" />
@@ -172,14 +295,26 @@ const StudioPage = () => {
       <div className="flex-1 flex overflow-hidden">
         <StudioSidebar onAddBlock={handleAddBlock} />
         
-        <StudioCanvas 
-          blocks={blocks}
-          selectedBlockId={selectedBlockId}
-          onSelectBlock={handleSelectBlock}
-          onAddBlock={handleAddBlock}
-          blockModels={blockModels}
-          onModelChange={handleModelChange}
-        />
+        {isLoading ? (
+          <div className="flex-1 flex items-center justify-center bg-black">
+            <div className="flex flex-col items-center gap-3">
+              <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
+              <p className="text-sm text-zinc-400">Loading project...</p>
+            </div>
+          </div>
+        ) : (
+          <StudioCanvas 
+            blocks={blocks}
+            selectedBlockId={selectedBlockId}
+            onSelectBlock={handleSelectBlock}
+            onAddBlock={handleAddBlock}
+            onDeleteBlock={handleDeleteBlock}
+            onUpdateBlockPosition={handleUpdateBlockPosition}
+            onUpdateBlockData={handleUpdateBlockData}
+            blockModels={blockModels}
+            onModelChange={handleModelChange}
+          />
+        )}
       </div>
 
       {/* Block Settings Modal */}

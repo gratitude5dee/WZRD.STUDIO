@@ -1,5 +1,11 @@
 project_id = "ixkkrousepsiorwlaycp"
 
+[functions.studio-save-state]
+verify_jwt = false
+
+[functions.studio-load-state]
+verify_jwt = false
+
 [functions.gemini-text-generation]
 verify_jwt = false
 

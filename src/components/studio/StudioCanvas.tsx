@@ -27,6 +27,9 @@ interface StudioCanvasProps {
   selectedBlockId: string | null;
   onSelectBlock: (id: string) => void;
   onAddBlock: (block: Block) => void;
+  onDeleteBlock: (blockId: string) => void;
+  onUpdateBlockPosition: (blockId: string, position: { x: number; y: number }) => void;
+  onUpdateBlockData: (blockId: string, data: Partial<Block>) => void;
   blockModels: Record<string, string>;
   onModelChange: (blockId: string, modelId: string) => void;
 }
@@ -36,7 +39,17 @@ const GRID_SIZE = 20; // Snap-to-grid size
 // Helper function to snap position to grid
 const snapToGrid = (value: number) => Math.round(value / GRID_SIZE) * GRID_SIZE;
 
-const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock, onAddBlock, blockModels, onModelChange }: StudioCanvasProps) => {
+const StudioCanvas = ({ 
+  blocks, 
+  selectedBlockId, 
+  onSelectBlock, 
+  onAddBlock, 
+  onDeleteBlock,
+  onUpdateBlockPosition,
+  onUpdateBlockData,
+  blockModels, 
+  onModelChange 
+}: StudioCanvasProps) => {
   const [showAddBlockDialog, setShowAddBlockDialog] = useState(false);
   const [addBlockPosition, setAddBlockPosition] = useState({ x: 0, y: 0 });
   const [showGrid, setShowGrid] = useState(true);
@@ -68,10 +81,13 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock, onAddBlock, bloc
     };
   }, []);
 
-  // Sync with parent
+  // One-way sync: only update local blocks when parent blocks change significantly
   useEffect(() => {
-    setLocalBlocks(blocks);
-  }, [blocks]);
+    // Only sync if block count changes or if it's an initial load
+    if (blocks.length !== localBlocks.length || localBlocks.length === 0) {
+      setLocalBlocks(blocks);
+    }
+  }, [blocks.length]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -79,6 +95,7 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock, onAddBlock, bloc
       // Delete/Backspace: remove selected block
       if ((e.key === 'Delete' || e.key === 'Backspace') && selectedBlockId) {
         e.preventDefault();
+        onDeleteBlock(selectedBlockId);
         setLocalBlocks(prev => prev.filter(b => b.id !== selectedBlockId));
         onSelectBlock('');
         toast.success('Block deleted');
@@ -106,20 +123,22 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock, onAddBlock, bloc
       // Arrow keys: nudge 10px
       if (selectedBlockId && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
         e.preventDefault();
-        setLocalBlocks(prev => prev.map(b => {
-          if (b.id === selectedBlockId) {
-            let newX = b.position.x;
-            let newY = b.position.y;
-            
-            if (e.key === 'ArrowUp') newY -= 10;
-            if (e.key === 'ArrowDown') newY += 10;
-            if (e.key === 'ArrowLeft') newX -= 10;
-            if (e.key === 'ArrowRight') newX += 10;
+        const block = localBlocks.find(b => b.id === selectedBlockId);
+        if (block) {
+          let newX = block.position.x;
+          let newY = block.position.y;
+          
+          if (e.key === 'ArrowUp') newY -= 10;
+          if (e.key === 'ArrowDown') newY += 10;
+          if (e.key === 'ArrowLeft') newX -= 10;
+          if (e.key === 'ArrowRight') newX += 10;
 
-            return { ...b, position: { x: snapToGrid(newX), y: snapToGrid(newY) } };
-          }
-          return b;
-        }));
+          const newPosition = { x: snapToGrid(newX), y: snapToGrid(newY) };
+          onUpdateBlockPosition(selectedBlockId, newPosition);
+          setLocalBlocks(prev => prev.map(b => 
+            b.id === selectedBlockId ? { ...b, position: newPosition } : b
+          ));
+        }
       }
 
       // G: toggle grid
@@ -206,6 +225,12 @@ const StudioCanvas = ({ blocks, selectedBlockId, onSelectBlock, onAddBlock, bloc
   };
 
   const handleMouseUp = () => {
+    if (draggedBlockId) {
+      const block = localBlocks.find(b => b.id === draggedBlockId);
+      if (block) {
+        onUpdateBlockPosition(draggedBlockId, block.position);
+      }
+    }
     setDraggedBlockId(null);
   };
 
