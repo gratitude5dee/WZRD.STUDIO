@@ -34,6 +34,7 @@ export const ConnectionNodeSelector: React.FC<ConnectionNodeSelectorProps> = ({
 
   return (
     <motion.div
+      layout
       initial={{ opacity: 0, scale: 0.9, y: -10 }}
       animate={
         isTransforming && targetType
@@ -51,13 +52,17 @@ export const ConnectionNodeSelector: React.FC<ConnectionNodeSelectorProps> = ({
         type: "spring",
         stiffness: 300,
         damping: 25,
-        duration: isTransforming ? 0.5 : 0.2
+        duration: isTransforming ? 0.6 : 0.2
       }}
       className={cn(
         "absolute z-50",
-        isTransforming ? "" : "w-64"
+        !isTransforming && "w-64"
       )}
-      style={{ left: position.x, top: position.y }}
+      style={{ 
+        left: position.x, 
+        top: position.y,
+        overflow: isTransforming ? 'hidden' : 'visible'
+      }}
       onClick={(e) => e.stopPropagation()}
     >
       <div className={cn(

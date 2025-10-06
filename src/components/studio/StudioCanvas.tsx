@@ -222,70 +222,70 @@ const StudioCanvas = ({
     setNodeSelectorTransforming(true);
     setNodeSelectorTargetType(type);
 
-    // Wait for transformation animation to complete before creating block
-    setTimeout(() => {
-      // Determine target connection point based on source point
-      const getOppositePoint = (point: 'top' | 'right' | 'bottom' | 'left'): 'top' | 'right' | 'bottom' | 'left' => {
-        const opposites = { top: 'bottom', right: 'left', bottom: 'top', left: 'right' } as const;
-        return opposites[point];
-      };
-
-      const targetPoint = getOppositePoint(activeConnection.sourcePoint);
-      
-      // Create new block at menu position
-      const newBlockId = `${type}-${Date.now()}`;
-      const newBlock: Block = {
-        id: newBlockId,
-        type,
-        position: nodeSelectorPosition,
-      };
-
-      // Add to newly created blocks for animation
-      setNewlyCreatedBlocks(prev => new Set(prev).add(newBlockId));
+      // Wait for transformation animation to complete before creating block
       setTimeout(() => {
-        setNewlyCreatedBlocks(prev => {
-          const next = new Set(prev);
-          next.delete(newBlockId);
-          return next;
-        });
-      }, 600);
+        // Determine target connection point based on source point
+        const getOppositePoint = (point: 'top' | 'right' | 'bottom' | 'left'): 'top' | 'right' | 'bottom' | 'left' => {
+          const opposites = { top: 'bottom', right: 'left', bottom: 'top', left: 'right' } as const;
+          return opposites[point];
+        };
 
-      setLocalBlocks(prev => [...prev, newBlock]);
-      onAddBlock(newBlock);
-
-      // Get source block type for toast
-      const sourceBlock = localBlocks.find(b => b.id === activeConnection.sourceBlockId);
-      const sourceType = sourceBlock?.type || 'block';
-      
-      // Highlight both blocks briefly
-      setHighlightedBlocks(new Set([activeConnection.sourceBlockId, newBlockId]));
-      setTimeout(() => {
-        setHighlightedBlocks(new Set());
-      }, 1000);
-
-      // Create connection with enhanced feedback
-      setTimeout(() => {
-        createConnection(
-          activeConnection.sourceBlockId,
-          activeConnection.sourcePoint,
-          newBlockId,
-          targetPoint
-        );
+        const targetPoint = getOppositePoint(activeConnection.sourcePoint);
         
-        // Show connection success toast with block types
-        const capitalize = (str: string) => str.charAt(0).toUpperCase() + str.slice(1);
-        toast.success(`Connected ${capitalize(sourceType)} → ${capitalize(type)}`, {
-          description: 'Data will flow from source to target',
-          duration: 2500
-        });
-      }, 50);
+        // Create new block at menu position
+        const newBlockId = `${type}-${Date.now()}`;
+        const newBlock: Block = {
+          id: newBlockId,
+          type,
+          position: nodeSelectorPosition,
+        };
 
-      // Reset selector state
-      setShowNodeSelector(false);
-      setActiveConnection(null);
-      setNodeSelectorTransforming(false);
-      setNodeSelectorTargetType(null);
-    }, 500); // Match transformation animation duration
+        // Add to newly created blocks for animation
+        setNewlyCreatedBlocks(prev => new Set(prev).add(newBlockId));
+        setTimeout(() => {
+          setNewlyCreatedBlocks(prev => {
+            const next = new Set(prev);
+            next.delete(newBlockId);
+            return next;
+          });
+        }, 600);
+
+        setLocalBlocks(prev => [...prev, newBlock]);
+        onAddBlock(newBlock);
+
+        // Get source block type for toast
+        const sourceBlock = localBlocks.find(b => b.id === activeConnection.sourceBlockId);
+        const sourceType = sourceBlock?.type || 'block';
+        
+        // Highlight both blocks briefly
+        setHighlightedBlocks(new Set([activeConnection.sourceBlockId, newBlockId]));
+        setTimeout(() => {
+          setHighlightedBlocks(new Set());
+        }, 1000);
+
+        // Create connection with enhanced feedback
+        setTimeout(() => {
+          createConnection(
+            activeConnection.sourceBlockId,
+            activeConnection.sourcePoint,
+            newBlockId,
+            targetPoint
+          );
+          
+          // Show connection success toast with block types
+          const capitalize = (str: string) => str.charAt(0).toUpperCase() + str.slice(1);
+          toast.success(`Connected ${capitalize(sourceType)} → ${capitalize(type)}`, {
+            description: 'Data will flow from source to target',
+            duration: 2500
+          });
+        }, 50);
+
+        // Reset selector state after transformation completes
+        setActiveConnection(null);
+        setNodeSelectorTransforming(false);
+        setNodeSelectorTargetType(null);
+        setShowNodeSelector(false);
+      }, 700); // Extended to allow full transformation animation
   };
 
   const getPreviewPath = (activeConn: NonNullable<typeof activeConnection>): string => {
@@ -642,26 +642,28 @@ const StudioCanvas = ({
             )}
 
             {/* Node Selector Menu */}
-            {showNodeSelector && (
-              <ConnectionNodeSelector
-                position={nodeSelectorPosition}
-                onSelectType={handleSelectNodeType}
-                onNavigate={() => {
-                  setShowNodeSelector(false);
-                  setActiveConnection(null);
-                  setNodeSelectorTransforming(false);
-                  setNodeSelectorTargetType(null);
-                }}
-                onCancel={() => {
-                  setShowNodeSelector(false);
-                  setActiveConnection(null);
-                  setNodeSelectorTransforming(false);
-                  setNodeSelectorTargetType(null);
-                }}
-                isTransforming={nodeSelectorTransforming}
-                targetType={nodeSelectorTargetType || undefined}
-              />
-            )}
+            <AnimatePresence mode="wait">
+              {showNodeSelector && (
+                <ConnectionNodeSelector
+                  position={nodeSelectorPosition}
+                  onSelectType={handleSelectNodeType}
+                  onNavigate={() => {
+                    setShowNodeSelector(false);
+                    setActiveConnection(null);
+                    setNodeSelectorTransforming(false);
+                    setNodeSelectorTargetType(null);
+                  }}
+                  onCancel={() => {
+                    setShowNodeSelector(false);
+                    setActiveConnection(null);
+                    setNodeSelectorTransforming(false);
+                    setNodeSelectorTargetType(null);
+                  }}
+                  isTransforming={nodeSelectorTransforming}
+                  targetType={nodeSelectorTargetType || undefined}
+                />
+              )}
+            </AnimatePresence>
 
             {/* Zoom Controls */}
             <AnimatePresence>
