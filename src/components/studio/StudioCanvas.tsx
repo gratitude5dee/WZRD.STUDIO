@@ -218,12 +218,15 @@ const StudioCanvas = ({
   const handleSelectNodeType = (type: 'text' | 'image' | 'video') => {
     if (!activeConnection) return;
 
+    console.log('🔄 Starting transformation:', type);
+    
     // Start transformation animation
     setNodeSelectorTransforming(true);
     setNodeSelectorTargetType(type);
 
       // Wait for transformation animation to complete before creating block
       setTimeout(() => {
+        console.log('✅ Transformation complete, creating block');
         // Determine target connection point based on source point
         const getOppositePoint = (point: 'top' | 'right' | 'bottom' | 'left'): 'top' | 'right' | 'bottom' | 'left' => {
           const opposites = { top: 'bottom', right: 'left', bottom: 'top', left: 'right' } as const;
