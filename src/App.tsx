@@ -16,7 +16,7 @@ import StudioPage from "./pages/StudioPage";
 import LearningStudioPage from "./pages/LearningStudioPage";
 import StoryboardPage from "./pages/StoryboardPage";
 import EditorPage from "./pages/EditorPage";
-import CustomCursor from "@/components/CustomCursor";
+// import CustomCursor from "@/components/CustomCursor"; // Disabled for better drag & drop
 
 // Component to handle redirect from old storyboard URLs to timeline
 const RedirectToTimeline = () => {
@@ -32,7 +32,7 @@ const App = () => {
       <TooltipProvider>
         <BrowserRouter>
           <AuthProvider>
-            <CustomCursor />
+            {/* <CustomCursor /> */}
             <Toaster />
             <Sonner />
             <Routes>

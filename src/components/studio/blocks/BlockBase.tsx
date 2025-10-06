@@ -126,7 +126,7 @@ const BlockBase: React.FC<BlockProps> = ({
       <div className="px-4 py-3.5 border-b border-zinc-800/40 flex items-center gap-3 group/header bg-gradient-to-b from-zinc-900/50 to-transparent">
         {/* Prominent Drag Handle */}
         <div 
-          className="drag-handle flex items-center justify-center w-7 h-7 -ml-1 rounded-md hover:bg-zinc-800/60 cursor-grab active:cursor-grabbing transition-all duration-200 hover:scale-105"
+          className="drag-handle flex items-center justify-center w-8 h-8 -ml-1 rounded-md hover:bg-zinc-800/70 cursor-grab active:cursor-grabbing transition-all duration-200 hover:scale-105"
           title="Drag to move"
         >
           <GripVertical className="w-4 h-4 text-zinc-600 group-hover/header:text-zinc-400 transition-colors" />
@@ -146,11 +146,7 @@ const BlockBase: React.FC<BlockProps> = ({
       </div>
 
       {/* Content */}
-      <div 
-        className="p-4 rounded-b-[16px]"
-        onMouseDown={(e) => e.stopPropagation()}
-        onClick={(e) => e.stopPropagation()}
-      >
+      <div className="p-4 rounded-b-[16px]">
         {children}
       </div>
     </motion.div>

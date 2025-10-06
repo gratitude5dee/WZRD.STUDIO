@@ -38,7 +38,7 @@ interface StudioCanvasProps {
 }
 
 const GRID_SIZE = 20; // Snap-to-grid size
-const DRAG_THRESHOLD = 5; // Minimum pixels to move before drag starts
+const DRAG_THRESHOLD = 3; // Minimum pixels to move before drag starts (reduced for responsiveness)
 const CANVAS_PADDING = 5000; // Padding around blocks for infinite canvas
 const SNAP_DISTANCE = 20; // Distance for magnetic snapping to nearby blocks
 
@@ -303,6 +303,7 @@ const StudioCanvas = ({
         limitToBounds={false}
         onZoom={showZoomControlsTemporarily}
         doubleClick={{ disabled: true }}
+        panning={{ disabled: interactionMode === 'edit' }}
       >
         {({ zoomIn, zoomOut, resetTransform }) => (
           <>
