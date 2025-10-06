@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Sparkles, Info, Video, Wand2, Download, RotateCw, Play, Pause, Volume2, VolumeX, Maximize2 } from 'lucide-react';
 import BlockBase, { ConnectionPoint } from './BlockBase';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useGeminiVideo } from '@/hooks/useGeminiVideo';
 import { geminiVideoModel } from '@/types/modelTypes';
 import { BlockFloatingToolbar } from './BlockFloatingToolbar';
 import { motion } from 'framer-motion';
+import { toast } from 'sonner';
 
 export interface VideoBlockProps {
   id: string;
@@ -119,11 +121,31 @@ const VideoBlock: React.FC<VideoBlockProps> = ({
     setMode('prompt');
   };
 
+  const handleDownload = async (videoUrl: string) => {
+    try {
+      const response = await fetch(videoUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `generated-video-${Date.now()}.mp4`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      toast.success('Video downloaded');
+    } catch (error) {
+      toast.error('Failed to download video');
+    }
+  };
+
   const handleModelChange = (modelId: string) => {
     if (externalOnModelChange) {
       externalOnModelChange(modelId);
     }
   };
+
+  const generatedVideo = videoUrl ? { url: videoUrl } : null;
 
   return (
     <BlockBase
@@ -143,106 +165,94 @@ const VideoBlock: React.FC<VideoBlockProps> = ({
         />
       }
     >
-      {/* Suggestions Mode */}
+      {/* Suggestions Mode - Empty State */}
       {mode === 'suggestions' && (
-        <div className="space-y-3">
-          <button
-            onClick={() => {/* TODO: Open help modal */}}
-            className="w-full flex items-center gap-2 px-3 py-2 text-xs text-zinc-400 hover:text-zinc-200 bg-zinc-900/30 hover:bg-zinc-800/50 rounded-lg border border-zinc-800/30 hover:border-zinc-700/50 transition-all"
+        <div className="space-y-2 mb-3">
+          <button 
+            className="w-full flex items-center gap-2 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50 p-2 rounded-lg transition-colors text-left text-xs"
+            onClick={() => toast.info('Documentation coming soon')}
+            onMouseDown={(e) => e.stopPropagation()}
           >
             <Info className="w-3.5 h-3.5" />
             <span>Learn about Video Blocks</span>
           </button>
-
-          <div className="space-y-1.5">
-            {[
-              { icon: '🎬', label: 'Cinematic drone shot', desc: 'Create aerial footage' },
-              { icon: '⏱️', label: 'Time-lapse', desc: 'Accelerated scene progression' },
-              { icon: '🌅', label: 'Sunset scene', desc: 'Golden hour ambiance' },
-              { icon: '🎨', label: 'Abstract motion', desc: 'Artistic visual effects' },
-            ].map((suggestion, idx) => (
-              <button
-                key={idx}
-                onClick={() => handleSelectSuggestion(suggestion.label)}
-                className="w-full text-left px-3 py-2.5 rounded-xl bg-zinc-900/40 hover:bg-zinc-800/60 border border-zinc-800/30 hover:border-zinc-700/50 transition-all duration-200 group"
-              >
-                <div className="flex items-center gap-2.5">
-                  <div className="flex-shrink-0 w-7 h-7 flex items-center justify-center bg-zinc-800/50 group-hover:bg-zinc-700/50 rounded-lg transition-colors">
-                    <span className="text-base">{suggestion.icon}</span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm text-zinc-200 group-hover:text-white transition-colors font-medium">
-                      {suggestion.label}
-                    </div>
-                    <div className="text-[11px] text-zinc-500 group-hover:text-zinc-400 mt-0.5 transition-colors truncate">
-                      {suggestion.desc}
-                    </div>
-                  </div>
-                </div>
-              </button>
-            ))}
-          </div>
-
-          <div className="pt-2 border-t border-zinc-800/30">
-            <div className="text-[11px] text-zinc-500 text-center">
-              Or describe your video concept...
-            </div>
-          </div>
+          <button 
+            className="w-full flex items-center gap-2 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50 p-2 rounded-lg transition-colors text-left text-xs"
+            onClick={() => {
+              setPrompt('Cinematic drone shot flying over a misty mountain range at golden hour');
+              setMode('prompt');
+            }}
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            <span className="text-sm">🏔️</span>
+            <span>Cinematic drone shot over mountains</span>
+          </button>
+          <button 
+            className="w-full flex items-center gap-2 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50 p-2 rounded-lg transition-colors text-left text-xs"
+            onClick={() => {
+              setPrompt('Time-lapse of a sunset over a calm ocean with vibrant colors');
+              setMode('prompt');
+            }}
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            <span className="text-sm">🌅</span>
+            <span>Time-lapse of sunset over ocean</span>
+          </button>
+          <button 
+            className="w-full flex items-center gap-2 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50 p-2 rounded-lg transition-colors text-left text-xs"
+            onClick={() => {
+              setPrompt('Abstract morphing shapes with neon colors in a dark environment');
+              setMode('prompt');
+            }}
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            <span className="text-sm">✨</span>
+            <span>Abstract morphing shapes with neon</span>
+          </button>
         </div>
       )}
 
-      {/* Prompt/Loading Mode */}
-      {mode === 'prompt' && !videoUrl && (
+      {/* Prompt Mode with Loading State */}
+      {mode === 'prompt' && (
         <div className="space-y-3">
           {isGenerating ? (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="space-y-3"
-            >
+            <>
               {/* Loading Visualization */}
               <div className="aspect-video rounded-xl bg-zinc-900/50 border border-zinc-800/30 relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-blue-500/5 to-amber-500/5 animate-pulse" />
+                {/* Animated Progress Overlay */}
+                <motion.div 
+                  className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-pink-500/5"
+                  animate={{ opacity: [0.3, 0.6, 0.3] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                />
                 
-                <div className="absolute top-3 right-3 flex items-center gap-2">
-                  <Badge variant="outline" className="text-[10px] bg-black/60 border-zinc-700/50 text-zinc-400 backdrop-blur-sm">
-                    🎬 {generationStage}
-                  </Badge>
-                  <Badge variant="outline" className="text-[10px] bg-black/60 border-zinc-700/50 text-zinc-400 backdrop-blur-sm">
+                {/* Timer Badge */}
+                <div className="absolute top-3 right-3">
+                  <Badge className="bg-black/60 text-white text-xs backdrop-blur-sm border-0">
                     ~{estimatedTime}s
                   </Badge>
                 </div>
-
-                <div className="absolute bottom-3 left-3 right-3">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="text-xs text-zinc-400 max-w-[200px] truncate">
-                      {prompt}
-                    </div>
-                    <div className="text-xs text-zinc-400">
-                      Frame {currentFrame}/{totalFrames}
-                    </div>
+                
+                {/* Bottom Progress Info */}
+                <div className="absolute bottom-0 left-0 right-0 p-3">
+                  <div className="text-xs text-zinc-400 mb-2 flex items-center justify-between">
+                    <span className="truncate flex-1">{prompt}</span>
+                    <span className="ml-2 shrink-0">{generationStage}</span>
+                  </div>
+                  <div className="h-1 bg-zinc-800/50 rounded-full overflow-hidden">
+                    <motion.div 
+                      className="h-full bg-gradient-to-r from-purple-500 to-pink-500"
+                      initial={{ width: 0 }}
+                      animate={{ width: `${progress}%` }}
+                      transition={{ duration: 0.5 }}
+                    />
                   </div>
                 </div>
               </div>
-
-              {/* Progress Bar */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-zinc-400">{generationStage}...</span>
-                  <span className="text-zinc-500">{Math.floor((currentFrame / totalFrames) * 100)}%</span>
-                </div>
-                <div className="h-1.5 bg-zinc-800/50 rounded-full overflow-hidden">
-                  <motion.div
-                    className="h-full bg-gradient-to-r from-purple-500 via-blue-500 to-amber-500"
-                    initial={{ width: 0 }}
-                    animate={{ width: `${(currentFrame / totalFrames) * 100}%` }}
-                    transition={{ duration: 0.5 }}
-                  />
-                </div>
-              </div>
-            </motion.div>
+            </>
           ) : (
             <>
+              {/* Prompt Input */}
               <div className="relative">
                 <Textarea
                   value={prompt}
@@ -254,111 +264,78 @@ const VideoBlock: React.FC<VideoBlockProps> = ({
                     onInputFocus?.();
                   }}
                   onBlur={() => onInputBlur?.()}
-                  className="min-h-[100px] text-sm bg-zinc-900/50 border-zinc-800/40 rounded-xl text-zinc-200 placeholder:text-zinc-500 focus:border-purple-500/50 resize-none cursor-text"
-                  placeholder='Try "Cinematic drone shot over misty mountains at sunrise"'
+                  className="min-h-[80px] bg-zinc-900/50 border-zinc-800/40 text-zinc-100 placeholder:text-zinc-500 resize-none pr-20"
+                  placeholder='Try "A serene waterfall in a lush forest..."'
                   disabled={isGenerating}
                 />
+                <div className="absolute bottom-2 right-2">
+                  <Button
+                    size="icon"
+                    className="h-7 w-7 bg-blue-600 hover:bg-blue-700 text-white"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleGenerate();
+                    }}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    disabled={isGenerating || !prompt.trim()}
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
               </div>
-
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleGenerate();
-                }}
-                onPointerDown={(e) => e.stopPropagation()}
-                disabled={isGenerating || !prompt.trim()}
-                className="w-full px-3 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white rounded-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                <Sparkles className="w-3.5 h-3.5" />
-                <span className="text-sm font-medium">Generate Video</span>
-              </button>
             </>
           )}
         </div>
       )}
 
       {/* Display Mode */}
-      {videoUrl && (
-        <motion.div
+      {mode === 'display' && generatedVideo && (
+        <motion.div 
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
           className="space-y-3"
         >
-          <div className="relative group rounded-xl overflow-hidden">
+          <div className="relative aspect-video rounded-xl overflow-hidden bg-black">
             <video
-              src={videoUrl}
-              className="w-full aspect-video object-cover"
+              src={generatedVideo.url}
+              className="w-full h-full object-contain"
               loop
               muted={isMuted}
               autoPlay
+              playsInline
+              onMouseDown={(e) => e.stopPropagation()}
             />
-
-            {/* Top Overlay */}
-            <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/80 via-black/40 to-transparent p-3">
-              <div className="flex items-start justify-between">
-                <Badge variant="outline" className="text-[10px] bg-purple-500/10 border-purple-500/30 text-purple-400">
-                  <Video className="w-2.5 h-2.5 mr-1" />
-                  Generated
-                </Badge>
-                <Badge className="bg-white/10 text-white backdrop-blur-sm text-[10px]">
-                  {getModelDisplayName(selectedModel)}
-                </Badge>
-              </div>
-            </div>
-
-            {/* Hover Actions */}
-            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center gap-2">
-              <button
-                onClick={(e) => e.stopPropagation()}
-                className="p-2.5 bg-white/90 hover:bg-white rounded-full transition-all"
-              >
-                {isPlaying ? <Pause className="w-4 h-4 text-zinc-900" /> : <Play className="w-4 h-4 text-zinc-900" />}
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsMuted(!isMuted);
-                }}
-                className="p-2.5 bg-white/90 hover:bg-white rounded-full transition-all"
-              >
-                {isMuted ? <VolumeX className="w-4 h-4 text-zinc-900" /> : <Volume2 className="w-4 h-4 text-zinc-900" />}
-              </button>
-              <button
-                onClick={(e) => e.stopPropagation()}
-                className="p-2.5 bg-white/90 hover:bg-white rounded-full transition-all"
-              >
-                <Download className="w-4 h-4 text-zinc-900" />
-              </button>
-              <button
-                onClick={(e) => e.stopPropagation()}
-                className="p-2.5 bg-white/90 hover:bg-white rounded-full transition-all"
-              >
-                <Maximize2 className="w-4 h-4 text-zinc-900" />
-              </button>
-            </div>
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center justify-end gap-2">
-            <button
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant="ghost"
+              className="text-zinc-400 hover:text-zinc-200"
               onClick={(e) => {
                 e.stopPropagation();
-                setMode('suggestions');
+                handleDownload(generatedVideo.url);
               }}
-              className="px-3 py-1.5 text-xs text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50 rounded-lg transition-all"
+              onMouseDown={(e) => e.stopPropagation()}
             >
-              New Video
-            </button>
-            <button
+              <Download className="w-3.5 h-3.5 mr-1.5" />
+              Download
+            </Button>
+            <div className="flex-1" />
+            <Button
+              size="sm"
+              className="bg-blue-600 hover:bg-blue-700 text-white"
               onClick={(e) => {
                 e.stopPropagation();
                 handleGenerate();
               }}
-              className="px-3 py-1.5 bg-purple-500 hover:bg-purple-600 rounded-lg flex items-center gap-1.5 transition-all"
+              onMouseDown={(e) => e.stopPropagation()}
+              disabled={isGenerating}
             >
-              <Wand2 className="w-3 h-3 text-white" />
-              <span className="text-xs text-white font-medium">Create Variation</span>
-            </button>
+              <RotateCw className="w-3.5 h-3.5 mr-1.5" />
+              Regenerate
+            </Button>
           </div>
         </motion.div>
       )}
