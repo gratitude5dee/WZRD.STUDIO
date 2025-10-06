@@ -36,7 +36,7 @@ interface StudioCanvasProps {
 
 const GRID_SIZE = 20; // Snap-to-grid size
 const DRAG_THRESHOLD = 5; // Minimum pixels to move before drag starts
-const CANVAS_PADDING = 2000; // Padding around blocks for infinite canvas
+const CANVAS_PADDING = 5000; // Padding around blocks for infinite canvas
 const SNAP_DISTANCE = 20; // Distance for magnetic snapping to nearby blocks
 
 // Helper function to snap position to grid
@@ -344,11 +344,12 @@ const StudioCanvas = ({
               <div 
                 className="canvas-bg w-full h-full relative"
                 style={{
-                  background: 'radial-gradient(circle at 50% 50%, hsl(220, 25%, 8%) 0%, hsl(220, 25%, 6%) 100%)',
+                  backgroundColor: 'hsl(220, 25%, 6%)',
                   backgroundImage: showGrid 
-                    ? `radial-gradient(circle at 50% 50%, hsl(220, 25%, 8%) 0%, hsl(220, 25%, 6%) 100%), radial-gradient(circle, rgba(113, 113, 122, 0.12) 1px, transparent 1px)`
-                    : 'radial-gradient(circle at 50% 50%, hsl(220, 25%, 8%) 0%, hsl(220, 25%, 6%) 100%)',
-                  backgroundSize: showGrid ? 'auto, 20px 20px' : 'auto',
+                    ? `radial-gradient(circle, rgba(113, 113, 122, 0.25) 1.5px, transparent 1.5px)`
+                    : 'none',
+                  backgroundSize: showGrid ? '20px 20px' : 'auto',
+                  backgroundPosition: 'center center',
                   minWidth: `${calculateCanvasBounds(localBlocks).maxX - calculateCanvasBounds(localBlocks).minX}px`,
                   minHeight: `${calculateCanvasBounds(localBlocks).maxY - calculateCanvasBounds(localBlocks).minY}px`,
                   cursor: interactionMode === 'pan' ? 'grab' : 'default'
