@@ -58,9 +58,14 @@ serve(async (req) => {
       return errorResponse('Character not found', 404, fetchError?.message);
     }
 
-    // 2. Generate Visual Prompt using Groq
+    // 2. Generate Visual Prompt using Lovable AI with Gemini 2.5 Flash
     console.log(`Generating visual prompt for character: ${charData.name}`);
     
+    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+    if (!LOVABLE_API_KEY) {
+      return errorResponse('LOVABLE_API_KEY not configured', 500);
+    }
+
     const visualPromptSystem = getCharacterVisualSystemPrompt();
     const visualPromptUser = getCharacterVisualUserPrompt(
       charData.name,
@@ -68,42 +73,68 @@ serve(async (req) => {
       charData.project
     );
 
-    const { data: groqResponse, error: groqError } = await supabaseClient.functions.invoke('groq-chat', {
-      body: {
-        prompt: `${visualPromptSystem}\n\n${visualPromptUser}`,
-        model: 'llama3-8b-8192', // Using faster model for prompt generation
-        temperature: 0.7,
-        maxTokens: 200 // Visual prompts should be concise
-      },
+    const promptResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      method: 'POST',
       headers: {
-        'x-internal-request': 'true'
-      }
+        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'google/gemini-2.5-flash',
+        messages: [
+          { role: 'system', content: visualPromptSystem },
+          { role: 'user', content: visualPromptUser }
+        ],
+        temperature: 0.7,
+        max_tokens: 200
+      }),
     });
 
-    if (groqError || !groqResponse?.text) {
-      console.error('Failed to generate visual prompt:', groqError || 'No response text');
-      return errorResponse('Failed to generate visual prompt', 500, groqError);
+    if (!promptResponse.ok) {
+      console.error('Failed to generate visual prompt:', promptResponse.status);
+      return errorResponse('Failed to generate visual prompt', 500);
     }
 
-    const visualPrompt = groqResponse.text.trim();
+    const promptData = await promptResponse.json();
+    const visualPrompt = promptData.choices?.[0]?.message?.content?.trim();
+
+    if (!visualPrompt) {
+      console.error('No visual prompt received');
+      return errorResponse('Failed to generate visual prompt', 500);
+    }
+
     console.log(`Generated visual prompt: ${visualPrompt}`);
 
-    // 3. Generate Image using Gemini Nano banana
-    console.log('Calling Gemini image generation (Nano banana)...');
+    // 3. Generate Image using Lovable AI with Nano banana
+    console.log('Calling Lovable AI Gateway with Nano banana for image generation...');
     
-    const { data: imageResponse, error: imageError } = await supabaseClient.functions.invoke('gemini-image-generation', {
-      body: {
-        prompt: visualPrompt,
-        editMode: false
-      }
+    const imageResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'google/gemini-2.5-flash-image-preview',
+        messages: [
+          { role: 'user', content: visualPrompt }
+        ],
+        modalities: ['image', 'text']
+      }),
     });
 
-    if (imageError || !imageResponse?.imageUrl) {
-      console.error('Failed to generate character image:', imageError || 'No image URL returned');
-      return errorResponse('Failed to generate character image', 500, imageError);
+    if (!imageResponse.ok) {
+      console.error('Failed to generate character image:', imageResponse.status);
+      return errorResponse('Failed to generate character image', 500);
     }
 
-    const imageUrl = imageResponse.imageUrl;
+    const imageData = await imageResponse.json();
+    const imageUrl = imageData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+
+    if (!imageUrl) {
+      console.error('No image URL returned');
+      return errorResponse('Failed to generate character image', 500);
+    }
     console.log(`Generated Image URL (base64): ${imageUrl.substring(0, 50)}...`);
 
     // 4. Return immediate response and update DB in background

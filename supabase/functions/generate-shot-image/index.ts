@@ -151,90 +151,96 @@ serve(async (req) => {
     console.log(`[generate-shot-image][Shot ${shotId}] Using aspect ratio: ${aspectRatio}, FAL image size:`, falImageSize);
 
     try {
-      // Use Fal.ai Flux Schnell model with improved queue handling
-      console.log(`[generate-shot-image][Shot ${shotId}] Calling Fal.AI Flux Schnell model...`);
+      // Use Lovable AI Gateway with Gemini 2.5 Flash Image (Nano banana)
+      console.log(`[generate-shot-image][Shot ${shotId}] Calling Lovable AI Gateway with Nano banana...`);
       
-      const result = await submitToFalQueue(FAL_MODELS.FLUX_SCHNELL, {
-        prompt: shot.visual_prompt,
-        image_size: falImageSize,
-        num_inference_steps: 4,
-        guidance_scale: 3.5,
-        num_images: 1,
-        enable_safety_checker: true,
-        output_format: "jpeg"
-      }, {
-        onProgress: (status) => {
-          console.log(`[generate-shot-image][Shot ${shotId}] Queue status: ${status.status} (attempt ${status.attempts})`);
-        }
+      const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+      if (!LOVABLE_API_KEY) {
+        throw new Error('LOVABLE_API_KEY not configured');
+      }
+
+      const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'google/gemini-2.5-flash-image-preview',
+          messages: [
+            { role: 'user', content: shot.visual_prompt }
+          ],
+          modalities: ['image', 'text']
+        }),
       });
 
-      if (!result.success) {
-        throw new Error(result.error || 'Failed to generate image with Fal.ai');
+      if (!aiResponse.ok) {
+        const errorText = await aiResponse.text();
+        console.error(`[generate-shot-image][Shot ${shotId}] AI Gateway error: ${aiResponse.status} - ${errorText}`);
+        if (aiResponse.status === 429) {
+          throw new Error('Rate limit exceeded. Please try again later.');
+        }
+        if (aiResponse.status === 402) {
+          throw new Error('Credits exhausted. Please add credits to your workspace.');
+        }
+        throw new Error(`AI Gateway error: ${aiResponse.status}`);
       }
 
-      console.log(`[generate-shot-image][Shot ${shotId}] Fal.AI generation successful`);
-      console.log(`[generate-shot-image][Shot ${shotId}] Response:`, JSON.stringify(result.data, null, 2));
+      const aiData = await aiResponse.json();
+      const base64Image = aiData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
 
-      // Extract image URL from the response
-      if (result.data?.images && result.data.images[0] && result.data.images[0].url) {
-        const imageUrl = result.data.images[0].url;
-        console.log(`[generate-shot-image][Shot ${shotId}] Found image URL: ${imageUrl}`);
-        
-        // Download the image and upload to Supabase storage
-        console.log(`[generate-shot-image][Shot ${shotId}] Downloading image...`);
-        const imageResponse = await fetch(imageUrl);
-        if (!imageResponse.ok) {
-          throw new Error(`Failed to download image: ${imageResponse.status}`);
-        }
-        
-        const imageBuffer = await imageResponse.arrayBuffer();
-        const fileName = `shot-${shotId}-${Date.now()}.png`;
-        
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('workflow-media')
-          .upload(fileName, imageBuffer, {
-            contentType: 'image/png',
-            upsert: false
-          });
-
-        if (uploadError) {
-          console.error(`[generate-shot-image][Shot ${shotId}] Failed to upload image: ${uploadError.message}`);
-          throw new Error(`Failed to upload image: ${uploadError.message}`);
-        }
-
-        // Get public URL
-        const { data: { publicUrl } } = supabase.storage
-          .from('workflow-media')
-          .getPublicUrl(fileName);
-
-        // Update shot with the generated image
-        const { error: updateError } = await supabase
-          .from("shots")
-          .update({ 
-            image_url: publicUrl,
-            image_status: "completed"
-          })
-          .eq("id", shotId);
-
-        if (updateError) {
-          console.error(`[generate-shot-image][Shot ${shotId}] Failed to update shot with image: ${updateError.message}`);
-          throw new Error(`Failed to update shot: ${updateError.message}`);
-        }
-
-        console.log(`[generate-shot-image][Shot ${shotId}] Image generation completed successfully`);
-        return new Response(
-          JSON.stringify({ 
-            success: true, 
-            image_url: publicUrl,
-            status: "completed"
-          }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      } else {
-        console.error(`[generate-shot-image][Shot ${shotId}] Invalid response structure. Expected images array with URL.`);
-        console.error(`[generate-shot-image][Shot ${shotId}] Actual response:`, JSON.stringify(result, null, 2));
-        throw new Error('Invalid image generation response: missing image URL in response');
+      if (!base64Image) {
+        throw new Error('No image returned from AI Gateway');
       }
+
+      console.log(`[generate-shot-image][Shot ${shotId}] Image generated successfully, uploading to storage...`);
+
+      // Extract base64 data (remove data:image/png;base64, prefix if present)
+      const base64Data = base64Image.replace(/^data:image\/\w+;base64,/, '');
+      const imageBuffer = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
+      
+      const fileName = `shot-${shotId}-${Date.now()}.png`;
+      
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('workflow-media')
+        .upload(fileName, imageBuffer, {
+          contentType: 'image/png',
+          upsert: false
+        });
+
+      if (uploadError) {
+        console.error(`[generate-shot-image][Shot ${shotId}] Failed to upload image: ${uploadError.message}`);
+        throw new Error(`Failed to upload image: ${uploadError.message}`);
+      }
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('workflow-media')
+        .getPublicUrl(fileName);
+
+      // Update shot with the generated image
+      const { error: updateError } = await supabase
+        .from("shots")
+        .update({ 
+          image_url: publicUrl,
+          image_status: "completed"
+        })
+        .eq("id", shotId);
+
+      if (updateError) {
+        console.error(`[generate-shot-image][Shot ${shotId}] Failed to update shot with image: ${updateError.message}`);
+        throw new Error(`Failed to update shot: ${updateError.message}`);
+      }
+
+      console.log(`[generate-shot-image][Shot ${shotId}] Image generation completed successfully`);
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          image_url: publicUrl,
+          status: "completed"
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
 
     } catch (error) {
       console.error(`[generate-shot-image][Shot ${shotId}] Error in image generation: ${error.message}`);

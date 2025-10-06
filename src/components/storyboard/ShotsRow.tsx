@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { DndContext, DragEndEvent, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, arrayMove, horizontalListSortingStrategy } from '@dnd-kit/sortable';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -7,11 +7,27 @@ import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Plus, Trash2, AlertCircle } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { ShotCard } from './shot'; // Updated import path
+import { ShotCard } from './shot';
+import ShotConnectionLines from './shot/ShotConnectionLines';
 import { supabaseService } from '@/services/supabaseService';
 import { toast } from 'sonner';
 import { ShotDetails } from '@/types/storyboardTypes';
 import { cn } from '@/lib/utils';
+
+interface ShotConnection {
+  id: string;
+  sourceId: string;
+  targetId: string;
+  sourcePoint: 'left' | 'right';
+  targetPoint: 'left' | 'right';
+}
+
+interface ActiveConnection {
+  sourceId: string;
+  sourcePoint: 'left' | 'right';
+  cursorX: number;
+  cursorY: number;
+}
 
 interface ShotsRowProps {
   sceneId: string;
@@ -26,6 +42,11 @@ const ShotsRow = ({ sceneId, sceneNumber, projectId, onSceneDelete, isSelected =
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSavingOrder, setIsSavingOrder] = useState(false);
+  const [selectedShotId, setSelectedShotId] = useState<string | null>(null);
+  const [connections, setConnections] = useState<ShotConnection[]>([]);
+  const [activeConnection, setActiveConnection] = useState<ActiveConnection | null>(null);
+  const [shotRefs, setShotRefs] = useState<Map<string, { x: number; y: number; width: number; height: number }>>(new Map());
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -176,6 +197,84 @@ const ShotsRow = ({ sceneId, sceneNumber, projectId, onSceneDelete, isSelected =
     }
   };
 
+  // Connection management
+  const handleConnectionPointClick = (shotId: string, point: 'left' | 'right') => {
+    if (activeConnection) {
+      // Complete the connection
+      if (activeConnection.sourceId !== shotId) {
+        const newConnection: ShotConnection = {
+          id: `${activeConnection.sourceId}-${shotId}`,
+          sourceId: activeConnection.sourceId,
+          targetId: shotId,
+          sourcePoint: activeConnection.sourcePoint,
+          targetPoint: point
+        };
+        setConnections([...connections, newConnection]);
+        toast.success('Shots connected');
+      }
+      setActiveConnection(null);
+    } else {
+      // Start a new connection
+      setActiveConnection({
+        sourceId: shotId,
+        sourcePoint: point,
+        cursorX: 0,
+        cursorY: 0
+      });
+    }
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (activeConnection && containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      setActiveConnection({
+        ...activeConnection,
+        cursorX: e.clientX - rect.left,
+        cursorY: e.clientY - rect.top
+      });
+    }
+  };
+
+  const handleMouseUp = () => {
+    if (activeConnection) {
+      setActiveConnection(null);
+    }
+  };
+
+  const getConnectedPoints = (shotId: string) => {
+    return {
+      left: connections.some(c => (c.sourceId === shotId && c.sourcePoint === 'left') || (c.targetId === shotId && c.targetPoint === 'left')),
+      right: connections.some(c => (c.sourceId === shotId && c.sourcePoint === 'right') || (c.targetId === shotId && c.targetPoint === 'right'))
+    };
+  };
+
+  // Update shot refs when shots change
+  useEffect(() => {
+    const updateRefs = () => {
+      const newRefs = new Map();
+      shots.forEach(shot => {
+        const element = document.querySelector(`[data-shot-id="${shot.id}"]`);
+        if (element) {
+          const rect = element.getBoundingClientRect();
+          const containerRect = containerRef.current?.getBoundingClientRect();
+          if (containerRect) {
+            newRefs.set(shot.id, {
+              x: rect.left - containerRect.left,
+              y: rect.top - containerRect.top,
+              width: rect.width,
+              height: rect.height
+            });
+          }
+        }
+      });
+      setShotRefs(newRefs);
+    };
+    
+    // Update refs after a short delay to ensure DOM is ready
+    const timer = setTimeout(updateRefs, 100);
+    return () => clearTimeout(timer);
+  }, [shots]);
+
   return (
     <motion.div 
       layout
@@ -230,7 +329,43 @@ const ShotsRow = ({ sceneId, sceneNumber, projectId, onSceneDelete, isSelected =
       </div>
 
       <ScrollArea className="pb-3">
-        <div className="flex space-x-4 pb-3 px-2 min-h-[180px] perspective-1000 transform-style-3d">
+        <div 
+          ref={containerRef}
+          className="flex space-x-4 pb-3 px-2 min-h-[180px] perspective-1000 transform-style-3d relative"
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          style={{
+            backgroundImage: 'radial-gradient(circle, rgba(113, 113, 122, 0.08) 1px, transparent 1px)',
+            backgroundSize: '20px 20px'
+          }}
+        >
+          {/* Connection Lines */}
+          <ShotConnectionLines connections={connections} shotRefs={shotRefs} />
+          
+          {/* Preview Connection Line */}
+          {activeConnection && shotRefs.get(activeConnection.sourceId) && (
+            <svg className="absolute inset-0 pointer-events-none" style={{ zIndex: 10 }}>
+              <defs>
+                <linearGradient id="preview-gradient">
+                  <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.6" />
+                  <stop offset="100%" stopColor="#8b5cf6" stopOpacity="0.6" />
+                </linearGradient>
+              </defs>
+              <path
+                d={(() => {
+                  const source = shotRefs.get(activeConnection.sourceId)!;
+                  const sourceX = activeConnection.sourcePoint === 'left' ? source.x : source.x + source.width;
+                  const sourceY = source.y + source.height / 2;
+                  return `M ${sourceX} ${sourceY} L ${activeConnection.cursorX} ${activeConnection.cursorY}`;
+                })()}
+                stroke="url(#preview-gradient)"
+                strokeWidth="2"
+                strokeDasharray="5,5"
+                fill="none"
+                className="animate-[dash_1s_linear_infinite]"
+              />
+            </svg>
+          )}
           {isLoading ? (
             <div className="flex items-center justify-center w-full text-zinc-500">
               <span className="animate-spin mr-2">◌</span> Loading shots...
@@ -260,11 +395,15 @@ const ShotsRow = ({ sceneId, sceneNumber, projectId, onSceneDelete, isSelected =
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0, scale: 0.8 }}
                       transition={{ duration: 0.2, delay: index * 0.05 }}
+                      data-shot-id={shot.id}
                     >
                       <ShotCard
                         shot={shot}
                         onUpdate={(updates) => handleShotUpdate(shot.id, updates)}
                         onDelete={() => handleDeleteShot(shot.id)}
+                        onConnectionPointClick={handleConnectionPointClick}
+                        connectedPoints={getConnectedPoints(shot.id)}
+                        isSelected={selectedShotId === shot.id}
                       />
                     </motion.div>
                   ))}

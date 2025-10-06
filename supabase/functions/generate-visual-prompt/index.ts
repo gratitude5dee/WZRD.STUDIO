@@ -90,32 +90,49 @@ serve(async (req) => {
       }
     );
 
-    console.log(`[generate-visual-prompt][Shot ${shotId}] Calling Groq for visual prompt generation...`);
+    console.log(`[generate-visual-prompt][Shot ${shotId}] Calling Lovable AI Gateway with Gemini 2.5 Flash...`);
     
-    // Call Groq via the groq-chat Edge Function
-    const { data: groqResponse, error: groqError } = await supabase.functions.invoke('groq-chat', {
-      body: {
-        prompt: userPrompt,
-        systemPrompt: systemPrompt,
-        model: 'llama-3.1-8b-instant', // Using the faster model since this is a simpler task
-        temperature: 0.7,
-        maxTokens: 200 // Visual prompts should be concise
-      },
+    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+    if (!LOVABLE_API_KEY) {
+      throw new Error('LOVABLE_API_KEY not configured');
+    }
+
+    // Call Lovable AI Gateway with Gemini 2.5 Flash
+    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      method: 'POST',
       headers: {
-        'x-internal-request': 'true'
-      }
+        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'google/gemini-2.5-flash',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt }
+        ],
+        temperature: 0.7,
+        max_tokens: 200
+      }),
     });
 
-    if (groqError) {
-      console.error(`[generate-visual-prompt][Shot ${shotId}] Groq API error:`, groqError);
-      throw groqError;
+    if (!aiResponse.ok) {
+      const errorText = await aiResponse.text();
+      console.error(`[generate-visual-prompt][Shot ${shotId}] AI Gateway error: ${aiResponse.status} - ${errorText}`);
+      if (aiResponse.status === 429) {
+        throw new Error('Rate limit exceeded. Please try again later.');
+      }
+      if (aiResponse.status === 402) {
+        throw new Error('Credits exhausted. Please add credits to your workspace.');
+      }
+      throw new Error(`AI Gateway error: ${aiResponse.status}`);
     }
 
-    if (!groqResponse?.text) {
-      throw new Error('No response text received from Groq');
-    }
+    const aiData = await aiResponse.json();
+    const visualPrompt = aiData.choices?.[0]?.message?.content?.trim();
 
-    const visualPrompt = groqResponse.text.trim();
+    if (!visualPrompt) {
+      throw new Error('No response received from AI Gateway');
+    }
     console.log(`[generate-visual-prompt][Shot ${shotId}] Generated visual prompt:`, visualPrompt);
 
     // Update the shot with the generated visual prompt

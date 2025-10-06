@@ -18,9 +18,19 @@ interface ShotCardProps {
   shot: ShotDetails;
   onUpdate: (updates: Partial<ShotDetails>) => Promise<void>;
   onDelete: () => void;
+  onConnectionPointClick?: (shotId: string, point: 'left' | 'right') => void;
+  connectedPoints?: { left: boolean; right: boolean };
+  isSelected?: boolean;
 }
 
-export const ShotCard: React.FC<ShotCardProps> = ({ shot, onUpdate, onDelete }) => {
+export const ShotCard: React.FC<ShotCardProps> = ({ 
+  shot, 
+  onUpdate, 
+  onDelete, 
+  onConnectionPointClick,
+  connectedPoints = { left: false, right: false },
+  isSelected = false
+}) => {
   const {
     // State
     shotType,
@@ -136,19 +146,61 @@ export const ShotCard: React.FC<ShotCardProps> = ({ shot, onUpdate, onDelete }) 
       style={style}
       ref={setNodeRef}
       className={cn(
-        "relative flex flex-col glass-card rounded-lg overflow-hidden w-[280px] min-h-[320px]",
-        "transition-shadow duration-200 hover:shadow-glow-purple-md",
+        "relative flex flex-col rounded-[16px] backdrop-blur-sm w-[280px] min-h-[320px] group",
+        "bg-gradient-to-br from-zinc-900/90 to-zinc-900/70 transition-all duration-300",
+        isSelected 
+          ? 'border-2 border-blue-500/60 shadow-[0_0_0_4px_rgba(59,130,246,0.15),0_8px_32px_rgba(59,130,246,0.2),inset_0_1px_0_rgba(255,255,255,0.03)]' 
+          : 'border border-zinc-800/30 hover:border-zinc-700/50',
+        "shadow-[0_4px_20px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.02)]",
+        "hover:translate-y-[-2px]",
         isExpanded && "min-h-[480px] w-[360px]"
       )}
     >
+      {/* Connection Points */}
+      <div 
+        className={cn(
+          "absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 z-30",
+          "w-3 h-3 rounded-full transition-all duration-300 cursor-crosshair",
+          connectedPoints.left
+            ? "bg-emerald-500/90 border-2 border-emerald-400 shadow-[0_0_16px_rgba(16,185,129,0.8)] animate-pulse opacity-100"
+            : "bg-zinc-800/80 border-2 border-zinc-600/50 opacity-0 group-hover:opacity-100 hover:w-3.5 hover:h-3.5 hover:bg-blue-500/90 hover:border-blue-400 hover:shadow-[0_0_16px_rgba(59,130,246,0.9)]"
+        )}
+        onClick={(e) => {
+          e.stopPropagation();
+          onConnectionPointClick?.(shot.id, 'left');
+        }}
+      >
+        <div className="absolute inset-0 flex items-center justify-center text-[8px] font-bold text-white">
+          {connectedPoints.left ? '✓' : '+'}
+        </div>
+      </div>
+      
+      <div 
+        className={cn(
+          "absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 z-30",
+          "w-3 h-3 rounded-full transition-all duration-300 cursor-crosshair",
+          connectedPoints.right
+            ? "bg-emerald-500/90 border-2 border-emerald-400 shadow-[0_0_16px_rgba(16,185,129,0.8)] animate-pulse opacity-100"
+            : "bg-zinc-800/80 border-2 border-zinc-600/50 opacity-0 group-hover:opacity-100 hover:w-3.5 hover:h-3.5 hover:bg-blue-500/90 hover:border-blue-400 hover:shadow-[0_0_16px_rgba(59,130,246,0.9)]"
+        )}
+        onClick={(e) => {
+          e.stopPropagation();
+          onConnectionPointClick?.(shot.id, 'right');
+        }}
+      >
+        <div className="absolute inset-0 flex items-center justify-center text-[8px] font-bold text-white">
+          {connectedPoints.right ? '✓' : '+'}
+        </div>
+      </div>
+
       {/* Drag handle */}
       <div
         {...attributes}
         {...listeners}
-        className="absolute top-2 left-2 z-20 cursor-move bg-black/30 hover:bg-black/50 backdrop-blur-sm p-2 rounded-md opacity-70 hover:opacity-100 transition-opacity pointer-events-auto"
+        className="absolute top-2 left-2 z-20 cursor-grab active:cursor-grabbing bg-zinc-900/70 hover:bg-zinc-800/90 backdrop-blur-sm p-1.5 rounded-lg border border-zinc-700/50 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-auto shadow-[0_2px_8px_rgba(0,0,0,0.3)]"
         style={{ touchAction: 'none' }}
       >
-        <Move className="h-5 w-5 text-white pointer-events-none" />
+        <Move className="h-4 w-4 text-zinc-400 pointer-events-none" />
       </div>
       
       {/* Expand/Collapse button */}
