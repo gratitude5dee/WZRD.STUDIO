@@ -6,9 +6,12 @@ import ImageBlock from './blocks/ImageBlock';
 import VideoBlock from './blocks/VideoBlock';
 import { AddBlockDialog } from './AddBlockDialog';
 import EmptyCanvasState from './EmptyCanvasState';
+import { ConnectionLines } from './ConnectionLines';
+import { ConnectionNodeSelector } from './ConnectionNodeSelector';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { Connection } from '@/types/blockTypes';
 
 interface Block {
   id: string;
@@ -83,6 +86,21 @@ const StudioCanvas = ({
   const transformRef = useRef<any>(null);
   const [localBlocks, setLocalBlocks] = useState(blocks);
   const [interactionMode, setInteractionMode] = useState<'pan' | 'edit'>('pan');
+  
+  // Connection state
+  const [connections, setConnections] = useState<Connection[]>([]);
+  const [activeConnection, setActiveConnection] = useState<{
+    sourceBlockId: string;
+    sourcePoint: 'top' | 'right' | 'bottom' | 'left';
+    cursorPosition: { x: number; y: number };
+  } | null>(null);
+  const [blockRefs, setBlockRefs] = useState<Record<string, { 
+    element: HTMLElement; 
+    points: Record<string, { x: number; y: number }> 
+  }>>({});
+  const [selectedConnectionId, setSelectedConnectionId] = useState<string | null>(null);
+  const [showNodeSelector, setShowNodeSelector] = useState(false);
+  const [nodeSelectorPosition, setNodeSelectorPosition] = useState({ x: 0, y: 0 });
 
   // Zoom controls visibility
   const [showZoomControls, setShowZoomControls] = useState(false);
@@ -114,16 +132,166 @@ const StudioCanvas = ({
     }
   }, [blocks.length]);
 
+  // Helper functions for connections
+  const getCursorPosition = (e: React.MouseEvent): { x: number; y: number } => {
+    const rect = canvasRef.current?.getBoundingClientRect();
+    if (!rect) return { x: 0, y: 0 };
+    
+    const transform = transformRef.current?.state || { positionX: 0, positionY: 0, scale: 1 };
+    
+    return {
+      x: (e.clientX - rect.left - transform.positionX) / transform.scale,
+      y: (e.clientY - rect.top - transform.positionY) / transform.scale
+    };
+  };
+
+  const findNearbyConnectionPoint = (
+    cursorPos: { x: number; y: number },
+    threshold = 40
+  ): { blockId: string; point: string } | null => {
+    for (const [blockId, blockRef] of Object.entries(blockRefs)) {
+      for (const [point, pointPos] of Object.entries(blockRef.points)) {
+        const distance = Math.hypot(
+          cursorPos.x - pointPos.x,
+          cursorPos.y - pointPos.y
+        );
+        if (distance < threshold) {
+          return { blockId, point };
+        }
+      }
+    }
+    return null;
+  };
+
+  const createConnection = (
+    sourceBlockId: string,
+    sourcePoint: 'top' | 'right' | 'bottom' | 'left',
+    targetBlockId: string,
+    targetPoint: 'top' | 'right' | 'bottom' | 'left'
+  ) => {
+    const sourceBlock = localBlocks.find(b => b.id === sourceBlockId);
+    if (!sourceBlock) return;
+
+    const newConnection: Connection = {
+      id: `conn-${Date.now()}`,
+      sourceBlockId,
+      targetBlockId,
+      sourcePoint,
+      targetPoint,
+      dataType: sourceBlock.type
+    };
+
+    setConnections(prev => [...prev, newConnection]);
+    toast.success('Connection created');
+  };
+
+  const handleConnectionPointClick = useCallback((blockId: string, point: 'top' | 'right' | 'bottom' | 'left', e: React.MouseEvent) => {
+    e.stopPropagation();
+    const cursorPos = getCursorPosition(e);
+    setActiveConnection({
+      sourceBlockId: blockId,
+      sourcePoint: point,
+      cursorPosition: cursorPos
+    });
+    setInteractionMode('edit');
+  }, []);
+
+  const handleRegisterBlockRef = useCallback((
+    blockId: string,
+    element: HTMLElement | null,
+    connectionPoints: Record<string, { x: number; y: number }>
+  ) => {
+    if (element) {
+      setBlockRefs(prev => ({
+        ...prev,
+        [blockId]: { element, points: connectionPoints }
+      }));
+    }
+  }, []);
+
+  const handleSelectNodeType = (type: 'text' | 'image' | 'video') => {
+    if (!activeConnection) return;
+
+    // Determine target connection point based on source point
+    const getOppositePoint = (point: 'top' | 'right' | 'bottom' | 'left'): 'top' | 'right' | 'bottom' | 'left' => {
+      const opposites = { top: 'bottom', right: 'left', bottom: 'top', left: 'right' } as const;
+      return opposites[point];
+    };
+
+    const targetPoint = getOppositePoint(activeConnection.sourcePoint);
+    
+    // Create new block at cursor position
+    const newBlockId = `${type}-${Date.now()}`;
+    const newBlock: Block = {
+      id: newBlockId,
+      type,
+      position: nodeSelectorPosition,
+    };
+
+    setLocalBlocks(prev => [...prev, newBlock]);
+    onAddBlock(newBlock);
+
+    // Create connection
+    setTimeout(() => {
+      createConnection(
+        activeConnection.sourceBlockId,
+        activeConnection.sourcePoint,
+        newBlockId,
+        targetPoint
+      );
+    }, 50);
+
+    setShowNodeSelector(false);
+    setActiveConnection(null);
+  };
+
+  const getPreviewPath = (activeConn: NonNullable<typeof activeConnection>): string => {
+    const sourceRef = blockRefs[activeConn.sourceBlockId];
+    if (!sourceRef) return '';
+
+    const sourcePos = sourceRef.points[activeConn.sourcePoint];
+    if (!sourcePos) return '';
+
+    const { x: x1, y: y1 } = sourcePos;
+    const { x: x2, y: y2 } = activeConn.cursorPosition;
+
+    const dx = x2 - x1;
+    const curvature = 0.8;
+    const offset = Math.abs(dx) * curvature;
+
+    return `M ${x1},${y1} C ${x1 + offset},${y1} ${x2 - offset},${y2} ${x2},${y2}`;
+  };
+
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Delete/Backspace: remove selected block
-      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedBlockId) {
-        e.preventDefault();
-        onDeleteBlock(selectedBlockId);
-        setLocalBlocks(prev => prev.filter(b => b.id !== selectedBlockId));
-        onSelectBlock('');
-        toast.success('Block deleted');
+      // Escape: Cancel active connection
+      if (e.key === 'Escape') {
+        if (activeConnection) {
+          setActiveConnection(null);
+          setShowNodeSelector(false);
+          toast.info('Connection cancelled');
+          return;
+        }
+      }
+
+      // Delete/Backspace: remove selected connection or block
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        if (selectedConnectionId) {
+          e.preventDefault();
+          setConnections(prev => prev.filter(c => c.id !== selectedConnectionId));
+          setSelectedConnectionId(null);
+          toast.success('Connection deleted');
+          return;
+        }
+        if (selectedBlockId) {
+          e.preventDefault();
+          onDeleteBlock(selectedBlockId);
+          setLocalBlocks(prev => prev.filter(b => b.id !== selectedBlockId));
+          onSelectBlock('');
+          toast.success('Block deleted');
+          return;
+        }
       }
 
       // Cmd/Ctrl + D: duplicate selected block
@@ -175,7 +343,7 @@ const StudioCanvas = ({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedBlockId, localBlocks, showGrid, onSelectBlock, onAddBlock]);
+  }, [selectedBlockId, selectedConnectionId, activeConnection, localBlocks, showGrid, onSelectBlock, onAddBlock]);
 
   const handleCanvasDoubleClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget || (e.target as HTMLElement).classList.contains('canvas-bg')) {
@@ -232,6 +400,13 @@ const StudioCanvas = ({
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
+    // Update active connection cursor position
+    if (activeConnection) {
+      const cursorPos = getCursorPosition(e);
+      setActiveConnection(prev => prev ? { ...prev, cursorPosition: cursorPos } : null);
+      return;
+    }
+
     if (draggedBlockId && dragStartPos && canvasRef.current && transformRef.current) {
       const rect = canvasRef.current.getBoundingClientRect();
       const transform = transformRef.current?.state || { positionX: 0, positionY: 0, scale: 1 };
@@ -279,7 +454,31 @@ const StudioCanvas = ({
     }
   };
 
-  const handleMouseUp = () => {
+  const handleMouseUp = (e: React.MouseEvent) => {
+    // Handle connection drawing mode
+    if (activeConnection) {
+      const cursorPos = getCursorPosition(e);
+      const nearbyPoint = findNearbyConnectionPoint(cursorPos);
+      
+      if (nearbyPoint && nearbyPoint.blockId !== activeConnection.sourceBlockId) {
+        // Connect to existing block
+        createConnection(
+          activeConnection.sourceBlockId,
+          activeConnection.sourcePoint,
+          nearbyPoint.blockId,
+          nearbyPoint.point as 'top' | 'right' | 'bottom' | 'left'
+        );
+      } else {
+        // Show node selector menu
+        setNodeSelectorPosition(cursorPos);
+        setShowNodeSelector(true);
+      }
+      
+      setActiveConnection(null);
+      setInteractionMode('pan');
+      return;
+    }
+
     if (draggedBlockId && isDragging) {
       const block = localBlocks.find(b => b.id === draggedBlockId);
       if (block) {
@@ -307,6 +506,51 @@ const StudioCanvas = ({
       >
         {({ zoomIn, zoomOut, resetTransform }) => (
           <>
+            {/* Connection Lines */}
+            <ConnectionLines
+              connections={connections}
+              blockRefs={blockRefs}
+              selectedConnectionId={selectedConnectionId}
+              onSelectConnection={setSelectedConnectionId}
+            />
+
+            {/* Preview Line During Connection Drawing */}
+            {activeConnection && (
+              <svg className="absolute inset-0 pointer-events-none z-30" style={{ width: '100%', height: '100%' }}>
+                <defs>
+                  <linearGradient id="preview-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.6" />
+                    <stop offset="100%" stopColor="#8b5cf6" stopOpacity="0.6" />
+                  </linearGradient>
+                </defs>
+                <path
+                  d={getPreviewPath(activeConnection)}
+                  stroke="url(#preview-gradient)"
+                  strokeWidth="3"
+                  strokeDasharray="8,4"
+                  fill="none"
+                  opacity="0.8"
+                  className="animate-dash"
+                />
+              </svg>
+            )}
+
+            {/* Node Selector Menu */}
+            {showNodeSelector && (
+              <ConnectionNodeSelector
+                position={nodeSelectorPosition}
+                onSelectType={handleSelectNodeType}
+                onNavigate={() => {
+                  setShowNodeSelector(false);
+                  setActiveConnection(null);
+                }}
+                onCancel={() => {
+                  setShowNodeSelector(false);
+                  setActiveConnection(null);
+                }}
+              />
+            )}
+
             {/* Zoom Controls */}
             <AnimatePresence>
               {showZoomControls && (
@@ -389,53 +633,72 @@ const StudioCanvas = ({
                 </div>
 
                 {/* Render Blocks */}
-                {localBlocks.map((block) => (
-                  <div
-                    key={block.id}
-                    style={{
-                      position: 'absolute',
-                      left: block.position.x,
-                      top: block.position.y,
-                      opacity: draggedBlockId === block.id && isDragging ? 0.5 : 1,
-                      transform: draggedBlockId === block.id && isDragging ? 'scale(1.02)' : 'scale(1)',
-                      transition: draggedBlockId === block.id ? 'none' : 'transform 0.2s ease'
-                    }}
-                    onMouseDown={(e) => handleBlockMouseDown(block.id, e)}
-                  >
-                    {block.type === 'text' && (
-                      <TextBlock
-                        id={block.id}
-                        onSelect={() => onSelectBlock(block.id)}
-                        isSelected={selectedBlockId === block.id}
-                        selectedModel={blockModels[block.id]}
-                        onModelChange={(modelId) => onModelChange(block.id, modelId)}
-                        initialData={block.initialData}
-                      />
-                    )}
-                    {block.type === 'image' && (
-                      <ImageBlock
-                        id={block.id}
-                        onSelect={() => onSelectBlock(block.id)}
-                        isSelected={selectedBlockId === block.id}
-                        selectedModel={blockModels[block.id]}
-                        onModelChange={(modelId) => onModelChange(block.id, modelId)}
-                        onSpawnBlocks={handleSpawnBlocks}
-                        blockPosition={block.position}
-            initialData={block.initialData}
-            displayMode={block.initialData?.imageUrl ? 'display' : 'input'}
-          />
-                    )}
-                    {block.type === 'video' && (
-                      <VideoBlock
-                        id={block.id}
-                        onSelect={() => onSelectBlock(block.id)}
-                        isSelected={selectedBlockId === block.id}
-                        selectedModel={blockModels[block.id]}
-                        onModelChange={(modelId) => onModelChange(block.id, modelId)}
-                      />
-                    )}
-                  </div>
-                ))}
+                {localBlocks.map((block) => {
+                  const blockConnections = connections.filter(
+                    c => c.sourceBlockId === block.id || c.targetBlockId === block.id
+                  );
+                  const connectedPoints = [
+                    ...blockConnections.filter(c => c.sourceBlockId === block.id).map(c => c.sourcePoint),
+                    ...blockConnections.filter(c => c.targetBlockId === block.id).map(c => c.targetPoint),
+                  ];
+                  
+                  return (
+                    <div
+                      key={block.id}
+                      style={{
+                        position: 'absolute',
+                        left: block.position.x,
+                        top: block.position.y,
+                        opacity: draggedBlockId === block.id && isDragging ? 0.5 : 1,
+                        transform: draggedBlockId === block.id && isDragging ? 'scale(1.02)' : 'scale(1)',
+                        transition: draggedBlockId === block.id ? 'none' : 'transform 0.2s ease'
+                      }}
+                      onMouseDown={(e) => handleBlockMouseDown(block.id, e)}
+                    >
+                      {block.type === 'text' && (
+                        <TextBlock
+                          id={block.id}
+                          onSelect={() => onSelectBlock(block.id)}
+                          isSelected={selectedBlockId === block.id}
+                          selectedModel={blockModels[block.id]}
+                          onModelChange={(modelId) => onModelChange(block.id, modelId)}
+                          initialData={block.initialData}
+                          onRegisterRef={handleRegisterBlockRef}
+                          onConnectionPointClick={handleConnectionPointClick}
+                          connectedPoints={connectedPoints}
+                        />
+                      )}
+                      {block.type === 'image' && (
+                        <ImageBlock
+                          id={block.id}
+                          onSelect={() => onSelectBlock(block.id)}
+                          isSelected={selectedBlockId === block.id}
+                          selectedModel={blockModels[block.id]}
+                          onModelChange={(modelId) => onModelChange(block.id, modelId)}
+                          onSpawnBlocks={handleSpawnBlocks}
+                          blockPosition={block.position}
+                          initialData={block.initialData}
+                          displayMode={block.initialData?.imageUrl ? 'display' : 'input'}
+                          onRegisterRef={handleRegisterBlockRef}
+                          onConnectionPointClick={handleConnectionPointClick}
+                          connectedPoints={connectedPoints}
+                        />
+                      )}
+                      {block.type === 'video' && (
+                        <VideoBlock
+                          id={block.id}
+                          onSelect={() => onSelectBlock(block.id)}
+                          isSelected={selectedBlockId === block.id}
+                          selectedModel={blockModels[block.id]}
+                          onModelChange={(modelId) => onModelChange(block.id, modelId)}
+                          onRegisterRef={handleRegisterBlockRef}
+                          onConnectionPointClick={handleConnectionPointClick}
+                          connectedPoints={connectedPoints}
+                        />
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </TransformComponent>
           </>

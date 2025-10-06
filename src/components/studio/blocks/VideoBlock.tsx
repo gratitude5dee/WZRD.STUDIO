@@ -21,8 +21,10 @@ export interface VideoBlockProps {
   onShowHistory?: () => void;
   onDragEnd?: (position: { x: number, y: number }) => void;
   onRegisterRef?: (blockId: string, element: HTMLElement | null, connectionPoints: Record<string, { x: number; y: number }>) => void;
+  onConnectionPointClick?: (blockId: string, point: 'top' | 'right' | 'bottom' | 'left', e: React.MouseEvent) => void;
   getInput?: (blockId: string, inputId: string) => any;
   setOutput?: (blockId: string, outputId: string, value: any) => void;
+  connectedPoints?: Array<'top' | 'right' | 'bottom' | 'left'>;
   onInputFocus?: () => void;
   onInputBlur?: () => void;
   selectedModel?: string;
@@ -40,8 +42,10 @@ const VideoBlock: React.FC<VideoBlockProps> = ({
   onShowHistory,
   onDragEnd,
   onRegisterRef,
+  onConnectionPointClick,
   getInput,
   setOutput,
+  connectedPoints = [],
   onInputFocus,
   onInputBlur,
   selectedModel: externalSelectedModel,
@@ -155,6 +159,9 @@ const VideoBlock: React.FC<VideoBlockProps> = ({
       onSelect={onSelect}
       isSelected={isSelected}
       model={getModelDisplayName(selectedModel)}
+      onRegisterRef={onRegisterRef}
+      onConnectionPointClick={onConnectionPointClick}
+      connectedPoints={connectedPoints}
       toolbar={
         <BlockFloatingToolbar
           blockType="video"

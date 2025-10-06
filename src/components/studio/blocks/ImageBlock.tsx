@@ -15,10 +15,12 @@ interface ImageBlockProps {
   onSelect: () => void;
   isSelected: boolean;
   onRegisterRef?: (blockId: string, element: HTMLElement | null, connectionPoints: Record<string, { x: number; y: number }>) => void;
+  onConnectionPointClick?: (blockId: string, point: 'top' | 'right' | 'bottom' | 'left', e: React.MouseEvent) => void;
   getInput?: (blockId: string, inputId: string) => any;
   setOutput?: (blockId: string, outputId: string, value: any) => void;
   selectedModel?: string;
   onModelChange?: (modelId: string) => void;
+  connectedPoints?: Array<'top' | 'right' | 'bottom' | 'left'>;
   onSpawnBlocks?: (blocks: Array<{
     id: string;
     type: 'text' | 'image' | 'video';
@@ -40,10 +42,12 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
   onSelect,
   isSelected,
   onRegisterRef,
+  onConnectionPointClick,
   getInput,
   setOutput,
   selectedModel,
   onModelChange,
+  connectedPoints = [],
   onSpawnBlocks,
   blockPosition = { x: 0, y: 0 },
   initialData,
@@ -332,6 +336,9 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
         onSelect={onSelect}
         isSelected={isSelected}
         model={selectedModel}
+        onRegisterRef={onRegisterRef}
+        onConnectionPointClick={onConnectionPointClick}
+        connectedPoints={connectedPoints}
         toolbar={
           <BlockFloatingToolbar
             blockType="image"

@@ -22,7 +22,7 @@ export interface BlockProps {
   onDragEnd?: (position: { x: number, y: number }) => void;
   onRegisterRef?: (blockId: string, element: HTMLElement | null, connectionPoints: Record<string, { x: number; y: number }>) => void;
   onAddConnectedBlock?: (side: 'left' | 'right') => void;
-  onConnectionPointClick?: (blockId: string, point: 'top' | 'right' | 'bottom' | 'left') => void;
+  onConnectionPointClick?: (blockId: string, point: 'top' | 'right' | 'bottom' | 'left', e: React.MouseEvent) => void;
   model?: string;
   onModelChange?: (model: string) => void;
   toolbar?: React.ReactNode;
@@ -114,9 +114,7 @@ const BlockBase: React.FC<BlockProps> = ({
           className={getConnectionPointStyle(point)}
           onClick={(e) => {
             e.stopPropagation();
-            if (onConnectionPointClick) {
-              onConnectionPointClick(id, point);
-            }
+            onConnectionPointClick?.(id, point, e);
           }}
           title={`Connect ${point}`}
         />

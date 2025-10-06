@@ -23,10 +23,12 @@ export interface TextBlockProps {
   onShowHistory?: () => void;
   onDragEnd?: (position: { x: number, y: number }) => void;
   onRegisterRef?: (blockId: string, element: HTMLElement | null, connectionPoints: Record<string, { x: number; y: number }>) => void;
+  onConnectionPointClick?: (blockId: string, point: 'top' | 'right' | 'bottom' | 'left', e: React.MouseEvent) => void;
   getInput?: (blockId: string, inputId: string) => any;
   setOutput?: (blockId: string, outputId: string, value: any) => void;
   onCreateConnectedNodes?: (sourceBlockId: string, template: ActionTemplate) => void;
   connectedInputs?: ConnectedInput[];
+  connectedPoints?: Array<'top' | 'right' | 'bottom' | 'left'>;
   onInputFocus?: () => void;
   onInputBlur?: () => void;
   selectedModel?: string;
@@ -49,10 +51,12 @@ const TextBlock: React.FC<TextBlockProps> = ({
   onShowHistory,
   onDragEnd,
   onRegisterRef,
+  onConnectionPointClick,
   getInput,
   setOutput,
   onCreateConnectedNodes,
   connectedInputs = [],
+  connectedPoints = [],
   onInputFocus,
   onInputBlur,
   selectedModel: externalSelectedModel,
@@ -180,6 +184,9 @@ const TextBlock: React.FC<TextBlockProps> = ({
       onSelect={onSelect}
       isSelected={isSelected}
       model={getModelDisplayName(selectedModel)}
+      onRegisterRef={onRegisterRef}
+      onConnectionPointClick={onConnectionPointClick}
+      connectedPoints={connectedPoints}
       toolbar={
         <BlockFloatingToolbar
           blockType="text"
