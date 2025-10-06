@@ -19,6 +19,9 @@ interface Block {
     imageUrl?: string;
     generationTime?: number;
     aspectRatio?: string;
+    mode?: string;
+    connectedImageUrl?: string;
+    connectedImagePrompt?: string;
   };
 }
 
@@ -405,6 +408,7 @@ const StudioCanvas = ({
                         isSelected={selectedBlockId === block.id}
                         selectedModel={blockModels[block.id]}
                         onModelChange={(modelId) => onModelChange(block.id, modelId)}
+                        initialData={block.initialData}
                       />
                     )}
                     {block.type === 'image' && (

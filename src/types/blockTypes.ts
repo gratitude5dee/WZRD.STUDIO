@@ -9,9 +9,12 @@ export interface BlockData {
 export interface Connection {
   id: string;
   sourceBlockId: string;
-  sourcePointId: string;
   targetBlockId: string;
-  targetPointId: string;
+  sourcePoint: 'top' | 'right' | 'bottom' | 'left';
+  targetPoint: 'top' | 'right' | 'bottom' | 'left';
+  dataType: 'image' | 'text' | 'video';
+  sourcePointId?: string;
+  targetPointId?: string;
   path?: string;
 }
 

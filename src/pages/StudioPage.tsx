@@ -23,6 +23,9 @@ export interface Block {
     imageUrl?: string;
     generationTime?: number;
     aspectRatio?: string;
+    mode?: string;
+    connectedImageUrl?: string;
+    connectedImagePrompt?: string;
   };
 }
 

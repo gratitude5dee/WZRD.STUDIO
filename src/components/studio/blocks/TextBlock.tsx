@@ -4,11 +4,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useGeminiText } from '@/hooks/useGeminiText';
-import { Sparkles, Copy, RotateCw, Download, Info } from 'lucide-react';
+import { Sparkles, Copy, RotateCw, Download, Info, Image } from 'lucide-react';
 import TextBlockSuggestions from './TextBlockSuggestions';
 import { ActionTemplate, BlockMode, ConnectedInput } from '@/types/studioTypes';
 import { BlockFloatingToolbar } from './BlockFloatingToolbar';
 import { motion } from 'framer-motion';
+import { toast } from 'sonner';
+import { useGeminiVision } from '@/hooks/useGeminiVision';
 
 export interface TextBlockProps {
   id: string;
@@ -29,6 +31,11 @@ export interface TextBlockProps {
   onInputBlur?: () => void;
   selectedModel?: string;
   onModelChange?: (modelId: string) => void;
+  initialData?: {
+    mode?: string;
+    connectedImageUrl?: string;
+    connectedImagePrompt?: string;
+  };
 }
 
 const TextBlock: React.FC<TextBlockProps> = ({ 
@@ -49,18 +56,25 @@ const TextBlock: React.FC<TextBlockProps> = ({
   onInputFocus,
   onInputBlur,
   selectedModel: externalSelectedModel,
-  onModelChange: externalOnModelChange
+  onModelChange: externalOnModelChange,
+  initialData
 }) => {
-  const [mode, setMode] = useState<BlockMode>('suggestions');
-  const [prompt, setPrompt] = useState<string>("");
+  // Check if this is visual intelligence mode
+  const isVisualIntelligence = initialData?.mode === 'visual-intelligence';
+  const connectedImageUrl = initialData?.connectedImageUrl;
+  const connectedImagePrompt = initialData?.connectedImagePrompt;
+  
+  const [mode, setMode] = useState<BlockMode>(isVisualIntelligence ? 'prompt' : 'suggestions');
+  const [prompt, setPrompt] = useState<string>(isVisualIntelligence ? '' : '');
   const [selectedTemplate, setSelectedTemplate] = useState<ActionTemplate | null>(null);
   const [progress, setProgress] = useState(0);
   const [estimatedTime, setEstimatedTime] = useState(8);
   const { isGenerating, output, generateText } = useGeminiText();
+  const { analyzeImage, isAnalyzing } = useGeminiVision();
 
   // Simulate progress during generation
   useEffect(() => {
-    if (isGenerating) {
+    if (isGenerating || isAnalyzing) {
       setProgress(0);
       const interval = setInterval(() => {
         setProgress(prev => {
@@ -74,7 +88,7 @@ const TextBlock: React.FC<TextBlockProps> = ({
       setProgress(100);
       setEstimatedTime(0);
     }
-  }, [isGenerating, output]);
+  }, [isGenerating, isAnalyzing, output]);
 
   // Use external model if provided, otherwise use default
   const selectedModel = externalSelectedModel || 'google/gemini-2.5-flash';
@@ -113,8 +127,21 @@ const TextBlock: React.FC<TextBlockProps> = ({
     setMode('prompt');
   };
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
     if (!prompt.trim()) return;
+    
+    // Handle visual intelligence mode
+    if (isVisualIntelligence && connectedImageUrl) {
+      const response = await analyzeImage(connectedImageUrl, prompt);
+      if (response) {
+        // Set the output to the response from vision analysis
+        if (setOutput) {
+          setOutput(id, 'output', response);
+        }
+        setMode('output');
+      }
+      return;
+    }
     
     // Build full prompt with connected inputs
     let fullPrompt = prompt;
@@ -149,7 +176,7 @@ const TextBlock: React.FC<TextBlockProps> = ({
     <BlockBase
       id={id}
       type="text"
-      title="Text"
+      title={isVisualIntelligence ? "Visual Q&A" : "Text"}
       onSelect={onSelect}
       isSelected={isSelected}
       model={getModelDisplayName(selectedModel)}
@@ -161,8 +188,32 @@ const TextBlock: React.FC<TextBlockProps> = ({
         />
       }
     >
+      {/* Visual Intelligence Mode - Show Connected Image */}
+      {isVisualIntelligence && connectedImageUrl && mode === 'prompt' && (
+        <div className="mb-3">
+          <div className="relative rounded-lg overflow-hidden border border-zinc-800/40 bg-zinc-900/30">
+            <img 
+              src={connectedImageUrl}
+              className="w-full h-20 object-cover"
+              alt="Connected"
+            />
+            <div className="absolute top-2 left-2">
+              <Badge className="bg-black/60 text-white text-[10px] backdrop-blur-sm border-0">
+                <Image className="w-3 h-3 mr-1" />
+                Source Image
+              </Badge>
+            </div>
+          </div>
+          {connectedImagePrompt && (
+            <p className="text-[10px] text-zinc-500 mt-1 truncate">
+              "{connectedImagePrompt}"
+            </p>
+          )}
+        </div>
+      )}
+      
       {/* Suggestions Mode */}
-      {mode === 'suggestions' && (
+      {mode === 'suggestions' && !isVisualIntelligence && (
         <TextBlockSuggestions onSelectAction={handleSelectAction} />
       )}
 
@@ -181,8 +232,8 @@ const TextBlock: React.FC<TextBlockProps> = ({
               }}
               onBlur={() => onInputBlur?.()}
               className="min-h-[80px] bg-zinc-900/50 border-zinc-800/40 text-zinc-100 placeholder:text-zinc-500 resize-none pr-20"
-              placeholder='Try "Write a compelling product description for..."'
-              disabled={isGenerating}
+              placeholder={isVisualIntelligence ? 'Ask a question about this image...' : 'Try "Write a compelling product description for..."'}
+              disabled={isGenerating || isAnalyzing}
               onKeyDown={(e) => {
                 if (e.key === 'Tab' && !e.shiftKey) {
                   e.preventDefault();
@@ -202,7 +253,7 @@ const TextBlock: React.FC<TextBlockProps> = ({
                   handleGenerate();
                 }}
                 onMouseDown={(e) => e.stopPropagation()}
-                disabled={isGenerating || !prompt.trim()}
+                disabled={isGenerating || isAnalyzing || !prompt.trim()}
               >
                 <Sparkles className="w-3.5 h-3.5" />
               </Button>
@@ -210,7 +261,7 @@ const TextBlock: React.FC<TextBlockProps> = ({
           </div>
 
           {/* Loading State */}
-          {isGenerating && (
+          {(isGenerating || isAnalyzing) && (
             <div className="space-y-3">
               <div className="min-h-[120px] rounded-xl bg-zinc-900/50 border border-zinc-800/30 relative overflow-hidden p-4">
                 {/* Animated Progress Overlay */}

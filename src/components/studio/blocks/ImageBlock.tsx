@@ -21,14 +21,9 @@ interface ImageBlockProps {
   onModelChange?: (modelId: string) => void;
   onSpawnBlocks?: (blocks: Array<{
     id: string;
-    type: 'image';
+    type: 'text' | 'image' | 'video';
     position: { x: number; y: number };
-    initialData?: {
-      prompt?: string;
-      imageUrl?: string;
-      generationTime?: number;
-      aspectRatio?: string;
-    };
+    initialData?: any;
   }>) => void;
   blockPosition?: { x: number; y: number };
   initialData?: {
@@ -389,7 +384,30 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
               </button>
               <button 
                 className="w-full flex items-center gap-2 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50 p-2 rounded-lg transition-colors text-left text-xs"
-                onClick={() => toast.info('Image Q&A coming soon')}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  // Trigger visual intelligence workflow
+                  if (onSpawnBlocks && generatedImage) {
+                    const textBlockId = uuidv4();
+                    const textBlock = {
+                      id: textBlockId,
+                      type: 'text' as const,
+                      position: {
+                        x: blockPosition.x + 450,
+                        y: blockPosition.y
+                      },
+                      initialData: {
+                        mode: 'visual-intelligence',
+                        connectedImageUrl: generatedImage.url,
+                        connectedImagePrompt: prompt
+                      }
+                    };
+                    onSpawnBlocks([textBlock]);
+                    toast.success('Visual Q&A block created! Ask your question.');
+                  } else {
+                    toast.info('Generate an image first');
+                  }
+                }}
                 onMouseDown={(e) => e.stopPropagation()}
               >
                 <MessageSquare className="w-3.5 h-3.5" />

@@ -22,10 +22,12 @@ export interface BlockProps {
   onDragEnd?: (position: { x: number, y: number }) => void;
   onRegisterRef?: (blockId: string, element: HTMLElement | null, connectionPoints: Record<string, { x: number; y: number }>) => void;
   onAddConnectedBlock?: (side: 'left' | 'right') => void;
+  onConnectionPointClick?: (blockId: string, point: 'top' | 'right' | 'bottom' | 'left') => void;
   model?: string;
   onModelChange?: (model: string) => void;
   toolbar?: React.ReactNode;
   generationTime?: number;
+  connectedPoints?: Array<'top' | 'right' | 'bottom' | 'left'>;
 }
 
 const BlockBase: React.FC<BlockProps> = ({ 
@@ -39,10 +41,12 @@ const BlockBase: React.FC<BlockProps> = ({
   onDragEnd,
   onRegisterRef,
   onAddConnectedBlock,
+  onConnectionPointClick,
   model,
   onModelChange,
   toolbar,
-  generationTime
+  generationTime,
+  connectedPoints = []
 }) => {
   const blockRef = React.useRef<HTMLDivElement>(null);
   const [isHovered, setIsHovered] = useState(false);
@@ -50,9 +54,35 @@ const BlockBase: React.FC<BlockProps> = ({
   // Register block with parent
   React.useEffect(() => {
     if (onRegisterRef && blockRef.current) {
-      onRegisterRef(id, blockRef.current, {});
+      const rect = blockRef.current.getBoundingClientRect();
+      const points = {
+        top: { x: rect.left + rect.width / 2, y: rect.top },
+        right: { x: rect.right, y: rect.top + rect.height / 2 },
+        bottom: { x: rect.left + rect.width / 2, y: rect.bottom },
+        left: { x: rect.left, y: rect.top + rect.height / 2 }
+      };
+      onRegisterRef(id, blockRef.current, points);
     }
   }, [id, onRegisterRef]);
+
+  const connectionPoints: Array<'top' | 'right' | 'bottom' | 'left'> = ['top', 'right', 'bottom', 'left'];
+  
+  const getConnectionPointStyle = (point: 'top' | 'right' | 'bottom' | 'left') => {
+    const isConnected = connectedPoints.includes(point);
+    const baseStyle = "absolute w-3 h-3 rounded-full border-2 transition-all duration-200 z-20";
+    const positionStyles = {
+      top: "left-1/2 -translate-x-1/2 -top-1.5",
+      right: "right-0 translate-x-1/2 top-1/2 -translate-y-1/2",
+      bottom: "left-1/2 -translate-x-1/2 -bottom-1.5",
+      left: "left-0 -translate-x-1/2 top-1/2 -translate-y-1/2"
+    };
+    
+    if (isConnected) {
+      return `${baseStyle} ${positionStyles[point]} bg-green-500 border-green-400 shadow-[0_0_8px_rgba(34,197,94,0.6)]`;
+    }
+    
+    return `${baseStyle} ${positionStyles[point]} bg-zinc-800 border-zinc-700 opacity-0 group-hover:opacity-100 hover:bg-blue-500 hover:border-blue-400 hover:scale-125 hover:shadow-[0_0_8px_rgba(59,130,246,0.6)] cursor-pointer`;
+  };
 
   return (
     <motion.div
@@ -77,33 +107,20 @@ const BlockBase: React.FC<BlockProps> = ({
           {toolbar}
         </div>
       )}
-      {/* Left Connector */}
-      {onAddConnectedBlock && (
-        <button
-          className="absolute left-0 top-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-zinc-900 border border-zinc-700/50 flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-blue-500 hover:border-blue-400 hover:scale-110 transition-all duration-200 z-10 shadow-lg"
+      {/* Connection Points */}
+      {connectionPoints.map((point) => (
+        <div
+          key={point}
+          className={getConnectionPointStyle(point)}
           onClick={(e) => {
             e.stopPropagation();
-            onAddConnectedBlock('left');
+            if (onConnectionPointClick) {
+              onConnectionPointClick(id, point);
+            }
           }}
-          title="Add connected block"
-        >
-          <Plus className="w-3.5 h-3.5 text-zinc-400 hover:text-white transition-colors" />
-        </button>
-      )}
-
-      {/* Right Connector */}
-      {onAddConnectedBlock && (
-        <button
-          className="absolute right-0 top-1/2 translate-x-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-zinc-900 border border-zinc-700/50 flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-blue-500 hover:border-blue-400 hover:scale-110 transition-all duration-200 z-10 shadow-lg"
-          onClick={(e) => {
-            e.stopPropagation();
-            onAddConnectedBlock('right');
-          }}
-          title="Add connected block"
-        >
-          <Plus className="w-3.5 h-3.5 text-zinc-400 hover:text-white transition-colors" />
-        </button>
-      )}
+          title={`Connect ${point}`}
+        />
+      ))}
 
       {/* Header with Drag Handle */}
       <div className="px-4 py-3.5 border-b border-zinc-800/40 flex items-center gap-3 group/header bg-gradient-to-b from-zinc-900/50 to-transparent">
