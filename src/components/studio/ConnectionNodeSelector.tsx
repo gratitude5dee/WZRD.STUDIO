@@ -86,7 +86,12 @@ export const ConnectionNodeSelector: React.FC<ConnectionNodeSelectorProps> = ({
             {blockTypes.map((block) => (
               <motion.button
                 key={block.type}
-                onClick={() => onSelectType(block.type)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log('Button clicked:', block.type);
+                  onSelectType(block.type);
+                }}
                 whileHover={{ x: 2 }}
                 className={cn(
                   "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg",
