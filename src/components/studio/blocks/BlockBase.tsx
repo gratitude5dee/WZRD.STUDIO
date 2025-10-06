@@ -105,9 +105,17 @@ const BlockBase: React.FC<BlockProps> = ({
         </button>
       )}
 
-      {/* Header with Model Selector */}
-      <div className="px-4 py-2.5 border-b border-zinc-800/50 cursor-move">
-        <div className="flex items-center justify-between">
+      {/* Header with Drag Handle */}
+      <div className="px-4 py-2.5 border-b border-zinc-800/50 flex items-center gap-2 group/header">
+        {/* Prominent Drag Handle */}
+        <div 
+          className="drag-handle flex items-center justify-center w-6 h-6 -ml-1 rounded hover:bg-zinc-800/80 cursor-grab active:cursor-grabbing transition-all duration-200 hover:scale-110"
+          title="Drag to move"
+        >
+          <GripVertical className="w-4 h-4 text-zinc-600 group-hover/header:text-zinc-400 transition-colors" />
+        </div>
+        
+        <div className="flex items-center justify-between flex-1">
           <span className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider">{title}</span>
           <div className="flex items-center gap-2">
             {generationTime && (

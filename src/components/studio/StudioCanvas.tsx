@@ -35,9 +35,27 @@ interface StudioCanvasProps {
 }
 
 const GRID_SIZE = 20; // Snap-to-grid size
+const DRAG_THRESHOLD = 5; // Minimum pixels to move before drag starts
+const CANVAS_PADDING = 2000; // Padding around blocks for infinite canvas
+const SNAP_DISTANCE = 20; // Distance for magnetic snapping to nearby blocks
 
 // Helper function to snap position to grid
 const snapToGrid = (value: number) => Math.round(value / GRID_SIZE) * GRID_SIZE;
+
+// Calculate dynamic canvas bounds based on block positions
+const calculateCanvasBounds = (blocks: Block[]) => {
+  if (blocks.length === 0) {
+    return { minX: -CANVAS_PADDING, maxX: CANVAS_PADDING, minY: -CANVAS_PADDING, maxY: CANVAS_PADDING };
+  }
+  
+  const positions = blocks.map(b => b.position);
+  const minX = Math.min(...positions.map(p => p.x)) - CANVAS_PADDING;
+  const maxX = Math.max(...positions.map(p => p.x)) + CANVAS_PADDING + 400; // +400 for block width
+  const minY = Math.min(...positions.map(p => p.y)) - CANVAS_PADDING;
+  const maxY = Math.max(...positions.map(p => p.y)) + CANVAS_PADDING + 400; // +400 for block height
+  
+  return { minX, maxX, minY, maxY };
+};
 
 const StudioCanvas = ({ 
   blocks, 
@@ -55,9 +73,13 @@ const StudioCanvas = ({
   const [showGrid, setShowGrid] = useState(true);
   const [draggedBlockId, setDraggedBlockId] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [dragStartPos, setDragStartPos] = useState<{ x: number; y: number } | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [alignmentGuides, setAlignmentGuides] = useState<{ x: number[]; y: number[] }>({ x: [], y: [] });
   const canvasRef = useRef<HTMLDivElement>(null);
   const transformRef = useRef<any>(null);
   const [localBlocks, setLocalBlocks] = useState(blocks);
+  const [interactionMode, setInteractionMode] = useState<'pan' | 'edit'>('pan');
 
   // Zoom controls visibility
   const [showZoomControls, setShowZoomControls] = useState(false);
@@ -184,8 +206,9 @@ const StudioCanvas = ({
   }, [onAddBlock]);
 
   const handleBlockMouseDown = (blockId: string, e: React.MouseEvent) => {
-    if ((e.target as HTMLElement).classList.contains('cursor-move') || 
-        (e.target as HTMLElement).closest('.cursor-move')) {
+    if ((e.target as HTMLElement).classList.contains('drag-handle') || 
+        (e.target as HTMLElement).closest('.drag-handle')) {
+      e.stopPropagation();
       const block = localBlocks.find(b => b.id === blockId);
       if (block && canvasRef.current && transformRef.current) {
         const rect = canvasRef.current.getBoundingClientRect();
@@ -194,44 +217,77 @@ const StudioCanvas = ({
         const mouseY = (e.clientY - rect.top - transform.positionY) / transform.scale;
         
         setDraggedBlockId(blockId);
+        setDragStartPos({ x: mouseX, y: mouseY });
         setDragOffset({
           x: mouseX - block.position.x,
           y: mouseY - block.position.y
         });
+        setInteractionMode('edit');
+        onSelectBlock(blockId);
       }
     }
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
-    if (draggedBlockId && canvasRef.current && transformRef.current) {
+    if (draggedBlockId && dragStartPos && canvasRef.current && transformRef.current) {
       const rect = canvasRef.current.getBoundingClientRect();
       const transform = transformRef.current?.state || { positionX: 0, positionY: 0, scale: 1 };
       const mouseX = (e.clientX - rect.left - transform.positionX) / transform.scale;
       const mouseY = (e.clientY - rect.top - transform.positionY) / transform.scale;
       
-      setLocalBlocks(prev => prev.map(b => {
-        if (b.id === draggedBlockId) {
-          return {
-            ...b,
-            position: {
-              x: snapToGrid(mouseX - dragOffset.x),
-              y: snapToGrid(mouseY - dragOffset.y)
-            }
-          };
-        }
-        return b;
-      }));
+      // Check drag threshold before starting actual drag
+      const deltaX = Math.abs(mouseX - dragStartPos.x);
+      const deltaY = Math.abs(mouseY - dragStartPos.y);
+      
+      if (!isDragging && (deltaX > DRAG_THRESHOLD || deltaY > DRAG_THRESHOLD)) {
+        setIsDragging(true);
+      }
+      
+      if (isDragging) {
+        let newX = snapToGrid(mouseX - dragOffset.x);
+        let newY = snapToGrid(mouseY - dragOffset.y);
+        
+        // Find alignment guides (magnetic snapping to nearby blocks)
+        const guides = { x: [] as number[], y: [] as number[] };
+        const otherBlocks = localBlocks.filter(b => b.id !== draggedBlockId);
+        
+        otherBlocks.forEach(block => {
+          // Check X alignment
+          if (Math.abs(block.position.x - newX) < SNAP_DISTANCE) {
+            newX = block.position.x;
+            guides.x.push(block.position.x);
+          }
+          // Check Y alignment
+          if (Math.abs(block.position.y - newY) < SNAP_DISTANCE) {
+            newY = block.position.y;
+            guides.y.push(block.position.y);
+          }
+        });
+        
+        setAlignmentGuides(guides);
+        
+        setLocalBlocks(prev => prev.map(b => {
+          if (b.id === draggedBlockId) {
+            return { ...b, position: { x: newX, y: newY } };
+          }
+          return b;
+        }));
+      }
     }
   };
 
   const handleMouseUp = () => {
-    if (draggedBlockId) {
+    if (draggedBlockId && isDragging) {
       const block = localBlocks.find(b => b.id === draggedBlockId);
       if (block) {
         onUpdateBlockPosition(draggedBlockId, block.position);
       }
     }
     setDraggedBlockId(null);
+    setDragStartPos(null);
+    setIsDragging(false);
+    setAlignmentGuides({ x: [], y: [] });
+    setInteractionMode('pan');
   };
 
   return (
@@ -286,24 +342,46 @@ const StudioCanvas = ({
               contentStyle={{ width: '100%', height: '100%' }}
             >
               <div 
-                className="canvas-bg w-full h-full relative bg-zinc-950"
+                className="canvas-bg w-full h-full relative"
                 style={{
+                  background: 'radial-gradient(circle at 50% 50%, hsl(220, 25%, 8%) 0%, hsl(220, 25%, 6%) 100%)',
                   backgroundImage: showGrid 
-                    ? `radial-gradient(circle, rgba(113, 113, 122, 0.15) 1px, transparent 1px)`
-                    : 'none',
-                  backgroundSize: showGrid ? `${GRID_SIZE}px ${GRID_SIZE}px` : 'auto',
-                  minWidth: '4000px',
-                  minHeight: '4000px'
+                    ? `radial-gradient(circle at 50% 50%, hsl(220, 25%, 8%) 0%, hsl(220, 25%, 6%) 100%), radial-gradient(circle, rgba(113, 113, 122, 0.12) 1px, transparent 1px)`
+                    : 'radial-gradient(circle at 50% 50%, hsl(220, 25%, 8%) 0%, hsl(220, 25%, 6%) 100%)',
+                  backgroundSize: showGrid ? 'auto, 20px 20px' : 'auto',
+                  minWidth: `${calculateCanvasBounds(localBlocks).maxX - calculateCanvasBounds(localBlocks).minX}px`,
+                  minHeight: `${calculateCanvasBounds(localBlocks).maxY - calculateCanvasBounds(localBlocks).minY}px`,
+                  cursor: interactionMode === 'pan' ? 'grab' : 'default'
                 }}
                 onDoubleClick={handleCanvasDoubleClick}
                 onMouseMove={handleMouseMove}
                 onMouseUp={handleMouseUp}
                 onMouseLeave={handleMouseUp}
               >
+                {/* Alignment Guides */}
+                {alignmentGuides.x.map((x, i) => (
+                  <div
+                    key={`guide-x-${i}`}
+                    className="absolute top-0 bottom-0 w-[1px] bg-blue-500/50 pointer-events-none z-50"
+                    style={{ left: x }}
+                  />
+                ))}
+                {alignmentGuides.y.map((y, i) => (
+                  <div
+                    key={`guide-y-${i}`}
+                    className="absolute left-0 right-0 h-[1px] bg-blue-500/50 pointer-events-none z-50"
+                    style={{ top: y }}
+                  />
+                ))}
                 {/* Empty Canvas State */}
                 {localBlocks.length === 0 && (
                   <EmptyCanvasState onAddBlock={handleSelectBlockType} />
                 )}
+
+                {/* Mode Indicator */}
+                <div className="fixed bottom-6 left-6 z-50 px-3 py-1.5 bg-zinc-900/95 backdrop-blur-sm border border-zinc-700 rounded-lg text-xs text-zinc-400">
+                  Mode: <span className="text-zinc-200 font-medium">{interactionMode === 'pan' ? 'Navigate (Space+Drag)' : 'Edit Block'}</span>
+                </div>
 
                 {/* Render Blocks */}
                 {localBlocks.map((block) => (
@@ -313,7 +391,9 @@ const StudioCanvas = ({
                       position: 'absolute',
                       left: block.position.x,
                       top: block.position.y,
-                      cursor: draggedBlockId === block.id ? 'grabbing' : 'default'
+                      opacity: draggedBlockId === block.id && isDragging ? 0.5 : 1,
+                      transform: draggedBlockId === block.id && isDragging ? 'scale(1.02)' : 'scale(1)',
+                      transition: draggedBlockId === block.id ? 'none' : 'transform 0.2s ease'
                     }}
                     onMouseDown={(e) => handleBlockMouseDown(block.id, e)}
                   >
