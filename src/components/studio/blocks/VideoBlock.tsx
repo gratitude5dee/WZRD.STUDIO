@@ -89,9 +89,9 @@ const VideoBlock: React.FC<VideoBlockProps> = ({
   // Use external model if provided, otherwise use default
   const selectedModel = externalSelectedModel || 'gemini-2.5-flash-video';
   const getModelDisplayName = (modelId: string) => {
-    if (modelId === 'gemini-2.5-flash-video') return 'Gemini 2.5';
+    if (modelId === 'gemini-2.5-flash-video') return 'Veo 3 Fast';
     if (modelId === 'luma-dream') return 'Luma Dream';
-    return 'Gemini 2.5';
+    return 'Veo 3 Fast';
   };
 
   // Check for connected input and use it as prompt if available

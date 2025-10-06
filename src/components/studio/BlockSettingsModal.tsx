@@ -38,7 +38,7 @@ const IMAGE_MODELS: Model[] = [
 ];
 
 const VIDEO_MODELS: Model[] = [
-  { id: 'gemini-2.5-flash-video', name: 'Gemini 2.5', description: 'Video generation', credits: 10, time: '~30s', icon: 'video' },
+  { id: 'gemini-2.5-flash-video', name: 'Veo 3 Fast', description: 'Fast video generation', credits: 10, time: '~30s', icon: 'video' },
   { id: 'luma-dream', name: 'Luma Dream', description: 'Cinematic quality', credits: 25, time: '~90s', icon: 'video' },
 ];
 
