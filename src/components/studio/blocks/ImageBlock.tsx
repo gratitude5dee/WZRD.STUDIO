@@ -2,11 +2,13 @@ import React, { useState, useRef, useEffect } from 'react';
 import BlockBase from './BlockBase';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { useGeminiImage } from '@/hooks/useGeminiImage';
-import { Download, Copy, Maximize2 } from 'lucide-react';
+import { Download, Copy, Maximize2, Sparkles, Info, Upload, Video, MessageSquare, Send, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { BlockFloatingToolbar } from './BlockFloatingToolbar';
 import { v4 as uuidv4 } from 'uuid';
+import { motion } from 'framer-motion';
 
 interface ImageBlockProps {
   id: string;
@@ -63,7 +65,24 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
   const [generatedImage, setGeneratedImage] = useState<{ url: string; generationTime?: number } | null>(
     initialData?.imageUrl ? { url: initialData.imageUrl, generationTime: initialData.generationTime } : null
   );
+  const [progress, setProgress] = useState(0);
+  const [timeRemaining, setTimeRemaining] = useState(30);
   const { isGenerating, generateImage } = useGeminiImage();
+
+  // Simulate progress during generation
+  useEffect(() => {
+    if (isGenerating) {
+      setProgress(0);
+      setTimeRemaining(30);
+      const interval = setInterval(() => {
+        setProgress(prev => Math.min(prev + 2, 95));
+        setTimeRemaining(prev => Math.max(prev - 1, 1));
+      }, 1000);
+      return () => clearInterval(interval);
+    } else {
+      setProgress(100);
+    }
+  }, [isGenerating]);
 
   const generateShortTitle = (fullPrompt: string): string => {
     const words = fullPrompt.trim().split(/\s+/);
@@ -222,9 +241,11 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
   // Display mode - prominent image with overlay
   if (displayMode === 'display' && generatedImage) {
     return (
-      <div 
+      <motion.div 
         ref={blockRef}
-        className="relative w-80 h-80 rounded-2xl overflow-hidden cursor-pointer group"
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="relative w-80 h-80 rounded-[20px] overflow-hidden cursor-pointer group shadow-[0_8px_32px_rgba(0,0,0,0.4)]"
         onClick={() => {
           setDisplayMode('input');
           onSelect();
@@ -238,42 +259,39 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
         
         {/* Top gradient overlay with title */}
         <div className="absolute inset-x-0 top-0 bg-gradient-to-b from-black/80 via-black/40 to-transparent p-4">
-          <div className="flex items-start justify-between">
-            <h3 className="text-white font-medium text-sm leading-tight max-w-[200px]">
+          <div className="flex items-start justify-between gap-2">
+            <h3 className="text-white font-medium text-sm leading-tight flex-1">
               {generateShortTitle(prompt)}
             </h3>
             {generatedImage.generationTime && (
-              <span className="text-white/90 text-xs font-medium px-2 py-1 bg-white/10 rounded-md backdrop-blur-sm">
+              <Badge className="bg-white/10 text-white text-[10px] backdrop-blur-sm border-0 shrink-0">
                 ~{generatedImage.generationTime}s
-              </span>
+              </Badge>
             )}
           </div>
         </div>
 
         {/* Hover actions overlay */}
-        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center gap-2">
           <Button
-            size="sm"
-            variant="secondary"
-            className="bg-white/90 hover:bg-white text-black"
+            size="icon"
+            className="bg-white/90 hover:bg-white text-black shadow-lg"
             onClick={(e) => handleDownload(generatedImage.url, e)}
             onMouseDown={(e) => e.stopPropagation()}
           >
             <Download className="w-4 h-4" />
           </Button>
           <Button
-            size="sm"
-            variant="secondary"
-            className="bg-white/90 hover:bg-white text-black"
+            size="icon"
+            className="bg-white/90 hover:bg-white text-black shadow-lg"
             onClick={(e) => handleCopy(generatedImage.url, e)}
             onMouseDown={(e) => e.stopPropagation()}
           >
             <Copy className="w-4 h-4" />
           </Button>
           <Button
-            size="sm"
-            variant="secondary"
-            className="bg-white/90 hover:bg-white text-black"
+            size="icon"
+            className="bg-white/90 hover:bg-white text-black shadow-lg"
             onClick={(e) => {
               e.stopPropagation();
               setDisplayMode('input');
@@ -282,13 +300,30 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
           >
             <Maximize2 className="w-4 h-4" />
           </Button>
+          <Button
+            size="icon"
+            className="bg-white/90 hover:bg-white text-black shadow-lg"
+            onClick={(e) => {
+              e.stopPropagation();
+              toast.info('Variation feature coming soon');
+            }}
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            <Sparkles className="w-4 h-4" />
+          </Button>
         </div>
 
-        {/* Selection indicator */}
+        {/* Selection indicator with corner dots */}
         {isSelected && (
-          <div className="absolute inset-0 border-2 border-blue-500 rounded-2xl pointer-events-none" />
+          <>
+            <div className="absolute inset-0 border-2 border-blue-500/70 rounded-[20px] pointer-events-none shadow-[0_0_0_4px_rgba(59,130,246,0.15)]" />
+            <div className="absolute top-1 left-1 w-2 h-2 bg-blue-500 rounded-full" />
+            <div className="absolute top-1 right-1 w-2 h-2 bg-blue-500 rounded-full" />
+            <div className="absolute bottom-1 left-1 w-2 h-2 bg-blue-500 rounded-full" />
+            <div className="absolute bottom-1 right-1 w-2 h-2 bg-blue-500 rounded-full" />
+          </>
         )}
-      </div>
+      </motion.div>
     );
   }
 
@@ -317,38 +352,135 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
         }
       >
         <div className="space-y-3">
-          {/* Prompt Input */}
-          <Textarea
-            placeholder={isGeneratingPrompt ? "Generating prompt..." : "Describe the image you want to generate..."}
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            className="min-h-[80px] bg-zinc-800/50 border-zinc-700 text-zinc-100 placeholder:text-zinc-500 resize-none"
-            disabled={isGeneratingPrompt}
-            onMouseDown={(e) => e.stopPropagation()}
-            onClick={(e) => e.stopPropagation()}
-          />
+          {/* Empty State - Suggestion Menu */}
+          {!prompt && !generatedImage && !isGenerating && (
+            <div className="space-y-2 mb-3">
+              <button 
+                className="w-full flex items-center gap-2 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50 p-2 rounded-lg transition-colors text-left text-xs"
+                onClick={() => toast.info('Documentation coming soon')}
+                onMouseDown={(e) => e.stopPropagation()}
+              >
+                <Info className="w-3.5 h-3.5" />
+                <span>Learn about Image Blocks</span>
+              </button>
+              <button 
+                className="w-full flex items-center gap-2 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50 p-2 rounded-lg transition-colors text-left text-xs"
+                onClick={() => toast.info('Upload feature coming soon')}
+                onMouseDown={(e) => e.stopPropagation()}
+              >
+                <Upload className="w-3.5 h-3.5" />
+                <span>Upload an Image</span>
+              </button>
+              <button 
+                className="w-full flex items-center gap-2 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50 p-2 rounded-lg transition-colors text-left text-xs"
+                onClick={() => toast.info('Video combination coming soon')}
+                onMouseDown={(e) => e.stopPropagation()}
+              >
+                <Video className="w-3.5 h-3.5" />
+                <span>Combine images into a video</span>
+              </button>
+              <button 
+                className="w-full flex items-center gap-2 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50 p-2 rounded-lg transition-colors text-left text-xs"
+                onClick={() => toast.info('Image to video coming soon')}
+                onMouseDown={(e) => e.stopPropagation()}
+              >
+                <Video className="w-3.5 h-3.5" />
+                <span>Turn an image into a video</span>
+              </button>
+              <button 
+                className="w-full flex items-center gap-2 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50 p-2 rounded-lg transition-colors text-left text-xs"
+                onClick={() => toast.info('Image Q&A coming soon')}
+                onMouseDown={(e) => e.stopPropagation()}
+              >
+                <MessageSquare className="w-3.5 h-3.5" />
+                <span>Ask a question about an image</span>
+              </button>
+            </div>
+          )}
 
-          {/* Generate Button */}
-          <Button
-            onClick={handleGenerate}
-            disabled={isGenerating || !prompt.trim() || isGeneratingPrompt}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-            onMouseDown={(e) => e.stopPropagation()}
-          >
-            {isGenerating ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                Generating...
-              </>
-            ) : (
-              'Generate'
-            )}
-          </Button>
+          {/* Prompt Input with Counter and Send */}
+          <div className="relative">
+            <Textarea
+              placeholder='Try "An ethereal aurora over a snowy landscape"'
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              className="min-h-[80px] bg-zinc-900/50 border-zinc-800/40 text-zinc-100 placeholder:text-zinc-500 resize-none pr-20"
+              disabled={isGeneratingPrompt || isGenerating}
+              onMouseDown={(e) => e.stopPropagation()}
+              onClick={(e) => e.stopPropagation()}
+            />
+            <div className="absolute bottom-2 right-2 flex items-center gap-1.5">
+              <Badge className="bg-zinc-800 text-zinc-400 text-xs border-zinc-700/50 hover:bg-zinc-700 cursor-pointer" onClick={() => setGenerationCount(prev => prev < 4 ? prev + 1 : 1)}>
+                {generationCount}×
+              </Badge>
+              <Button
+                size="icon"
+                className="h-7 w-7 bg-blue-600 hover:bg-blue-700 text-white"
+                onClick={handleGenerate}
+                disabled={isGenerating || !prompt.trim() || isGeneratingPrompt}
+                onMouseDown={(e) => e.stopPropagation()}
+              >
+                <Send className="w-3.5 h-3.5" />
+              </Button>
+            </div>
+          </div>
 
-          {/* Single Generated Image */}
-          {generatedImage && (
-            <div
-              className="relative group cursor-pointer rounded-lg overflow-hidden bg-zinc-800/30 aspect-square"
+          {/* Loading State with Progress */}
+          {isGenerating && (
+            <div className="space-y-3">
+              <div className="aspect-square rounded-xl bg-zinc-900/50 border border-zinc-800/30 relative overflow-hidden">
+                {/* Animated Progress Overlay */}
+                <motion.div 
+                  className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5"
+                  animate={{ opacity: [0.3, 0.6, 0.3] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                />
+                
+                {/* Timer Badge */}
+                <div className="absolute top-3 right-3">
+                  <Badge className="bg-black/60 text-white text-xs backdrop-blur-sm border-0">
+                    ~{timeRemaining}s
+                  </Badge>
+                </div>
+                
+                {/* Bottom Info */}
+                <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between">
+                  <div className="text-xs text-zinc-400 max-w-[200px] truncate">
+                    {prompt}
+                  </div>
+                  {generationCount > 1 && (
+                    <div className="flex items-center gap-1 bg-black/60 backdrop-blur-sm rounded-full px-2 py-1">
+                      <Plus className="w-3 h-3 text-white" />
+                      <span className="text-xs text-white">{generationCount}×</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              {/* Progress Bar */}
+              <div className="space-y-2">
+                <div className="flex justify-between text-xs text-zinc-500">
+                  <span>Generating image...</span>
+                  <span>{progress}%</span>
+                </div>
+                <div className="h-1 bg-zinc-800/50 rounded-full overflow-hidden">
+                  <motion.div 
+                    className="h-full bg-gradient-to-r from-blue-500 to-purple-500"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${progress}%` }}
+                    transition={{ duration: 0.3 }}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Generated Image with Enhanced Display */}
+          {generatedImage && !isGenerating && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="relative group cursor-pointer rounded-xl overflow-hidden bg-zinc-800/30 aspect-square"
             >
               <img
                 src={generatedImage.url}
@@ -358,50 +490,44 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
               
               {/* Generation Time Badge */}
               {generatedImage.generationTime && (
-                <div className="absolute top-2 right-2 px-2 py-1 bg-black/60 backdrop-blur-sm rounded-md">
-                  <span className="text-xs text-zinc-300">~{generatedImage.generationTime}s</span>
+                <div className="absolute top-2 right-2">
+                  <Badge className="bg-black/60 text-white text-xs backdrop-blur-sm border-0">
+                    ~{generatedImage.generationTime}s
+                  </Badge>
                 </div>
               )}
               
               {/* Hover Actions */}
-              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center gap-2">
                 <Button
-                  size="sm"
-                  variant="ghost"
-                  className="text-white hover:bg-white/20"
+                  size="icon"
+                  className="bg-white/90 hover:bg-white text-black shadow-lg"
                   onClick={(e) => handleDownload(generatedImage.url, e)}
                   onMouseDown={(e) => e.stopPropagation()}
                 >
                   <Download className="w-4 h-4" />
                 </Button>
                 <Button
-                  size="sm"
-                  variant="ghost"
-                  className="text-white hover:bg-white/20"
+                  size="icon"
+                  className="bg-white/90 hover:bg-white text-black shadow-lg"
                   onClick={(e) => handleCopy(generatedImage.url, e)}
                   onMouseDown={(e) => e.stopPropagation()}
                 >
                   <Copy className="w-4 h-4" />
                 </Button>
                 <Button
-                  size="sm"
-                  variant="ghost"
-                  className="text-white hover:bg-white/20"
+                  size="icon"
+                  className="bg-white/90 hover:bg-white text-black shadow-lg"
                   onClick={(e) => {
                     e.stopPropagation();
-                    setDisplayMode('input');
+                    setDisplayMode('display');
                   }}
                   onMouseDown={(e) => e.stopPropagation()}
                 >
                   <Maximize2 className="w-4 h-4" />
                 </Button>
               </div>
-            </div>
-          )}
-
-          {/* Loading State */}
-          {isGenerating && !generatedImage && (
-            <div className="aspect-square rounded-lg bg-zinc-800/30 animate-pulse" />
+            </motion.div>
           )}
         </div>
       </BlockBase>

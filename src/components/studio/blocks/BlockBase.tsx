@@ -61,11 +61,11 @@ const BlockBase: React.FC<BlockProps> = ({
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.2 }}
       className={cn(
-        "group relative w-80 bg-zinc-900/90 backdrop-blur-sm rounded-2xl border transition-all duration-200",
+        "group relative w-80 bg-zinc-900/90 backdrop-blur-sm rounded-[20px] border transition-all duration-300",
         isSelected 
-          ? 'border-blue-500/50 shadow-[0_0_0_1px_rgba(59,130,246,0.3),0_8px_32px_rgba(59,130,246,0.15)]' 
-          : 'border-zinc-800/50 hover:border-zinc-700/50',
-        "shadow-[0_4px_20px_rgba(0,0,0,0.3),0_0_0_1px_rgba(255,255,255,0.03)]"
+          ? 'border-blue-500/60 shadow-[0_0_0_4px_rgba(59,130,246,0.15),0_8px_32px_rgba(59,130,246,0.2),inset_0_1px_0_rgba(255,255,255,0.03)]' 
+          : 'border-zinc-800/30 hover:border-zinc-700/50',
+        "shadow-[0_4px_20px_rgba(0,0,0,0.4),0_0_0_1px_rgba(255,255,255,0.03),inset_0_1px_0_rgba(255,255,255,0.02)]"
       )}
       onClick={onSelect}
       onMouseEnter={() => setIsHovered(true)}
@@ -106,23 +106,23 @@ const BlockBase: React.FC<BlockProps> = ({
       )}
 
       {/* Header with Drag Handle */}
-      <div className="px-4 py-2.5 border-b border-zinc-800/50 flex items-center gap-2 group/header">
+      <div className="px-4 py-3.5 border-b border-zinc-800/40 flex items-center gap-3 group/header bg-gradient-to-b from-zinc-900/50 to-transparent">
         {/* Prominent Drag Handle */}
         <div 
-          className="drag-handle flex items-center justify-center w-6 h-6 -ml-1 rounded hover:bg-zinc-800/80 cursor-grab active:cursor-grabbing transition-all duration-200 hover:scale-110"
+          className="drag-handle flex items-center justify-center w-7 h-7 -ml-1 rounded-md hover:bg-zinc-800/60 cursor-grab active:cursor-grabbing transition-all duration-200 hover:scale-105"
           title="Drag to move"
         >
           <GripVertical className="w-4 h-4 text-zinc-600 group-hover/header:text-zinc-400 transition-colors" />
         </div>
         
-        <div className="flex items-center justify-between flex-1">
-          <span className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider">{title}</span>
-          <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between flex-1 min-w-0">
+          <span className="text-xs font-medium text-zinc-400 truncate">{title}</span>
+          <div className="flex items-center gap-2 flex-shrink-0">
             {generationTime && (
               <span className="text-[10px] text-zinc-500">~{generationTime}s</span>
             )}
             {model && (
-              <span className="text-[10px] font-medium text-zinc-400">{model}</span>
+              <span className="text-[10px] font-medium text-zinc-300 px-2 py-0.5 bg-zinc-800/60 rounded-full border border-zinc-700/50">{model}</span>
             )}
           </div>
         </div>
@@ -130,7 +130,7 @@ const BlockBase: React.FC<BlockProps> = ({
 
       {/* Content */}
       <div 
-        className="p-4"
+        className="p-4 rounded-b-[16px]"
         onMouseDown={(e) => e.stopPropagation()}
         onClick={(e) => e.stopPropagation()}
       >
