@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import BlockBase, { ConnectionPoint } from './BlockBase';
 import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
 import { useGeminiText } from '@/hooks/useGeminiText';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, Copy, RotateCw, Download, Info } from 'lucide-react';
 import TextBlockSuggestions from './TextBlockSuggestions';
 import { ActionTemplate, BlockMode, ConnectedInput } from '@/types/studioTypes';
 import { BlockFloatingToolbar } from './BlockFloatingToolbar';
+import { motion } from 'framer-motion';
 
 export interface TextBlockProps {
   id: string;
@@ -51,7 +53,27 @@ const TextBlock: React.FC<TextBlockProps> = ({
   const [mode, setMode] = useState<BlockMode>('suggestions');
   const [prompt, setPrompt] = useState<string>("");
   const [selectedTemplate, setSelectedTemplate] = useState<ActionTemplate | null>(null);
+  const [progress, setProgress] = useState(0);
+  const [estimatedTime, setEstimatedTime] = useState(8);
   const { isGenerating, output, generateText } = useGeminiText();
+
+  // Simulate progress during generation
+  useEffect(() => {
+    if (isGenerating) {
+      setProgress(0);
+      const interval = setInterval(() => {
+        setProgress(prev => {
+          if (prev >= 95) return prev;
+          return prev + Math.random() * 10;
+        });
+        setEstimatedTime(prev => Math.max(0, prev - 1));
+      }, 800);
+      return () => clearInterval(interval);
+    } else if (output) {
+      setProgress(100);
+      setEstimatedTime(0);
+    }
+  }, [isGenerating, output]);
 
   // Use external model if provided, otherwise use default
   const selectedModel = externalSelectedModel || 'google/gemini-2.5-flash';
@@ -140,38 +162,44 @@ const TextBlock: React.FC<TextBlockProps> = ({
     >
       {/* Suggestions Mode */}
       {mode === 'suggestions' && (
-        <div className="space-y-2">
-          <p className="text-xs text-zinc-500">Try to...</p>
-          <TextBlockSuggestions onSelectAction={handleSelectAction} />
-        </div>
+        <TextBlockSuggestions onSelectAction={handleSelectAction} />
       )}
 
       {/* Prompt Mode */}
       {mode === 'prompt' && (
-        <div className="space-y-2.5">
-          <Textarea
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            onMouseDown={(e) => e.stopPropagation()}
-            onClick={(e) => e.stopPropagation()}
-            onFocus={(e) => {
-              e.stopPropagation();
-              onInputFocus?.();
-            }}
-            onBlur={() => onInputBlur?.()}
-            className="min-h-[100px] text-sm bg-zinc-950/50 border-zinc-800/50 text-zinc-200 placeholder:text-zinc-600 focus:border-blue-500/50 resize-none cursor-text"
-            placeholder="Describe what you want to generate..."
-            disabled={isGenerating}
-            onKeyDown={(e) => {
-              if (e.key === 'Tab' && !e.shiftKey) {
-                e.preventDefault();
-                handleGenerate();
-              }
-            }}
-          />
+        <div className="space-y-3">
+          <div className="relative">
+            <Textarea
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              onMouseDown={(e) => e.stopPropagation()}
+              onClick={(e) => e.stopPropagation()}
+              onFocus={(e) => {
+                e.stopPropagation();
+                onInputFocus?.();
+              }}
+              onBlur={() => onInputBlur?.()}
+              className="min-h-[120px] text-sm bg-zinc-900/50 border-zinc-800/40 rounded-xl text-zinc-200 placeholder:text-zinc-500 focus:border-blue-500/50 focus:bg-zinc-900/70 resize-none cursor-text transition-all"
+              placeholder='Try "Write a compelling product description for..."'
+              disabled={isGenerating}
+              onKeyDown={(e) => {
+                if (e.key === 'Tab' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleGenerate();
+                }
+              }}
+            />
+            <div className="absolute bottom-3 right-3 flex items-center gap-2">
+              <Badge variant="outline" className="text-[10px] bg-zinc-800/80 border-zinc-700/50 text-zinc-400">
+                {prompt.length} chars
+              </Badge>
+            </div>
+          </div>
           
-          <div className="flex items-center justify-between pt-1.5 border-t border-zinc-800/30">
-            <span className="text-[9px] text-zinc-600 uppercase tracking-wider font-medium">TAB to send</span>
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] text-zinc-500 font-medium">
+              <kbd className="px-1.5 py-0.5 bg-zinc-800/50 border border-zinc-700/50 rounded text-[9px]">TAB</kbd> to send
+            </span>
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -179,56 +207,124 @@ const TextBlock: React.FC<TextBlockProps> = ({
               }}
               onPointerDown={(e) => e.stopPropagation()}
               disabled={isGenerating || !prompt.trim()}
-              className="w-5 h-5 rounded-md bg-blue-500 hover:bg-blue-600 flex items-center justify-center transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-3 py-1.5 rounded-lg bg-blue-500 hover:bg-blue-600 flex items-center justify-center gap-1.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed group"
               title="Send"
             >
               {isGenerating ? (
-                <div className="w-2.5 h-2.5 border border-white/30 border-t-white rounded-full animate-spin" />
+                <>
+                  <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <span className="text-xs text-white font-medium">Generating...</span>
+                </>
               ) : (
-                <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
-                </svg>
+                <>
+                  <Sparkles className="w-3 h-3 text-white" />
+                  <span className="text-xs text-white font-medium">Generate</span>
+                </>
               )}
             </button>
           </div>
+
+          {/* Loading State */}
+          {isGenerating && (
+            <motion.div 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-2 p-3 bg-zinc-900/30 rounded-xl border border-zinc-800/30"
+            >
+              <div className="flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+                  <span className="text-zinc-400">Generating text...</span>
+                </div>
+                <Badge variant="outline" className="text-[10px] bg-black/40 border-zinc-700/50 text-zinc-400">
+                  ~{estimatedTime}s
+                </Badge>
+              </div>
+              <div className="h-1.5 bg-zinc-800/50 rounded-full overflow-hidden">
+                <motion.div 
+                  className="h-full bg-gradient-to-r from-blue-500 via-purple-500 to-blue-500"
+                  initial={{ width: 0 }}
+                  animate={{ width: `${progress}%` }}
+                  transition={{ duration: 0.5 }}
+                />
+              </div>
+            </motion.div>
+          )}
         </div>
       )}
 
       {/* Output Mode */}
       {mode === 'output' && (
-        <div className="space-y-3">
-          <div className="flex items-center gap-2 text-xs mb-1">
-            <Sparkles className="w-3 h-3 text-green-400" />
-            <span className="text-zinc-500">Generated Text</span>
-          </div>
-
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="space-y-3"
+        >
+          {/* Output Display */}
           {output && (
-            <div className="p-3 bg-zinc-950/50 rounded-lg border border-zinc-800/50 max-h-60 overflow-y-auto">
-              <pre className="text-sm text-zinc-300 leading-relaxed whitespace-pre-wrap">{output}</pre>
+            <div className="relative group">
+              <div className="p-4 bg-zinc-900/50 rounded-xl border border-zinc-800/30 max-h-[300px] overflow-y-auto custom-scrollbar">
+                <div className="text-sm text-zinc-200 leading-relaxed whitespace-pre-wrap font-mono">
+                  {output}
+                </div>
+              </div>
+              
+              {/* Top Badge */}
+              <div className="absolute top-3 right-3">
+                <Badge variant="outline" className="text-[10px] bg-green-500/10 border-green-500/30 text-green-400">
+                  <Sparkles className="w-2.5 h-2.5 mr-1" />
+                  Generated
+                </Badge>
+              </div>
+
+              {/* Character Count Badge */}
+              <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                <Badge variant="outline" className="text-[10px] bg-black/80 border-zinc-700/50 text-zinc-400 backdrop-blur-sm">
+                  {output.length} chars
+                </Badge>
+              </div>
             </div>
           )}
           
-          <div className="flex justify-between items-center pt-1.5 border-t border-zinc-800/30">
+          {/* Action Buttons */}
+          <div className="flex items-center justify-between gap-2">
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 handleBackToPrompt();
               }}
               onPointerDown={(e) => e.stopPropagation()}
-              className="px-2 py-1 text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
+              className="px-3 py-1.5 text-xs text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50 rounded-lg transition-all"
             >
               Edit Prompt
             </button>
-            <div className="flex gap-1.5">
+            <div className="flex gap-2">
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   navigator.clipboard.writeText(output || '');
                 }}
                 onPointerDown={(e) => e.stopPropagation()}
-                className="px-2.5 py-1 text-[10px] bg-zinc-800/50 hover:bg-zinc-800 text-zinc-300 rounded transition-colors"
+                className="p-2 bg-zinc-800/50 hover:bg-zinc-700/50 rounded-lg transition-all group/btn"
+                title="Copy"
               >
-                Copy
+                <Copy className="w-3.5 h-3.5 text-zinc-400 group-hover/btn:text-zinc-200" />
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const blob = new Blob([output || ''], { type: 'text/plain' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = 'generated-text.txt';
+                  a.click();
+                }}
+                onPointerDown={(e) => e.stopPropagation()}
+                className="p-2 bg-zinc-800/50 hover:bg-zinc-700/50 rounded-lg transition-all group/btn"
+                title="Download"
+              >
+                <Download className="w-3.5 h-3.5 text-zinc-400 group-hover/btn:text-zinc-200" />
               </button>
               <button
                 onClick={(e) => {
@@ -237,23 +333,23 @@ const TextBlock: React.FC<TextBlockProps> = ({
                 }}
                 onPointerDown={(e) => e.stopPropagation()}
                 disabled={isGenerating}
-                className="px-2.5 py-1 text-[10px] bg-blue-500 hover:bg-blue-600 text-white rounded flex items-center gap-1.5 disabled:opacity-50 transition-all"
+                className="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 rounded-lg flex items-center gap-1.5 disabled:opacity-50 transition-all"
               >
                 {isGenerating ? (
                   <>
-                    <div className="w-2.5 h-2.5 border border-white/30 border-t-white rounded-full animate-spin" />
-                    <span>Regenerating...</span>
+                    <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <span className="text-xs text-white font-medium">Regenerating...</span>
                   </>
                 ) : (
                   <>
-                    <Sparkles className="w-2.5 h-2.5" />
-                    <span>Regenerate</span>
+                    <RotateCw className="w-3 h-3 text-white" />
+                    <span className="text-xs text-white font-medium">Regenerate</span>
                   </>
                 )}
               </button>
             </div>
           </div>
-        </div>
+        </motion.div>
       )}
     </BlockBase>
   );

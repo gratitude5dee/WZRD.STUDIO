@@ -10,46 +10,48 @@ interface TextBlockSuggestionsProps {
 
 const TextBlockSuggestions: React.FC<TextBlockSuggestionsProps> = ({ onSelectAction }) => {
   return (
-    <div className="space-y-4 p-4">
+    <div className="space-y-3">
       {/* Info section */}
-      <div className="flex items-center gap-2 text-xs text-zinc-400 pb-2 border-b border-zinc-800">
+      <button
+        onClick={() => {/* TODO: Open help modal */}}
+        className="w-full flex items-center gap-2 px-3 py-2 text-xs text-zinc-400 hover:text-zinc-200 bg-zinc-900/30 hover:bg-zinc-800/50 rounded-lg border border-zinc-800/30 hover:border-zinc-700/50 transition-all"
+      >
         <Info className="w-3.5 h-3.5" />
         <span>Learn about Text Blocks</span>
-      </div>
+      </button>
 
-      {/* Try to section */}
-      <div>
-        <h3 className="text-xs font-medium text-zinc-300 mb-3">Try to...</h3>
-        <div className="space-y-2">
-          {SUGGESTION_ORDER.map(templateId => {
-            const template = PROMPT_TEMPLATES[templateId];
-            return (
-              <button
-                key={template.id}
-                onClick={() => onSelectAction(template)}
-                className="w-full text-left px-3 py-2.5 rounded-md bg-zinc-900/50 hover:bg-zinc-800/70 border border-zinc-800 hover:border-zinc-700 transition-all group"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="text-lg">{template.icon}</span>
-                  <div className="flex-1">
-                    <div className="text-sm text-zinc-200 group-hover:text-white transition-colors">
-                      {template.label}
-                    </div>
-                    <div className="text-xs text-zinc-500 mt-0.5">
-                      {template.description}
-                    </div>
+      {/* Suggestions Grid */}
+      <div className="space-y-1.5">
+        {SUGGESTION_ORDER.map(templateId => {
+          const template = PROMPT_TEMPLATES[templateId];
+          return (
+            <button
+              key={template.id}
+              onClick={() => onSelectAction(template)}
+              className="w-full text-left px-3 py-2.5 rounded-xl bg-zinc-900/40 hover:bg-zinc-800/60 border border-zinc-800/30 hover:border-zinc-700/50 transition-all duration-200 group"
+            >
+              <div className="flex items-center gap-2.5">
+                <div className="flex-shrink-0 w-7 h-7 flex items-center justify-center bg-zinc-800/50 group-hover:bg-zinc-700/50 rounded-lg transition-colors">
+                  <span className="text-base">{template.icon}</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm text-zinc-200 group-hover:text-white transition-colors font-medium">
+                    {template.label}
+                  </div>
+                  <div className="text-[11px] text-zinc-500 group-hover:text-zinc-400 mt-0.5 transition-colors truncate">
+                    {template.description}
                   </div>
                 </div>
-              </button>
-            );
-          })}
-        </div>
+              </div>
+            </button>
+          );
+        })}
       </div>
 
-      {/* Sample prompt hint */}
-      <div className="pt-2 border-t border-zinc-800">
-        <div className="text-xs text-zinc-500 italic">
-          Or type your own prompt below...
+      {/* Hint */}
+      <div className="pt-2 border-t border-zinc-800/30">
+        <div className="text-[11px] text-zinc-500 text-center">
+          Or start typing your own prompt...
         </div>
       </div>
     </div>
