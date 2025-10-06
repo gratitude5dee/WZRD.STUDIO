@@ -1,10 +1,8 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
-import { v4 as uuidv4 } from 'uuid';
 import TextBlock from './blocks/TextBlock';
 import ImageBlock from './blocks/ImageBlock';
 import VideoBlock from './blocks/VideoBlock';
-import { AddBlockDialog } from './AddBlockDialog';
 import EmptyCanvasState from './EmptyCanvasState';
 import { ConnectionLines } from './ConnectionLines';
 import { ConnectionNodeSelector } from './ConnectionNodeSelector';
@@ -74,8 +72,6 @@ const StudioCanvas = ({
   blockModels, 
   onModelChange 
 }: StudioCanvasProps) => {
-  const [showAddBlockDialog, setShowAddBlockDialog] = useState(false);
-  const [addBlockPosition, setAddBlockPosition] = useState({ x: 0, y: 0 });
   const [showGrid, setShowGrid] = useState(true);
   const [draggedBlockId, setDraggedBlockId] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
@@ -216,17 +212,39 @@ const StudioCanvas = ({
   }, []);
 
   const handleSelectNodeType = (type: 'text' | 'image' | 'video') => {
-    if (!activeConnection) return;
-
     console.log('🔄 Starting transformation:', type);
     
     // Start transformation animation
     setNodeSelectorTransforming(true);
     setNodeSelectorTargetType(type);
 
-      // Wait for transformation animation to complete before creating block
+    // Wait for transformation animation to complete before creating block
+    setTimeout(() => {
+      console.log('✅ Transformation complete, creating block');
+      
+      // Create new block at menu position
+      const newBlockId = `${type}-${Date.now()}`;
+      const newBlock: Block = {
+        id: newBlockId,
+        type,
+        position: nodeSelectorPosition,
+      };
+
+      // Add to newly created blocks for animation
+      setNewlyCreatedBlocks(prev => new Set(prev).add(newBlockId));
       setTimeout(() => {
-        console.log('✅ Transformation complete, creating block');
+        setNewlyCreatedBlocks(prev => {
+          const next = new Set(prev);
+          next.delete(newBlockId);
+          return next;
+        });
+      }, 600);
+
+      setLocalBlocks(prev => [...prev, newBlock]);
+      onAddBlock(newBlock);
+
+      // If activeConnection exists, create connection to the new block
+      if (activeConnection) {
         // Determine target connection point based on source point
         const getOppositePoint = (point: 'top' | 'right' | 'bottom' | 'left'): 'top' | 'right' | 'bottom' | 'left' => {
           const opposites = { top: 'bottom', right: 'left', bottom: 'top', left: 'right' } as const;
@@ -235,27 +253,6 @@ const StudioCanvas = ({
 
         const targetPoint = getOppositePoint(activeConnection.sourcePoint);
         
-        // Create new block at menu position
-        const newBlockId = `${type}-${Date.now()}`;
-        const newBlock: Block = {
-          id: newBlockId,
-          type,
-          position: nodeSelectorPosition,
-        };
-
-        // Add to newly created blocks for animation
-        setNewlyCreatedBlocks(prev => new Set(prev).add(newBlockId));
-        setTimeout(() => {
-          setNewlyCreatedBlocks(prev => {
-            const next = new Set(prev);
-            next.delete(newBlockId);
-            return next;
-          });
-        }, 600);
-
-        setLocalBlocks(prev => [...prev, newBlock]);
-        onAddBlock(newBlock);
-
         // Get source block type for toast
         const sourceBlock = localBlocks.find(b => b.id === activeConnection.sourceBlockId);
         const sourceType = sourceBlock?.type || 'block';
@@ -282,13 +279,17 @@ const StudioCanvas = ({
             duration: 2500
           });
         }, 50);
+      } else {
+        // Standalone block created (from double-click)
+        toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} block created`);
+      }
 
-        // Reset selector state after transformation completes
-        setActiveConnection(null);
-        setNodeSelectorTransforming(false);
-        setNodeSelectorTargetType(null);
-        setShowNodeSelector(false);
-      }, 700); // Extended to allow full transformation animation
+      // Reset selector state after transformation completes
+      setActiveConnection(null);
+      setNodeSelectorTransforming(false);
+      setNodeSelectorTargetType(null);
+      setShowNodeSelector(false);
+    }, 700); // Extended to allow full transformation animation
   };
 
   const getPreviewPath = (activeConn: NonNullable<typeof activeConnection>): string => {
@@ -355,7 +356,7 @@ const StudioCanvas = ({
         if (blockToDuplicate) {
           const newBlock = {
             ...blockToDuplicate,
-            id: uuidv4(),
+            id: `${blockToDuplicate.type}-${Date.now()}`,
             position: {
               x: blockToDuplicate.position.x + 40,
               y: blockToDuplicate.position.y + 40
@@ -401,28 +402,13 @@ const StudioCanvas = ({
 
   const handleCanvasDoubleClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget || (e.target as HTMLElement).classList.contains('canvas-bg')) {
-      const rect = canvasRef.current?.getBoundingClientRect();
-      if (rect && transformRef.current) {
-        const transform = transformRef.current?.state || { positionX: 0, positionY: 0, scale: 1 };
-        const x = (e.clientX - rect.left - transform.positionX) / transform.scale;
-        const y = (e.clientY - rect.top - transform.positionY) / transform.scale;
-        
-        setAddBlockPosition({ x: snapToGrid(x), y: snapToGrid(y) });
-        setShowAddBlockDialog(true);
-      }
+      const cursorPos = getCursorPosition(e);
+      
+      // Open ConnectionNodeSelector directly (no connection line)
+      setNodeSelectorPosition(cursorPos);
+      setShowNodeSelector(true);
+      setActiveConnection(null); // No active connection since we're creating standalone
     }
-  };
-
-  const handleSelectBlockType = (type: 'text' | 'image' | 'video') => {
-    const newBlock: Block = {
-      id: uuidv4(),
-      type,
-      position: addBlockPosition
-    };
-    setLocalBlocks(prev => [...prev, newBlock]);
-    onAddBlock(newBlock);
-    setShowAddBlockDialog(false);
-    onSelectBlock(newBlock.id);
   };
 
   const handleSpawnBlocks = useCallback((newBlocks: Block[]) => {
@@ -754,7 +740,7 @@ const StudioCanvas = ({
                 ))}
                 {/* Empty Canvas State */}
                 {localBlocks.length === 0 && (
-                  <EmptyCanvasState onAddBlock={handleSelectBlockType} />
+                  <EmptyCanvasState onAddBlock={handleSelectNodeType} />
                 )}
 
                 {/* Mode Indicator */}
@@ -845,14 +831,6 @@ const StudioCanvas = ({
           </>
         )}
       </TransformWrapper>
-
-      {/* Add Block Dialog */}
-      <AddBlockDialog
-        isOpen={showAddBlockDialog}
-        onClose={() => setShowAddBlockDialog(false)}
-        onSelectBlockType={handleSelectBlockType}
-        position={addBlockPosition}
-      />
     </div>
   );
 };
