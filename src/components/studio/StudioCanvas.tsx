@@ -101,6 +101,8 @@ const StudioCanvas = ({
   const [selectedConnectionId, setSelectedConnectionId] = useState<string | null>(null);
   const [showNodeSelector, setShowNodeSelector] = useState(false);
   const [nodeSelectorPosition, setNodeSelectorPosition] = useState({ x: 0, y: 0 });
+  const [nodeSelectorTransforming, setNodeSelectorTransforming] = useState(false);
+  const [nodeSelectorTargetType, setNodeSelectorTargetType] = useState<'text' | 'image' | 'video' | null>(null);
   
   // Animation state for newly created blocks
   const [newlyCreatedBlocks, setNewlyCreatedBlocks] = useState<Set<string>>(new Set());
@@ -216,64 +218,74 @@ const StudioCanvas = ({
   const handleSelectNodeType = (type: 'text' | 'image' | 'video') => {
     if (!activeConnection) return;
 
-    // Determine target connection point based on source point
-    const getOppositePoint = (point: 'top' | 'right' | 'bottom' | 'left'): 'top' | 'right' | 'bottom' | 'left' => {
-      const opposites = { top: 'bottom', right: 'left', bottom: 'top', left: 'right' } as const;
-      return opposites[point];
-    };
+    // Start transformation animation
+    setNodeSelectorTransforming(true);
+    setNodeSelectorTargetType(type);
 
-    const targetPoint = getOppositePoint(activeConnection.sourcePoint);
-    
-    // Create new block at cursor position
-    const newBlockId = `${type}-${Date.now()}`;
-    const newBlock: Block = {
-      id: newBlockId,
-      type,
-      position: nodeSelectorPosition,
-    };
-
-    // Add to newly created blocks for animation
-    setNewlyCreatedBlocks(prev => new Set(prev).add(newBlockId));
+    // Wait for transformation animation to complete before creating block
     setTimeout(() => {
-      setNewlyCreatedBlocks(prev => {
-        const next = new Set(prev);
-        next.delete(newBlockId);
-        return next;
-      });
-    }, 600);
+      // Determine target connection point based on source point
+      const getOppositePoint = (point: 'top' | 'right' | 'bottom' | 'left'): 'top' | 'right' | 'bottom' | 'left' => {
+        const opposites = { top: 'bottom', right: 'left', bottom: 'top', left: 'right' } as const;
+        return opposites[point];
+      };
 
-    setLocalBlocks(prev => [...prev, newBlock]);
-    onAddBlock(newBlock);
-
-    // Get source block type for toast
-    const sourceBlock = localBlocks.find(b => b.id === activeConnection.sourceBlockId);
-    const sourceType = sourceBlock?.type || 'block';
-    
-    // Highlight both blocks briefly
-    setHighlightedBlocks(new Set([activeConnection.sourceBlockId, newBlockId]));
-    setTimeout(() => {
-      setHighlightedBlocks(new Set());
-    }, 1000);
-
-    // Create connection with enhanced feedback
-    setTimeout(() => {
-      createConnection(
-        activeConnection.sourceBlockId,
-        activeConnection.sourcePoint,
-        newBlockId,
-        targetPoint
-      );
+      const targetPoint = getOppositePoint(activeConnection.sourcePoint);
       
-      // Show connection success toast with block types
-      const capitalize = (str: string) => str.charAt(0).toUpperCase() + str.slice(1);
-      toast.success(`Connected ${capitalize(sourceType)} → ${capitalize(type)}`, {
-        description: 'Data will flow from source to target',
-        duration: 2500
-      });
-    }, 50);
+      // Create new block at menu position
+      const newBlockId = `${type}-${Date.now()}`;
+      const newBlock: Block = {
+        id: newBlockId,
+        type,
+        position: nodeSelectorPosition,
+      };
 
-    setShowNodeSelector(false);
-    setActiveConnection(null);
+      // Add to newly created blocks for animation
+      setNewlyCreatedBlocks(prev => new Set(prev).add(newBlockId));
+      setTimeout(() => {
+        setNewlyCreatedBlocks(prev => {
+          const next = new Set(prev);
+          next.delete(newBlockId);
+          return next;
+        });
+      }, 600);
+
+      setLocalBlocks(prev => [...prev, newBlock]);
+      onAddBlock(newBlock);
+
+      // Get source block type for toast
+      const sourceBlock = localBlocks.find(b => b.id === activeConnection.sourceBlockId);
+      const sourceType = sourceBlock?.type || 'block';
+      
+      // Highlight both blocks briefly
+      setHighlightedBlocks(new Set([activeConnection.sourceBlockId, newBlockId]));
+      setTimeout(() => {
+        setHighlightedBlocks(new Set());
+      }, 1000);
+
+      // Create connection with enhanced feedback
+      setTimeout(() => {
+        createConnection(
+          activeConnection.sourceBlockId,
+          activeConnection.sourcePoint,
+          newBlockId,
+          targetPoint
+        );
+        
+        // Show connection success toast with block types
+        const capitalize = (str: string) => str.charAt(0).toUpperCase() + str.slice(1);
+        toast.success(`Connected ${capitalize(sourceType)} → ${capitalize(type)}`, {
+          description: 'Data will flow from source to target',
+          duration: 2500
+        });
+      }, 50);
+
+      // Reset selector state
+      setShowNodeSelector(false);
+      setActiveConnection(null);
+      setNodeSelectorTransforming(false);
+      setNodeSelectorTargetType(null);
+    }, 500); // Match transformation animation duration
   };
 
   const getPreviewPath = (activeConn: NonNullable<typeof activeConnection>): string => {
@@ -637,11 +649,17 @@ const StudioCanvas = ({
                 onNavigate={() => {
                   setShowNodeSelector(false);
                   setActiveConnection(null);
+                  setNodeSelectorTransforming(false);
+                  setNodeSelectorTargetType(null);
                 }}
                 onCancel={() => {
                   setShowNodeSelector(false);
                   setActiveConnection(null);
+                  setNodeSelectorTransforming(false);
+                  setNodeSelectorTargetType(null);
                 }}
+                isTransforming={nodeSelectorTransforming}
+                targetType={nodeSelectorTargetType || undefined}
               />
             )}
 
