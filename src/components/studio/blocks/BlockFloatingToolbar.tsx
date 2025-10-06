@@ -192,7 +192,7 @@ export const BlockFloatingToolbar: React.FC<BlockFloatingToolbarProps> = ({
             sideOffset={8}
           >
             {metadataModels?.map((model, index) => (
-              <React.Fragment key={model.id}>
+              <div key={model.id}>
                 {index > 0 && <DropdownMenuSeparator className="bg-zinc-800" />}
                 <DropdownMenuItem
                   className="flex items-start gap-3 p-3 cursor-pointer focus:bg-zinc-800 group"
@@ -225,7 +225,7 @@ export const BlockFloatingToolbar: React.FC<BlockFloatingToolbarProps> = ({
                     </Badge>
                   </div>
                 </DropdownMenuItem>
-              </React.Fragment>
+              </div>
             ))}
           </DropdownMenuContent>
         </DropdownMenu>

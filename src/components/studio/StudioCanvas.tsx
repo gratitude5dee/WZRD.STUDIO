@@ -526,9 +526,9 @@ const StudioCanvas = ({
         // Show node selector menu
         setNodeSelectorPosition(cursorPos);
         setShowNodeSelector(true);
+        // Don't clear activeConnection here - let selector use it
       }
       
-      setActiveConnection(null);
       setInteractionMode('pan');
       return;
     }
@@ -546,8 +546,45 @@ const StudioCanvas = ({
     setInteractionMode('pan');
   };
 
+  // Calculate viewport-relative position for selector
+  const getViewportPosition = (canvasPos: { x: number; y: number }) => {
+    if (!canvasRef.current || !transformRef.current) return canvasPos;
+    
+    const rect = canvasRef.current.getBoundingClientRect();
+    const transform = transformRef.current?.state || { positionX: 0, positionY: 0, scale: 1 };
+    
+    return {
+      x: canvasPos.x * transform.scale + transform.positionX,
+      y: canvasPos.y * transform.scale + transform.positionY
+    };
+  };
+
   return (
     <div className="flex-1 relative overflow-hidden bg-black" ref={canvasRef}>
+      {/* Node Selector Menu - Outside TransformWrapper for fixed positioning */}
+      <AnimatePresence mode="wait">
+        {showNodeSelector && (
+          <ConnectionNodeSelector
+            position={getViewportPosition(nodeSelectorPosition)}
+            onSelectType={handleSelectNodeType}
+            onNavigate={() => {
+              setShowNodeSelector(false);
+              setActiveConnection(null);
+              setNodeSelectorTransforming(false);
+              setNodeSelectorTargetType(null);
+            }}
+            onCancel={() => {
+              setShowNodeSelector(false);
+              setActiveConnection(null);
+              setNodeSelectorTransforming(false);
+              setNodeSelectorTargetType(null);
+            }}
+            isTransforming={nodeSelectorTransforming}
+            targetType={nodeSelectorTargetType || undefined}
+          />
+        )}
+      </AnimatePresence>
+
       <TransformWrapper
         ref={transformRef}
         initialScale={1}
@@ -643,30 +680,6 @@ const StudioCanvas = ({
                 </foreignObject>
               </svg>
             )}
-
-            {/* Node Selector Menu */}
-            <AnimatePresence mode="wait">
-              {showNodeSelector && (
-                <ConnectionNodeSelector
-                  position={nodeSelectorPosition}
-                  onSelectType={handleSelectNodeType}
-                  onNavigate={() => {
-                    setShowNodeSelector(false);
-                    setActiveConnection(null);
-                    setNodeSelectorTransforming(false);
-                    setNodeSelectorTargetType(null);
-                  }}
-                  onCancel={() => {
-                    setShowNodeSelector(false);
-                    setActiveConnection(null);
-                    setNodeSelectorTransforming(false);
-                    setNodeSelectorTargetType(null);
-                  }}
-                  isTransforming={nodeSelectorTransforming}
-                  targetType={nodeSelectorTargetType || undefined}
-                />
-              )}
-            </AnimatePresence>
 
             {/* Zoom Controls */}
             <AnimatePresence>
