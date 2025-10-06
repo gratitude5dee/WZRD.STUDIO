@@ -145,36 +145,72 @@ export const BlockFloatingToolbar: React.FC<BlockFloatingToolbarProps> = ({
 
         <div className="w-px h-5 bg-zinc-800" />
 
-        {/* Model Selector */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button className="flex items-center gap-2 px-2.5 py-1.5 hover:bg-zinc-800/50 rounded-md transition-colors">
-              <span className="text-xs font-medium text-zinc-300">
-                {availableModels.find(m => m.id === selectedModel)?.name || selectedModel}
-              </span>
-              <ChevronDown className="h-3 w-3 text-zinc-400" />
-            </button>
-          </DropdownMenuTrigger>
+        {/* Model Selector with Credit Badge */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex items-center gap-2 px-3 py-1.5 hover:bg-zinc-800/50 rounded-md transition-colors group">
+                  <span className="text-xs font-medium text-zinc-300">
+                    {availableModels.find(m => m.id === selectedModel)?.name || selectedModel}
+                  </span>
+                  <div className="flex items-center gap-1 px-1.5 py-0.5 bg-yellow-500/10 border border-yellow-500/20 rounded-full">
+                    <Sparkles className="w-2.5 h-2.5 text-yellow-500" />
+                    <span className="text-[10px] font-medium text-yellow-500">
+                      {availableModels.find(m => m.id === selectedModel)?.credits || 0}
+                    </span>
+                  </div>
+                  <ChevronDown className="h-3 w-3 text-zinc-400 group-hover:text-zinc-300 transition-colors" />
+                </button>
+              </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-80 bg-[#1a1a1a] border-zinc-800 p-2">
             <DropdownMenuLabel className="text-xs text-zinc-500 uppercase tracking-wider px-2">Select Model</DropdownMenuLabel>
             <DropdownMenuSeparator className="bg-zinc-800" />
             <div className="space-y-1 max-h-[400px] overflow-y-auto">
               {availableModels.map((model) => (
-                <div key={model.id} onClick={() => onModelChange(model.id)}>
-                  <ModelListItem
-                    icon={getModelIcon(model.icon)}
-                    name={model.name}
-                    description={model.description}
-                    credits={model.credits || 1}
-                    time={model.time || '~5s'}
-                    isSelected={selectedModel === model.id}
-                    onClick={() => onModelChange(model.id)}
-                  />
-                </div>
+                <button
+                  key={model.id}
+                  onClick={() => onModelChange(model.id)}
+                  className="w-full flex items-center justify-between gap-4 py-3 px-3 hover:bg-zinc-800/60 rounded-lg transition-all group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500/20 to-purple-500/20 border border-blue-500/30 flex items-center justify-center flex-shrink-0 group-hover:border-blue-400/50 transition-colors">
+                      {getModelIcon(model.icon)}
+                    </div>
+                    <div className="flex flex-col text-left">
+                      <span className="text-sm font-medium text-zinc-100">
+                        {model.name}
+                      </span>
+                      {model.description && (
+                        <span className="text-xs text-zinc-400">
+                          {model.description}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-1 px-2 py-1 bg-yellow-500/10 border border-yellow-500/20 rounded-full">
+                      <Sparkles className="w-3 h-3 text-yellow-500" />
+                      <span className="text-xs font-medium text-yellow-500">{model.credits || 1}</span>
+                    </div>
+                    <span className="text-xs text-zinc-500">{model.time || '~5s'}</span>
+                    {selectedModel === model.id && (
+                      <Check className="w-4 h-4 text-blue-500" />
+                    )}
+                  </div>
+                </button>
               ))}
             </div>
           </DropdownMenuContent>
-        </DropdownMenu>
+            </DropdownMenu>
+          </TooltipTrigger>
+          <TooltipContent>
+            <div className="flex items-center gap-2">
+              <span>Current model</span>
+              <span className="text-yellow-500">{availableModels.find(m => m.id === selectedModel)?.credits || 0} credits</span>
+            </div>
+          </TooltipContent>
+        </Tooltip>
 
         <div className="w-px h-5 bg-zinc-800" />
 

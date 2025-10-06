@@ -69,19 +69,19 @@ const BlockBase: React.FC<BlockProps> = ({
   
   const getConnectionPointStyle = (point: 'top' | 'right' | 'bottom' | 'left') => {
     const isConnected = connectedPoints.includes(point);
-    const baseStyle = "absolute w-3 h-3 rounded-full border-2 transition-all duration-200 z-20";
+    const baseStyle = "absolute rounded-full border-2 transition-all duration-300 z-20";
     const positionStyles = {
-      top: "left-1/2 -translate-x-1/2 -top-1.5",
+      top: "left-1/2 -translate-x-1/2 -top-2",
       right: "right-0 translate-x-1/2 top-1/2 -translate-y-1/2",
-      bottom: "left-1/2 -translate-x-1/2 -bottom-1.5",
+      bottom: "left-1/2 -translate-x-1/2 -bottom-2",
       left: "left-0 -translate-x-1/2 top-1/2 -translate-y-1/2"
     };
     
     if (isConnected) {
-      return `${baseStyle} ${positionStyles[point]} bg-green-500 border-green-400 shadow-[0_0_8px_rgba(34,197,94,0.6)]`;
+      return `${baseStyle} ${positionStyles[point]} w-2 h-2 bg-green-500 border-green-400 shadow-[0_0_12px_rgba(34,197,94,0.8)] animate-pulse`;
     }
     
-    return `${baseStyle} ${positionStyles[point]} bg-zinc-800 border-zinc-700 opacity-0 group-hover:opacity-100 hover:bg-blue-500 hover:border-blue-400 hover:scale-125 hover:shadow-[0_0_8px_rgba(59,130,246,0.6)] cursor-pointer`;
+    return `${baseStyle} ${positionStyles[point]} w-1.5 h-1.5 bg-zinc-700/50 border-zinc-600/50 opacity-0 group-hover:opacity-100 hover:w-2 hover:h-2 hover:bg-blue-500 hover:border-blue-400 hover:scale-125 hover:shadow-[0_0_12px_rgba(59,130,246,0.8)] cursor-pointer`;
   };
 
   return (

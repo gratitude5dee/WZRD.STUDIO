@@ -26,36 +26,36 @@ export const ImageCountSelector: React.FC<ImageCountSelectorProps> = ({
   };
 
   return (
-    <div className={cn("flex items-center gap-1", className)}>
-      <div className="flex items-center gap-0.5 px-2 py-1 bg-zinc-900/50 border border-zinc-800 rounded-md">
-        <span className="text-xs font-medium text-zinc-300 min-w-[20px] text-center">
+    <div className={cn("flex items-center gap-1.5", className)}>
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          decrement();
+        }}
+        disabled={value <= min}
+        className="w-6 h-6 rounded-full bg-zinc-800/50 border border-zinc-700 hover:bg-zinc-700/50 hover:border-zinc-600 transition-all disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center group"
+        title="Decrease count"
+      >
+        <ChevronDown className="w-3.5 h-3.5 text-zinc-400 group-hover:text-zinc-200 transition-colors" />
+      </button>
+      
+      <div className="px-3 py-1 bg-zinc-900/80 border border-zinc-800 rounded-full backdrop-blur-sm">
+        <span className="text-sm font-semibold text-zinc-200 min-w-[24px] text-center inline-block">
           {value}
         </span>
       </div>
-      <div className="flex flex-col">
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            increment();
-          }}
-          disabled={value >= max}
-          className="p-0.5 hover:bg-zinc-800/50 rounded-sm transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-          title="Increase count"
-        >
-          <ChevronUp className="w-3 h-3 text-zinc-400" />
-        </button>
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            decrement();
-          }}
-          disabled={value <= min}
-          className="p-0.5 hover:bg-zinc-800/50 rounded-sm transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-          title="Decrease count"
-        >
-          <ChevronDown className="w-3 h-3 text-zinc-400" />
-        </button>
-      </div>
+      
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          increment();
+        }}
+        disabled={value >= max}
+        className="w-6 h-6 rounded-full bg-zinc-800/50 border border-zinc-700 hover:bg-zinc-700/50 hover:border-zinc-600 transition-all disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center group"
+        title="Increase count"
+      >
+        <ChevronUp className="w-3.5 h-3.5 text-zinc-400 group-hover:text-zinc-200 transition-colors" />
+      </button>
     </div>
   );
 };

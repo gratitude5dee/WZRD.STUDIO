@@ -76,17 +76,26 @@ export const ConnectionLines: React.FC<ConnectionLinesProps> = ({
     >
       <defs>
         {connections.map((connection) => (
-          <linearGradient
-            key={getGradientId(connection)}
-            id={getGradientId(connection)}
-            x1="0%"
-            y1="0%"
-            x2="100%"
-            y2="0%"
-          >
-            <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.8" />
-            <stop offset="100%" stopColor="#a855f7" stopOpacity="0.8" />
-          </linearGradient>
+          <React.Fragment key={connection.id}>
+            <linearGradient
+              id={getGradientId(connection)}
+              x1="0%"
+              y1="0%"
+              x2="100%"
+              y2="0%"
+            >
+              <stop offset="0%" stopColor="#3b82f6" stopOpacity="1" />
+              <stop offset="50%" stopColor="#6366f1" stopOpacity="1" />
+              <stop offset="100%" stopColor="#8b5cf6" stopOpacity="1" />
+            </linearGradient>
+            <filter id={`glow-${connection.id}`}>
+              <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+              <feMerge>
+                <feMergeNode in="coloredBlur"/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
+          </React.Fragment>
         ))}
       </defs>
       
@@ -103,9 +112,10 @@ export const ConnectionLines: React.FC<ConnectionLinesProps> = ({
               d={path}
               fill="none"
               stroke={`url(#${getGradientId(connection)})`}
-              strokeWidth={isSelected ? 12 : 10}
-              opacity={0.15}
-              filter="blur(4px)"
+              strokeWidth="10"
+              opacity="0.25"
+              filter={`url(#glow-${connection.id})`}
+              pointerEvents="none"
             />
             
             {/* Main line */}
@@ -113,29 +123,43 @@ export const ConnectionLines: React.FC<ConnectionLinesProps> = ({
               d={path}
               fill="none"
               stroke={`url(#${getGradientId(connection)})`}
-              strokeWidth={isSelected ? 3 : 2.5}
+              strokeWidth={isSelected ? "3.5" : "2"}
               strokeLinecap="round"
-              className="pointer-events-auto cursor-pointer hover:stroke-[4px] transition-all"
+              className="pointer-events-auto cursor-pointer transition-all duration-300"
+              style={{
+                strokeWidth: isSelected ? '3.5px' : '2px'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.strokeWidth = '3.5px';
+              }}
+              onMouseLeave={(e) => {
+                if (!isSelected) {
+                  e.currentTarget.style.strokeWidth = '2px';
+                }
+              }}
               onClick={(e) => {
                 e.stopPropagation();
                 onSelectConnection(connection.id);
               }}
             />
             
-            {/* Animated flow dots */}
-            <circle r="4" fill="#60a5fa">
+            {/* Animated flow dots - forward */}
+            <circle r="3" fill="#60a5fa" opacity="0.95">
               <animateMotion
-                dur="2s"
+                dur="2.5s"
                 repeatCount="indefinite"
                 path={path}
               />
             </circle>
-            <circle r="4" fill="#a855f7">
+            
+            {/* Animated flow dots - backward */}
+            <circle r="3" fill="#8b5cf6" opacity="0.95">
               <animateMotion
-                dur="2s"
+                dur="2.5s"
                 repeatCount="indefinite"
-                begin="0.5s"
                 path={path}
+                keyPoints="1;0"
+                keyTimes="0;1"
               />
             </circle>
           </g>

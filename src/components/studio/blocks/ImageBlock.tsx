@@ -249,28 +249,28 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
         <img
           src={generatedImage.url}
           alt={prompt}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
         />
         
-        {/* Top gradient overlay with title */}
-        <div className="absolute inset-x-0 top-0 bg-gradient-to-b from-black/80 via-black/40 to-transparent p-4">
-          <div className="flex items-start justify-between gap-2">
-            <h3 className="text-white font-medium text-sm leading-tight flex-1">
+        {/* Bottom Badge Overlay with frosted glass */}
+        <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between pointer-events-none">
+          <div className="px-3 py-1.5 bg-black/60 backdrop-blur-md border border-white/10 rounded-lg max-w-[60%]">
+            <span className="text-xs font-medium text-white/90 line-clamp-1">
               {generateShortTitle(prompt)}
-            </h3>
-            {generatedImage.generationTime && (
-              <Badge className="bg-white/10 text-white text-[10px] backdrop-blur-sm border-0 shrink-0">
-                ~{generatedImage.generationTime}s
-              </Badge>
-            )}
+            </span>
+          </div>
+          <div className="px-2.5 py-1 bg-gradient-to-r from-blue-500/90 to-purple-500/90 backdrop-blur-md border border-white/20 rounded-lg shadow-lg">
+            <span className="text-[10px] font-bold text-white tracking-wide">
+              {selectedModel?.includes('flux') ? '⚡ Flux' : selectedModel?.includes('recraft') ? '🎨 Recraft' : '✨ AI'}
+            </span>
           </div>
         </div>
 
-        {/* Hover actions overlay */}
-        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center gap-2">
+        {/* Hover actions overlay with reduced opacity */}
+        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center gap-2">
           <Button
             size="icon"
-            className="bg-white/90 hover:bg-white text-black shadow-lg"
+            className="bg-white/90 hover:bg-white text-black shadow-lg transform hover:scale-110 transition-transform"
             onClick={(e) => handleDownload(generatedImage.url, e)}
             onMouseDown={(e) => e.stopPropagation()}
           >
@@ -278,7 +278,7 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
           </Button>
           <Button
             size="icon"
-            className="bg-white/90 hover:bg-white text-black shadow-lg"
+            className="bg-white/90 hover:bg-white text-black shadow-lg transform hover:scale-110 transition-transform"
             onClick={(e) => handleCopy(generatedImage.url, e)}
             onMouseDown={(e) => e.stopPropagation()}
           >
@@ -286,7 +286,7 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
           </Button>
           <Button
             size="icon"
-            className="bg-white/90 hover:bg-white text-black shadow-lg"
+            className="bg-white/90 hover:bg-white text-black shadow-lg transform hover:scale-110 transition-transform"
             onClick={(e) => {
               e.stopPropagation();
               setDisplayMode('input');
@@ -297,7 +297,7 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
           </Button>
           <Button
             size="icon"
-            className="bg-white/90 hover:bg-white text-black shadow-lg"
+            className="bg-white/90 hover:bg-white text-black shadow-lg transform hover:scale-110 transition-transform"
             onClick={(e) => {
               e.stopPropagation();
               toast.info('Variation feature coming soon');
@@ -347,43 +347,55 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
         }
       >
         <div className="space-y-3">
-          {/* Empty State - Suggestion Menu */}
+          {/* Empty State - Enhanced Suggestion Menu */}
           {!prompt && !generatedImage && !isGenerating && (
-            <div className="space-y-2 mb-3">
+            <div className="space-y-1.5 mb-3">
               <button 
-                className="w-full flex items-center gap-2 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50 p-2 rounded-lg transition-colors text-left text-xs"
+                className="w-full flex items-center gap-3 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50 p-3 rounded-lg transition-all text-left text-xs group border border-transparent hover:border-zinc-700/50"
                 onClick={() => toast.info('Documentation coming soon')}
                 onMouseDown={(e) => e.stopPropagation()}
               >
-                <Info className="w-3.5 h-3.5" />
-                <span>Learn about Image Blocks</span>
+                <div className="w-7 h-7 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-500/20 transition-colors">
+                  <Info className="w-3.5 h-3.5 text-blue-400" />
+                </div>
+                <span className="flex-1">Learn about Image Blocks</span>
+                <span className="text-zinc-600 group-hover:text-zinc-400 transition-colors">→</span>
               </button>
               <button 
-                className="w-full flex items-center gap-2 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50 p-2 rounded-lg transition-colors text-left text-xs"
+                className="w-full flex items-center gap-3 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50 p-3 rounded-lg transition-all text-left text-xs group border border-transparent hover:border-zinc-700/50"
                 onClick={() => toast.info('Upload feature coming soon')}
                 onMouseDown={(e) => e.stopPropagation()}
               >
-                <Upload className="w-3.5 h-3.5" />
-                <span>Upload an Image</span>
+                <div className="w-7 h-7 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center flex-shrink-0 group-hover:bg-purple-500/20 transition-colors">
+                  <Upload className="w-3.5 h-3.5 text-purple-400" />
+                </div>
+                <span className="flex-1">Upload an Image</span>
+                <span className="text-zinc-600 group-hover:text-zinc-400 transition-colors">→</span>
               </button>
               <button 
-                className="w-full flex items-center gap-2 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50 p-2 rounded-lg transition-colors text-left text-xs"
+                className="w-full flex items-center gap-3 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50 p-3 rounded-lg transition-all text-left text-xs group border border-transparent hover:border-zinc-700/50"
                 onClick={() => toast.info('Video combination coming soon')}
                 onMouseDown={(e) => e.stopPropagation()}
               >
-                <Video className="w-3.5 h-3.5" />
-                <span>Combine images into a video</span>
+                <div className="w-7 h-7 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center flex-shrink-0 group-hover:bg-amber-500/20 transition-colors">
+                  <Video className="w-3.5 h-3.5 text-amber-400" />
+                </div>
+                <span className="flex-1">Combine images into a video</span>
+                <span className="text-zinc-600 group-hover:text-zinc-400 transition-colors">→</span>
               </button>
               <button 
-                className="w-full flex items-center gap-2 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50 p-2 rounded-lg transition-colors text-left text-xs"
+                className="w-full flex items-center gap-3 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50 p-3 rounded-lg transition-all text-left text-xs group border border-transparent hover:border-zinc-700/50"
                 onClick={() => toast.info('Image to video coming soon')}
                 onMouseDown={(e) => e.stopPropagation()}
               >
-                <Video className="w-3.5 h-3.5" />
-                <span>Turn an image into a video</span>
+                <div className="w-7 h-7 rounded-lg bg-green-500/10 border border-green-500/20 flex items-center justify-center flex-shrink-0 group-hover:bg-green-500/20 transition-colors">
+                  <Video className="w-3.5 h-3.5 text-green-400" />
+                </div>
+                <span className="flex-1">Turn an image into a video</span>
+                <span className="text-zinc-600 group-hover:text-zinc-400 transition-colors">→</span>
               </button>
               <button 
-                className="w-full flex items-center gap-2 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50 p-2 rounded-lg transition-colors text-left text-xs"
+                className="w-full flex items-center gap-3 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50 p-3 rounded-lg transition-all text-left text-xs group border border-transparent hover:border-zinc-700/50"
                 onClick={(e) => {
                   e.stopPropagation();
                   // Trigger visual intelligence workflow
@@ -410,8 +422,11 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
                 }}
                 onMouseDown={(e) => e.stopPropagation()}
               >
-                <MessageSquare className="w-3.5 h-3.5" />
-                <span>Ask a question about an image</span>
+                <div className="w-7 h-7 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center flex-shrink-0 group-hover:bg-cyan-500/20 transition-colors">
+                  <MessageSquare className="w-3.5 h-3.5 text-cyan-400" />
+                </div>
+                <span className="flex-1">Ask a question about an image</span>
+                <span className="text-zinc-600 group-hover:text-zinc-400 transition-colors">→</span>
               </button>
             </div>
           )}
