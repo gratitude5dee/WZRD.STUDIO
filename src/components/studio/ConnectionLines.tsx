@@ -142,25 +142,37 @@ export const ConnectionLines: React.FC<ConnectionLinesProps> = ({
               }}
             />
             
-            {/* Animated flow dots - forward */}
-            <circle r="3" fill="#60a5fa" opacity="0.95">
-              <animateMotion
-                dur="2.5s"
-                repeatCount="indefinite"
-                path={path}
-              />
-            </circle>
+            {/* Animated flow indicator - directional arrow */}
+            <g opacity="0.9">
+              <circle r="4" fill="#60a5fa">
+                <animateMotion
+                  dur="3s"
+                  repeatCount="indefinite"
+                  path={path}
+                />
+              </circle>
+              {/* Trailing glow */}
+              <circle r="6" fill="#60a5fa" opacity="0.3">
+                <animateMotion
+                  dur="3s"
+                  repeatCount="indefinite"
+                  path={path}
+                  begin="0.1s"
+                />
+              </circle>
+            </g>
             
-            {/* Animated flow dots - backward */}
-            <circle r="3" fill="#8b5cf6" opacity="0.95">
-              <animateMotion
-                dur="2.5s"
-                repeatCount="indefinite"
-                path={path}
-                keyPoints="1;0"
-                keyTimes="0;1"
-              />
-            </circle>
+            {/* Secondary flow indicator with offset */}
+            <g opacity="0.7">
+              <circle r="3" fill="#8b5cf6">
+                <animateMotion
+                  dur="3s"
+                  repeatCount="indefinite"
+                  path={path}
+                  begin="1.5s"
+                />
+              </circle>
+            </g>
           </g>
         );
       })}

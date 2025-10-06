@@ -101,6 +101,10 @@ const StudioCanvas = ({
   const [selectedConnectionId, setSelectedConnectionId] = useState<string | null>(null);
   const [showNodeSelector, setShowNodeSelector] = useState(false);
   const [nodeSelectorPosition, setNodeSelectorPosition] = useState({ x: 0, y: 0 });
+  
+  // Animation state for newly created blocks
+  const [newlyCreatedBlocks, setNewlyCreatedBlocks] = useState<Set<string>>(new Set());
+  const [highlightedBlocks, setHighlightedBlocks] = useState<Set<string>>(new Set());
 
   // Zoom controls visibility
   const [showZoomControls, setShowZoomControls] = useState(false);
@@ -228,10 +232,30 @@ const StudioCanvas = ({
       position: nodeSelectorPosition,
     };
 
+    // Add to newly created blocks for animation
+    setNewlyCreatedBlocks(prev => new Set(prev).add(newBlockId));
+    setTimeout(() => {
+      setNewlyCreatedBlocks(prev => {
+        const next = new Set(prev);
+        next.delete(newBlockId);
+        return next;
+      });
+    }, 600);
+
     setLocalBlocks(prev => [...prev, newBlock]);
     onAddBlock(newBlock);
 
-    // Create connection
+    // Get source block type for toast
+    const sourceBlock = localBlocks.find(b => b.id === activeConnection.sourceBlockId);
+    const sourceType = sourceBlock?.type || 'block';
+    
+    // Highlight both blocks briefly
+    setHighlightedBlocks(new Set([activeConnection.sourceBlockId, newBlockId]));
+    setTimeout(() => {
+      setHighlightedBlocks(new Set());
+    }, 1000);
+
+    // Create connection with enhanced feedback
     setTimeout(() => {
       createConnection(
         activeConnection.sourceBlockId,
@@ -239,6 +263,13 @@ const StudioCanvas = ({
         newBlockId,
         targetPoint
       );
+      
+      // Show connection success toast with block types
+      const capitalize = (str: string) => str.charAt(0).toUpperCase() + str.slice(1);
+      toast.success(`Connected ${capitalize(sourceType)} → ${capitalize(type)}`, {
+        description: 'Data will flow from source to target',
+        duration: 2500
+      });
     }, 50);
 
     setShowNodeSelector(false);
@@ -705,16 +736,27 @@ const StudioCanvas = ({
                     ...blockConnections.filter(c => c.targetBlockId === block.id).map(c => c.targetPoint),
                   ];
                   
+                  const isNewlyCreated = newlyCreatedBlocks.has(block.id);
+                  const isHighlighted = highlightedBlocks.has(block.id);
+                  
                   return (
-                    <div
+                    <motion.div
                       key={block.id}
+                      initial={isNewlyCreated ? { opacity: 0, scale: 0.8, y: -10 } : false}
+                      animate={{ 
+                        opacity: draggedBlockId === block.id && isDragging ? 0.5 : 1,
+                        scale: draggedBlockId === block.id && isDragging ? 1.02 : 1,
+                      }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 400,
+                        damping: 25
+                      }}
                       style={{
                         position: 'absolute',
                         left: block.position.x,
                         top: block.position.y,
-                        opacity: draggedBlockId === block.id && isDragging ? 0.5 : 1,
-                        transform: draggedBlockId === block.id && isDragging ? 'scale(1.02)' : 'scale(1)',
-                        transition: draggedBlockId === block.id ? 'none' : 'transform 0.2s ease'
+                        filter: isHighlighted ? 'drop-shadow(0 0 20px rgba(59, 130, 246, 0.8))' : 'none',
                       }}
                       onMouseDown={(e) => handleBlockMouseDown(block.id, e)}
                     >
@@ -759,7 +801,7 @@ const StudioCanvas = ({
                           connectedPoints={connectedPoints}
                         />
                       )}
-                    </div>
+                    </motion.div>
                   );
                 })}
               </div>
