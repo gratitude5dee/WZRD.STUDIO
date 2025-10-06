@@ -28,6 +28,7 @@ const MODEL_METADATA = {
     { id: 'openai/gpt-5', name: 'GPT-5', description: 'Top performance', badge: 'Paid', icon: Target, color: 'text-orange-400' }
   ],
   image: [
+    { id: 'google/gemini-2.5-flash-image-preview', name: 'Gemini 2.5 Flash', description: 'Fast AI image generation', badge: 'Free', icon: Zap, color: 'text-green-400' },
     { id: 'fal-ai/flux-pro/v1.1', name: 'Flux Pro', description: 'Highest quality', badge: 'Premium', icon: Target, color: 'text-purple-400' },
     { id: 'fal-ai/flux-dev', name: 'Flux Dev', description: 'Best for creative work', badge: 'Free', icon: Zap, color: 'text-green-400' },
     { id: 'fal-ai/recraft-v3', name: 'Recraft V3', description: 'Fast generation', badge: 'Free', icon: Zap, color: 'text-blue-400' }
@@ -81,7 +82,7 @@ const DEFAULT_MODELS = {
     { id: 'anthropic/claude-haiku-3.5', name: 'Claude Haiku 3.5', description: 'Fast Claude model', credits: 3, time: '~4s', icon: 'sparkles-orange' },
   ],
   image: [
-    { id: 'gemini-2.5-flash-image', name: 'Gemini 2.5', description: 'Fast image generation', credits: 2, time: '~4s', icon: 'image' },
+    { id: 'google/gemini-2.5-flash-image-preview', name: 'Gemini 2.5 Flash', description: 'Fast AI image generation', credits: 2, time: '~4s', icon: 'image' },
     { id: 'flux-schnell', name: 'Flux Schnell', description: 'Ultra-fast quality', credits: 3, time: '~3s', icon: 'image' },
     { id: 'flux-dev', name: 'Flux Dev', description: 'Highest quality', credits: 5, time: '~8s', icon: 'image' },
   ],
