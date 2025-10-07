@@ -79,6 +79,8 @@ const ShotsRow = ({ sceneId, sceneNumber, projectId, onSceneDelete, isSelected =
   const [connections, setConnections] = useState<ShotConnection[]>([]);
   const [activeConnection, setActiveConnection] = useState<ActiveConnection | null>(null);
   const [shotRefs, setShotRefs] = useState<Map<string, { x: number; y: number; width: number; height: number }>>(new Map());
+  const [generationState, setGenerationState] = useState<'idle' | 'preparing' | 'generating' | 'visualizing' | 'complete'>('idle');
+  const [generationProgress, setGenerationProgress] = useState({ completed: 0, total: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
   const autoStartRef = useRef(false);
   const lastMetaRequestRef = useRef<string | null>(null);
@@ -424,9 +426,39 @@ const ShotsRow = ({ sceneId, sceneNumber, projectId, onSceneDelete, isSelected =
             <div className="text-xs uppercase tracking-wider text-zinc-500 font-medium mb-0.5">
               Scene
             </div>
-            <h2 className="text-xl font-bold text-amber-400 glow-text-gold font-serif">
-              Scene {sceneNumber}
-            </h2>
+            
+            {/* Generation progress badge */}
+            {generationState !== 'idle' && generationState !== 'complete' && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-950/40 border border-blue-500/30 backdrop-blur-sm"
+              >
+                <motion.div
+                  className="w-4 h-4 border-2 border-blue-500/30 border-t-blue-500 rounded-full"
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                />
+                <span className="text-xs text-blue-400 font-medium">
+                  {generationState === 'preparing' && 'Preparing shots...'}
+                  {generationState === 'generating' && `Generating ${generationProgress.completed}/${generationProgress.total}`}
+                  {generationState === 'visualizing' && 'Creating visuals...'}
+                </span>
+              </motion.div>
+            )}
+            
+            {generationState === 'complete' && generationProgress.total > 0 && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-950/40 border border-emerald-500/30 backdrop-blur-sm"
+              >
+                <span className="text-emerald-400">✓</span>
+                <span className="text-xs text-emerald-400 font-medium">
+                  Complete
+                </span>
+              </motion.div>
+            )}
           </div>
         </div>
 
@@ -581,8 +613,10 @@ const ShotsRow = ({ sceneId, sceneNumber, projectId, onSceneDelete, isSelected =
           )}
 
           {isLoading ? (
-            <div className="flex items-center justify-center w-full text-zinc-500">
-              <span className="animate-spin mr-2">◌</span> Loading shots...
+            <div className="flex gap-4">
+              {[0, 1, 2].map((i) => (
+                <ShotCardSkeleton key={i} />
+              ))}
             </div>
           ) : hasShots ? (
             <DndContext sensors={sensors} onDragEnd={handleDragEnd}>

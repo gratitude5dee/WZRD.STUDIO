@@ -1,23 +1,24 @@
 # Plan
 
 ## Prioritized Fixes
-1. **Harden Streaming UX (High Impact, Medium Effort)**
-   - Surface phase-aware progress, cancellation, and telemetry badges for `/gen/shots` so QA can validate latency budgets per scene.
-   - Persist the latest run metadata for comparison and expose hooks for retry/queue orchestration.
-2. **Virtualize Storyboard Timelines (High Impact, High Effort)**
-   - Swap the current map-based rendering for windowed lists (e.g., `@tanstack/react-virtual`) that cooperate with DnD and focus management.
-   - Move DOM measurement for connection lines off the critical path with ResizeObservers and requestIdle callbacks.
-3. **Prefetch & Cache Coordination (Medium Impact, Medium Effort)**
-   - Prewarm scene + shot metadata via React Query when a project loads and cache SSE payloads for offline review.
-   - Emit `stale-while-revalidate` hints and ETags for HTML to keep SSR snappy behind the CDN.
-4. **Bundle Budget Guardrails (Medium Impact, Low Effort)**
-   - Introduce a bundle analyzer script and split project setup wizard tabs into nested Suspense islands.
-   - Gate optional tooling (Luma/GenAI SDKs) behind dynamic imports so non-generative routes stay light.
-5. **Observability Pipeline (Medium Impact, Medium Effort)**
-   - Send `web-vitals` samples + streaming phase timings to Supabase via `navigator.sendBeacon` with project/scene tags.
-   - Dashboard critical percentiles (P75 FCP/LCP/INP, streaming latency) for regression detection.
+1. **Render Shell + Suspense (High Impact, Medium Effort)**
+   - Introduce `<PerfShell/>` that SSRs/streams header, navigation, and key containers with skeletons.
+   - Wrap router and Project Setup wizard in Suspense boundaries to surface the shell within 200ms while lazy-loading heavy modules.
+2. **Route-Level Code Splitting (High Impact, Low Effort)**
+   - Replace eager imports in `App.tsx` with `React.lazy` and `Suspense` fallbacks to cut initial JS for non-critical routes.
+3. **Async Skeletons for Project Setup (Medium Impact, Medium Effort)**
+   - Provide skeleton components for the wizard header/nav/tab content and use `startTransition` to keep INP under 200ms during tab changes.
+4. **Generative Shot Streaming (High Impact, High Effort)**
+   - Add `/gen/shots` SSE edge function to emit incremental shot states.
+   - Implement `useShotStream()` hook and integrate with `ShotsRow` to render placeholders immediately and progressively hydrate shot cards.
+5. **Instrumentation (Medium Impact, Low Effort)**
+   - Capture Web Vitals in the client, emit `Server-Timing` on `/gen/shots`, and log milestones (FCP/LCP proxies) during development.
+6. **Preload & Caching Hints (Medium Impact, Low Effort)**
+   - Preconnect to Supabase, preload app styles, and document cache headers for deployment configuration.
+7. **E2E Performance Tests (Medium Impact, Medium Effort)**
+   - Add Playwright tests with throttled network/CPU assertions for skeleton timing, streaming latency, and INP interactions.
 
 ## Rollback Plan
-- Feature-gate streaming telemetry with `VITE_ENABLE_STREAM_TELEMETRY`. Toggle off to hide progressive progress UI while leaving the legacy Supabase flow untouched.
-- Keep `VITE_ENABLE_SHOT_STREAM` as the master kill switch to drop back to manual shot creation.
-- `<PerfShell/>` remains optional through `VITE_USE_PERF_SHELL`; disable to restore the classic client-only bootstrap if regressions surface.
+- Feature-gate the shot streaming experience behind `VITE_ENABLE_SHOT_STREAM`. Toggle off to revert to existing Supabase-only flow without redeploying backend.
+- `<PerfShell/>` is additive; removing the Suspense wrapper or feature flag `VITE_USE_PERF_SHELL` (default on) will fall back to the previous rendering path.
+- `/gen/shots` edge function is isolated—remove the route or disable proxy to rollback streaming without touching the UI.

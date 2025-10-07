@@ -1,18 +1,15 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { MoreVertical, User, Share2, Save, Loader2 } from 'lucide-react';
+import { useParams } from 'react-router-dom';
+import { Loader2 } from 'lucide-react';
 import { useAppStore } from '@/store/appStore';
-import { Logo } from '@/components/ui/logo';
-import CreditsDisplay from '@/components/CreditsDisplay';
+import AppHeader from '@/components/AppHeader';
 import StudioSidebar from '@/components/studio/StudioSidebar';
 import StudioCanvas from '@/components/studio/StudioCanvas';
-import StudioBottomBar from '@/components/studio/StudioBottomBar';
 import BlockSettingsModal from '@/components/studio/BlockSettingsModal';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Button } from '@/components/ui/button';
 
 export interface Block {
   id: string;
@@ -30,9 +27,8 @@ export interface Block {
 }
 
 const StudioPage = () => {
-  const navigate = useNavigate();
   const { projectId } = useParams<{ projectId?: string }>();
-  const { activeProjectId, setActiveProject } = useAppStore();
+  const { setActiveProject } = useAppStore();
   
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
@@ -199,101 +195,9 @@ const StudioPage = () => {
   const selectedBlockType = selectedBlock?.type || null;
   const selectedModel = selectedBlockId ? blockModels[selectedBlockId] : '';
   
-  const location = useLocation();
-  
-  const handleViewModeChange = (mode: 'studio' | 'timeline' | 'editor') => {
-    if (mode === 'timeline') {
-      navigate(`/timeline/${projectId}`);
-    } else if (mode === 'editor') {
-      navigate(`/editor/${projectId}`);
-    }
-  };
-
-  const getCurrentView = (): 'studio' | 'timeline' | 'editor' => {
-    const path = location.pathname;
-    if (path.includes('/storyboard') || path.includes('/timeline')) return 'timeline';
-    if (path.includes('/editor')) return 'editor';
-    return 'studio';
-  };
-
-  const currentView = getCurrentView();
-  
   return (
     <div className="h-screen flex flex-col bg-black text-white">
-      {/* Enhanced Header */}
-      <header className="h-14 bg-black border-b border-zinc-800 flex items-center justify-between px-6">
-        {/* Left Section */}
-        <div className="flex items-center gap-4">
-          <Logo size="sm" showVersion={false} />
-          <span className="text-sm text-zinc-400">Untitled</span>
-          <button className="p-1 hover:bg-zinc-800 rounded transition-colors">
-            <MoreVertical className="w-4 h-4 text-zinc-500" />
-          </button>
-        </div>
-        
-        {/* Center Section - View Mode Pills */}
-        <div className="flex items-center gap-1 bg-zinc-900 rounded-full p-1">
-          <button
-            onClick={() => handleViewModeChange('studio')}
-            className={`px-5 py-1.5 text-sm font-medium rounded-full transition-all ${
-              currentView === 'studio'
-                ? 'bg-purple-600 text-white'
-                : 'text-zinc-400 hover:text-zinc-200'
-            }`}
-          >
-            Studio
-          </button>
-          <button
-            onClick={() => handleViewModeChange('timeline')}
-            className={`px-5 py-1.5 text-sm font-medium rounded-full transition-all ${
-              currentView === 'timeline'
-                ? 'bg-purple-600 text-white'
-                : 'text-zinc-400 hover:text-zinc-200'
-            }`}
-          >
-            Timeline
-          </button>
-          <button
-            onClick={() => handleViewModeChange('editor')}
-            className={`px-5 py-1.5 text-sm font-medium rounded-full transition-all ${
-              currentView === 'editor'
-                ? 'bg-purple-600 text-white'
-                : 'text-zinc-400 hover:text-zinc-200'
-            }`}
-          >
-            Editor
-          </button>
-        </div>
-
-        {/* Right Section */}
-        <div className="flex items-center gap-3">
-          {/* Save indicator */}
-          {projectId && (
-            <div className="flex items-center gap-2 text-xs text-zinc-400">
-              {isSaving ? (
-                <>
-                  <Loader2 className="w-3 h-3 animate-spin" />
-                  <span>Saving...</span>
-                </>
-              ) : lastSaved ? (
-                <>
-                  <Save className="w-3 h-3" />
-                  <span>Saved {new Date(lastSaved).toLocaleTimeString()}</span>
-                </>
-              ) : null}
-            </div>
-          )}
-          
-          <CreditsDisplay showTooltip={false} showButton={false} />
-          <button className="p-2 hover:bg-zinc-800 rounded-full transition-colors">
-            <User className="w-5 h-5 text-zinc-400" />
-          </button>
-          <button className="flex items-center gap-2 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-lg transition-colors">
-            <Share2 className="w-4 h-4 text-zinc-400" />
-            <span className="text-sm text-zinc-200">Share</span>
-          </button>
-        </div>
-      </header>
+      <AppHeader />
       
       <div className="flex-1 flex overflow-hidden">
         <StudioSidebar onAddBlock={handleAddBlock} />
