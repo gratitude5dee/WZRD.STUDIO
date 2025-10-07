@@ -26,6 +26,12 @@ const StoryboardPage = ({ viewMode, setViewMode }: StoryboardPageProps) => {
   const [selectedScene, setSelectedScene] = useState<SceneDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [sidebarData, setSidebarData] = useState<SidebarData | null>(null);
+  const [generationProgress, setGenerationProgress] = useState<Record<string, {
+    dialogue: boolean;
+    sound_effects: boolean;
+    visual_prompt: boolean;
+    image_url: boolean;
+  }>>({});
 
   // Memoize fetchData to prevent unnecessary re-renders
   const fetchData = useCallback(async () => {
@@ -133,12 +139,8 @@ const StoryboardPage = ({ viewMode, setViewMode }: StoryboardPageProps) => {
         }, 
         async (payload) => {
           console.log('Scenes realtime update:', payload);
-          
-          // Refresh the entire scene list on any change
-          // This is simpler than trying to merge changes
           await fetchData();
           
-          // Show a toast based on the event type
           if (payload.eventType === 'INSERT') {
             toast.success('New scene added');
           } else if (payload.eventType === 'UPDATE') {
@@ -148,10 +150,64 @@ const StoryboardPage = ({ viewMode, setViewMode }: StoryboardPageProps) => {
           }
         })
       .subscribe();
+    
+    // Subscribe to shot changes for real-time progress tracking
+    const shotsChannel = supabase
+      .channel('shots_channel')
+      .on('postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'shots',
+          filter: `project_id=eq.${projectId}`
+        },
+        (payload) => {
+          console.log('Shot realtime update:', payload);
+          const shotId = payload.new.id;
+          const newData = payload.new;
+          
+          setGenerationProgress(prev => {
+            const current = prev[shotId] || {
+              dialogue: false,
+              sound_effects: false,
+              visual_prompt: false,
+              image_url: false
+            };
+            
+            const updated = {
+              dialogue: !!newData.dialogue || current.dialogue,
+              sound_effects: !!newData.sound_effects || current.sound_effects,
+              visual_prompt: !!newData.visual_prompt || current.visual_prompt,
+              image_url: !!newData.image_url || current.image_url
+            };
+            
+            // Show toast for newly completed fields
+            if (!current.dialogue && updated.dialogue) {
+              toast.success(`Shot ${newData.shot_number}: Dialogue generated`, { duration: 2000 });
+            }
+            if (!current.sound_effects && updated.sound_effects) {
+              toast.success(`Shot ${newData.shot_number}: Sound effects generated`, { duration: 2000 });
+            }
+            if (!current.visual_prompt && updated.visual_prompt) {
+              toast.success(`Shot ${newData.shot_number}: Visual prompt ready`, { duration: 2000 });
+            }
+            if (!current.image_url && updated.image_url) {
+              toast.success(`Shot ${newData.shot_number}: Image generated`, { duration: 2000 });
+            }
+            
+            return { ...prev, [shotId]: updated };
+          });
+          
+          // Refresh data to show updated shots
+          fetchData();
+        }
+      )
+      .subscribe();
       
     // Clean up subscriptions
     return () => {
       supabase.removeChannel(scenesChannel);
+      supabase.removeChannel(shotsChannel);
     };
   }, [projectId, fetchData]);
 

@@ -154,4 +154,66 @@ export function getShotTypeUserPrompt(shotIdea: string): string {
 Return only the shot type: wide, medium, close, or extreme-close`;
 }
 
+// Dialogue generation prompts
+export function getDialogueSystemPrompt(): string {
+  return `You are an expert screenwriter specializing in natural, cinematic dialogue. Generate dialogue that:
+- Fits the scene context and shot composition
+- Matches the project's tone and genre
+- Sounds natural and character-appropriate
+- Is concise and impactful (avoid exposition dumps)
+- Advances the story or reveals character
+
+Return ONLY the dialogue text without quotation marks or attribution (e.g., "Character:"). If no dialogue is needed for this shot, return "No dialogue" or describe voiceover if appropriate.`;
+}
+
+export function getDialogueUserPrompt(
+  shotIdea: string,
+  shotType: string,
+  sceneContext: any,
+  projectContext: any
+): string {
+  return `Generate dialogue for this shot:
+
+Shot Idea: "${shotIdea}"
+Shot Type: ${shotType}
+Scene: ${sceneContext.title || `Scene ${sceneContext.scene_number}`}
+Scene Description: ${sceneContext.description || 'No description'}
+Location: ${sceneContext.location || 'Unspecified'}
+
+Project Context:
+- Genre: ${projectContext.genre || 'Unspecified'}
+- Tone: ${projectContext.tone || 'Unspecified'}
+- Style: ${projectContext.video_style || 'Unspecified'}
+
+Generate natural dialogue (2-3 lines max) or indicate "No dialogue" if it's a silent shot or establishing shot.`;
+}
+
+// Sound effects generation prompts
+export function getSoundEffectsSystemPrompt(): string {
+  return `You are an expert sound designer for film and video. Generate sound effects descriptions that:
+- Enhance the visual scene
+- Match the shot type and action
+- Include ambient sounds and specific effects
+- Use professional sound design terminology
+- Are clear and implementable
+
+Return a concise list of 2-4 key sound effects (e.g., "City traffic ambience, footsteps on concrete, distant sirens"). If no sound effects are needed, return "Natural ambience".`;
+}
+
+export function getSoundEffectsUserPrompt(
+  shotIdea: string,
+  shotType: string,
+  sceneContext: any
+): string {
+  return `Generate sound effects for this shot:
+
+Shot Idea: "${shotIdea}"
+Shot Type: ${shotType}
+Scene Location: ${sceneContext.location || 'Unspecified'}
+Lighting: ${sceneContext.lighting || 'Unspecified'}
+Weather: ${sceneContext.weather || 'Unspecified'}
+
+List 2-4 specific sound effects that would enhance this shot (ambient, foley, specific sounds). Be concise and professional.`;
+}
+
 // Add other prompt helpers below as needed

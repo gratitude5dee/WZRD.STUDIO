@@ -48,13 +48,17 @@ const NavigationFooter = () => {
         nextTab = visibleTabs[currentTabIndex + 1];
       }
     } else if (isLastTab) {
-      // If on the last tab, finalize the project and navigate to timeline
-      const setupInitiated = await finalizeProjectSetup();
-      if (setupInitiated && projectId) {
-        // Navigate to timeline if successful
+      // If on the last tab, finalize and navigate immediately
+      if (projectId) {
+        // Start background processing (don't await)
+        finalizeProjectSetup().catch(err => {
+          console.error('Background finalization error:', err);
+        });
+        
+        // Navigate immediately
         navigate(`/timeline/${projectId}`);
       }
-      return; // Exit after attempting to navigate
+      return;
     } else {
       // For other tabs, save data and move to the next one
       await saveProjectData();

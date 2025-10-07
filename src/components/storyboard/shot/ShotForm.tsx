@@ -162,8 +162,10 @@ const ShotForm: React.FC<ShotFormProps> = ({
           id={`dialogue-${id}`}
           value={dialogue || ''}
           onChange={onDialogueChange}
-          className="glass-input text-white resize-none min-h-[40px] text-[11px]"
-          placeholder="Spoken words..."
+          className={`glass-input text-white resize-none min-h-[40px] text-[11px] ${
+            !dialogue ? 'animate-pulse bg-gradient-to-r from-zinc-900/50 to-zinc-800/50' : ''
+          }`}
+          placeholder={!dialogue ? "Generating dialogue..." : "Spoken words..."}
         />
         {id && setIsGeneratingAudio && setLocalAudioUrl && setLocalAudioStatus && isGeneratingRef && (
           <ShotAudio
@@ -184,8 +186,10 @@ const ShotForm: React.FC<ShotFormProps> = ({
             id={`sound-effects-${id}`}
             value={soundEffects || ''}
             onChange={onSoundEffectsChange}
-            className="glass-input text-white resize-none min-h-[40px] text-[11px]"
-            placeholder="e.g., footsteps, rain..."
+            className={`glass-input text-white resize-none min-h-[40px] text-[11px] ${
+              !soundEffects ? 'animate-pulse bg-gradient-to-r from-zinc-900/50 to-zinc-800/50' : ''
+            }`}
+            placeholder={!soundEffects ? "Generating sound effects..." : "e.g., footsteps, rain..."}
           />
         </div>
       )}
