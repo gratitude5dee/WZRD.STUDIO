@@ -222,32 +222,81 @@ serve(async (req) => {
           }
         }
 
-        // Step 6: Complete the storyline and trigger additional processing
+        // Step 6: Complete the storyline
         await supabaseClient
           .from('storylines')
           .update({ status: 'complete' })
           .eq('id', storyline_id);
 
-        // Generate shots and other assets using original logic
-        const dbResults = await saveStorylineData(
-          supabaseClient,
-          project_id,
-          storylineData,
-          !generate_alternative,
-          analysisData,
-          generate_alternative
-        );
+        // Step 7: Generate shots from scenes (only for main storyline)
+        if (!generate_alternative && sceneBreakdown.length > 0) {
+          const { data: scenesWithIds } = await supabaseClient
+            .from('scenes')
+            .select('id, scene_number')
+            .eq('storyline_id', storyline_id)
+            .order('scene_number');
 
-        if (Object.keys(dbResults.updatedSettings).length > 0) {
-          await updateProjectSettings(supabaseClient, project_id, dbResults.updatedSettings);
+          if (scenesWithIds) {
+            const shotsToInsert: any[] = [];
+            
+            scenesWithIds.forEach((scene, sceneIdx) => {
+              const sceneData = sceneBreakdown[sceneIdx];
+              if (sceneData?.shot_ideas?.length > 0) {
+                sceneData.shot_ideas.forEach((shotIdea, index) => {
+                  shotsToInsert.push({
+                    scene_id: scene.id,
+                    project_id: project_id,
+                    shot_number: index + 1,
+                    shot_type: shotIdea.shot_type || 'medium',
+                    prompt_idea: shotIdea.description,
+                    visual_prompt: shotIdea.visual_prompt,
+                    camera_movement: shotIdea.camera_movement,
+                    duration_seconds: shotIdea.duration_seconds,
+                    composition_notes: shotIdea.composition_notes,
+                    image_status: 'prompt_ready'
+                  });
+                });
+              }
+            });
+
+            if (shotsToInsert.length > 0) {
+              const { data: newShots } = await supabaseClient
+                .from('shots')
+                .insert(shotsToInsert)
+                .select('id');
+              
+              if (newShots) {
+                console.log(`Created ${newShots.length} shots`);
+                await triggerShotVisualPromptGeneration(supabaseClient, newShots.map(s => s.id));
+              }
+            }
+          }
         }
 
-        if (dbResults.characters.length > 0) {
-          await triggerCharacterImageGeneration(supabaseClient, project_id, dbResults.characters);
-        }
-        
-        if (dbResults.inserted_shot_ids && dbResults.inserted_shot_ids.length > 0) {
-          await triggerShotVisualPromptGeneration(supabaseClient, dbResults.inserted_shot_ids);
+        // Step 8: Update project settings (only for main storyline)
+        if (!generate_alternative) {
+          const updatedSettings: any = { selected_storyline_id: storyline_id };
+          
+          if (analysisData?.potential_genre) {
+            updatedSettings.genre = analysisData.potential_genre;
+          }
+          if (analysisData?.potential_tone) {
+            updatedSettings.tone = analysisData.potential_tone;
+          }
+          
+          await updateProjectSettings(supabaseClient, project_id, updatedSettings);
+
+          // Trigger character image generation
+          if (analysisData?.characters?.length > 0) {
+            const { data: characters } = await supabaseClient
+              .from('characters')
+              .select('id, name')
+              .eq('project_id', project_id);
+            
+            if (characters) {
+              await triggerCharacterImageGeneration(supabaseClient, project_id, characters);
+            }
+          }
         }
 
         console.log('Background storyline generation completed successfully');
