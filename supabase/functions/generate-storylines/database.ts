@@ -281,13 +281,33 @@ export async function triggerCharacterImageGeneration(
     console.log(`🎨 Starting async image generation for ${characters.length} characters...`);
     
     // Fire all image generations in parallel without waiting (fire-and-forget)
-    characters.forEach(char => {
-      supabaseClient.functions.invoke('generate-character-image', {
-        body: { character_id: char.id, project_id: project_id }
-      }).catch(err => {
-        console.error(`Failed to start image generation for ${char.name}:`, err);
-      });
-    });
+    for (const char of characters) {
+      try {
+        // Set status to generating before invoking
+        await supabaseClient
+          .from('characters')
+          .update({ image_status: 'generating' })
+          .eq('id', char.id);
+        
+        // Invoke function (fire-and-forget)
+        supabaseClient.functions.invoke('generate-character-image', {
+          body: { character_id: char.id, project_id: project_id }
+        }).catch(async (err) => {
+          console.error(`Failed to start image generation for ${char.name}:`, err);
+          
+          // Update status to failed on invocation error
+          await supabaseClient
+            .from('characters')
+            .update({ 
+              image_status: 'failed',
+              image_generation_error: err.message || 'Failed to invoke image generation'
+            })
+            .eq('id', char.id);
+        });
+      } catch (error) {
+        console.error(`Error setting up image generation for ${char.name}:`, error);
+      }
+    }
     
     console.log(`✓ Image generation started for all characters (async stream mode)`);
   }

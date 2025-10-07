@@ -31,6 +31,8 @@ export interface Character {
   name: string;
   description?: string | null;
   image_url?: string | null;
+  image_status?: 'pending' | 'generating' | 'completed' | 'failed';
+  image_generation_error?: string | null;
 }
 
 // Storyline type definition

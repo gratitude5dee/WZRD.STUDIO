@@ -76,6 +76,24 @@ const SettingsTab = ({ projectData, updateProjectData }: SettingsTabProps) => {
         },
         (payload) => {
           console.log('Character updated via realtime:', payload.new);
+          
+          const oldChar = characters.find(c => c.id === payload.new.id);
+          const newStatus = payload.new.image_status;
+          const oldStatus = oldChar?.image_status;
+          
+          // Show toast notifications for status changes
+          if (oldStatus !== newStatus) {
+            if (newStatus === 'generating') {
+              toast.info(`Generating image for ${payload.new.name}...`);
+            } else if (newStatus === 'completed' && payload.new.image_url) {
+              toast.success(`Image generated for ${payload.new.name}`);
+            } else if (newStatus === 'failed') {
+              toast.error(`Failed to generate image for ${payload.new.name}`, {
+                description: payload.new.image_generation_error || 'Unknown error'
+              });
+            }
+          }
+          
           // Update the character in the local state
           setCharacters(prev => 
             prev.map(char => 

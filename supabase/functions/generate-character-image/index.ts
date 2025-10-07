@@ -4,6 +4,52 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { corsHeaders, errorResponse, successResponse, handleCors } from '../_shared/response.ts';
 import { getCharacterVisualSystemPrompt, getCharacterVisualUserPrompt } from '../_shared/prompts.ts';
 
+// Fetch with retry and timeout helper
+async function fetchWithRetry(
+  url: string, 
+  options: RequestInit, 
+  retries = 3, 
+  timeout = 30000
+): Promise<Response> {
+  for (let attempt = 0; attempt < retries; attempt++) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeout);
+      
+      const response = await fetch(url, {
+        ...options,
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (response.ok) {
+        return response;
+      }
+      
+      // If not ok and we have retries left, continue
+      if (attempt < retries - 1) {
+        const backoffMs = Math.min(1000 * Math.pow(2, attempt), 5000);
+        console.log(`Request failed (status ${response.status}), retrying in ${backoffMs}ms... (attempt ${attempt + 1}/${retries})`);
+        await new Promise(resolve => setTimeout(resolve, backoffMs));
+        continue;
+      }
+      
+      return response;
+    } catch (error) {
+      if (attempt < retries - 1) {
+        const backoffMs = Math.min(1000 * Math.pow(2, attempt), 5000);
+        console.log(`Request error: ${error.message}, retrying in ${backoffMs}ms... (attempt ${attempt + 1}/${retries})`);
+        await new Promise(resolve => setTimeout(resolve, backoffMs));
+        continue;
+      }
+      throw error;
+    }
+  }
+  
+  throw new Error('Max retries exceeded');
+}
+
 interface RequestBody {
   character_id: string;
   project_id?: string;
@@ -34,6 +80,15 @@ serve(async (req) => {
     if (!character_id) return errorResponse('character_id is required', 400);
 
     console.log(`Generating image for character ID: ${character_id}`);
+    
+    // Update character status to generating
+    await supabaseClient
+      .from('characters')
+      .update({ 
+        image_status: 'generating',
+        image_generation_error: null
+      })
+      .eq('id', character_id);
 
     // 1. Fetch Character Data and Project Context
     let query = supabaseClient
@@ -73,7 +128,7 @@ serve(async (req) => {
       charData.project
     );
 
-    const promptResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    const promptResponse = await fetchWithRetry('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${LOVABLE_API_KEY}`,
@@ -86,9 +141,9 @@ serve(async (req) => {
           { role: 'user', content: visualPromptUser }
         ],
         temperature: 0.7,
-        max_tokens: 200
+        max_tokens: 150
       }),
-    });
+    }, 3, 30000);
 
     if (!promptResponse.ok) {
       console.error('Failed to generate visual prompt:', promptResponse.status);
@@ -108,7 +163,7 @@ serve(async (req) => {
     // 3. Generate Image using Lovable AI with Nano banana
     console.log('Calling Lovable AI Gateway with Nano banana for image generation...');
     
-    const imageResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    const imageResponse = await fetchWithRetry('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${LOVABLE_API_KEY}`,
@@ -121,7 +176,7 @@ serve(async (req) => {
         ],
         modalities: ['image', 'text']
       }),
-    });
+    }, 3, 30000);
 
     if (!imageResponse.ok) {
       console.error('Failed to generate character image:', imageResponse.status);
@@ -153,13 +208,17 @@ serve(async (req) => {
         (async () => {
           const { error: updateError } = await supabaseClient
             .from('characters')
-            .update({ image_url: imageUrl })
+            .update({ 
+              image_url: imageUrl,
+              image_status: 'completed',
+              image_generation_error: null
+            })
             .eq('id', character_id);
 
           if (updateError) {
             console.error(`Background update failed for character ${character_id}:`, updateError);
           } else {
-            console.log(`Successfully updated character ${character_id} with image URL`);
+            console.log(`Successfully updated character ${character_id} with image URL and status`);
           }
         })()
       );
@@ -167,7 +226,11 @@ serve(async (req) => {
       // Fallback for environments without EdgeRuntime.waitUntil
       const { error: updateError } = await supabaseClient
         .from('characters')
-        .update({ image_url: imageUrl })
+        .update({ 
+          image_url: imageUrl,
+          image_status: 'completed',
+          image_generation_error: null
+        })
         .eq('id', character_id);
 
       if (updateError) {
@@ -179,6 +242,23 @@ serve(async (req) => {
 
   } catch (error) {
     console.error(`Error in generate-character-image:`, error);
+    
+    // Update character status to failed
+    try {
+      const { character_id } = await req.json();
+      if (character_id) {
+        await supabaseClient
+          .from('characters')
+          .update({ 
+            image_status: 'failed',
+            image_generation_error: error.message || 'Unknown error'
+          })
+          .eq('id', character_id);
+      }
+    } catch (updateError) {
+      console.error('Failed to update character error status:', updateError);
+    }
+    
     return errorResponse(error.message || 'Failed to generate character image', 500);
   }
 });

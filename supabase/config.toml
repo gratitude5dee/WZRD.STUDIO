@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.generate-concept-examples]
 verify_jwt = false
+
+[functions.generate-character-image]
+verify_jwt = false

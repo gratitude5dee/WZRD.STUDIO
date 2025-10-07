@@ -445,6 +445,8 @@ export type Database = {
           created_at: string | null
           description: string | null
           id: string
+          image_generation_error: string | null
+          image_status: string | null
           image_url: string | null
           name: string
           project_id: string
@@ -454,6 +456,8 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           id?: string
+          image_generation_error?: string | null
+          image_status?: string | null
           image_url?: string | null
           name: string
           project_id: string
@@ -463,6 +467,8 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           id?: string
+          image_generation_error?: string | null
+          image_status?: string | null
           image_url?: string | null
           name?: string
           project_id?: string
