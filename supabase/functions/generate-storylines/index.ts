@@ -232,12 +232,13 @@ serve(async (req) => {
         if (!generate_alternative && sceneBreakdown.length > 0) {
           const { data: scenesWithIds } = await supabaseClient
             .from('scenes')
-            .select('id, scene_number')
+            .select('id, scene_number, title, description, location, lighting, emotional_tone, color_palette')
             .eq('storyline_id', storyline_id)
             .order('scene_number');
 
           if (scenesWithIds) {
-            console.log(`[Shot Generation] Processing ${sceneBreakdown.length} scenes from Gemini`);
+            console.log(`[Shot Generation] sceneBreakdown length: ${sceneBreakdown.length}`);
+            console.log(`[Shot Generation] scenesWithIds length: ${scenesWithIds.length}`);
             sceneBreakdown.forEach((scene, idx) => {
               console.log(`[Scene ${idx + 1}] shot_ideas count: ${scene.shot_ideas?.length || 0}`);
             });
@@ -245,33 +246,43 @@ serve(async (req) => {
             const shotsToInsert: any[] = [];
             
             scenesWithIds.forEach((scene, sceneIdx) => {
+              console.log(`[Scene ${scene.scene_number}] Processing... sceneData exists: ${!!sceneBreakdown[sceneIdx]}`);
               const sceneData = sceneBreakdown[sceneIdx];
               let shotIdeas = sceneData?.shot_ideas || [];
+              console.log(`[Scene ${scene.scene_number}] shotIdeas count: ${shotIdeas.length}`);
               
-              // FALLBACK: If no shot ideas provided, create 3 default shots
+              // FALLBACK: If no shot ideas provided, create 3 default shots using scene data from DB
               if (shotIdeas.length === 0) {
-                console.warn(`[Scene ${scene.scene_number}] No shot_ideas from Gemini. Creating default shots.`);
+                console.warn(`[Scene ${scene.scene_number}] No shot_ideas from Gemini. Creating default shots using DB scene data.`);
+                
+                const sceneTitle = scene.title || sceneData?.title || `Scene ${scene.scene_number}`;
+                const sceneDesc = scene.description || sceneData?.description || 'the scene unfolds';
+                const location = scene.location || sceneData?.location || 'the location';
+                const lighting = scene.lighting || sceneData?.lighting || 'cinematic lighting';
+                const tone = scene.emotional_tone || sceneData?.emotional_tone || 'dramatic';
+                const palette = scene.color_palette || sceneData?.color_palette || 'cinematic color grading';
+                
                 shotIdeas = [
                   {
                     shot_type: 'wide',
-                    description: `Establishing shot of ${sceneData?.location || 'the scene'}`,
-                    visual_prompt: `Wide angle establishing shot, ${sceneData?.description || 'cinematic scene'}, ${sceneData?.lighting || 'natural lighting'}, professional cinematography`,
+                    description: `Establishing shot: ${sceneTitle}`,
+                    visual_prompt: `Wide angle establishing shot of ${location}, ${sceneDesc}, ${lighting}, professional cinematography, ${palette}`,
                     camera_movement: 'static',
                     duration_seconds: 4,
                     composition_notes: 'Establishing context'
                   },
                   {
                     shot_type: 'medium',
-                    description: `Main action: ${sceneData?.description?.slice(0, 80) || 'scene continues'}`,
-                    visual_prompt: `Medium shot, ${sceneData?.emotional_tone || 'dramatic'} atmosphere, ${sceneData?.color_palette || 'cinematic color grading'}, professional photography`,
+                    description: `Main action: ${sceneDesc.slice(0, 80)}`,
+                    visual_prompt: `Medium shot, ${tone} atmosphere, ${sceneDesc}, ${lighting}, ${palette}, professional photography`,
                     camera_movement: 'subtle pan',
                     duration_seconds: 5,
                     composition_notes: 'Core narrative beat'
                   },
                   {
                     shot_type: 'close_up',
-                    description: `Emotional close-up transitioning to next scene`,
-                    visual_prompt: `Close-up shot, ${sceneData?.emotional_tone || 'intense'} mood, ${sceneData?.lighting || 'dramatic lighting'}, shallow depth of field, 85mm lens`,
+                    description: `Emotional close-up for ${sceneTitle}`,
+                    visual_prompt: `Close-up shot, ${tone} mood, ${lighting}, shallow depth of field, 85mm lens, ${palette}`,
                     camera_movement: 'static',
                     duration_seconds: 3,
                     composition_notes: 'Emotional emphasis'
@@ -297,6 +308,12 @@ serve(async (req) => {
             });
 
             console.log(`[Shot Generation] Prepared ${shotsToInsert.length} total shots for insertion`);
+            console.log(`[Shot Generation] Shots per scene: ${JSON.stringify(
+              scenesWithIds.map((s, i) => ({ 
+                scene: s.scene_number, 
+                count: shotsToInsert.filter(sh => sh.scene_id === s.id).length 
+              }))
+            )}`);
 
             if (shotsToInsert.length > 0) {
               const { data: newShots } = await supabaseClient

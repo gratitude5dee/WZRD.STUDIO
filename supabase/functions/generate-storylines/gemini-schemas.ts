@@ -35,7 +35,7 @@ export const STORYLINE_RESPONSE_SCHEMA = {
           color_palette: { type: "string", description: "Color grading suggestions" },
           shot_ideas: {
             type: "array",
-            description: "Key shots for this scene (REQUIRED: 3-6 shots)",
+            description: "Key shots for this scene (REQUIRED: 3-6 shots) - YOU MUST PROVIDE AT LEAST 3 SHOTS FOR EVERY SCENE",
             minItems: 3,
             maxItems: 6,
             items: {
