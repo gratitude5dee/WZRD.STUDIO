@@ -237,27 +237,66 @@ serve(async (req) => {
             .order('scene_number');
 
           if (scenesWithIds) {
+            console.log(`[Shot Generation] Processing ${sceneBreakdown.length} scenes from Gemini`);
+            sceneBreakdown.forEach((scene, idx) => {
+              console.log(`[Scene ${idx + 1}] shot_ideas count: ${scene.shot_ideas?.length || 0}`);
+            });
+
             const shotsToInsert: any[] = [];
             
             scenesWithIds.forEach((scene, sceneIdx) => {
               const sceneData = sceneBreakdown[sceneIdx];
-              if (sceneData?.shot_ideas?.length > 0) {
-                sceneData.shot_ideas.forEach((shotIdea, index) => {
-                  shotsToInsert.push({
-                    scene_id: scene.id,
-                    project_id: project_id,
-                    shot_number: index + 1,
-                    shot_type: shotIdea.shot_type || 'medium',
-                    prompt_idea: shotIdea.description,
-                    visual_prompt: shotIdea.visual_prompt,
-                    camera_movement: shotIdea.camera_movement,
-                    duration_seconds: shotIdea.duration_seconds,
-                    composition_notes: shotIdea.composition_notes,
-                    image_status: 'prompt_ready'
-                  });
-                });
+              let shotIdeas = sceneData?.shot_ideas || [];
+              
+              // FALLBACK: If no shot ideas provided, create 3 default shots
+              if (shotIdeas.length === 0) {
+                console.warn(`[Scene ${scene.scene_number}] No shot_ideas from Gemini. Creating default shots.`);
+                shotIdeas = [
+                  {
+                    shot_type: 'wide',
+                    description: `Establishing shot of ${sceneData?.location || 'the scene'}`,
+                    visual_prompt: `Wide angle establishing shot, ${sceneData?.description || 'cinematic scene'}, ${sceneData?.lighting || 'natural lighting'}, professional cinematography`,
+                    camera_movement: 'static',
+                    duration_seconds: 4,
+                    composition_notes: 'Establishing context'
+                  },
+                  {
+                    shot_type: 'medium',
+                    description: `Main action: ${sceneData?.description?.slice(0, 80) || 'scene continues'}`,
+                    visual_prompt: `Medium shot, ${sceneData?.emotional_tone || 'dramatic'} atmosphere, ${sceneData?.color_palette || 'cinematic color grading'}, professional photography`,
+                    camera_movement: 'subtle pan',
+                    duration_seconds: 5,
+                    composition_notes: 'Core narrative beat'
+                  },
+                  {
+                    shot_type: 'close_up',
+                    description: `Emotional close-up transitioning to next scene`,
+                    visual_prompt: `Close-up shot, ${sceneData?.emotional_tone || 'intense'} mood, ${sceneData?.lighting || 'dramatic lighting'}, shallow depth of field, 85mm lens`,
+                    camera_movement: 'static',
+                    duration_seconds: 3,
+                    composition_notes: 'Emotional emphasis'
+                  }
+                ];
               }
+              
+              // Generate shots for this scene
+              shotIdeas.forEach((shotIdea, index) => {
+                shotsToInsert.push({
+                  scene_id: scene.id,
+                  project_id: project_id,
+                  shot_number: index + 1,
+                  shot_type: shotIdea.shot_type || 'medium',
+                  prompt_idea: shotIdea.description,
+                  visual_prompt: shotIdea.visual_prompt,
+                  camera_movement: shotIdea.camera_movement,
+                  duration_seconds: shotIdea.duration_seconds,
+                  composition_notes: shotIdea.composition_notes,
+                  image_status: 'prompt_ready'
+                });
+              });
             });
+
+            console.log(`[Shot Generation] Prepared ${shotsToInsert.length} total shots for insertion`);
 
             if (shotsToInsert.length > 0) {
               const { data: newShots } = await supabaseClient

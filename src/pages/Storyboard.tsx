@@ -156,6 +156,23 @@ const StoryboardPage = ({ viewMode, setViewMode }: StoryboardPageProps) => {
       .channel('shots_channel')
       .on('postgres_changes',
         {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'shots'
+        },
+        async (payload) => {
+          console.log('Shot INSERT realtime update:', payload);
+          await fetchData();
+          
+          // Find the scene this shot belongs to
+          const shot = payload.new as any;
+          const scene = scenes.find(s => s.id === shot.scene_id);
+          if (scene) {
+            toast.success(`Shot ${shot.shot_number} created for Scene ${scene.scene_number}`);
+          }
+        })
+      .on('postgres_changes',
+        {
           event: 'UPDATE',
           schema: 'public',
           table: 'shots',

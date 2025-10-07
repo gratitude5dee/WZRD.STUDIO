@@ -123,12 +123,14 @@ DELIVERABLES:
 2. Scene Breakdown:
    - 5-10 scenes with clear progression
    - Each scene includes: title, description, location, lighting, weather, emotional tone, color palette
-   - 3-6 key shots per scene with:
+   - **MANDATORY: 3-6 key shots per scene (NO EXCEPTIONS)** with:
      * Shot type and camera movement
      * Narrative description
      * AI-optimized visual prompt for image generation
      * Composition notes
      * Suggested duration
+
+⚠️ CRITICAL: EVERY scene MUST have at least 3 shots. Do not skip any scenes.
 
 VISUAL PROMPT QUALITY EXAMPLES:
 
