@@ -1,7 +1,10 @@
-import { Grid, Users, Globe, Star, Settings, HelpCircle, ChevronDown } from 'lucide-react';
+import { Grid, Users, Globe, Star, Settings, HelpCircle, ChevronDown, LogOut } from 'lucide-react';
 import { WorkspaceSwitcher } from './WorkspaceSwitcher';
 import CreditsDisplay from '../CreditsDisplay';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface SidebarProps {
   activeView: string;
@@ -10,6 +13,17 @@ interface SidebarProps {
 
 export const Sidebar = ({ activeView, onViewChange }: SidebarProps) => {
   const [favoritesOpen, setFavoritesOpen] = useState(true);
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      toast.error('Failed to log out');
+    } else {
+      toast.success('Logged out successfully');
+      navigate('/');
+    }
+  };
 
   const navItems = [
     { id: 'all', label: 'All', icon: Grid },
@@ -79,6 +93,13 @@ export const Sidebar = ({ activeView, onViewChange }: SidebarProps) => {
           </button>
           <button className="flex items-center justify-center w-9 h-9 rounded-lg text-white/60 hover:text-white hover:bg-white/[0.04] transition-colors">
             <HelpCircle className="w-4 h-4" />
+          </button>
+          <button 
+            onClick={handleLogout}
+            className="flex items-center justify-center w-9 h-9 rounded-lg text-white/60 hover:text-white hover:bg-white/[0.04] transition-colors"
+            title="Log out"
+          >
+            <LogOut className="w-4 h-4" />
           </button>
         </div>
       </div>
