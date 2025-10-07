@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Plus, Trash2, AlertCircle, Sparkles, Loader2 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { ShotCard } from './shot';
+import { ShotCardSkeleton } from './shot/ShotCardSkeleton';
 import ShotConnectionLines from './shot/ShotConnectionLines';
 import ShotCardSkeleton from './shot/ShotCardSkeleton';
 import { supabaseService } from '@/services/supabaseService';
@@ -149,8 +150,25 @@ const ShotsRow = ({ sceneId, sceneNumber, projectId, onSceneDelete, isSelected =
     const fetchShots = async () => {
       setIsLoading(true);
       try {
-        const fetched = await supabaseService.shots.listByScene(sceneId);
-        setShots(fetched as ShotDetails[]);
+        const shots = await supabaseService.shots.listByScene(sceneId);
+        setShots(shots as ShotDetails[]);
+        
+        // Update generation progress
+        const completed = shots.filter((s: ShotDetails) => 
+          s.image_status === 'completed' && s.visual_prompt
+        ).length;
+        setGenerationProgress({ completed, total: shots.length });
+        
+        // Update generation state
+        if (completed === 0 && shots.length > 0) {
+          setGenerationState('preparing');
+        } else if (completed < shots.length && shots.length > 0) {
+          setGenerationState('generating');
+        } else if (completed === shots.length && shots.length > 0) {
+          setGenerationState('complete');
+        } else {
+          setGenerationState('idle');
+        }
       } catch (error: any) {
         console.error('Error fetching shots:', error);
         toast.error(`Failed to load shots: ${error.message}`);
@@ -395,9 +413,39 @@ const ShotsRow = ({ sceneId, sceneNumber, projectId, onSceneDelete, isSelected =
             <div className="text-xs uppercase tracking-wider text-zinc-500 font-medium mb-0.5">
               Scene
             </div>
-            <h2 className="text-xl font-bold text-amber-400 glow-text-gold font-serif">
-              Scene {sceneNumber}
-            </h2>
+            
+            {/* Generation progress badge */}
+            {generationState !== 'idle' && generationState !== 'complete' && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-950/40 border border-blue-500/30 backdrop-blur-sm"
+              >
+                <motion.div
+                  className="w-4 h-4 border-2 border-blue-500/30 border-t-blue-500 rounded-full"
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                />
+                <span className="text-xs text-blue-400 font-medium">
+                  {generationState === 'preparing' && 'Preparing shots...'}
+                  {generationState === 'generating' && `Generating ${generationProgress.completed}/${generationProgress.total}`}
+                  {generationState === 'visualizing' && 'Creating visuals...'}
+                </span>
+              </motion.div>
+            )}
+            
+            {generationState === 'complete' && generationProgress.total > 0 && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-950/40 border border-emerald-500/30 backdrop-blur-sm"
+              >
+                <span className="text-emerald-400">✓</span>
+                <span className="text-xs text-emerald-400 font-medium">
+                  Complete
+                </span>
+              </motion.div>
+            )}
           </div>
         </div>
 
@@ -525,8 +573,10 @@ const ShotsRow = ({ sceneId, sceneNumber, projectId, onSceneDelete, isSelected =
           )}
 
           {isLoading ? (
-            <div className="flex items-center justify-center w-full text-zinc-500">
-              <span className="animate-spin mr-2">◌</span> Loading shots...
+            <div className="flex gap-4">
+              {[0, 1, 2].map((i) => (
+                <ShotCardSkeleton key={i} delay={i * 0.15} />
+              ))}
             </div>
           ) : hasShots ? (
             <DndContext sensors={sensors} onDragEnd={handleDragEnd}>

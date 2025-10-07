@@ -77,28 +77,41 @@ async function processSingleShot(
   try {
     console.log(`[Shot ${shot.id}] Starting content generation...`);
     
-    // Generate all content in parallel
-    const [visualPrompt, dialogue, soundEffects] = await Promise.all([
-      // Visual Prompt using Claude
-      callClaudeApi(
-        claudeApiKey,
-        getVisualPromptSystemPrompt(),
-        getVisualPromptUserPrompt(shot.prompt_idea || '', shot.shot_type || 'medium', scene, projectData),
-        300
-      ),
-      // Dialogue using Lovable AI
-      callLovableAI(
-        getDialogueSystemPrompt(),
-        getDialogueUserPrompt(shot.prompt_idea, shot.shot_type, scene, projectData),
-        150
-      ),
-      // Sound Effects using Lovable AI
-      callLovableAI(
-        getSoundEffectsSystemPrompt(),
-        getSoundEffectsUserPrompt(shot.prompt_idea, shot.shot_type, scene),
-        100
-      )
-    ]);
+    // Generate all content using Lovable AI (more reliable than Claude for this use case)
+    let visualPrompt = '';
+    let dialogue = '';
+    let soundEffects = '';
+    
+    try {
+      [visualPrompt, dialogue, soundEffects] = await Promise.all([
+        // Visual Prompt using Lovable AI
+        callLovableAI(
+          getVisualPromptSystemPrompt(),
+          getVisualPromptUserPrompt(shot.prompt_idea || '', shot.shot_type || 'medium', scene, projectData),
+          300
+        ),
+        // Dialogue using Lovable AI
+        callLovableAI(
+          getDialogueSystemPrompt(),
+          getDialogueUserPrompt(shot.prompt_idea, shot.shot_type, scene, projectData),
+          150
+        ),
+        // Sound Effects using Lovable AI
+        callLovableAI(
+          getSoundEffectsSystemPrompt(),
+          getSoundEffectsUserPrompt(shot.prompt_idea, shot.shot_type, scene),
+          100
+        )
+      ]);
+    } catch (aiError: any) {
+      console.warn(`[Shot ${shot.id}] AI generation failed, using fallback:`, aiError.message);
+      // Fallback: Create basic prompts from available data
+      const sceneDesc = scene.description || scene.title || '';
+      const shotDesc = shot.prompt_idea || sceneDesc;
+      visualPrompt = `${shot.shot_type || 'Medium'} shot: ${shotDesc.substring(0, 150)}, professional cinematography, dramatic lighting, cinematic composition`;
+      dialogue = '';
+      soundEffects = `Ambient sound appropriate for ${scene.location || 'the scene'}`;
+    }
     
     // Clean up responses
     const cleanedVisualPrompt = visualPrompt.trim().replace(/^"|"$/g, '');
@@ -157,38 +170,60 @@ async function processSingleScene(
 ) {
   try {
     console.log(`[Scene ${scene.scene_number}] Generating shot ideas...`);
-    const shotIdeasContent = await callClaudeApi(
-      claudeApiKey,
-      getShotIdeasSystemPrompt(),
-      getShotIdeasUserPrompt(scene),
-      150
-    );
+    
+    let shotIdeasContent = '';
+    try {
+      shotIdeasContent = await callLovableAI(
+        getShotIdeasSystemPrompt(),
+        getShotIdeasUserPrompt(scene),
+        150
+      );
+    } catch (aiError: any) {
+      console.warn(`[Scene ${scene.scene_number}] AI shot generation failed, using fallback:`, aiError.message);
+    }
     
     let shotIdeas: string[] = [];
     try {
-      shotIdeas = JSON.parse(shotIdeasContent);
-      if (!Array.isArray(shotIdeas)) throw new Error("Not an array");
-      console.log(`[Scene ${scene.scene_number}] Got ${shotIdeas.length} shot ideas:`, shotIdeas);
+      if (shotIdeasContent) {
+        shotIdeas = JSON.parse(shotIdeasContent);
+        if (!Array.isArray(shotIdeas)) throw new Error("Not an array");
+        console.log(`[Scene ${scene.scene_number}] Got ${shotIdeas.length} shot ideas:`, shotIdeas);
+      }
     } catch (parseError: any) {
       console.error(`[Scene ${scene.scene_number}] Failed to parse shot ideas: ${parseError.message}. Using default.`);
-      shotIdeas = [`${scene.title || `Scene ${scene.scene_number}`} - Key moment`];
+    }
+    
+    // Fallback: Create default shots with scene context
+    if (shotIdeas.length === 0) {
+      console.log(`[Scene ${scene.scene_number}] Using fallback shot structure (3 default shots)`);
+      const sceneDesc = scene.description || '';
+      const sceneTitle = scene.title || `Scene ${scene.scene_number}`;
+      
+      shotIdeas = [
+        `Establishing wide shot: ${sceneTitle} - ${sceneDesc.substring(0, 80)}`,
+        `Medium shot capturing the main action: ${sceneDesc.substring(0, 80)}`,
+        `Close-up detail shot emphasizing key moment in ${sceneTitle}`
+      ];
     }
 
     const shotsToInsert: any[] = [];
 
-    // Prepare shot records
+    // Prepare shot records - determine shot types
     for (let i = 0; i < shotIdeas.length; i++) {
       const idea = shotIdeas[i];
       const shotNumber = i + 1;
 
+      // Determine shot type based on position and content
       let shotType = 'medium';
-      try {
-        const typeContent = await callClaudeApi(claudeApiKey, getShotTypeSystemPrompt(), getShotTypeUserPrompt(idea), 20);
-        shotType = typeContent.trim().toLowerCase() || 'medium';
-        console.log(`[Scene ${scene.scene_number} / Shot ${shotNumber}] Determined shot type: ${shotType}`);
-      } catch (typeError: any) {
-        console.warn(`[Scene ${scene.scene_number} / Shot ${shotNumber}] Failed to get shot type: ${typeError.message}. Using default.`);
+      if (i === 0) {
+        shotType = 'wide'; // First shot is usually establishing
+      } else if (idea.toLowerCase().includes('close') || idea.toLowerCase().includes('detail')) {
+        shotType = 'close_up';
+      } else if (idea.toLowerCase().includes('wide') || idea.toLowerCase().includes('establishing')) {
+        shotType = 'wide';
       }
+      
+      console.log(`[Scene ${scene.scene_number} / Shot ${shotNumber}] Shot type: ${shotType}`);
 
       shotsToInsert.push({
         scene_id: scene.id,
@@ -232,12 +267,11 @@ async function processSingleScene(
 
       console.log(`[Scene ${scene.scene_number}] Inserted ${insertedShots.length} shots.`);
 
-      // Process each shot (generate content + trigger image)
-      const shotPromises = insertedShots.map((shot: any) => 
-        processSingleShot(shot, scene, projectData, supabaseClient, claudeApiKey)
-      );
+      // Process each shot sequentially to avoid rate limits and ensure proper ordering
+      for (const shot of insertedShots) {
+        await processSingleShot(shot, scene, projectData, supabaseClient, claudeApiKey);
+      }
       
-      await Promise.all(shotPromises);
       console.log(`[Scene ${scene.scene_number}] Finished processing all shots.`);
       
       return insertedShots.length;
@@ -284,11 +318,13 @@ async function processProjectSetup(
     }
 
     console.log(`[Background Processing ${project_id}] Processing ${scenesData.length} scenes...`);
+    console.log(`[Background Processing ${project_id}] Prioritizing Scene 1 for immediate loading...`);
 
     let totalShotsCreated = 0;
     
-    // Process scenes sequentially to avoid overwhelming the API
+    // Process scenes sequentially to avoid overwhelming the API (Scene 1 first)
     for (const scene of scenesData) {
+      console.log(`[Scene ${scene.scene_number}] Starting scene processing...`);
       const shotsCreated = await processSingleScene(
         scene,
         projectData,
@@ -297,6 +333,7 @@ async function processProjectSetup(
         claudeApiKey
       );
       totalShotsCreated += shotsCreated;
+      console.log(`[Scene ${scene.scene_number}] Created ${shotsCreated} shots.`);
     }
 
     console.log(`[Background Processing ${project_id}] Complete. Created ${totalShotsCreated} shots.`);
