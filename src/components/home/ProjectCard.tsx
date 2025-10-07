@@ -1,9 +1,10 @@
 import { useNavigate } from 'react-router-dom';
 import { MoreHorizontal, Trash2, Lock, Globe } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { DeleteProjectDialog } from '../dialogs/DeleteProjectDialog';
 import { useProjectActions } from '@/hooks/useProjectActions';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface Project {
   id: string;
@@ -24,9 +25,49 @@ export const ProjectCard = ({ project, onOpen, onDelete }: ProjectCardProps) => 
   const navigate = useNavigate();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const [mediaUrl, setMediaUrl] = useState<string | null>(null);
+  const [mediaType, setMediaType] = useState<'video' | 'image' | null>(null);
   const { deleteProject, isDeleting } = useProjectActions();
+  const videoRef = useRef<HTMLVideoElement>(null);
   
   const formattedDate = formatDistanceToNow(new Date(project.updated_at), { addSuffix: true });
+
+  // Fetch first media item for this project
+  useEffect(() => {
+    const fetchProjectMedia = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('media_items')
+          .select('url, media_type')
+          .eq('project_id', project.id)
+          .order('created_at', { ascending: true })
+          .limit(1)
+          .single();
+
+        if (error || !data) return;
+
+        setMediaUrl(data.url);
+        setMediaType(data.media_type as 'video' | 'image');
+      } catch (err) {
+        // No media items for this project - that's okay
+        console.log('No media items found for project', project.id);
+      }
+    };
+
+    fetchProjectMedia();
+  }, [project.id]);
+
+  // Handle video playback on hover
+  useEffect(() => {
+    if (videoRef.current && mediaType === 'video') {
+      if (isHovered) {
+        videoRef.current.play().catch(err => console.log('Video play error:', err));
+      } else {
+        videoRef.current.pause();
+        videoRef.current.currentTime = 0;
+      }
+    }
+  }, [isHovered, mediaType]);
 
   const handleDelete = async () => {
     const success = await deleteProject(project.id);
@@ -60,7 +101,22 @@ export const ProjectCard = ({ project, onOpen, onDelete }: ProjectCardProps) => 
       >
         {/* Thumbnail */}
         <div className="relative aspect-video bg-[#0A0A0A] overflow-hidden">
-          {project.thumbnail_url ? (
+          {mediaUrl && mediaType === 'video' ? (
+            <video
+              ref={videoRef}
+              src={mediaUrl}
+              className="w-full h-full object-cover"
+              loop
+              muted
+              playsInline
+            />
+          ) : mediaUrl && mediaType === 'image' ? (
+            <img
+              src={mediaUrl}
+              alt={project.title}
+              className="w-full h-full object-cover"
+            />
+          ) : project.thumbnail_url ? (
             <img
               src={project.thumbnail_url}
               alt={project.title}
@@ -68,8 +124,8 @@ export const ProjectCard = ({ project, onOpen, onDelete }: ProjectCardProps) => 
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
-              <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-purple-500/20 to-purple-700/20 flex items-center justify-center">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-purple-700" />
+              <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-cosmic-stellar/20 to-cosmic-plasma/20 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cosmic-stellar to-cosmic-plasma" />
               </div>
             </div>
           )}
