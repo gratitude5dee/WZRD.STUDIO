@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.gemini-storyline-generation]
 verify_jwt = false
+
+[functions.generate-concept-examples]
+verify_jwt = false

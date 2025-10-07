@@ -7,6 +7,8 @@ import { RefreshCw, FileText, Info, Plus } from 'lucide-react';
 import { type ProjectData } from './types';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { motion } from 'framer-motion';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface ConceptTabProps {
   projectData: ProjectData;
@@ -22,13 +24,8 @@ interface ExampleConcept {
 const ConceptTab = ({ projectData, updateProjectData }: ConceptTabProps) => {
   const [conceptCharCount, setConceptCharCount] = useState(0);
   const [showCommercialOptions, setShowCommercialOptions] = useState(false);
-
-  // Update character count when concept changes
-  useEffect(() => {
-    setConceptCharCount(projectData.concept ? projectData.concept.length : 0);
-  }, [projectData.concept]);
-
-  const exampleConcepts: ExampleConcept[] = [
+  const [isGeneratingExamples, setIsGeneratingExamples] = useState(false);
+  const [exampleConcepts, setExampleConcepts] = useState<ExampleConcept[]>([
     {
       title: 'Forgotten Melody',
       description: 'A musician\'s rediscovered composition sparks a journey through love, betrayal, and the hidden glamour of the music industry.',
@@ -44,7 +41,12 @@ const ConceptTab = ({ projectData, updateProjectData }: ConceptTabProps) => {
       description: 'At a cozy ski resort, a group of strangers arrives for the holidays, each carrying their own hopes and worries. As their paths cross, unexpected connections form, transforming the season.',
       type: 'storyline'
     }
-  ];
+  ]);
+
+  // Update character count when concept changes
+  useEffect(() => {
+    setConceptCharCount(projectData.concept ? projectData.concept.length : 0);
+  }, [projectData.concept]);
 
   const handleConceptChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     updateProjectData({ concept: e.target.value });
@@ -85,6 +87,27 @@ const ConceptTab = ({ projectData, updateProjectData }: ConceptTabProps) => {
 
   const handleConceptOptionChange = (option: 'ai' | 'manual') => {
     updateProjectData({ conceptOption: option });
+  };
+
+  const handleRegenerateExamples = async () => {
+    setIsGeneratingExamples(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-concept-examples');
+      
+      if (error) throw error;
+      
+      if (data?.concepts && Array.isArray(data.concepts)) {
+        setExampleConcepts(data.concepts);
+        toast.success('New examples generated!');
+      } else {
+        throw new Error('Invalid response format');
+      }
+    } catch (error: any) {
+      console.error('Error generating examples:', error);
+      toast.error(error.message || 'Failed to generate new examples');
+    } finally {
+      setIsGeneratingExamples(false);
+    }
   };
 
   // Handle commercial-specific field changes
@@ -171,8 +194,14 @@ const ConceptTab = ({ projectData, updateProjectData }: ConceptTabProps) => {
           <div className="hidden lg:block lg:w-[350px] ml-6">
             <div className="mb-4 flex justify-between items-center">
               <h2 className="font-semibold text-zinc-300">EXAMPLES</h2>
-              <Button variant="ghost" size="icon" className="text-zinc-400 hover:text-zinc-200">
-                <RefreshCw className="h-4 w-4" />
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="text-zinc-400 hover:text-zinc-200"
+                onClick={handleRegenerateExamples}
+                disabled={isGeneratingExamples}
+              >
+                <RefreshCw className={`h-4 w-4 ${isGeneratingExamples ? 'animate-spin' : ''}`} />
               </Button>
             </div>
             
