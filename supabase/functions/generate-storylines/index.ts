@@ -124,7 +124,7 @@ serve(async (req) => {
           .insert({
             project_id,
             title: storylineData.primary_storyline.title,
-            description: storylineData.primary_storyline.logline,
+            description: storylineData.primary_storyline.description,
             full_story: '', // Will be populated progressively
             status: 'generating',
             is_selected: !generate_alternative
@@ -153,7 +153,7 @@ serve(async (req) => {
         console.log('Completed streaming full story');
 
         // Step 4: Stream scenes (one by one)
-        const sceneBreakdown = storylineData.primary_storyline.scene_breakdown || [];
+        const sceneBreakdown = storylineData.scene_breakdown || [];
         for (const scene of sceneBreakdown) {
           await supabaseClient
             .from('scenes')
@@ -161,10 +161,9 @@ serve(async (req) => {
               project_id,
               storyline_id,
               scene_number: scene.scene_number,
-              title: scene.scene_title,
+              title: scene.title,
               description: scene.description,
               location: scene.location,
-              time_of_day: scene.time_of_day,
               lighting: scene.lighting,
               weather: scene.weather
             });
