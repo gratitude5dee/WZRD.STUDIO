@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { Plus, Trash2, AlertCircle, Sparkles, Loader2 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { ShotCard } from './shot';
-import { ShotCardSkeleton } from './shot/ShotCardSkeleton';
 import ShotConnectionLines from './shot/ShotConnectionLines';
 import ShotCardSkeleton from './shot/ShotCardSkeleton';
 import { supabaseService } from '@/services/supabaseService';
@@ -79,6 +78,8 @@ const ShotsRow = ({ sceneId, sceneNumber, projectId, onSceneDelete, isSelected =
   const [connections, setConnections] = useState<ShotConnection[]>([]);
   const [activeConnection, setActiveConnection] = useState<ActiveConnection | null>(null);
   const [shotRefs, setShotRefs] = useState<Map<string, { x: number; y: number; width: number; height: number }>>(new Map());
+  const [generationState, setGenerationState] = useState<'idle' | 'preparing' | 'generating' | 'visualizing' | 'complete'>('idle');
+  const [generationProgress, setGenerationProgress] = useState({ completed: 0, total: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
   const autoStartRef = useRef(false);
 
@@ -575,7 +576,7 @@ const ShotsRow = ({ sceneId, sceneNumber, projectId, onSceneDelete, isSelected =
           {isLoading ? (
             <div className="flex gap-4">
               {[0, 1, 2].map((i) => (
-                <ShotCardSkeleton key={i} delay={i * 0.15} />
+                <ShotCardSkeleton key={i} />
               ))}
             </div>
           ) : hasShots ? (

@@ -56,16 +56,23 @@ export const AppHeader = ({
   }, [projectIdFromURL, activeProjectId, setActiveProject]);
 
   const handleNavigate = async (viewMode: ViewMode) => {
+    // Determine the projectId to use (URL takes priority, then store)
+    const projectId = projectIdFromURL || activeProjectId;
+    
     // Case 1: User wants to go to studio
     if (viewMode === 'studio') {
-      // From any view, always go to global studio view
-      navigate('/studio');
+      // If we have a projectId, preserve it in the studio URL
+      if (projectId) {
+        navigate(`/studio/${projectId}`);
+      } else {
+        navigate('/studio');
+      }
       return;
     }
     
     // Case 2: User wants to go to timeline or editor
     // Both require a project ID
-    if (!activeProjectId) {
+    if (!projectId) {
       // If we don't have an active project, try to fetch the most recent one
       const recentProjectId = await fetchMostRecentProject();
       
@@ -76,8 +83,8 @@ export const AppHeader = ({
         navigate('/home');
       }
     } else {
-      // We have an active project, navigate to the view with this project
-      navigate(`/${viewMode}/${activeProjectId}`);
+      // We have a project, navigate to the view with this project
+      navigate(`/${viewMode}/${projectId}`);
     }
   };
 

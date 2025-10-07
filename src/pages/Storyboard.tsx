@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Plus, Loader2, AlertCircle } from 'lucide-react';
 import { ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 import { motion, AnimatePresence } from 'framer-motion';
-import StoryboardHeader from '@/components/storyboard/StoryboardHeader';
+import AppHeader from '@/components/AppHeader';
 import StoryboardSidebar from '@/components/storyboard/StoryboardSidebar';
 import ShotsRow from '@/components/storyboard/ShotsRow';
 import { supabase } from '@/integrations/supabase/client';
@@ -13,12 +13,7 @@ import { toast } from 'sonner';
 import { ProjectDetails, SceneDetails, CharacterDetails, SidebarData } from '@/types/storyboardTypes';
 import { useCursorLoading } from '@/contexts/CursorLoadingContext';
 
-interface StoryboardPageProps {
-  viewMode: 'studio' | 'timeline' | 'editor';
-  setViewMode: (mode: 'studio' | 'timeline' | 'editor') => void;
-}
-
-const StoryboardPage = ({ viewMode, setViewMode }: StoryboardPageProps) => {
+const StoryboardPage = () => {
   const { projectId } = useParams<{ projectId?: string }>();
   const navigate = useNavigate();
   const [scenes, setScenes] = useState<SceneDetails[]>([]);
@@ -382,7 +377,7 @@ const StoryboardPage = ({ viewMode, setViewMode }: StoryboardPageProps) => {
 
   return (
     <div className="flex flex-col h-screen bg-[#0A0D16]">
-      <StoryboardHeader viewMode={viewMode} setViewMode={setViewMode} />
+      <AppHeader />
       <ResizablePanelGroup direction="horizontal" className="flex-grow">
         {/* Sidebar */}
         <ResizablePanel defaultSize={20} minSize={15} maxSize={30} className="h-full">
