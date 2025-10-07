@@ -36,27 +36,42 @@ serve(async (req) => {
     }
     messages.push({ role: "user", content: prompt });
 
-    // Call Lovable AI Gateway with JSON schema for structured output
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model,
-        messages,
-        temperature,
-        response_format: {
-          type: "json_schema",
-          json_schema: {
-            name: "storyline_generation",
-            strict: true,
-            schema: responseSchema
+    // Call Lovable AI Gateway with timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s timeout
+
+    let response;
+    try {
+      response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model,
+          messages,
+          temperature,
+          response_format: {
+            type: "json_schema",
+            json_schema: {
+              name: "storyline_generation",
+              strict: true,
+              schema: responseSchema
+            }
           }
-        }
-      }),
-    });
+        }),
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      if (fetchError.name === 'AbortError') {
+        console.error('Request timeout (60s exceeded)');
+        return errorResponse("Request timeout (60s exceeded)", 504);
+      }
+      throw fetchError;
+    }
 
     if (!response.ok) {
       if (response.status === 429) {
@@ -73,17 +88,36 @@ serve(async (req) => {
     const data = await response.json();
     const content = data.choices?.[0]?.message?.content;
 
-    if (!content) {
-      return errorResponse("No content returned from AI", 500);
+    // Enhanced validation before JSON parsing
+    if (!content || content.trim() === '') {
+      console.error('Empty content from AI Gateway:', {
+        status: response.status,
+        headers: Object.fromEntries(response.headers.entries()),
+        usage: data.usage,
+        model
+      });
+      return errorResponse("Empty response from AI", 500, { 
+        model, 
+        usage: data.usage 
+      });
     }
 
-    // Parse the JSON response (guaranteed to be valid due to schema)
+    // Parse the JSON response with better error details
     let parsedContent;
     try {
       parsedContent = JSON.parse(content);
     } catch (parseError) {
-      console.error("Failed to parse JSON response:", parseError);
-      return errorResponse("Invalid JSON response from AI", 500, { content });
+      console.error("Failed to parse JSON response:", {
+        error: parseError.message,
+        contentPreview: content.substring(0, 500),
+        contentLength: content.length,
+        model
+      });
+      return errorResponse("Invalid JSON response from AI", 500, { 
+        contentPreview: content.substring(0, 200),
+        error: parseError.message,
+        model
+      });
     }
 
     return successResponse({

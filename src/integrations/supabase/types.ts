@@ -2505,33 +2505,39 @@ export type Database = {
         Row: {
           created_at: string
           description: string
+          failure_reason: string | null
           full_story: string
           generated_by: string | null
           id: string
           is_selected: boolean | null
           project_id: string
+          status: string | null
           tags: string[] | null
           title: string
         }
         Insert: {
           created_at?: string
           description: string
+          failure_reason?: string | null
           full_story: string
           generated_by?: string | null
           id?: string
           is_selected?: boolean | null
           project_id: string
+          status?: string | null
           tags?: string[] | null
           title: string
         }
         Update: {
           created_at?: string
           description?: string
+          failure_reason?: string | null
           full_story?: string
           generated_by?: string | null
           id?: string
           is_selected?: boolean | null
           project_id?: string
+          status?: string | null
           tags?: string[] | null
           title?: string
         }

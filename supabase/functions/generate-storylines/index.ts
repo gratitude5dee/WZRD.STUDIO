@@ -75,131 +75,207 @@ serve(async (req) => {
       }
     }
 
-    // Step 1: Generate storyline and scenes using Gemini with structured output
-    console.log('Generating storyline with Gemini AI (structured JSON output)...');
-    const storylineSystemPrompt = getStorylineSystemPrompt(generate_alternative);
-    const storylineUserPrompt = getStorylineUserPrompt(project, generate_alternative, existingStorylines);
-    
-    // Import schemas dynamically
-    const { STORYLINE_RESPONSE_SCHEMA, ALTERNATIVE_STORYLINE_SCHEMA } = await import('./gemini-schemas.ts');
-    const responseSchema = generate_alternative ? ALTERNATIVE_STORYLINE_SCHEMA : STORYLINE_RESPONSE_SCHEMA;
-    
-    // Call Gemini via the gemini-storyline-generation Edge Function
-    const geminiResponse = await fetch(
-      `${Deno.env.get('SUPABASE_URL')}/functions/v1/gemini-storyline-generation`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          systemPrompt: storylineSystemPrompt,
-          prompt: storylineUserPrompt,
-          model: generate_alternative ? 'google/gemini-2.5-flash' : 'google/gemini-2.5-pro',
-          responseSchema: responseSchema,
-          temperature: generate_alternative ? 1.0 : 0.7
-        }),
-      }
-    );
-
-    if (!geminiResponse.ok) {
-      const errorData = await geminiResponse.json().catch(() => ({ error: 'Unknown error' }));
-      console.error('Gemini API error:', errorData);
-      return errorResponse('Failed to generate storyline', 500, errorData);
-    }
-
-    const geminiData = await geminiResponse.json();
-    const storylineData = geminiData.parsed as StorylineResponseData;
-
-    if (!storylineData || !storylineData.primary_storyline) {
-      console.error('Failed to parse valid response from Gemini:', { raw_content: geminiData.text });
-      return errorResponse('Failed to parse valid storyline from Gemini', 500, { raw_content: geminiData.text });
-    }
-
-    console.log('Successfully generated storyline with Gemini (guaranteed valid JSON)');
-    const fullStoryText = storylineData.primary_storyline.full_story;
-
-    // Step 2: Analyze storyline for characters and settings (only for main storyline, not alternatives)
-    let analysisData: AnalysisResponseData | null = null;
-    if (!generate_alternative) {
+    // Start background processing with EdgeRuntime.waitUntil()
+    const backgroundProcessing = (async () => {
+      let storyline_id: string | null = null;
+      
       try {
-        console.log('Analyzing storyline with Gemini for characters and settings...');
-        const analysisSystemPrompt = getAnalysisSystemPrompt();
-        const analysisUserPrompt = getAnalysisUserPrompt(fullStoryText);
-
-        const { ANALYSIS_RESPONSE_SCHEMA } = await import('./gemini-schemas.ts');
-
-        // Call Gemini for analysis with structured output
-        const analysisResponse = await fetch(
+        // Step 1: Generate storyline with Gemini
+        console.log('Generating storyline with Gemini AI (structured JSON output)...');
+        const storylineSystemPrompt = getStorylineSystemPrompt(generate_alternative);
+        const storylineUserPrompt = getStorylineUserPrompt(project, generate_alternative, existingStorylines);
+        
+        const { STORYLINE_RESPONSE_SCHEMA, ALTERNATIVE_STORYLINE_SCHEMA } = await import('./gemini-schemas.ts');
+        const responseSchema = generate_alternative ? ALTERNATIVE_STORYLINE_SCHEMA : STORYLINE_RESPONSE_SCHEMA;
+        
+        const geminiResponse = await fetch(
           `${Deno.env.get('SUPABASE_URL')}/functions/v1/gemini-storyline-generation`,
           {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              systemPrompt: analysisSystemPrompt,
-              prompt: analysisUserPrompt,
-              model: 'google/gemini-2.5-flash',
-              responseSchema: ANALYSIS_RESPONSE_SCHEMA,
-              temperature: 0.5
+              systemPrompt: storylineSystemPrompt,
+              prompt: storylineUserPrompt,
+              model: generate_alternative ? 'google/gemini-2.5-flash' : 'google/gemini-2.5-pro',
+              responseSchema: responseSchema,
+              temperature: generate_alternative ? 1.0 : 0.7
             }),
           }
         );
 
-        if (!analysisResponse.ok) {
-          throw new Error(`Analysis call failed: ${analysisResponse.status}`);
+        if (!geminiResponse.ok) {
+          const errorData = await geminiResponse.json().catch(() => ({ error: 'Unknown error' }));
+          throw new Error(`Gemini generation failed: ${errorData.error || geminiResponse.statusText}`);
+        }
+
+        const geminiData = await geminiResponse.json();
+        const storylineData = geminiData.parsed as StorylineResponseData;
+
+        if (!storylineData || !storylineData.primary_storyline) {
+          throw new Error('Failed to parse valid storyline from Gemini');
+        }
+
+        console.log('Successfully generated storyline with Gemini');
+        const fullStoryText = storylineData.primary_storyline.full_story;
+
+        // Step 2: Create storyline skeleton
+        const { data: storylineRecord, error: storylineError } = await supabaseClient
+          .from('storylines')
+          .insert({
+            project_id,
+            title: storylineData.primary_storyline.title,
+            description: storylineData.primary_storyline.logline,
+            full_story: '', // Will be populated progressively
+            status: 'generating',
+            is_selected: !generate_alternative
+          })
+          .select()
+          .single();
+        
+        if (storylineError) throw storylineError;
+        storyline_id = storylineRecord.id;
+        console.log(`Created storyline skeleton with ID: ${storyline_id}`);
+
+        // Step 3: Stream full story (paragraph by paragraph)
+        const paragraphs = fullStoryText.split('\n\n').filter(p => p.trim());
+        let accumulatedStory = '';
+        
+        for (const paragraph of paragraphs) {
+          accumulatedStory += paragraph + '\n\n';
+          await supabaseClient
+            .from('storylines')
+            .update({ full_story: accumulatedStory.trim() })
+            .eq('id', storyline_id);
+          
+          await new Promise(resolve => setTimeout(resolve, 100)); // Smooth streaming
+        }
+
+        console.log('Completed streaming full story');
+
+        // Step 4: Stream scenes (one by one)
+        const sceneBreakdown = storylineData.primary_storyline.scene_breakdown || [];
+        for (const scene of sceneBreakdown) {
+          await supabaseClient
+            .from('scenes')
+            .insert({
+              project_id,
+              storyline_id,
+              scene_number: scene.scene_number,
+              title: scene.scene_title,
+              description: scene.description,
+              location: scene.location,
+              time_of_day: scene.time_of_day,
+              lighting: scene.lighting,
+              weather: scene.weather
+            });
+          
+          await new Promise(resolve => setTimeout(resolve, 150)); // Smooth scene appearance
+        }
+
+        console.log(`Completed streaming ${sceneBreakdown.length} scenes`);
+
+        // Step 5: Analysis and character discovery (only for main storyline)
+        let analysisData: AnalysisResponseData | null = null;
+        if (!generate_alternative) {
+          try {
+            console.log('Analyzing storyline for characters and settings...');
+            const analysisSystemPrompt = getAnalysisSystemPrompt();
+            const analysisUserPrompt = getAnalysisUserPrompt(fullStoryText);
+            const { ANALYSIS_RESPONSE_SCHEMA } = await import('./gemini-schemas.ts');
+
+            const analysisResponse = await fetch(
+              `${Deno.env.get('SUPABASE_URL')}/functions/v1/gemini-storyline-generation`,
+              {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  systemPrompt: analysisSystemPrompt,
+                  prompt: analysisUserPrompt,
+                  model: 'google/gemini-2.5-flash',
+                  responseSchema: ANALYSIS_RESPONSE_SCHEMA,
+                  temperature: 0.5
+                }),
+              }
+            );
+
+            if (analysisResponse.ok) {
+              const analysisData_raw = await analysisResponse.json();
+              analysisData = analysisData_raw.parsed as AnalysisResponseData;
+              
+              // Stream characters
+              if (analysisData?.characters) {
+                for (const char of analysisData.characters) {
+                  await supabaseClient
+                    .from('characters')
+                    .insert({
+                      project_id,
+                      name: char.name,
+                      description: char.description
+                    });
+                  
+                  await new Promise(resolve => setTimeout(resolve, 100));
+                }
+                console.log(`Completed streaming ${analysisData.characters.length} characters`);
+              }
+            }
+          } catch (analysisError) {
+            console.warn('Failed to analyze storyline:', analysisError.message);
+          }
+        }
+
+        // Step 6: Complete the storyline and trigger additional processing
+        await supabaseClient
+          .from('storylines')
+          .update({ status: 'complete' })
+          .eq('id', storyline_id);
+
+        // Generate shots and other assets using original logic
+        const dbResults = await saveStorylineData(
+          supabaseClient,
+          project_id,
+          storylineData,
+          !generate_alternative,
+          analysisData,
+          generate_alternative
+        );
+
+        if (Object.keys(dbResults.updatedSettings).length > 0) {
+          await updateProjectSettings(supabaseClient, project_id, dbResults.updatedSettings);
+        }
+
+        if (dbResults.characters.length > 0) {
+          await triggerCharacterImageGeneration(supabaseClient, project_id, dbResults.characters);
         }
         
-        const analysisData_raw = await analysisResponse.json();
-        analysisData = analysisData_raw.parsed as AnalysisResponseData;
-        console.log('Analysis complete with Gemini.', analysisData ? 'Successfully extracted character and setting data.' : 'Parsing failed.');
-      } catch (analysisError) {
-        console.warn('Failed to analyze storyline:', analysisError.message);
-        // Continue without analysis data if this step fails
+        if (dbResults.inserted_shot_ids && dbResults.inserted_shot_ids.length > 0) {
+          await triggerShotVisualPromptGeneration(supabaseClient, dbResults.inserted_shot_ids);
+        }
+
+        console.log('Background storyline generation completed successfully');
+
+      } catch (error) {
+        console.error('Background generation error:', error);
+        if (storyline_id) {
+          await supabaseClient
+            .from('storylines')
+            .update({ 
+              status: 'failed', 
+              failure_reason: error.message 
+            })
+            .eq('id', storyline_id);
+        }
       }
-    }
+    })();
 
-    // Step 3: Save to database
-    const isSelected = !generate_alternative;
-    const dbResults = await saveStorylineData(
-      supabaseClient,
-      project_id,
-      storylineData,
-      isSelected,
-      analysisData,
-      generate_alternative
-    );
+    // Use EdgeRuntime.waitUntil to keep function alive for background processing
+    EdgeRuntime.waitUntil(backgroundProcessing);
 
-    // Update project with selected storyline and potentially inferred settings
-    if (Object.keys(dbResults.updatedSettings).length > 0) {
-      await updateProjectSettings(supabaseClient, project_id, dbResults.updatedSettings);
-    }
-
-    // Trigger character image generation for saved characters
-    if (dbResults.characters.length > 0) {
-      await triggerCharacterImageGeneration(supabaseClient, project_id, dbResults.characters);
-    }
-    
-    // Trigger visual prompt generation for created shots
-    if (dbResults.inserted_shot_ids && dbResults.inserted_shot_ids.length > 0) {
-      await triggerShotVisualPromptGeneration(supabaseClient, dbResults.inserted_shot_ids);
-    }
-
-    // Return success response
-    const result: StorylineGenerationResult = {
+    // Return immediately with 202 Accepted
+    return successResponse({
       success: true,
-      storyline_id: dbResults.storyline_id,
-      scene_count: dbResults.scene_count,
-      character_count: dbResults.character_count,
-      shot_count: dbResults.inserted_shot_ids?.length || 0,
-      is_alternative: generate_alternative,
-      updated_settings: Object.keys(dbResults.updatedSettings).filter(k => k !== 'selected_storyline_id'),
-      potential_genre: analysisData?.potential_genre,
-      potential_tone: analysisData?.potential_tone
-    };
-
-    return successResponse(result);
+      message: 'Storyline generation started',
+      project_id
+    }, 202);
 
   } catch (error) {
     console.error('Error in generate-storylines function:', error);

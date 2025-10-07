@@ -131,7 +131,7 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // Function to generate storyline using the generate-storylines Edge Function
+  // Non-blocking storyline generation with streaming
   const generateStoryline = async (currentProjectId: string): Promise<boolean> => {
     if (!user) {
       toast.error("Please log in to generate storylines");
@@ -147,6 +147,7 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
       setIsGenerating(true);
       console.log(`Invoking generate-storylines for project: ${currentProjectId}`);
       
+      // Non-blocking call - edge function returns immediately
       const { data, error } = await supabase.functions.invoke('generate-storylines', {
         body: { project_id: currentProjectId }
       });
@@ -157,43 +158,21 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
         return false;
       }
       
-      console.log('Storyline generation function response:', data);
-      if (data.success === false) {
-        toast.error(`Storyline generation failed: ${data.error || 'Unknown error'}`);
-        return false;
-      }
+      console.log('Storyline generation started:', data);
       
-      // Add character count to toast message if available
-      toast.success(`Storyline generated with ${data.scene_count ?? 0} scenes${data.character_count ? ` and ${data.character_count} characters` : ''}`);
+      // Immediate success - generation happening in background
+      toast.success('Storyline generation started! Watch it appear in real-time.', {
+        duration: 5000
+      });
       
-      // If AI inferred settings that didn't exist, update them in context
-      if (data.updated_settings?.length > 0) {
-        const updates: Partial<ProjectData> = {};
-        // Check for updated settings from the response
-        if (data.updated_settings.includes('genre') && !projectData.genre) {
-          updates.genre = data.potential_genre || '';
-        }
-        if (data.updated_settings.includes('tone') && !projectData.tone) {
-          updates.tone = data.potential_tone || '';
-        }
-        
-        if (Object.keys(updates).length > 0) {
-          console.log('Applying inferred settings to context:', updates);
-          updateProjectData(updates);
-        }
-      }
+      return true; // Allow navigation immediately
       
-      // Signal generation completion - AFTER all DB operations
-      setGenerationCompletedSignal(prev => prev + 1);
-      console.log('Generation completed signal incremented:', generationCompletedSignal + 1);
-      
-      return true;
     } catch (error: any) {
       console.error('Error in generateStoryline:', error);
       toast.error(`Storyline generation failed: ${error.message}`);
       return false;
     } finally {
-      setIsGenerating(false);
+      setIsGenerating(false); // Release immediately
     }
   };
 

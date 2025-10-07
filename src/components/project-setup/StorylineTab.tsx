@@ -5,6 +5,7 @@ import { supabaseService } from '@/services/supabaseService';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Loader2, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -28,6 +29,12 @@ const StorylineTab = ({ projectData, updateProjectData }: StorylineTabProps) => 
   const navigate = useNavigate();
   const params = useParams();
   
+  // Streaming state
+  const [streamingStory, setStreamingStory] = useState('');
+  const [streamingStatus, setStreamingStatus] = useState<'pending' | 'generating' | 'complete' | 'failed'>('pending');
+  const [streamingScenes, setStreamingScenes] = useState<any[]>([]);
+  const [streamingCharacters, setStreamingCharacters] = useState<any[]>([]);
+  
   // Determine the project ID to use (URL param takes precedence)
   const currentProjectId = params.id || contextProjectId;
 
@@ -42,6 +49,88 @@ const StorylineTab = ({ projectData, updateProjectData }: StorylineTabProps) => 
       setIsLoading(false);
     }
   }, [currentProjectId]);
+
+  // Realtime streaming for storyline updates
+  useEffect(() => {
+    if (!currentProjectId) return;
+    
+    // Subscribe to storyline updates (streaming full_story and status changes)
+    const storylineChannel = supabase
+      .channel(`storyline-updates-${currentProjectId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'storylines',
+          filter: `project_id=eq.${currentProjectId}`
+        },
+        (payload) => {
+          console.log('Storyline update received:', payload);
+          const newStoryline = payload.new as Storyline;
+          
+          setStreamingStory(newStoryline.full_story || '');
+          setStreamingStatus(newStoryline.status || 'pending');
+          
+          // Update selected storyline if it's being updated
+          if (selectedStoryline?.id === newStoryline.id) {
+            setSelectedStoryline(newStoryline);
+          }
+          
+          if (newStoryline.status === 'complete') {
+            toast.success('Storyline generation complete!');
+            fetchStorylines(); // Refresh to get final data
+          } else if (newStoryline.status === 'failed') {
+            toast.error('Storyline generation failed');
+          }
+        }
+      )
+      .subscribe();
+    
+    // Subscribe to scene insertions
+    const scenesChannel = supabase
+      .channel(`scenes-${currentProjectId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'scenes',
+          filter: `project_id=eq.${currentProjectId}`
+        },
+        (payload) => {
+          console.log('New scene received:', payload);
+          setStreamingScenes(prev => [...prev, payload.new]);
+          toast.info(`Scene ${payload.new.scene_number} added`, { duration: 2000 });
+        }
+      )
+      .subscribe();
+    
+    // Subscribe to character insertions
+    const charactersChannel = supabase
+      .channel(`characters-${currentProjectId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'characters',
+          filter: `project_id=eq.${currentProjectId}`
+        },
+        (payload) => {
+          console.log('New character received:', payload);
+          setStreamingCharacters(prev => [...prev, payload.new]);
+          toast.info(`Character discovered: ${payload.new.name}`, { duration: 2000 });
+        }
+      )
+      .subscribe();
+    
+    return () => {
+      supabase.removeChannel(storylineChannel);
+      supabase.removeChannel(scenesChannel);
+      supabase.removeChannel(charactersChannel);
+    };
+  }, [currentProjectId, selectedStoryline?.id]);
 
   const fetchStorylines = async () => {
     if (!currentProjectId) return;
@@ -252,16 +341,26 @@ const StorylineTab = ({ projectData, updateProjectData }: StorylineTabProps) => 
           {/* Main Storyline Editor - Now spans 2 columns */}
           <div className="md:col-span-2">
             <div className="bg-black rounded-lg border border-zinc-800 p-6 min-h-[400px]">
-              {isLoading ? (
+              {/* Show streaming status indicator */}
+              {streamingStatus === 'generating' && (
+                <div className="flex items-center gap-2 text-blue-400 mb-4 p-3 bg-blue-950/20 rounded border border-blue-900">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Generating storyline in real-time...</span>
+                </div>
+              )}
+              
+              {isLoading && !selectedStoryline ? (
                 <div className="flex justify-center items-center h-full py-20">
                   <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
                   <span className="ml-3 text-zinc-400">Loading your storyline...</span>
                 </div>
-              ) : selectedStoryline ? (
+              ) : selectedStoryline || streamingStory ? (
                 <>
-                  <h2 className="text-2xl font-bold mb-4 text-white">{selectedStoryline.title}</h2>
+                  <h2 className="text-2xl font-bold mb-4 text-white">
+                    {selectedStoryline?.title || <Skeleton className="h-8 w-64" />}
+                  </h2>
                   <div className="flex flex-wrap gap-2 mb-6">
-                    {selectedStoryline.tags && selectedStoryline.tags.map((tag, tagIndex) => (
+                    {selectedStoryline?.tags && selectedStoryline.tags.map((tag, tagIndex) => (
                       <Badge 
                         key={tagIndex} 
                         className="bg-zinc-900 text-zinc-300"
@@ -270,13 +369,51 @@ const StorylineTab = ({ projectData, updateProjectData }: StorylineTabProps) => 
                       </Badge>
                     ))}
                   </div>
+                  
+                  {/* Display streaming or final story */}
                   <div className="prose prose-invert max-w-none">
-                    <p className="text-zinc-300 whitespace-pre-line">
-                      {selectedStoryline.full_story}
-                    </p>
+                    {streamingStatus === 'generating' && streamingStory ? (
+                      <p className="text-zinc-300 whitespace-pre-line animate-fade-in">
+                        {streamingStory}
+                        <span className="inline-block w-2 h-5 bg-blue-400 ml-1 animate-pulse"></span>
+                      </p>
+                    ) : selectedStoryline?.full_story ? (
+                      <p className="text-zinc-300 whitespace-pre-line">
+                        {selectedStoryline.full_story}
+                      </p>
+                    ) : (
+                      <Skeleton className="h-48 w-full" />
+                    )}
                   </div>
+                  
+                  {/* Show streaming scenes */}
+                  {streamingScenes.length > 0 && (
+                    <div className="mt-6 space-y-2">
+                      <h3 className="text-lg font-semibold text-zinc-300">Scenes</h3>
+                      {streamingScenes.map((scene, idx) => (
+                        <div key={scene.id || idx} className="p-3 bg-zinc-900 rounded animate-fade-in">
+                          <span className="font-medium">Scene {scene.scene_number}:</span> {scene.title}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {/* Show streaming characters */}
+                  {streamingCharacters.length > 0 && (
+                    <div className="mt-6">
+                      <h3 className="text-lg font-semibold text-zinc-300 mb-2">Characters</h3>
+                      <div className="flex flex-wrap gap-2">
+                        {streamingCharacters.map((char, idx) => (
+                          <Badge key={char.id || idx} className="bg-zinc-900 text-zinc-300 animate-fade-in">
+                            {char.name}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
                   <div className="mt-4 text-right text-sm text-zinc-500">
-                    {characterCount} characters
+                    {(streamingStory || selectedStoryline?.full_story || '').length} characters
                   </div>
                 </>
               ) : (

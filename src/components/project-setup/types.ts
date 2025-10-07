@@ -42,5 +42,7 @@ export interface Storyline {
   full_story: string;
   tags?: string[];
   is_selected?: boolean;
+  status?: 'pending' | 'generating' | 'complete' | 'failed';
+  failure_reason?: string | null;
   created_at?: string;
 }
