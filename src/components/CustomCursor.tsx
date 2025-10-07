@@ -17,7 +17,11 @@ const BASE_SCALE = 0.6; // Initial size when clicked
 const TRAIL_LIFESPAN = 400; // How long trail particles last (ms)
 const TRAIL_INTERVAL = 30; // How often to add a particle (ms)
 
-const CustomCursor: React.FC = () => {
+interface CustomCursorProps {
+    isLoading?: boolean;
+}
+
+const CustomCursor: React.FC<CustomCursorProps> = ({ isLoading = false }) => {
     const { x, y, isMouseDown, isMoving, holdDuration } = useCustomCursor();
     const [trails, setTrails] = React.useState<TrailParticle[]>([]);
     const lastTrailTimeRef = React.useRef<number>(0);
@@ -74,6 +78,27 @@ const CustomCursor: React.FC = () => {
 
     return (
         <>
+            {/* Loading Ring */}
+            {isLoading && (
+                <motion.div
+                    className="fixed top-0 left-0 pointer-events-none z-[10000]"
+                    style={{
+                        x: x - 12,
+                        y: y - 12,
+                        width: '24px',
+                        height: '24px',
+                    }}
+                    animate={{ rotate: 360 }}
+                    transition={{
+                        duration: 1,
+                        repeat: Infinity,
+                        ease: "linear"
+                    }}
+                >
+                    <div className="w-full h-full rounded-full border-2 border-dashed border-purple-400/70 border-t-purple-600" />
+                </motion.div>
+            )}
+
             {/* Cursor Orb */}
             <motion.div
                 className="fixed top-0 left-0 pointer-events-none z-[9999] rounded-full bg-blue-400"

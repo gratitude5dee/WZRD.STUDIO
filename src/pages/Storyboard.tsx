@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Plus, Loader2, AlertCircle } from 'lucide-react';
@@ -11,6 +11,7 @@ import ShotsRow from '@/components/storyboard/ShotsRow';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { ProjectDetails, SceneDetails, CharacterDetails, SidebarData } from '@/types/storyboardTypes';
+import { useCursorLoading } from '@/contexts/CursorLoadingContext';
 
 interface StoryboardPageProps {
   viewMode: 'studio' | 'timeline' | 'editor';
@@ -32,6 +33,8 @@ const StoryboardPage = ({ viewMode, setViewMode }: StoryboardPageProps) => {
     visual_prompt: boolean;
     image_url: boolean;
   }>>({});
+  const { setGlobalCursorLoading } = useCursorLoading();
+  const shotsGenerationTimeoutRef = useRef<NodeJS.Timeout>();
 
   // Memoize fetchData to prevent unnecessary re-renders
   const fetchData = useCallback(async () => {
@@ -170,6 +173,19 @@ const StoryboardPage = ({ viewMode, setViewMode }: StoryboardPageProps) => {
           if (scene) {
             toast.success(`Shot ${shot.shot_number} created for Scene ${scene.scene_number}`);
           }
+
+          // Activate loading cursor
+          setGlobalCursorLoading(true);
+          
+          // Clear existing timeout
+          if (shotsGenerationTimeoutRef.current) {
+            clearTimeout(shotsGenerationTimeoutRef.current);
+          }
+          
+          // Set new timeout to turn off loading after 2s of no activity
+          shotsGenerationTimeoutRef.current = setTimeout(() => {
+            setGlobalCursorLoading(false);
+          }, 2000);
         })
       .on('postgres_changes',
         {
@@ -225,8 +241,11 @@ const StoryboardPage = ({ viewMode, setViewMode }: StoryboardPageProps) => {
     return () => {
       supabase.removeChannel(scenesChannel);
       supabase.removeChannel(shotsChannel);
+      if (shotsGenerationTimeoutRef.current) {
+        clearTimeout(shotsGenerationTimeoutRef.current);
+      }
     };
-  }, [projectId, fetchData]);
+  }, [projectId, fetchData, setGlobalCursorLoading]);
 
   // Function to update scene details in the database
   const handleSceneUpdate = async (sceneId: string | undefined, updates: Partial<Omit<SceneDetails, 'id' | 'project_id' | 'scene_number'>>) => {

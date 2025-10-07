@@ -16,12 +16,19 @@ import StudioPage from "./pages/StudioPage";
 import LearningStudioPage from "./pages/LearningStudioPage";
 import StoryboardPage from "./pages/StoryboardPage";
 import EditorPage from "./pages/EditorPage";
-// import CustomCursor from "@/components/CustomCursor"; // Disabled for better drag & drop
+import CustomCursor from "@/components/CustomCursor";
+import { CursorLoadingProvider, useCursorLoading } from "@/contexts/CursorLoadingContext";
 
 // Component to handle redirect from old storyboard URLs to timeline
 const RedirectToTimeline = () => {
   const { projectId } = useParams();
   return <Navigate to={`/timeline/${projectId}`} replace />;
+};
+
+// Wrapper component to access cursor loading context
+const CursorWrapper = () => {
+  const { isLoading } = useCursorLoading();
+  return <CustomCursor isLoading={isLoading} />;
 };
 
 const queryClient = new QueryClient();
@@ -32,9 +39,10 @@ const App = () => {
       <TooltipProvider>
         <BrowserRouter>
           <AuthProvider>
-            {/* <CustomCursor /> */}
-            <Toaster />
-            <Sonner />
+            <CursorLoadingProvider>
+              <CursorWrapper />
+              <Toaster />
+              <Sonner />
             <Routes>
               <Route path="/" element={<Landing />} />
               <Route path="/login" element={<Login />} />
@@ -95,6 +103,7 @@ const App = () => {
               } />
               <Route path="*" element={<NotFound />} />
             </Routes>
+            </CursorLoadingProvider>
           </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>

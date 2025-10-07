@@ -7,6 +7,7 @@ interface CursorState {
   isMouseDown: boolean;
   isMoving: boolean;
   holdDuration: number; // Milliseconds the mouse has been held down
+  isLoading: boolean; // Loading state for visual feedback
 }
 
 const initialState: CursorState = {
@@ -15,6 +16,7 @@ const initialState: CursorState = {
   isMouseDown: false,
   isMoving: false,
   holdDuration: 0,
+  isLoading: false,
 };
 
 // Debounce helper
@@ -119,5 +121,9 @@ export function useCustomCursor() {
     };
   }, [handleMouseMove, handleMouseDown, handleMouseUp, handleMouseStop]); // Include debounced handler dependency
 
-  return cursorState;
+  const setIsLoading = (loading: boolean) => {
+    setCursorState(prev => ({ ...prev, isLoading: loading }));
+  };
+
+  return { ...cursorState, setIsLoading };
 }
