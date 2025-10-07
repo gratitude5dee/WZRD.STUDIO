@@ -283,45 +283,96 @@ const ShotsRow = ({ sceneId, sceneNumber, projectId, onSceneDelete, isSelected =
       exit={{ opacity: 0, y: -20 }}
       transition={{ duration: 0.3 }}
       className={cn(
-        "p-4 rounded-lg transition-all duration-300 mb-8 relative group",
-        isSelected 
-          ? "bg-purple-900/10 ring-1 ring-purple-500/30 shadow-lg" 
-          : "hover:bg-white/5"
+        "relative group mb-8 p-6 rounded-[20px] backdrop-blur-sm transition-all duration-300",
+        "bg-gradient-to-br from-zinc-900/40 to-zinc-900/20",
+        "border border-zinc-800/30 hover:border-zinc-700/50",
+        "shadow-[0_8px_32px_rgba(0,0,0,0.4),0_0_0_1px_rgba(255,255,255,0.03),inset_0_1px_0_rgba(255,255,255,0.02)]",
+        isSelected && [
+          "border-2 border-blue-500/60",
+          "shadow-[0_0_0_4px_rgba(59,130,246,0.15),0_12px_40px_rgba(59,130,246,0.25),inset_0_1px_0_rgba(255,255,255,0.05)]",
+          "bg-gradient-to-br from-blue-950/30 to-zinc-900/40"
+        ]
       )}
     >
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-2xl font-bold text-[#FFB628] glow-text-gold font-serif cursor-pointer hover:opacity-80">
-          SCENE {sceneNumber}
-        </h2>
-        <div className="flex space-x-2">
-          <Button 
-            onClick={addShot}
-            className="bg-purple-600 hover:bg-purple-700 text-white shadow-glow-purple-sm transition-all-std"
-            disabled={isLoading || isSavingOrder}
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add Shot
-          </Button>
+      {/* Scene Title and Actions */}
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          {/* Scene number badge with glass morphism */}
+          <div className="relative">
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-600/10 
+                backdrop-blur-sm border border-amber-500/30 
+                shadow-[0_0_24px_rgba(251,191,36,0.3),inset_0_1px_0_rgba(255,255,255,0.1)]
+                flex items-center justify-center"
+            >
+              <span className="text-2xl font-bold text-amber-400 glow-text-gold">
+                {sceneNumber}
+              </span>
+            </motion.div>
+            {/* Corner accent */}
+            <div className="absolute -top-1 -right-1 w-3 h-3 bg-amber-400/60 rounded-full 
+              blur-sm animate-pulse" 
+            />
+          </div>
           
+          {/* Scene label */}
+          <div>
+            <div className="text-xs uppercase tracking-wider text-zinc-500 font-medium mb-0.5">
+              Scene
+            </div>
+            <h2 className="text-xl font-bold text-amber-400 glow-text-gold font-serif">
+              Scene {sceneNumber}
+            </h2>
+          </div>
+        </div>
+        
+        <div className="flex gap-2">
+          {/* Add Shot Button - Premium glass style */}
+          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+            <Button 
+              onClick={addShot}
+              size="sm"
+              className={cn(
+                "relative overflow-hidden backdrop-blur-sm",
+                "bg-gradient-to-br from-blue-600/90 to-purple-600/90",
+                "border border-blue-500/30",
+                "shadow-[0_4px_20px_rgba(59,130,246,0.3),inset_0_1px_0_rgba(255,255,255,0.1)]",
+                "hover:shadow-[0_6px_28px_rgba(59,130,246,0.4),inset_0_1px_0_rgba(255,255,255,0.15)]",
+                "transition-all duration-300"
+              )}
+              disabled={isLoading || isSavingOrder}
+            >
+              <div className="absolute inset-0 bg-gradient-to-t from-transparent to-white/10" />
+              <Plus className="w-4 h-4 mr-2 relative z-10" />
+              <span className="relative z-10">Add Shot</span>
+            </Button>
+          </motion.div>
+          
+          {/* Delete Button - Premium destructive style */}
           {onSceneDelete && (
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button 
-                  variant="destructive" 
-                  size="icon"
-                  disabled={isDeleting}
-                  onClick={handleDeleteScene}
-                  className="transition-all-std"
-                >
-                  {isDeleting ? (
-                    <span className="animate-spin">◌</span>
-                  ) : (
-                    <Trash2 className="w-4 h-4" />
-                  )}
-                </Button>
+                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                  <Button 
+                    variant="ghost"
+                    size="sm"
+                    disabled={isDeleting}
+                    onClick={handleDeleteScene}
+                    className={cn(
+                      "backdrop-blur-sm bg-red-950/20 border border-red-500/30",
+                      "hover:bg-red-900/40 hover:border-red-500/50",
+                      "shadow-[0_2px_12px_rgba(239,68,68,0.2)]",
+                      "hover:shadow-[0_4px_20px_rgba(239,68,68,0.3)]",
+                      "transition-all duration-300"
+                    )}
+                  >
+                    <Trash2 className="w-4 h-4 text-red-400" />
+                  </Button>
+                </motion.div>
               </TooltipTrigger>
-              <TooltipContent>
-                <p>Delete scene and all its shots</p>
+              <TooltipContent className="glass-panel border-zinc-700">
+                <p className="text-xs">Delete scene and all shots</p>
               </TooltipContent>
             </Tooltip>
           )}
@@ -331,13 +382,17 @@ const ShotsRow = ({ sceneId, sceneNumber, projectId, onSceneDelete, isSelected =
       <ScrollArea className="pb-3">
         <div 
           ref={containerRef}
-          className="flex space-x-4 pb-3 px-2 min-h-[180px] perspective-1000 transform-style-3d relative"
+          className={cn(
+            "flex space-x-4 pb-3 px-2 min-h-[180px]",
+            "perspective-1000 transform-style-3d relative",
+            // Enhanced dotted grid with glow
+            "before:absolute before:inset-0 before:pointer-events-none",
+            "before:bg-[radial-gradient(circle,rgba(59,130,246,0.08)_1px,transparent_1px)]",
+            "before:bg-[length:20px_20px]",
+            "before:opacity-50"
+          )}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
-          style={{
-            backgroundImage: 'radial-gradient(circle, rgba(113, 113, 122, 0.08) 1px, transparent 1px)',
-            backgroundSize: '20px 20px'
-          }}
         >
           {/* Connection Lines */}
           <ShotConnectionLines connections={connections} shotRefs={shotRefs} />
@@ -371,12 +426,25 @@ const ShotsRow = ({ sceneId, sceneNumber, projectId, onSceneDelete, isSelected =
               <span className="animate-spin mr-2">◌</span> Loading shots...
             </div>
           ) : shots.length === 0 ? (
-            <div className="flex flex-col items-center justify-center w-full text-zinc-500">
-              <AlertCircle className="w-8 h-8 mb-2 opacity-50" />
-              <p>No shots in this scene yet.</p>
+            <div className={cn(
+              "flex flex-col items-center justify-center w-full py-12",
+              "rounded-xl bg-zinc-900/20 backdrop-blur-sm",
+              "border border-dashed border-zinc-700/50"
+            )}>
+              <div className="w-12 h-12 rounded-xl bg-zinc-800/50 flex items-center justify-center mb-4
+                shadow-[inset_0_2px_8px_rgba(0,0,0,0.3)]">
+                <AlertCircle className="w-6 h-6 text-zinc-500" />
+              </div>
+              
+              <p className="text-zinc-400 text-sm mb-4">No shots in this scene yet.</p>
+              
               <Button 
                 variant="ghost" 
-                className="mt-2 text-zinc-400 hover:text-white"
+                className={cn(
+                  "border border-zinc-700/50 bg-zinc-900/30",
+                  "hover:bg-zinc-800/50 hover:border-zinc-600/50",
+                  "text-zinc-300 hover:text-white"
+                )}
                 onClick={addShot}
               >
                 <Plus className="w-4 h-4 mr-2" />

@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAppStore } from '@/store/appStore';
 import { ProjectDetails, SceneDetails, CharacterDetails, SidebarData } from '@/types/storyboardTypes';
+import { cn } from '@/lib/utils';
 
 const StoryboardPage = () => {
   const { projectId } = useParams<{ projectId?: string }>();
@@ -320,21 +321,41 @@ const StoryboardPage = () => {
           <div className="p-6 h-full overflow-y-auto relative">
             {scenes.length === 0 ? (
               <motion.div 
-                initial={{ opacity: 0, y: 20 }} 
-                animate={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0, scale: 0.95 }} 
+                animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.5 }}
-                className="text-center text-zinc-500 mt-20"
+                className={cn(
+                  "text-center mt-20 max-w-md mx-auto",
+                  "p-8 rounded-2xl",
+                  "bg-gradient-to-br from-zinc-900/60 to-zinc-900/30",
+                  "backdrop-blur-sm border border-zinc-800/40",
+                  "shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.03)]"
+                )}
               >
-                <AlertCircle className="mx-auto w-12 h-12 text-zinc-600 mb-4" />
-                <p className="text-xl mb-2">No scenes found</p>
-                <p className="text-sm mb-6">Add scenes manually or generate them in Project Setup.</p>
-                <Button 
-                  variant="outline" 
-                  className="border-purple-500/30 text-purple-300 hover:bg-purple-950/30"
-                  onClick={addScene}
-                >
-                  <Plus className="w-4 h-4 mr-2" /> Add First Scene
-                </Button>
+                <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-zinc-800/50 
+                  flex items-center justify-center
+                  shadow-[inset_0_2px_8px_rgba(0,0,0,0.3)]">
+                  <AlertCircle className="w-8 h-8 text-zinc-500" />
+                </div>
+                
+                <p className="text-xl font-semibold text-zinc-300 mb-2">No scenes found</p>
+                <p className="text-sm text-zinc-500 mb-6">
+                  Add scenes manually or generate them in Project Setup.
+                </p>
+                
+                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                  <Button 
+                    className={cn(
+                      "bg-gradient-to-br from-purple-600/90 to-blue-600/90",
+                      "border border-purple-500/30",
+                      "shadow-[0_4px_20px_rgba(139,92,246,0.3)]",
+                      "hover:shadow-[0_6px_28px_rgba(139,92,246,0.4)]"
+                    )}
+                    onClick={addScene}
+                  >
+                    <Plus className="w-4 h-4 mr-2" /> Add First Scene
+                  </Button>
+                </motion.div>
               </motion.div>
             ) : (
               <AnimatePresence initial={false}>
@@ -360,32 +381,108 @@ const StoryboardPage = () => {
                 ))}
               </AnimatePresence>
             )}
-            {/* Floating Action Button to Add Scene */}
-            <motion.button
-              onClick={addScene}
-              className="fixed bottom-6 right-6 rounded-full h-14 w-14 bg-gradient-to-br from-purple-600 to-indigo-600 p-0 flex items-center justify-center shadow-lg hover:scale-105 transition-transform z-20"
-              whileHover={{ 
-                scale: 1.1, 
-                rotate: 15,
-                boxShadow: "0px 0px 20px 0px rgba(147, 51, 234, 0.5)"
-              }}
-              whileTap={{ scale: 0.95 }}
-              transition={{ 
-                type: "spring", 
-                stiffness: 400, 
-                damping: 10 
-              }}
-            >
-              <Plus className="w-6 h-6 text-white" />
-              <span className="sr-only">Add a scene</span>
-            </motion.button>
+            {/* Floating Action Button to Add Scene - Premium Design */}
+            <div className="fixed bottom-8 right-8 z-30">
+              {/* Glow layer (backdrop) */}
+              <motion.div
+                className="absolute inset-0 rounded-full bg-gradient-to-br from-blue-500/40 to-purple-500/40 blur-2xl"
+                animate={{
+                  scale: [1, 1.2, 1],
+                  opacity: [0.5, 0.8, 0.5]
+                }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                }}
+              />
+              
+              {/* Main button */}
+              <motion.button
+                onClick={addScene}
+                className={cn(
+                  "relative w-16 h-16 rounded-2xl",
+                  "bg-gradient-to-br from-blue-600 to-purple-600",
+                  "border-2 border-blue-500/30",
+                  "shadow-[0_0_32px_rgba(139,92,246,0.5),0_8px_24px_rgba(59,130,246,0.4),inset_0_2px_0_rgba(255,255,255,0.2)]",
+                  "flex items-center justify-center",
+                  "overflow-hidden"
+                )}
+                whileHover={{ 
+                  scale: 1.1,
+                  rotate: 90,
+                  boxShadow: "0 0 40px rgba(139,92,246,0.6), 0 12px 32px rgba(59,130,246,0.5)"
+                }}
+                whileTap={{ scale: 0.9 }}
+                transition={{ 
+                  type: "spring", 
+                  stiffness: 400, 
+                  damping: 15
+                }}
+              >
+                {/* Gradient overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-transparent via-white/5 to-white/15" />
+                
+                {/* Icon */}
+                <Plus className="w-7 h-7 text-white relative z-10 drop-shadow-lg" />
+                
+                {/* Rotating shine effect */}
+                <motion.div
+                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
+                  style={{ width: '200%', left: '-50%' }}
+                  animate={{
+                    rotate: [0, 360]
+                  }}
+                  transition={{
+                    duration: 3,
+                    repeat: Infinity,
+                    ease: "linear"
+                  }}
+                />
+              </motion.button>
+            </div>
           </div>
         </ResizablePanel>
       </ResizablePanelGroup>
       
-      {/* Background gradient and noise texture */}
-      <div className="fixed inset-0 bg-gradient-to-br from-[#0A0D16]/90 to-[#131A2A]/90 -z-10" />
-      <div className="fixed inset-0 bg-noise opacity-5 -z-10" style={{ backgroundImage: 'url(/noise.png)' }} />
+      {/* Enhanced Background */}
+      {/* Base gradient */}
+      <div className="fixed inset-0 bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950 -z-20" />
+      
+      {/* Animated gradient orbs */}
+      <div className="fixed inset-0 -z-10 overflow-hidden">
+        <motion.div 
+          className="absolute top-0 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"
+          animate={{
+            x: [0, 50, 0],
+            y: [0, 30, 0],
+            scale: [1, 1.1, 1]
+          }}
+          transition={{
+            duration: 20,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
+        <motion.div 
+          className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl"
+          animate={{
+            x: [0, -50, 0],
+            y: [0, -30, 0],
+            scale: [1, 1.2, 1]
+          }}
+          transition={{
+            duration: 25,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
+      </div>
+      
+      {/* Noise texture */}
+      <div className="fixed inset-0 bg-noise opacity-[0.03] -z-10 mix-blend-overlay" 
+        style={{ backgroundImage: 'url(/noise.png)' }} 
+      />
     </div>
   );
 };

@@ -75,25 +75,51 @@ const StoryboardSidebar: React.FC<StoryboardSidebarProps> = ({ data, onUpdate })
     }
   };
 
-  const inputBaseClass = "glass-input rounded text-xs h-7 transition-all-fast placeholder:text-zinc-500";
+  const inputBaseClass = cn(
+    "rounded-lg text-xs h-8 px-3",
+    "bg-zinc-900/50 backdrop-blur-sm",
+    "border border-zinc-800/50",
+    "focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20",
+    "shadow-[inset_0_1px_2px_rgba(0,0,0,0.3)]",
+    "transition-all duration-200",
+    "placeholder:text-zinc-600"
+  );
   const labelBaseClass = "text-[10px] font-medium uppercase text-zinc-400 mb-1 block";
 
   return (
-    <div className="w-full glass-panel border-r text-white h-full">
-      <ScrollArea className="h-full">
+    <div className={cn(
+      "w-full h-full relative overflow-hidden",
+      "bg-gradient-to-br from-zinc-950/95 to-zinc-900/90",
+      "backdrop-blur-xl border-r border-zinc-800/50",
+      "shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]"
+    )}>
+      <ScrollArea className="h-full text-white">
         <div className="p-5 space-y-5">
           {/* Project Title and Description */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
+            className="relative"
           >
-            <h2 className="text-lg font-bold text-[#2F7BBC] mb-1 font-serif tracking-wide glow-text-blue">
-              {data.projectTitle || 'Project Title'}
-            </h2>
-            <p className="text-zinc-400 text-xs mb-5 leading-relaxed line-clamp-3">
-              {data.projectDescription || 'No project description.'}
-            </p>
+            {/* Glass card container */}
+            <div className={cn(
+              "rounded-xl p-4 mb-6",
+              "bg-gradient-to-br from-blue-950/30 to-zinc-900/40",
+              "backdrop-blur-sm border border-blue-500/20",
+              "shadow-[0_4px_20px_rgba(59,130,246,0.15),inset_0_1px_0_rgba(255,255,255,0.03)]"
+            )}>
+              {/* Accent corner glow */}
+              <div className="absolute top-0 right-0 w-20 h-20 bg-blue-500/10 rounded-full blur-2xl" />
+              
+              <h2 className="text-lg font-bold text-blue-400 mb-2 font-serif tracking-wide relative z-10
+                shadow-[0_0_20px_rgba(47,123,188,0.4)]">
+                {data.projectTitle || 'Project Title'}
+              </h2>
+              <p className="text-zinc-400 text-xs leading-relaxed line-clamp-3 relative z-10">
+                {data.projectDescription || 'No project description.'}
+              </p>
+            </div>
           </motion.div>
 
           {/* Scene Description */}
@@ -121,13 +147,22 @@ const StoryboardSidebar: React.FC<StoryboardSidebarProps> = ({ data, onUpdate })
           >
             <CollapsibleTrigger asChild>
               <motion.div 
-                className="flex items-center justify-between cursor-pointer hover:text-blue-400 transition-colors py-1"
-                whileHover={{ scale: 1.02 }}
+                className={cn(
+                  "flex items-center justify-between cursor-pointer py-2 px-3 rounded-lg",
+                  "hover:bg-zinc-800/30 transition-all duration-200",
+                  "border border-transparent hover:border-zinc-700/50"
+                )}
+                whileHover={{ x: 2 }}
                 whileTap={{ scale: 0.98 }}
               >
                 <div className="flex items-center gap-2">
-                  <Settings className="w-3.5 h-3.5 text-zinc-500" />
-                  <h3 className="text-zinc-200 font-medium text-xs uppercase tracking-wider">Location</h3>
+                  <div className="w-7 h-7 rounded-md bg-zinc-800/50 flex items-center justify-center
+                    shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
+                    <Settings className="w-3.5 h-3.5 text-blue-400" />
+                  </div>
+                  <h3 className="text-zinc-200 font-medium text-xs uppercase tracking-wider">
+                    Location
+                  </h3>
                 </div>
                 <motion.div
                   animate={{ rotate: openSections.location ? 180 : 0 }}
@@ -194,12 +229,19 @@ const StoryboardSidebar: React.FC<StoryboardSidebarProps> = ({ data, onUpdate })
           >
             <CollapsibleTrigger asChild>
               <motion.div 
-                className="flex items-center justify-between cursor-pointer hover:text-blue-400 transition-colors py-1"
-                whileHover={{ scale: 1.02 }}
+                className={cn(
+                  "flex items-center justify-between cursor-pointer py-2 px-3 rounded-lg",
+                  "hover:bg-zinc-800/30 transition-all duration-200",
+                  "border border-transparent hover:border-zinc-700/50"
+                )}
+                whileHover={{ x: 2 }}
                 whileTap={{ scale: 0.98 }}
               >
                 <div className="flex items-center gap-2">
-                  <FileCode className="w-3.5 h-3.5 text-zinc-500" />
+                  <div className="w-7 h-7 rounded-md bg-zinc-800/50 flex items-center justify-center
+                    shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
+                    <FileCode className="w-3.5 h-3.5 text-purple-400" />
+                  </div>
                   <h3 className="text-zinc-200 font-medium text-xs uppercase tracking-wider">Style</h3>
                 </div>
                 <motion.div
@@ -238,12 +280,19 @@ const StoryboardSidebar: React.FC<StoryboardSidebarProps> = ({ data, onUpdate })
           >
             <CollapsibleTrigger asChild>
               <motion.div 
-                className="flex items-center justify-between cursor-pointer hover:text-blue-400 transition-colors py-1"
-                whileHover={{ scale: 1.02 }}
+                className={cn(
+                  "flex items-center justify-between cursor-pointer py-2 px-3 rounded-lg",
+                  "hover:bg-zinc-800/30 transition-all duration-200",
+                  "border border-transparent hover:border-zinc-700/50"
+                )}
+                whileHover={{ x: 2 }}
                 whileTap={{ scale: 0.98 }}
               >
                 <div className="flex items-center gap-2">
-                  <Shirt className="w-3.5 h-3.5 text-zinc-500" />
+                  <div className="w-7 h-7 rounded-md bg-zinc-800/50 flex items-center justify-center
+                    shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
+                    <Shirt className="w-3.5 h-3.5 text-amber-400" />
+                  </div>
                   <h3 className="text-zinc-200 font-medium text-xs uppercase tracking-wider">Clothing</h3>
                 </div>
                 <motion.div
@@ -284,12 +333,19 @@ const StoryboardSidebar: React.FC<StoryboardSidebarProps> = ({ data, onUpdate })
           >
             <CollapsibleTrigger asChild>
               <motion.div 
-                className="flex items-center justify-between cursor-pointer hover:text-blue-400 transition-colors py-1"
-                whileHover={{ scale: 1.02 }}
+                className={cn(
+                  "flex items-center justify-between cursor-pointer py-2 px-3 rounded-lg",
+                  "hover:bg-zinc-800/30 transition-all duration-200",
+                  "border border-transparent hover:border-zinc-700/50"
+                )}
+                whileHover={{ x: 2 }}
                 whileTap={{ scale: 0.98 }}
               >
                 <div className="flex items-center gap-2">
-                  <Music className="w-3.5 h-3.5 text-zinc-500" />
+                  <div className="w-7 h-7 rounded-md bg-zinc-800/50 flex items-center justify-center
+                    shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
+                    <Music className="w-3.5 h-3.5 text-green-400" />
+                  </div>
                   <h3 className="text-zinc-200 font-medium text-xs uppercase tracking-wider">Sound</h3>
                 </div>
                 <motion.div
