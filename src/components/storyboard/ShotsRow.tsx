@@ -1,10 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState, startTransition } from 'react';
 import { DndContext, DragEndEvent, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, arrayMove, horizontalListSortingStrategy } from '@dnd-kit/sortable';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import { Plus, Trash2, AlertCircle, Sparkles, Loader2 } from 'lucide-react';
+import { Plus, Trash2, AlertCircle, Sparkles, Loader2, CircleStop } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { ShotCard } from './shot';
 import ShotConnectionLines from './shot/ShotConnectionLines';
@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 import { ShotDetails } from '@/types/storyboardTypes';
 import { cn } from '@/lib/utils';
 import { useShotStream, ShotStreamStatus } from '@/hooks/useShotStream';
+import ShotStreamProgress from './shot/ShotStreamProgress';
 
 interface ShotConnection {
   id: string;
@@ -82,8 +83,10 @@ const ShotsRow = ({ sceneId, sceneNumber, projectId, onSceneDelete, isSelected =
   const [generationProgress, setGenerationProgress] = useState({ completed: 0, total: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
   const autoStartRef = useRef(false);
+  const lastMetaRequestRef = useRef<string | null>(null);
 
   const streamingEnabled = (import.meta.env.VITE_ENABLE_SHOT_STREAM ?? 'true') !== 'false';
+  const streamTelemetryEnabled = (import.meta.env.VITE_ENABLE_STREAM_TELEMETRY ?? 'true') !== 'false';
 
   const handleStreamError = useCallback((error: Error) => {
     console.error('Shot streaming error', error);
@@ -93,25 +96,27 @@ const ShotsRow = ({ sceneId, sceneNumber, projectId, onSceneDelete, isSelected =
   const handleStreamReady = useCallback(
     (shot: Partial<ShotDetails>) => {
       if (!shot.id) return;
-      setShots(prev => {
-        const existingIndex = prev.findIndex(item => item.id === shot.id);
-        if (existingIndex >= 0) {
-          const next = [...prev];
-          next[existingIndex] = { ...next[existingIndex], ...shot };
-          return next;
-        }
-        const fallback = buildShotFromPartial(shot, {
-          sceneId,
-          projectId,
-          fallbackNumber: prev.length + 1
+      startTransition(() => {
+        setShots(prev => {
+          const existingIndex = prev.findIndex(item => item.id === shot.id);
+          if (existingIndex >= 0) {
+            const next = [...prev];
+            next[existingIndex] = { ...next[existingIndex], ...shot };
+            return next;
+          }
+          const fallback = buildShotFromPartial(shot, {
+            sceneId,
+            projectId,
+            fallbackNumber: prev.length + 1
+          });
+          return [...prev, fallback];
         });
-        return [...prev, fallback];
       });
     },
     [projectId, sceneId]
   );
 
-  const { isStreaming, latencyMs, messages, start: startStream } = useShotStream(projectId, {
+  const { isStreaming, latencyMs, messages, meta, phaseDurations, progress, start: startStream, cancel: cancelStream } = useShotStream(projectId, {
     onShotReady: handleStreamReady,
     onError: handleStreamError
   });
@@ -120,6 +125,16 @@ const ShotsRow = ({ sceneId, sceneNumber, projectId, onSceneDelete, isSelected =
     () => messages.filter(message => message.status !== 'ready'),
     [messages]
   );
+
+  const currentStatus = useMemo<ShotStreamStatus | null>(() => {
+    if (streamingPlaceholders.length > 0) {
+      return streamingPlaceholders[streamingPlaceholders.length - 1]?.status ?? null;
+    }
+    const latest = [...messages].reverse().find(message => message.status);
+    return latest?.status ?? null;
+  }, [messages, streamingPlaceholders]);
+
+  const showStreamTelemetry = streamTelemetryEnabled && streamingEnabled && (isStreaming || progress > 0 || !!meta);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -151,28 +166,12 @@ const ShotsRow = ({ sceneId, sceneNumber, projectId, onSceneDelete, isSelected =
     const fetchShots = async () => {
       setIsLoading(true);
       try {
-        const shots = await supabaseService.shots.listByScene(sceneId);
-        setShots(shots as ShotDetails[]);
-        
-        // Update generation progress
-        const completed = shots.filter((s: ShotDetails) => 
-          s.image_status === 'completed' && s.visual_prompt
-        ).length;
-        setGenerationProgress({ completed, total: shots.length });
-        
-        // Update generation state
-        if (completed === 0 && shots.length > 0) {
-          setGenerationState('preparing');
-        } else if (completed < shots.length && shots.length > 0) {
-          setGenerationState('generating');
-        } else if (completed === shots.length && shots.length > 0) {
-          setGenerationState('complete');
-        } else {
-          setGenerationState('idle');
-        }
-      } catch (error: any) {
+        const fetched = await supabaseService.shots.listByScene(sceneId);
+        setShots(fetched as ShotDetails[]);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
         console.error('Error fetching shots:', error);
-        toast.error(`Failed to load shots: ${error.message}`);
+        toast.error(`Failed to load shots: ${message}`);
       } finally {
         setIsLoading(false);
       }
@@ -188,6 +187,15 @@ const ShotsRow = ({ sceneId, sceneNumber, projectId, onSceneDelete, isSelected =
       startShotGeneration();
     }
   }, [streamingEnabled, isLoading, shots.length, startShotGeneration]);
+
+  useEffect(() => {
+    if (!streamTelemetryEnabled || !meta) return;
+    if (meta.requestId === lastMetaRequestRef.current) return;
+    lastMetaRequestRef.current = meta.requestId;
+    if (import.meta.env.DEV) {
+      console.info('[shot-stream] request meta', meta);
+    }
+  }, [meta, streamTelemetryEnabled]);
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
@@ -216,9 +224,10 @@ const ShotsRow = ({ sceneId, sceneNumber, projectId, onSceneDelete, isSelected =
             supabaseService.shots.update(shot.id, { shot_number: shot.shot_number })
           )
         );
-      } catch (error: any) {
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
         console.error('Error updating shot order:', error);
-        toast.error(`Failed to save shot order: ${error.message}`);
+        toast.error(`Failed to save shot order: ${message}`);
       } finally {
         setIsSavingOrder(false);
       }
@@ -257,9 +266,10 @@ const ShotsRow = ({ sceneId, sceneNumber, projectId, onSceneDelete, isSelected =
 
       setShots(prev => [...prev, newShot]);
       toast.success('Shot added');
-    } catch (error: any) {
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
       console.error('Error adding shot:', error);
-      toast.error(`Failed to add shot: ${error.message}`);
+      toast.error(`Failed to add shot: ${message}`);
     }
   };
 
@@ -268,9 +278,10 @@ const ShotsRow = ({ sceneId, sceneNumber, projectId, onSceneDelete, isSelected =
       await supabaseService.shots.delete(shotId);
       setShots(current => current.filter(shot => shot.id !== shotId));
       toast.success('Shot deleted');
-    } catch (error: any) {
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
       console.error('Error deleting shot:', error);
-      toast.error(`Failed to delete shot: ${error.message}`);
+      toast.error(`Failed to delete shot: ${message}`);
     }
   };
 
@@ -293,9 +304,10 @@ const ShotsRow = ({ sceneId, sceneNumber, projectId, onSceneDelete, isSelected =
       setShots(prev => prev.map(shot =>
         shot.id === shotId ? { ...shot, ...updates } : shot
       ));
-    } catch (error: any) {
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
       console.error('Error updating shot:', error);
-      toast.error(`Failed to update shot: ${error.message}`);
+      toast.error(`Failed to update shot: ${message}`);
     }
   };
 
@@ -450,9 +462,9 @@ const ShotsRow = ({ sceneId, sceneNumber, projectId, onSceneDelete, isSelected =
           </div>
         </div>
 
-        <div className="flex items-start gap-3">
-          {streamingEnabled && (
-            <div className="flex flex-col items-end gap-1">
+        <div className="flex flex-col items-end gap-3">
+          <div className="flex flex-wrap items-center justify-end gap-3">
+            {streamingEnabled && (
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                 <Button
                   onClick={startShotGeneration}
@@ -477,58 +489,85 @@ const ShotsRow = ({ sceneId, sceneNumber, projectId, onSceneDelete, isSelected =
                   <span className="relative z-10 ml-2">{isStreaming ? 'Streaming…' : 'Auto-generate'}</span>
                 </Button>
               </motion.div>
-              {latencyMs !== null && (
-                <span className="text-xs text-blue-200/80">
-                  First chunk {Math.round(latencyMs)} ms
-                </span>
-              )}
-            </div>
-          )}
-          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-            <Button
-              onClick={addShot}
-              size="sm"
-              className={cn(
-                'relative overflow-hidden backdrop-blur-sm',
-                'bg-gradient-to-br from-blue-600/90 to-purple-600/90',
-                'border border-blue-500/30',
-                'shadow-[0_4px_20px_rgba(59,130,246,0.3),inset_0_1px_0_rgba(255,255,255,0.1)]',
-                'hover:shadow-[0_6px_28px_rgba(59,130,246,0.4),inset_0_1px_0_rgba(255,255,255,0.15)]',
-                'transition-all duration-300'
-              )}
-              disabled={isLoading || isSavingOrder}
-            >
-              <div className="absolute inset-0 bg-gradient-to-t from-transparent to-white/10" />
-              <Plus className="w-4 h-4 mr-2 relative z-10" />
-              <span className="relative z-10">Add Shot</span>
-            </Button>
-          </motion.div>
+            )}
 
-          {onSceneDelete && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    disabled={isDeleting}
-                    onClick={handleDeleteScene}
-                    className={cn(
-                      'backdrop-blur-sm bg-red-950/20 border border-red-500/30',
-                      'hover:bg-red-900/40 hover:border-red-500/50',
-                      'shadow-[0_2px_12px_rgba(239,68,68,0.2)]',
-                      'hover:shadow-[0_4px_20px_rgba(239,68,68,0.3)]',
-                      'transition-all duration-300'
-                    )}
-                  >
-                    <Trash2 className="w-4 h-4 text-red-400" />
-                  </Button>
-                </motion.div>
-              </TooltipTrigger>
-              <TooltipContent className="glass-panel border-zinc-700">
-                <p className="text-xs">Delete scene and all shots</p>
-              </TooltipContent>
-            </Tooltip>
+            {isStreaming && (
+              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                <Button
+                  onClick={cancelStream}
+                  size="sm"
+                  variant="ghost"
+                  className={cn(
+                    'relative overflow-hidden backdrop-blur-sm text-red-200',
+                    'border border-red-500/40 bg-red-500/10',
+                    'hover:bg-red-500/20 hover:text-red-100',
+                    'transition-all duration-300'
+                  )}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-t from-transparent to-red-500/10" />
+                  <CircleStop className="relative z-10 h-4 w-4" />
+                  <span className="relative z-10 ml-2">Cancel</span>
+                </Button>
+              </motion.div>
+            )}
+
+            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+              <Button
+                onClick={addShot}
+                size="sm"
+                className={cn(
+                  'relative overflow-hidden backdrop-blur-sm',
+                  'bg-gradient-to-br from-blue-600/90 to-purple-600/90',
+                  'border border-blue-500/30',
+                  'shadow-[0_4px_20px_rgba(59,130,246,0.3),inset_0_1px_0_rgba(255,255,255,0.1)]',
+                  'hover:shadow-[0_6px_28px_rgba(59,130,246,0.4),inset_0_1px_0_rgba(255,255,255,0.15)]',
+                  'transition-all duration-300'
+                )}
+                disabled={isLoading || isSavingOrder}
+              >
+                <div className="absolute inset-0 bg-gradient-to-t from-transparent to-white/10" />
+                <Plus className="w-4 h-4 mr-2 relative z-10" />
+                <span className="relative z-10">Add Shot</span>
+              </Button>
+            </motion.div>
+
+            {onSceneDelete && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      disabled={isDeleting}
+                      onClick={handleDeleteScene}
+                      className={cn(
+                        'backdrop-blur-sm bg-red-950/20 border border-red-500/30',
+                        'hover:bg-red-900/40 hover:border-red-500/50',
+                        'shadow-[0_2px_12px_rgba(239,68,68,0.2)]',
+                        'hover:shadow-[0_4px_20px_rgba(239,68,68,0.3)]',
+                        'transition-all duration-300'
+                      )}
+                    >
+                      <Trash2 className="w-4 h-4 text-red-400" />
+                    </Button>
+                  </motion.div>
+                </TooltipTrigger>
+                <TooltipContent className="glass-panel border-zinc-700">
+                  <p className="text-xs">Delete scene and all shots</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </div>
+
+          {showStreamTelemetry && (
+            <ShotStreamProgress
+              status={currentStatus}
+              isStreaming={isStreaming}
+              latencyMs={latencyMs}
+              meta={meta}
+              phaseDurations={phaseDurations}
+              progress={progress}
+            />
           )}
         </div>
       </div>

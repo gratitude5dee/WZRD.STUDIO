@@ -14,6 +14,15 @@ export interface ShotStreamMessage {
   scene_id?: string;
 }
 
+export interface ShotStreamMeta {
+  requestId: string;
+  projectId: string;
+  sceneId: string;
+  latency: number;
+}
+
+type PhaseDurations = Partial<Record<ShotStreamStatus, number>>;
+
 interface UseShotStreamOptions {
   endpoint?: string;
   onShotReady?: (shot: Partial<ShotDetails>) => void;
@@ -24,6 +33,14 @@ interface ParsedEvent {
   event?: string;
   data?: string;
 }
+
+const statusOrder: ShotStreamStatus[] = ['creating', 'drafting', 'enriching', 'ready'];
+
+const computeProgress = (status: ShotStreamStatus): number => {
+  const index = statusOrder.indexOf(status);
+  if (index === -1) return 0;
+  return ((index + 1) / statusOrder.length) * 100;
+};
 
 const extractEvents = (buffer: string): { events: ParsedEvent[]; remainder: string } => {
   const events: ParsedEvent[] = [];
@@ -60,9 +77,15 @@ export const useShotStream = (
   const [messages, setMessages] = useState<ShotStreamMessage[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const [latencyMs, setLatencyMs] = useState<number | null>(null);
+  const [meta, setMeta] = useState<ShotStreamMeta | null>(null);
+  const [phaseDurations, setPhaseDurations] = useState<PhaseDurations>({});
+  const [progress, setProgress] = useState(0);
   const controllerRef = useRef<AbortController | null>(null);
   const bufferRef = useRef('');
   const startTimeRef = useRef<number | null>(null);
+  const markRef = useRef<string | null>(null);
+  const measureNamesRef = useRef<string[]>([]);
+  const lastStatusRef = useRef<ShotStreamStatus | null>(null);
 
   const streamEndpoint = useMemo(() => {
     if (endpoint) return endpoint;
@@ -70,11 +93,40 @@ export const useShotStream = (
     return `${base}/gen/shots`;
   }, [endpoint]);
 
+  const clearPerformance = useCallback(() => {
+    if (typeof performance === 'undefined') return;
+    if (markRef.current) {
+      performance.clearMarks(markRef.current);
+    }
+    measureNamesRef.current.forEach(name => performance.clearMeasures(name));
+    measureNamesRef.current = [];
+    markRef.current = null;
+    lastStatusRef.current = null;
+  }, []);
+
+  const recordMeasure = useCallback(
+    (suffix: string) => {
+      if (typeof performance === 'undefined' || !markRef.current) return;
+      const measureName = `${markRef.current}:${suffix}`;
+      measureNamesRef.current.push(measureName);
+      try {
+        performance.measure(measureName, markRef.current);
+      } catch (error) {
+        if (import.meta.env.DEV) {
+          // eslint-disable-next-line no-console
+          console.warn('Failed to record performance measure', measureName, error);
+        }
+      }
+    },
+    []
+  );
+
   const cancel = useCallback(() => {
     controllerRef.current?.abort();
     controllerRef.current = null;
     setIsStreaming(false);
-  }, []);
+    clearPerformance();
+  }, [clearPerformance]);
 
   const start = useCallback(
     async (payload: Record<string, unknown> = {}) => {
@@ -84,13 +136,23 @@ export const useShotStream = (
       }
 
       cancel();
-      startTimeRef.current = performance.now();
-      performance.mark('shot-stream:start');
+      if (typeof performance !== 'undefined') {
+        startTimeRef.current = performance.now();
+        const mark = `shot-stream:${projectId}:${Date.now()}`;
+        markRef.current = mark;
+        performance.mark(mark);
+      } else {
+        startTimeRef.current = Date.now();
+        markRef.current = null;
+      }
       const controller = new AbortController();
       controllerRef.current = controller;
       setMessages([]);
       bufferRef.current = '';
       setLatencyMs(null);
+      setMeta(null);
+      setPhaseDurations({});
+      setProgress(0);
       setIsStreaming(true);
 
       try {
@@ -120,15 +182,17 @@ export const useShotStream = (
           if (!firstChunkReceived) {
             firstChunkReceived = true;
             if (startTimeRef.current !== null) {
-              const latency = performance.now() - startTimeRef.current;
+              const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
+              const latency = now - startTimeRef.current;
               setLatencyMs(latency);
-              performance.measure('shot-stream:first-chunk', 'shot-stream:start');
+              recordMeasure('first-chunk');
             }
           }
 
           bufferRef.current += decoded;
           const { events, remainder } = extractEvents(bufferRef.current);
           bufferRef.current = remainder;
+          let shouldTerminate = false;
 
           for (const event of events) {
             if (!event.data) continue;
@@ -140,8 +204,20 @@ export const useShotStream = (
             }
 
             if (event.event === 'done') {
-              cancel();
+              setProgress(100);
+              recordMeasure('done');
+              shouldTerminate = true;
               break;
+            }
+
+            if (event.event === 'meta') {
+              try {
+                const metaPayload = JSON.parse(event.data) as ShotStreamMeta;
+                setMeta(metaPayload);
+              } catch (err) {
+                console.error('Failed to parse shot stream meta event', err);
+              }
+              continue;
             }
 
             if (event.event === 'shot') {
@@ -156,6 +232,19 @@ export const useShotStream = (
                   }
                   return [...prev, payload];
                 });
+
+                if (startTimeRef.current !== null) {
+                  const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
+                  const elapsed = now - startTimeRef.current;
+                  setPhaseDurations(prev => ({ ...prev, [payload.status]: elapsed }));
+                }
+
+                if (lastStatusRef.current !== payload.status) {
+                  lastStatusRef.current = payload.status;
+                  recordMeasure(`phase:${payload.status}`);
+                }
+
+                setProgress(prev => Math.max(prev, computeProgress(payload.status)));
 
                 if (payload.status === 'ready') {
                   const optimisticShot: Partial<ShotDetails> = {
@@ -183,6 +272,10 @@ export const useShotStream = (
               }
             }
           }
+
+          if (shouldTerminate) {
+            break;
+          }
         }
       } catch (error) {
         if ((error as DOMException).name === 'AbortError') {
@@ -192,9 +285,11 @@ export const useShotStream = (
         onError?.(error as Error);
       } finally {
         setIsStreaming(false);
+        controllerRef.current = null;
+        clearPerformance();
       }
     },
-    [projectId, streamEndpoint, cancel, onError, onShotReady]
+    [projectId, streamEndpoint, cancel, onError, onShotReady, recordMeasure, clearPerformance]
   );
 
   useEffect(() => cancel, [cancel]);
@@ -203,6 +298,9 @@ export const useShotStream = (
     isStreaming,
     latencyMs,
     messages,
+    meta,
+    phaseDurations,
+    progress,
     start,
     cancel
   };
