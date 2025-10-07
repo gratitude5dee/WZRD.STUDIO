@@ -1,4 +1,4 @@
-
+import { startTransition } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronRight } from 'lucide-react';
 import { useProjectContext } from './ProjectContext';
@@ -8,17 +8,25 @@ const TabNavigation = () => {
   const { activeTab, setActiveTab, getVisibleTabs } = useProjectContext();
   const visibleTabs = getVisibleTabs();
 
+  const handleTabChange = (tab: ProjectSetupTab) => {
+    if (tab === activeTab) return;
+    startTransition(() => {
+      setActiveTab(tab);
+      performance.mark(`tab:${tab}:selected`);
+    });
+  };
+
   return (
     <div className="border-b border-zinc-800 bg-[#0F1219]">
       <div className="container mx-auto">
-        <motion.div 
+        <motion.div
           className="flex"
           initial={false}
           animate={{ height: 'auto' }}
           transition={{ duration: 0.3 }}
         >
           {visibleTabs.map((tab, index) => (
-            <motion.div 
+            <motion.div
               key={tab}
               className={`relative ${index > 0 ? 'flex-1' : ''}`}
               initial={false}
@@ -28,16 +36,16 @@ const TabNavigation = () => {
               layout
             >
               <button
-                onClick={() => setActiveTab(tab)}
+                onClick={() => handleTabChange(tab)}
                 className={`py-4 px-6 w-full relative transition-all duration-300 flex items-center justify-center ${
                   activeTab === tab
                     ? 'text-white font-medium bg-[#0050E4]'
-                    : index < visibleTabs.indexOf(activeTab) 
+                    : index < visibleTabs.indexOf(activeTab)
                       ? 'text-blue-400 bg-[#131B2E]'
                       : 'text-zinc-400'
                 }`}
               >
-                {tab === 'concept' ? 'CONCEPT' : 
+                {tab === 'concept' ? 'CONCEPT' :
                  tab === 'storyline' ? 'STORYLINE' :
                  tab === 'settings' ? 'SETTINGS & CAST' : 'BREAKDOWN'}
                 {index < visibleTabs.length - 1 && (
@@ -47,7 +55,7 @@ const TabNavigation = () => {
                 )}
               </button>
               {activeTab === tab && (
-                <motion.div 
+                <motion.div
                   className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-500"
                   layoutId="activeTabIndicator"
                   transition={{ duration: 0.3 }}
