@@ -8,6 +8,7 @@ import { GlassCard } from '@/components/ui/glass-card';
 import { Button } from '@/components/ui/button';
 import { AnimatedLogo } from '@/components/ui/animated-logo';
 import { CinematicIntro } from '@/components/landing/CinematicIntro';
+import { ParticleField } from '@/components/landing/ParticleField';
 
 const Landing = () => {
   const navigate = useNavigate();
@@ -69,101 +70,240 @@ const Landing = () => {
       )}
 
       <div className="min-h-screen bg-black text-white overflow-x-hidden relative">
-        {/* Cosmic background effects */}
-        <div className="fixed inset-0 bg-cosmic-void/10 pointer-events-none"></div>
-        <div className="fixed inset-0 particle-field opacity-15 pointer-events-none"></div>
-        <div className="fixed inset-0 opacity-10 pointer-events-none">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(147,51,234,0.1),transparent_50%)]"></div>
+        {/* PHASE 1: Enhanced Multi-Layer Cosmic Background */}
+        <div className="fixed inset-0 pointer-events-none">
+          {/* Base cosmic void */}
+          <div className="absolute inset-0 bg-black" />
+          
+          {/* Animated gradient meshes */}
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,rgba(147,51,234,0.08),transparent_40%)] animate-pulse" style={{ animationDuration: '8s' }} />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_70%,rgba(236,72,153,0.06),transparent_40%)] animate-pulse" style={{ animationDuration: '12s', animationDelay: '2s' }} />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(59,130,246,0.05),transparent_50%)] animate-pulse" style={{ animationDuration: '10s', animationDelay: '4s' }} />
+          
+          {/* Particle field layers */}
+          <ParticleField phase="ambient" particleCount={120} />
+          <div className="absolute inset-0 particle-field opacity-10" />
+          
+          {/* Floating cosmic orbs with trails */}
+          <div className="absolute top-20 left-[10%] w-64 h-64 bg-cosmic-stellar/20 rounded-full blur-[120px] animate-float" />
+          <div className="absolute top-[30%] right-[15%] w-96 h-96 bg-cosmic-nebula/15 rounded-full blur-[150px] animate-float" style={{ animationDelay: '2s', animationDuration: '20s' }} />
+          <div className="absolute bottom-[20%] left-[20%] w-48 h-48 bg-cosmic-plasma/20 rounded-full blur-[100px] animate-float" style={{ animationDelay: '4s', animationDuration: '18s' }} />
+          <div className="absolute bottom-[40%] right-[25%] w-72 h-72 bg-cosmic-quantum/12 rounded-full blur-[130px] animate-float" style={{ animationDelay: '6s', animationDuration: '22s' }} />
+          
+          {/* Subtle scan lines for depth */}
+          <div className="absolute inset-0 bg-[linear-gradient(transparent_50%,rgba(255,255,255,0.02)_50%)] bg-[length:100%_4px]" />
         </div>
       
-      {/* Navigation */}
-      <nav className="fixed top-0 w-full z-50 backdrop-blur-xl bg-black/80 border-b border-white/10">
-        <div className="max-w-7xl mx-auto px-6 py-4">
+      {/* PHASE 2: Premium Glassmorphic Navigation */}
+      <nav className="fixed top-0 w-full z-50 border-b border-white/10 backdrop-blur-2xl bg-gradient-to-b from-black/95 via-black/90 to-black/80 shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
+        {/* Inner glow effect */}
+        <div className="absolute inset-0 bg-gradient-to-b from-cosmic-stellar/5 to-transparent pointer-events-none" />
+        
+        <div className="max-w-7xl mx-auto px-6 py-4 relative z-10">
           <div className="flex items-center justify-between">
-            <AnimatedLogo size="lg" showVersion={false} />
-            <div className="hidden md:flex space-x-8">
-              <a href="#features" className="text-zinc-400 hover:text-white transition-colors">Features</a>
-              <a href="#how-it-works" className="text-zinc-400 hover:text-white transition-colors">How It Works</a>
-              <a href="#pricing" className="text-zinc-400 hover:text-white transition-colors">Pricing</a>
-              <a href="#testimonials" className="text-zinc-400 hover:text-white transition-colors">Reviews</a>
+            {/* Logo with subtle glow */}
+            <div className="flex items-center gap-3">
+              <AnimatedLogo size="lg" showVersion={false} />
+              <div className="hidden md:block h-6 w-px bg-gradient-to-b from-transparent via-cosmic-stellar/50 to-transparent" />
             </div>
+            
+            {/* Navigation Links with Glass Hover */}
+            <div className="hidden md:flex items-center gap-8">
+              {[
+                { href: '#features', label: 'Features' },
+                { href: '#how-it-works', label: 'How It Works' },
+                { href: '#pricing', label: 'Pricing' },
+                { href: '#testimonials', label: 'Reviews' }
+              ].map((link) => (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  className="relative group text-sm font-medium text-zinc-400 hover:text-white transition-colors duration-300"
+                >
+                  {link.label}
+                  {/* Animated underline */}
+                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-cosmic-stellar via-cosmic-plasma to-cosmic-nebula group-hover:w-full transition-all duration-300 rounded-full shadow-[0_0_8px_hsl(var(--cosmic-stellar)/0.6)]" />
+                </a>
+              ))}
+            </div>
+            
+            {/* Enhanced CTA Button */}
             <GlassButton
               onClick={handleGetStarted}
               variant="cosmic"
-              glow="medium"
+              size="lg"
+              glow="intense"
+              particle={true}
+              className="relative overflow-hidden group"
             >
-              Start Creating
+              <span className="relative z-10 flex items-center gap-2">
+                Start Creating
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" />
+              </span>
+              {/* Pulse animation */}
+              <div className="absolute inset-0 bg-gradient-to-r from-cosmic-stellar/20 to-cosmic-plasma/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-xl" />
             </GlassButton>
           </div>
         </div>
+        
+        {/* Bottom glow line */}
+        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cosmic-stellar/30 to-transparent" />
       </nav>
 
-      {/* Hero Section */}
-      <section className="min-h-screen flex items-center relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-cosmic-nebula/10 via-transparent to-cosmic-plasma/10"></div>
+      {/* PHASE 3: Premium Hero Section with Glassmorphism */}
+      <section className="min-h-screen flex items-center relative overflow-hidden pt-24">
+        {/* Multi-layer background effects */}
+        <div className="absolute inset-0 bg-gradient-to-br from-cosmic-nebula/5 via-transparent via-50% to-cosmic-plasma/5" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(147,51,234,0.15),transparent_50%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,rgba(236,72,153,0.12),transparent_50%)]" />
         
-        {/* Cosmic floating orbs */}
-        <div className="absolute top-20 left-10 w-32 h-32 bg-cosmic-stellar/20 rounded-full animate-float blur-3xl"></div>
-        <div className="absolute top-40 right-20 w-48 h-48 bg-cosmic-nebula/20 rounded-full animate-float blur-3xl" style={{ animationDelay: '1s' }}></div>
-        <div className="absolute bottom-40 left-1/4 w-24 h-24 bg-cosmic-plasma/20 rounded-full animate-float blur-3xl" style={{ animationDelay: '2s' }}></div>
+        {/* Enhanced cosmic floating orbs with trails */}
+        <div className="absolute top-32 left-[8%] w-80 h-80 bg-cosmic-stellar/25 rounded-full blur-[140px] animate-float">
+          <div className="absolute inset-0 bg-cosmic-stellar/40 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '4s' }} />
+        </div>
+        <div className="absolute top-[35%] right-[12%] w-96 h-96 bg-cosmic-nebula/20 rounded-full blur-[160px] animate-float" style={{ animationDelay: '2s', animationDuration: '20s' }}>
+          <div className="absolute inset-0 bg-cosmic-nebula/30 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '5s', animationDelay: '1s' }} />
+        </div>
+        <div className="absolute bottom-[25%] left-[15%] w-64 h-64 bg-cosmic-plasma/25 rounded-full blur-[120px] animate-float" style={{ animationDelay: '4s', animationDuration: '18s' }}>
+          <div className="absolute inset-0 bg-cosmic-plasma/35 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '3.5s', animationDelay: '2s' }} />
+        </div>
         
-        <div className="relative z-10 max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center">
+        <div className="relative z-10 max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-20 items-center">
+          {/* Left Content Column */}
           <motion.div
             initial={{ opacity: 0, x: -50 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8 }}
-            className="space-y-8"
+            transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+            className="space-y-10"
           >
-            <div className="space-y-4">
-              <h1 className="text-6xl lg:text-7xl font-bold leading-tight">
-                <span className="block text-white">Transform</span>
-                <span className="block bg-gradient-to-r from-cosmic-stellar via-cosmic-plasma to-cosmic-nebula bg-clip-text text-transparent">
-                  Music into Magic
+            {/* Headline Container */}
+            <div className="space-y-6">
+              <motion.h1 
+                className="text-6xl lg:text-7xl xl:text-8xl font-bold leading-[1.1] tracking-tight"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.2 }}
+              >
+                <span className="block text-white drop-shadow-[0_0_30px_rgba(255,255,255,0.3)]">
+                  Transform
                 </span>
-              </h1>
+                <span className="block relative group">
+                  <span className="bg-gradient-to-r from-cosmic-stellar via-cosmic-plasma to-cosmic-nebula bg-clip-text text-transparent drop-shadow-[0_0_40px_rgba(147,51,234,0.5)] animate-shimmer bg-[length:200%_100%]">
+                    Music into Magic
+                  </span>
+                </span>
+              </motion.h1>
               
-              <p className="text-xl text-zinc-400 max-w-xl leading-relaxed">
-                Create stunning music videos with AI that understands your sound. 
-                Professional results in minutes, not months.
-              </p>
+              {/* Subheadline with glass container */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.4 }}
+                className="relative"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-cosmic-void/40 to-transparent backdrop-blur-md rounded-2xl -z-10" />
+                <p className="text-xl lg:text-2xl text-zinc-300 max-w-xl leading-relaxed p-6 relative">
+                  Create <span className="text-cosmic-stellar font-semibold">stunning music videos</span> with AI that understands your sound. 
+                  Professional results in <span className="text-cosmic-plasma font-semibold">minutes</span>, not months.
+                </p>
+              </motion.div>
             </div>
             
-            <div className="flex flex-col sm:flex-row gap-4">
-              <GlassButton
-                onClick={handleGetStarted}
-                variant="cosmic"
-                size="xl"
-                glow="medium"
-              >
-                Create Your First Video
-              </GlassButton>
-              <GlassButton 
-                variant="void"
-                size="xl"
-                glow="subtle"
-              >
-                Watch Demo
-              </GlassButton>
-            </div>
-            
-            <div className="flex items-center space-x-8 pt-4">
-              <div className="text-sm text-zinc-500">Trusted by 50K+ artists</div>
-              <div className="flex space-x-2 text-cosmic-stellar">
-                <span>★★★★★</span>
-                <span className="text-sm text-zinc-500">4.9/5</span>
+            {/* CTA Button Group with Glass Container */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.6 }}
+              className="relative"
+            >
+              {/* Background glow */}
+              <div className="absolute -inset-4 bg-gradient-to-r from-cosmic-stellar/20 to-cosmic-plasma/20 blur-3xl opacity-50 rounded-3xl" />
+              
+              <div className="relative flex flex-col sm:flex-row gap-4 p-2 backdrop-blur-xl bg-cosmic-void/20 rounded-2xl border border-white/10">
+                <GlassButton
+                  onClick={handleGetStarted}
+                  variant="cosmic"
+                  size="xl"
+                  glow="intense"
+                  particle={true}
+                  className="flex-1 group relative overflow-hidden"
+                >
+                  <span className="relative z-10 flex items-center justify-center gap-2">
+                    <Sparkles className="w-5 h-5" />
+                    Create Your First Video
+                    <ArrowRight className="w-5 h-5 group-hover:translate-x-2 transition-transform duration-300" />
+                  </span>
+                  {/* Animated gradient overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-cosmic-stellar via-cosmic-plasma to-cosmic-nebula opacity-0 group-hover:opacity-30 transition-opacity duration-500 blur-2xl" />
+                </GlassButton>
+                
+                <GlassButton 
+                  onClick={() => setIsVideoModalOpen(true)}
+                  variant="void"
+                  size="xl"
+                  glow="medium"
+                  className="flex-1 group"
+                >
+                  <Play className="w-5 h-5" />
+                  <span>Watch Demo</span>
+                </GlassButton>
               </div>
-            </div>
+            </motion.div>
+            
+            {/* Trust Badges with Enhanced Glass */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.8 }}
+              className="flex items-center gap-8 pt-6"
+            >
+              {/* Artists Badge */}
+              <div className="flex items-center gap-3 px-4 py-2 rounded-full backdrop-blur-lg bg-gradient-to-r from-cosmic-void/40 to-cosmic-shadow/30 border border-white/10">
+                <Users className="w-4 h-4 text-cosmic-stellar" />
+                <span className="text-sm text-zinc-400">
+                  Trusted by <span className="text-white font-semibold">50K+</span> artists
+                </span>
+              </div>
+              
+              {/* Rating Badge */}
+              <div className="flex items-center gap-2 px-4 py-2 rounded-full backdrop-blur-lg bg-gradient-to-r from-cosmic-void/40 to-cosmic-shadow/30 border border-white/10">
+                <div className="flex gap-0.5">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="w-3.5 h-3.5 fill-cosmic-stellar text-cosmic-stellar" />
+                  ))}
+                </div>
+                <span className="text-sm text-zinc-400">
+                  <span className="text-white font-semibold">4.9</span>/5
+                </span>
+              </div>
+            </motion.div>
           </motion.div>
           
-          {/* Hero visual */}
+          {/* Right Visual Column */}
           <motion.div
             initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="relative"
+            transition={{ duration: 0.8, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
+            className="relative group"
           >
-            <GlassCard variant="cosmic" depth="deep" glow="medium" shimmer className="p-8">
-              <div className="aspect-video bg-gradient-to-br from-cosmic-stellar/20 to-cosmic-nebula/20 rounded-2xl overflow-hidden relative">
+            {/* Outer glow container */}
+            <div className="absolute -inset-8 bg-gradient-to-br from-cosmic-stellar/20 via-cosmic-plasma/20 to-cosmic-nebula/20 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700 rounded-3xl" />
+            
+            {/* Main Glass Card */}
+            <GlassCard 
+              variant="cosmic" 
+              depth="deep" 
+              glow="intense" 
+              shimmer 
+              particle={true}
+              className="relative p-8 transform-gpu group-hover:scale-[1.02] transition-transform duration-500"
+            >
+              {/* Inner border glow */}
+              <div className="absolute inset-0 rounded-2xl border-2 border-cosmic-stellar/20 pointer-events-none" />
+              <div className="absolute inset-0 rounded-2xl border border-cosmic-plasma/30 blur-sm pointer-events-none" />
+              
+              {/* Video Container */}
+              <div className="aspect-video bg-gradient-to-br from-cosmic-stellar/20 via-cosmic-plasma/15 to-cosmic-nebula/20 rounded-2xl overflow-hidden relative ring-1 ring-white/10">
                 <video 
                   className="w-full h-full object-cover rounded-2xl"
                   autoPlay 
@@ -172,19 +312,63 @@ const Landing = () => {
                   playsInline
                 >
                   <source src="/bgvid.mp4" type="video/mp4" />
-                  <div className="flex items-center justify-center h-full">
+                  <div className="flex items-center justify-center h-full bg-cosmic-void/50">
                     <div className="text-8xl animate-pulse">🎬</div>
                   </div>
                 </video>
-                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent pointer-events-none"></div>
+                
+                {/* Video overlay effects */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20 pointer-events-none" />
+                
+                {/* Play button overlay */}
+                <button 
+                  onClick={() => setIsVideoModalOpen(true)}
+                  className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300 cursor-pointer"
+                >
+                  <div className="w-20 h-20 rounded-full backdrop-blur-xl bg-white/10 border border-white/20 flex items-center justify-center shadow-[0_0_40px_rgba(147,51,234,0.5)] hover:scale-110 transition-transform duration-300">
+                    <Play className="w-8 h-8 text-white ml-1" />
+                  </div>
+                </button>
               </div>
-              <div className="mt-6 text-center">
-                <div className="text-white font-semibold">Generative Media Interface</div>
-                <div className="text-sm text-zinc-400 mt-1">Professional quality in minutes</div>
+              
+              {/* Caption with glass effect */}
+              <div className="mt-6 text-center relative">
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-cosmic-void/30 to-transparent backdrop-blur-sm rounded-lg -z-10" />
+                <div className="py-4 px-6">
+                  <div className="text-white font-semibold text-lg mb-1 drop-shadow-[0_0_10px_rgba(147,51,234,0.5)]">
+                    Generative Media Interface
+                  </div>
+                  <div className="text-sm text-zinc-400 flex items-center justify-center gap-2">
+                    <Zap className="w-4 h-4 text-cosmic-quantum" />
+                    Professional quality in minutes
+                  </div>
+                </div>
               </div>
+              
+              {/* Corner accent decorations */}
+              <div className="absolute top-4 left-4 w-12 h-12 border-t-2 border-l-2 border-cosmic-stellar/50 rounded-tl-lg" />
+              <div className="absolute bottom-4 right-4 w-12 h-12 border-b-2 border-r-2 border-cosmic-plasma/50 rounded-br-lg" />
             </GlassCard>
+            
+            {/* Floating accent particles */}
+            <div className="absolute -top-4 -right-4 w-3 h-3 bg-cosmic-stellar rounded-full blur-sm animate-float" />
+            <div className="absolute -bottom-4 -left-4 w-2 h-2 bg-cosmic-plasma rounded-full blur-sm animate-float" style={{ animationDelay: '1s' }} />
           </motion.div>
         </div>
+        
+        {/* Scroll indicator with glass effect */}
+        <motion.div 
+          className="absolute bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3 cursor-pointer group"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.8, delay: 1 }}
+          onClick={() => window.scrollTo({ top: window.innerHeight, behavior: 'smooth' })}
+        >
+          <div className="px-4 py-2 rounded-full backdrop-blur-xl bg-cosmic-void/30 border border-white/10 shadow-[0_0_20px_rgba(147,51,234,0.2)]">
+            <span className="text-xs text-zinc-400 group-hover:text-white transition-colors">Scroll to explore</span>
+          </div>
+          <ChevronDown className="w-5 h-5 text-zinc-500 group-hover:text-cosmic-stellar animate-bounce transition-colors" />
+        </motion.div>
       </section>
 
       {/* Social Proof Banner */}
