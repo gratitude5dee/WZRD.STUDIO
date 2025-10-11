@@ -1,0 +1,24 @@
+{
+  "name": "@wzrd/mcp-elevenlabs-server",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "description": "Model Context Protocol server exposing ElevenLabs text-to-speech tools.",
+  "scripts": {
+    "start:http": "tsx src/index.ts",
+    "start:stdio": "tsx src/transports/stdio.ts",
+    "lint": "eslint src --ext .ts"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "morgan": "^1.10.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/morgan": "^1.9.9",
+    "@types/node": "^22.5.5",
+    "tsx": "^4.19.0",
+    "typescript": "^5.5.3"
+  }
+}

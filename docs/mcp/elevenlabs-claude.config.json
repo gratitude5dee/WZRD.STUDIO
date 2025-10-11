@@ -1,0 +1,16 @@
+{
+  "$schema": "https://raw.githubusercontent.com/anthropics/anthropic-sdk-typescript/main/packages/mcp/schema.json",
+  "mcpServers": {
+    "wzrd-elevenlabs": {
+      "command": "node",
+      "args": [
+        "./node_modules/tsx/dist/cli.mjs",
+        "mcp/elevenlabs-server/src/transports/stdio.ts"
+      ],
+      "env": {
+        "ELEVENLABS_API_KEY": "<your-elevenlabs-api-key>"
+      },
+      "transport": "stdio"
+    }
+  }
+}
