@@ -1,0 +1,177 @@
+mcp:
+  name: wzrd-studio
+  version: 0.1.0
+  summary: >-
+    Streaming interface for WZRD Studio shot generation. Documents the `/gen/shots`
+    SSE endpoint, client responsibilities, and feature flag fallbacks for
+    integrators.
+  feature_flags:
+    - name: VITE_ENABLE_SHOT_STREAM
+      type: boolean
+      default: true
+      description: >-
+        Enables the SSE streaming workflow. When false, clients must fall back to
+        the existing Supabase polling/CRUD flow for shot creation.
+    - name: VITE_ENABLE_STREAM_TELEMETRY
+      type: boolean
+      default: true
+      description: >-
+        Enables client-side logging of meta/latency metrics emitted by the
+        streaming endpoint. When disabled, telemetry hooks should be no-ops while
+        the core streaming UX continues to function.
+  client_hooks:
+    useShotStream:
+      module: src/hooks/useShotStream.ts
+      description: >-
+        React hook that owns the `/gen/shots` SSE session life-cycle. Provides
+        helpers for request orchestration, cancellation, optimistic rendering,
+        and performance telemetry.
+      responsibilities:
+        - Call `start(payload)` with the project identifier and any optional
+          contextual fields when the user initiates shot generation.
+        - Maintain UI state with values returned from the hook: `messages`,
+          `progress`, `meta`, `phaseDurations`, `latencyMs`, and `isStreaming`.
+        - Register `onShotReady` to optimistically merge completed shot payloads
+          into the local timeline. This callback receives the transformed shot
+          object used in the storyboard UI.
+        - Register `onError` to surface server or parsing failures to the user.
+        - Call `cancel()` to abort the current stream when navigating away or
+          when a competing generation is started.
+      payload_contract:
+        required:
+          projectId:
+            type: string
+            description: Supabase project identifier whose shots are being generated.
+        optional:
+          sceneId:
+            type: string
+            description: Scene identifier for scoping the generation request.
+          existingShots:
+            type: array
+            items:
+              type: object
+              required: [id, shot_number]
+              properties:
+                id: { type: string }
+                shot_number: { type: integer }
+            description: >-
+              Previously generated shots used to assign the next sequential shot
+              number. Clients SHOULD send the current ordered list when present.
+          endpoint:
+            type: string
+            description: Overrides the default `/gen/shots` route (used for testing).
+      fallback_behavior: >-
+        When `VITE_ENABLE_SHOT_STREAM` is false, callers should bypass
+        `useShotStream` entirely and revert to the Supabase `shots` CRUD flow in
+        `ShotsRow`. Generation controls should invoke the legacy queued shot
+        creation logic instead of `start()`.
+  endpoints:
+    - name: GenerateShotsStream
+      route: /gen/shots
+      method: POST
+      transport: server-sent-events
+      description: >-
+        Emits incremental shot generation updates for a storyboard scene. The
+        endpoint is backed by the Supabase `gen-shots` edge function
+        (`supabase/functions/gen-shots/index.ts`).
+      request:
+        headers:
+          Content-Type: application/json
+          Accept: text/event-stream
+        body:
+          type: object
+          required: [projectId]
+          properties:
+            projectId:
+              type: string
+              description: Supabase project identifier (required).
+            sceneId:
+              type: string
+              description: Optional scene identifier. Defaults to `scene-virtual` when omitted.
+            existingShots:
+              type: array
+              description: >-
+                Prior shot summaries with `id` and `shot_number` used to compute
+                the next sequential shot number on the server.
+              items:
+                type: object
+                required: [id, shot_number]
+                properties:
+                  id: { type: string }
+                  shot_number: { type: integer }
+      success_events:
+        order_guarantee: per-connection FIFO
+        events:
+          - name: meta
+            description: Initial metadata emitted after the SSE stream is established.
+            payload:
+              type: object
+              properties:
+                requestId: { type: string }
+                projectId: { type: string }
+                sceneId: { type: string }
+                latency: { type: integer, description: Milliseconds until first chunk }
+          - name: shot
+            description: Incremental shot payload describing the latest generation phase.
+            payload:
+              type: object
+              properties:
+                id: { type: string }
+                project_id: { type: string }
+                scene_id: { type: string }
+                shot_number: { type: integer }
+                status:
+                  type: string
+                  enum: [creating, drafting, enriching, ready]
+                title: { type: string, nullable: true }
+                description: { type: string, nullable: true }
+                visual_prompt: { type: string, nullable: true }
+                thumbnail: { type: string, nullable: true }
+              notes:
+                - Each `shot` event represents the latest known state; clients should
+                  merge updates by `id` rather than appending blindly.
+                - When `status` becomes `ready`, downstream hooks emit
+                  `onShotReady` with a storyboard-shaped payload.
+          - name: done
+            description: Terminal event signalling completion of the stream.
+            payload:
+              type: object
+              properties:
+                completed: { type: boolean }
+                duration: { type: integer, description: Milliseconds elapsed server-side }
+      error_events:
+        - name: error
+          description: >-
+            Emitted if the server encounters a recoverable issue mid-stream. The
+            event `data` contains a human-readable message; clients should abort
+            the stream and surface the error.
+      server_behaviour:
+        cors: "Access-Control-Allow-Origin: *"
+        cache_control: "no-cache, no-transform"
+        connection: "keep-alive"
+        transfer_encoding: "chunked"
+        telemetry:
+          server_timing: bootstrap;dur=<ms>
+      client_expectations:
+        - Treat non-200 responses or missing bodies as fatal and surface via
+          `onError`.
+        - Decode SSE frames incrementally; expect UTF-8 payloads separated by
+          double newlines.
+        - Cancel the `fetch` signal when the user navigates away or starts a new
+          generation.
+        - Track the first chunk latency and per-phase durations for performance
+          reporting (optional when telemetry flag disabled).
+      fallbacks:
+        - When the stream cannot be established (network failure, feature flag
+          disabled), display traditional loading states and issue non-streaming
+          shot creation via Supabase.
+        - Maintain compatibility with existing timelines by merging the final
+          `ready` payload into cached shots when streaming is unavailable.
+  maintenance:
+    revisit_when:
+      - The `/gen/shots` edge function signature, events, or timing metadata change.
+      - The `useShotStream` hook alters its message parsing, callbacks, or exported
+        API surface.
+    owners:
+      - product: Generative Storyboard
+      - engineering: Streaming Experience Guild

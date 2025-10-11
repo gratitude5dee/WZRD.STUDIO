@@ -1,0 +1,3 @@
+# Runtime dependencies for the Dedalus-backed MCP server example
+python-dotenv>=1.0
+Dedalus-Labs>=0.1.0
