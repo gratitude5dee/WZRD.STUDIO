@@ -864,6 +864,153 @@ export const shotService = {
   }
 };
 
+// Studio Block types
+export interface StudioBlock {
+  id: string;
+  project_id: string;
+  user_id: string;
+  block_type: 'text' | 'image' | 'video';
+  position_x: number;
+  position_y: number;
+  prompt?: string;
+  generated_output_url?: string;
+  selected_model?: string;
+  generation_metadata?: any;
+  created_at?: string;
+  updated_at?: string;
+}
+
+// Studio Connection types
+export interface StudioConnection {
+  id: string;
+  project_id: string;
+  source_block_id: string;
+  target_block_id: string;
+  source_handle?: string;
+  target_handle?: string;
+  animated?: boolean;
+  created_at?: string;
+}
+
+// Studio Blocks service
+export const studioBlockService = {
+  async listByProject(projectId: string): Promise<StudioBlock[]> {
+    try {
+      const { data, error } = await supabase
+        .from('studio_blocks')
+        .select('*')
+        .eq('project_id', projectId)
+        .order('created_at', { ascending: true });
+        
+      if (error) throw error;
+      return (data || []).map(block => ({
+        ...block,
+        block_type: block.block_type as 'text' | 'image' | 'video'
+      }));
+    } catch (error) {
+      handleError(error, 'listing studio blocks');
+      return [];
+    }
+  },
+
+  async create(block: Omit<StudioBlock, 'id' | 'user_id' | 'created_at' | 'updated_at'>): Promise<string> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+      
+      const { data, error } = await supabase
+        .from('studio_blocks')
+        .insert({ ...block, user_id: user.id })
+        .select('id')
+        .single();
+        
+      if (error) throw error;
+      return data?.id || '';
+    } catch (error) {
+      handleError(error, 'creating studio block');
+      throw error;
+    }
+  },
+
+  async update(id: string, updates: Partial<Omit<StudioBlock, 'id' | 'project_id' | 'user_id' | 'created_at' | 'updated_at'>>): Promise<void> {
+    try {
+      const { error } = await supabase
+        .from('studio_blocks')
+        .update(updates)
+        .eq('id', id);
+        
+      if (error) throw error;
+    } catch (error) {
+      handleError(error, 'updating studio block');
+    }
+  },
+
+  async delete(id: string): Promise<void> {
+    try {
+      const { error } = await supabase
+        .from('studio_blocks')
+        .delete()
+        .eq('id', id);
+        
+      if (error) throw error;
+    } catch (error) {
+      handleError(error, 'deleting studio block');
+    }
+  }
+};
+
+// Studio Connections service (assuming table exists)
+export const studioConnectionService = {
+  async listByProject(projectId: string): Promise<StudioConnection[]> {
+    try {
+      // Note: If studio_connections table doesn't exist yet, this will return empty array
+      const { data, error } = await supabase
+        .from('studio_connections' as any)
+        .select('*')
+        .eq('project_id', projectId)
+        .order('created_at', { ascending: true });
+        
+      if (error) {
+        console.warn('studio_connections table may not exist yet:', error);
+        return [];
+      }
+      return data || [];
+    } catch (error) {
+      console.warn('Error listing studio connections:', error);
+      return [];
+    }
+  },
+
+  async create(connection: Omit<StudioConnection, 'id' | 'created_at'>): Promise<string> {
+    try {
+      const { data, error } = await supabase
+        .from('studio_connections' as any)
+        .insert(connection)
+        .select('id')
+        .single();
+        
+      if (error) throw error;
+      return data?.id || '';
+    } catch (error) {
+      console.warn('Error creating studio connection:', error);
+      return '';
+    }
+  },
+
+  async delete(id: string): Promise<void> {
+    try {
+      const { error } = await supabase
+        .from('studio_connections' as any)
+        .delete()
+        .eq('id', id);
+        
+      if (error) throw error;
+    } catch (error) {
+      console.warn('Error deleting studio connection:', error);
+    }
+  }
+};
+
 // Export all services
 export const supabaseService = {
   projects: projectService,
@@ -874,7 +1021,9 @@ export const supabaseService = {
   scenes: sceneService,
   characters: characterService,
   storylines: storylineService,
-  shots: shotService
+  shots: shotService,
+  studioBlocks: studioBlockService,
+  studioConnections: studioConnectionService
 };
 
 export default supabaseService;
