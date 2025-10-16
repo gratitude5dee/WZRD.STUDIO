@@ -1,687 +1,234 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@keyframes dash {
-  to {
-    stroke-dashoffset: -240;
-  }
-}
-
-@keyframes matrix-logo-pulse {
-  0%, 100% {
-    opacity: 1;
-    filter: drop-shadow(0 0 20px rgba(0, 255, 65, 0.5));
-  }
-  50% {
-    opacity: 0.8;
-    filter: drop-shadow(0 0 40px rgba(0, 255, 65, 0.8));
-  }
-}
-
-.matrix-logo-pulse {
-  animation: matrix-logo-pulse 2s ease-in-out infinite;
-}
-
-/* React Flow Custom Styles */
-.react-flow__node {
-  cursor: grab;
-}
-
-.react-flow__node:active {
-  cursor: grabbing;
-}
-
-.react-flow__node.selected {
-  box-shadow: none;
-}
-
-.react-flow__edge.selected .react-flow__edge-path {
-  stroke-width: 3px;
-}
-
-.react-flow__handle {
-  transition: all 0.2s ease;
-}
-
-.react-flow__handle:hover {
-  transform: scale(1.2);
-}
-
-.react-flow__connection-path {
-  stroke-dasharray: 8 4;
-  animation: dash 1s linear infinite;
-}
-
-.react-flow__controls {
-  box-shadow: 0 4px 16px hsla(var(--foreground), 0.1);
-}
-
-.react-flow__controls-button {
-  background: hsl(var(--card)) !important;
-  border-color: hsl(var(--border)) !important;
-  color: hsl(var(--muted-foreground)) !important;
-  transition: all 0.2s ease !important;
-}
-
-.react-flow__controls-button:hover {
-  background: hsl(var(--muted)) !important;
-  color: hsl(var(--foreground)) !important;
-  transform: scale(1.05);
-}
-
-.react-flow__minimap {
-  box-shadow: 0 4px 16px hsla(var(--foreground), 0.1);
-}
-
-.react-flow__minimap-mask {
-  fill: hsla(var(--background), 0.7);
-}
-
-.react-flow__minimap-node {
-  fill: hsl(var(--primary));
-  stroke: none;
-  transition: all 0.2s ease;
-}
-
-.react-flow__minimap-node:hover {
-  fill: hsl(var(--accent));
-  opacity: 0.9;
-}
-
-.react-flow__minimap-node.selected {
-  fill: hsl(var(--accent));
-  stroke: hsl(var(--primary));
-  stroke-width: 2;
-}
-
-@keyframes glow-pulse {
-  0%, 100% {
-    box-shadow: 0 0 16px rgba(59, 130, 246, 0.4);
-  }
-  50% {
-    box-shadow: 0 0 24px rgba(59, 130, 246, 0.8);
-  }
-}
- 
 @layer base {
   :root {
-    /* Odyssey Light Mode - Cosmic Foundation */
-    --background: 240 10% 96%;
-    --foreground: 220 15% 15%;
-
-    --card: 240 20% 98%;
-    --card-foreground: 220 15% 15%;
-
-    --popover: 240 20% 98%;
-    --popover-foreground: 220 15% 15%;
-
-    /* Cosmic Primary - Deep Space Blue */
-    --primary: 230 50% 25%;
-    --primary-foreground: 240 100% 98%;
-
-    /* Nebula Secondary - Ethereal Purple */
-    --secondary: 270 30% 85%;
-    --secondary-foreground: 270 50% 20%;
-
-    /* Muted Cosmic Dust */
-    --muted: 240 15% 90%;
-    --muted-foreground: 220 10% 45%;
-
-    /* Stellar Accent - Cosmic Gold */
-    --accent: 45 90% 70%;
-    --accent-foreground: 45 95% 10%;
-
-    --destructive: 0 75% 55%;
-    --destructive-foreground: 0 0% 98%;
-
-    --border: 240 20% 85%;
-    --input: 240 20% 92%;
-    --ring: 230 50% 25%;
-
-    /* Refined Purple Theme Colors (Partiful-inspired) */
-    --refined-deep: 30 27 75;
-    --refined-rich: 124 58 237;
-    --refined-lavender: 196 181 253;
-    --refined-pink: 244 114 182;
-    --surface-dark: 15 23 42;
-    --surface-light: 30 41 59;
-    
-    /* Odyssey Extended Palette */
-    --cosmic-void: 220 25% 8%;
-    --nebula-purple: 270 60% 50%;
-    --stellar-gold: 45 95% 60%;
-    --plasma-blue: 200 85% 55%;
-    --quantum-green: 160 70% 45%;
-    --temporal-orange: 25 85% 60%;
-    --void-shadow: 220 30% 12%;
-    
-    /* Glass Effects */
-    --glass-primary: 230 50% 25% / 0.1;
-    --glass-secondary: 270 60% 50% / 0.08;
-    --glass-accent: 45 95% 60% / 0.12;
-    --glass-backdrop: 240 10% 5% / 0.4;
-    
-    /* Glow Effects */
-    --glow-primary: 230 80% 60%;
-    --glow-secondary: 270 70% 65%;
-    --glow-accent: 45 100% 70%;
-    
-    /* AI Canvas Design Tokens */
-    --canvas-bg: 0 0% 7%;           /* #121212 - Very dark grey canvas */
-    --block-bg: 0 0% 12%;           /* #1E1E1E - Floating dark grey blocks */
-    --text-primary: 0 0% 96%;       /* #F5F5F5 - Off-white text */
-    --text-secondary: 0 0% 53%;     /* #888888 - Medium grey hints */
-    --accent-blue: 217 91% 60%;     /* #3B82F6 - Neutral blue */
-    --accent-purple: 258 90% 66%;   /* #8B5CF6 - Purple alternative */
-    --connector-default: 0 0% 27%;  /* #444444 - Subtle grey */
-    --connector-active: 217 91% 60%; /* #3B82F6 - Active connector */
-    
-    --radius: 1rem;
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
+    --radius: 0.5rem;
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
   }
 
   .dark {
-    /* Odyssey Dark Mode - Deep Space */
-    --background: 220 25% 6%;
-    --foreground: 240 20% 92%;
-
-    --card: 220 30% 8%;
-    --card-foreground: 240 20% 92%;
-
-    --popover: 220 30% 10%;
-    --popover-foreground: 240 20% 92%;
-
-    /* Cosmic Primary - Stellar Blue */
-    --primary: 200 85% 65%;
-    --primary-foreground: 220 25% 8%;
-
-    /* Nebula Secondary - Deep Purple */
-    --secondary: 270 40% 15%;
-    --secondary-foreground: 270 60% 85%;
-
-    /* Muted Space Dust */
-    --muted: 220 20% 12%;
-    --muted-foreground: 240 15% 65%;
-
-    /* Stellar Accent - Quantum Gold */
-    --accent: 45 95% 65%;
-    --accent-foreground: 220 25% 8%;
-
-    --destructive: 0 70% 60%;
-    --destructive-foreground: 240 20% 92%;
-
-    --border: 220 30% 18%;
-    --input: 220 30% 12%;
-    --ring: 200 85% 65%;
-
-    /* Enhanced Glass Effects for Dark Mode */
-    --glass-primary: 200 85% 65% / 0.15;
-    --glass-secondary: 270 60% 50% / 0.12;
-    --glass-accent: 45 95% 65% / 0.18;
-    --glass-backdrop: 220 25% 6% / 0.6;
-    
-    /* AI Canvas Design Tokens (Dark Mode Optimized) */
-    --canvas-bg: 0 0% 7%;           /* #121212 - Very dark grey canvas */
-    --block-bg: 0 0% 12%;           /* #1E1E1E - Floating dark grey blocks */
-    --text-primary: 0 0% 96%;       /* #F5F5F5 - Off-white text */
-    --text-secondary: 0 0% 53%;     /* #888888 - Medium grey hints */
-    --accent-blue: 217 91% 60%;     /* #3B82F6 - Neutral blue */
-    --accent-purple: 258 90% 66%;   /* #8B5CF6 - Purple alternative */
-    --connector-default: 0 0% 27%;  /* #444444 - Subtle grey */
-    --connector-active: 217 91% 60%; /* #3B82F6 - Active connector */
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
   }
 }
 
-@keyframes dash {
-  to {
-    stroke-dashoffset: -20;
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+      'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   }
 }
 
-/* Global styles */
-body {
-  position: relative;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  background-color: hsl(var(--background));
-  min-height: 100vh;
+/* Professional React Flow Styles */
+.react-flow {
+  background: #0A0A0B;
 }
 
-body::after {
-  content: '';
-  position: fixed;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background-image: url('/noise.png');
-  opacity: 0.025;
-  pointer-events: none;
-  z-index: -10;
-  animation: noise 0.2s infinite;
+.react-flow__background {
+  background: #0A0A0B;
 }
 
-/* Added background noise class for landing page */
-.bg-noise {
-  background-image: url('/noise.png');
-  background-repeat: repeat;
+/* Professional grid pattern */
+.react-flow__background-pattern {
+  stroke: #27272A;
+  stroke-width: 0.5;
 }
 
-/* Added radial gradient for the hero section */
-.bg-gradient-radial {
-  background-image: radial-gradient(circle at center, var(--tw-gradient-from) 0%, var(--tw-gradient-via) 50%, var(--tw-gradient-to) 100%);
+/* Professional Controls Styling */
+.react-flow__controls {
+  background: #141416 !important;
+  border: 1px solid #3F3F46 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.02) !important;
+  padding: 4px !important;
 }
 
-/* Scrollbar styling */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-/* AI Canvas dot grid pattern */
-.canvas-dot-grid {
-  background-color: hsl(var(--canvas-bg));
-  background-image: radial-gradient(circle, hsl(var(--connector-default)) 1px, transparent 1px);
-  background-size: 20px 20px;
-  background-repeat: repeat;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(55, 65, 81, 0.5);
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(75, 85, 99, 0.7);
-}
-
-/* 3D Card Effects */
-.perspective {
-  perspective: 1000px;
-}
-
-.card-3d {
-  transform-style: preserve-3d;
-  transition: transform 0.3s ease-out;
-}
-
-.card-3d:hover {
-  transform: translateY(-5px) rotateX(5deg) rotateY(2deg);
-  box-shadow: 0 15px 25px -12px rgba(0, 0, 0, 0.5);
-}
-
-.card-content {
-  transform: translateZ(10px);
-}
-
-/* Odyssey Glass Components - Liquid Cosmic Effects */
-.glass-panel {
-  background: linear-gradient(135deg, hsl(var(--glass-backdrop)), hsl(var(--glass-primary)));
-  backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid hsl(var(--border));
-  box-shadow: 
-    0 8px 32px hsl(var(--cosmic-void) / 0.3),
-    0 4px 16px hsl(var(--glass-primary)),
-    inset 0 1px 0 hsl(var(--foreground) / 0.1);
-}
-
-.glass-card {
-  background: linear-gradient(135deg, hsl(var(--card) / 0.8), hsl(var(--glass-secondary)));
-  backdrop-filter: blur(16px) saturate(150%);
-  border: 1px solid hsl(var(--border));
-  box-shadow: 
-    0 6px 24px hsl(var(--cosmic-void) / 0.2),
-    0 2px 8px hsl(var(--glass-primary)),
-    inset 0 1px 0 hsl(var(--foreground) / 0.08);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.glass-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 
-    0 12px 36px hsl(var(--cosmic-void) / 0.3),
-    0 4px 16px hsl(var(--glow-primary) / 0.4),
-    inset 0 1px 0 hsl(var(--foreground) / 0.12);
-}
-
-.glass-input {
-  background: linear-gradient(135deg, hsl(var(--input) / 0.6), hsl(var(--glass-backdrop)));
-  backdrop-filter: blur(12px);
-  border: 1px solid hsl(var(--border));
-  transition: all 0.3s ease;
-}
-
-.glass-input:focus {
-  background: linear-gradient(135deg, hsl(var(--input) / 0.8), hsl(var(--glass-primary)));
-  border-color: hsl(var(--glow-primary));
-  box-shadow: 
-    0 0 0 2px hsl(var(--glow-primary) / 0.2),
-    0 4px 12px hsl(var(--glow-primary) / 0.3);
-}
-
-.glass-button {
-  background: linear-gradient(135deg, hsl(var(--primary) / 0.8), hsl(var(--glass-accent)));
-  backdrop-filter: blur(16px);
-  border: 1px solid hsl(var(--primary));
-  box-shadow: 
-    0 4px 16px hsl(var(--glow-primary) / 0.3),
-    inset 0 1px 0 hsl(var(--foreground) / 0.1);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.glass-button:hover {
-  transform: translateY(-1px);
-  background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--glow-accent) / 0.6));
-  box-shadow: 
-    0 8px 24px hsl(var(--glow-primary) / 0.4),
-    0 4px 12px hsl(var(--glow-accent) / 0.3),
-    inset 0 1px 0 hsl(var(--foreground) / 0.15);
-}
-
-/* Particle Effects */
-.particle-field {
-  position: relative;
-  overflow: hidden;
-}
-
-.particle-field::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-image: 
-    radial-gradient(2px 2px at 20px 30px, hsl(var(--glow-primary) / 0.3), transparent),
-    radial-gradient(2px 2px at 40px 70px, hsl(var(--glow-secondary) / 0.4), transparent),
-    radial-gradient(1px 1px at 90px 40px, hsl(var(--glow-accent) / 0.3), transparent),
-    radial-gradient(1px 1px at 130px 80px, hsl(var(--glow-primary) / 0.2), transparent);
-  background-repeat: repeat;
-  background-size: 150px 100px;
-  animation: particle-drift 20s linear infinite;
-  pointer-events: none;
-}
-
-@keyframes particle-drift {
-  0% { transform: translate(0, 0); }
-  100% { transform: translate(-150px, -100px); }
-}
-
-/* Cosmic Depth Effects */
-.cosmic-depth {
-  position: relative;
-  transform-style: preserve-3d;
-}
-
-.cosmic-depth::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(
-    45deg,
-    hsl(var(--glow-primary) / 0.05),
-    transparent 30%,
-    hsl(var(--glow-secondary) / 0.03) 70%,
-    hsl(var(--glow-accent) / 0.05)
-  );
-  transform: translateZ(-10px);
-  border-radius: inherit;
-  pointer-events: none;
-}
-
-/* Odyssey Glow Effects - Cosmic Luminescence */
-.glow-text {
-  text-shadow: 
-    0 0 10px hsl(var(--glow-accent) / 0.6),
-    0 0 20px hsl(var(--glow-accent) / 0.4),
-    0 0 30px hsl(var(--glow-accent) / 0.2);
-}
-
-.glow-text-primary {
-  text-shadow: 
-    0 0 10px hsl(var(--glow-primary) / 0.7),
-    0 0 20px hsl(var(--glow-primary) / 0.5),
-    0 0 30px hsl(var(--glow-primary) / 0.3);
-}
-
-.glow-text-secondary {
-  text-shadow: 
-    0 0 10px hsl(var(--glow-secondary) / 0.6),
-    0 0 20px hsl(var(--glow-secondary) / 0.4),
-    0 0 30px hsl(var(--glow-secondary) / 0.2);
-}
-
-.glow-text-cosmic {
-  background: linear-gradient(135deg, 
-    hsl(var(--glow-primary)), 
-    hsl(var(--glow-secondary)), 
-    hsl(var(--glow-accent))
-  );
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  text-shadow: none;
-  filter: drop-shadow(0 0 10px hsl(var(--glow-primary) / 0.5));
-}
-
-.shadow-glow-purple {
-  box-shadow: 0 0 10px rgba(147, 51, 234, 0.3), 0 0 20px rgba(147, 51, 234, 0.1);
-}
-
-.shadow-glow-purple-sm {
-  box-shadow: 0 0 5px rgba(147, 51, 234, 0.3), 0 0 10px rgba(147, 51, 234, 0.1);
-}
-
-.shadow-glow-blue-sm {
-  box-shadow: 0 0 5px rgba(47, 123, 188, 0.3), 0 0 10px rgba(47, 123, 188, 0.1);
-}
-
-.glow-button:hover {
-  box-shadow: 0 0 10px rgba(255, 255, 255, 0.2), 0 0 20px rgba(255, 255, 255, 0.1);
-}
-
-.glow-button-subtle:hover {
-  box-shadow: 0 0 5px rgba(255, 255, 255, 0.1);
-}
-
-.glow-icon-button:hover {
-  box-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
-}
-
-.sidebar-content-glow {
-  animation: fadeIn 0.3s ease-out;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(5px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
-}
-
-.animate-shimmer {
-  animation: shimmer 2s infinite linear;
-}
-
-@keyframes noise {
-  0% { transform: translate(0, 0); }
-  10% { transform: translate(-5%, -5%); }
-  20% { transform: translate(-10%, 5%); }
-  30% { transform: translate(5%, -10%); }
-  40% { transform: translate(-5%, 15%); }
-  50% { transform: translate(-10%, 5%); }
-  60% { transform: translate(15%, 0); }
-  70% { transform: translate(0, 10%); }
-  80% { transform: translate(-15%, 0); }
-  90% { transform: translate(10%, 5%); }
-  100% { transform: translate(0, 0); }
-}
-
-/* Odyssey Cosmic Animations */
-@keyframes cosmic-pulse {
-  0%, 100% { 
-    opacity: 0.6;
-    transform: scale(1);
-  }
-  50% { 
-    opacity: 1;
-    transform: scale(1.05);
-  }
-}
-
-@keyframes stellar-drift {
-  0% { transform: translateX(-100px) translateY(0px); }
-  25% { transform: translateX(0px) translateY(-50px); }
-  50% { transform: translateX(100px) translateY(0px); }
-  75% { transform: translateX(50px) translateY(50px); }
-  100% { transform: translateX(-100px) translateY(0px); }
-}
-
-@keyframes quantum-shift {
-  0% { 
-    box-shadow: 0 0 20px hsl(var(--cosmic-quantum) / 0.3);
-    filter: hue-rotate(0deg);
-  }
-  33% { 
-    box-shadow: 0 0 25px hsl(var(--cosmic-plasma) / 0.4);
-    filter: hue-rotate(120deg);
-  }
-  66% { 
-    box-shadow: 0 0 30px hsl(var(--cosmic-stellar) / 0.5);
-    filter: hue-rotate(240deg);
-  }
-  100% { 
-    box-shadow: 0 0 20px hsl(var(--cosmic-quantum) / 0.3);
-    filter: hue-rotate(360deg);
-  }
-}
-
-@keyframes void-ripple {
-  0% { 
-    transform: scale(1);
-    opacity: 0.8;
-  }
-  50% { 
-    transform: scale(1.1);
-    opacity: 0.4;
-  }
-  100% { 
-    transform: scale(1.2);
-    opacity: 0;
-  }
-}
-
-/* Cosmic React Flow Styles */
-.cosmic-flow .react-flow__node {
+.react-flow__controls-button {
   background: transparent !important;
   border: none !important;
-  padding: 0 !important;
+  border-bottom: 1px solid #27272A !important;
+  color: #A1A1AA !important;
+  width: 32px !important;
+  height: 32px !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
-.cosmic-flow .react-flow__edge-path {
-  filter: drop-shadow(0 0 4px currentColor);
+.react-flow__controls-button:last-child {
+  border-bottom: none !important;
 }
 
-.cosmic-flow .react-flow__edge.animated path {
-  stroke-dasharray: 5;
-  animation: edge-flow 2s ease-in-out infinite;
+.react-flow__controls-button:hover {
+  background: #1C1C1F !important;
+  color: #FAFAFA !important;
+  transform: scale(1.05);
 }
 
-@keyframes edge-flow {
+.react-flow__controls-button svg {
+  width: 16px !important;
+  height: 16px !important;
+}
+
+/* Professional Minimap Styling */
+.react-flow__minimap {
+  background: #141416 !important;
+  border: 1px solid #3F3F46 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.02) !important;
+  overflow: hidden !important;
+}
+
+.react-flow__minimap-mask {
+  fill: rgba(20, 20, 22, 0.6) !important;
+  stroke: #6366F1 !important;
+  stroke-width: 2 !important;
+}
+
+.react-flow__minimap-node {
+  fill: #3F3F46 !important;
+  stroke: #6366F1 !important;
+  stroke-width: 1.5 !important;
+}
+
+/* Connection line styling */
+.react-flow__connection-path {
+  stroke: #6366F1 !important;
+  stroke-width: 2.5 !important;
+}
+
+.react-flow__edge.selected .react-flow__edge-path {
+  stroke-width: 3 !important;
+}
+
+/* Node selection styling */
+.react-flow__node.selected {
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15) !important;
+}
+
+/* Professional Panel styling */
+.react-flow__panel {
+  margin: 16px;
+}
+
+/* Hide attribution */
+.react-flow__attribution {
+  display: none !important;
+}
+
+/* Smooth transitions for everything */
+.react-flow__node,
+.react-flow__edge {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Existing styles for the tooltips */
+[data-tooltip-content] {
+  position: relative;
+  cursor: pointer;
+}
+
+[data-tooltip-content]::before,
+[data-tooltip-content]::after {
+  position: absolute;
+  visibility: hidden;
+  opacity: 0;
+  left: 50%;
+  bottom: calc(100% + 5px);
+  pointer-events: none;
+  transform: translateX(-50%);
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+  z-index: 1000; /* Ensure tooltips are above other elements */
+}
+
+/* The actual tooltip box */
+[data-tooltip-content]::before {
+  content: attr(data-tooltip-content);
+  background-color: rgba(30, 30, 30, 0.9); /* Dark background */
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 5px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+/* Tooltip arrow */
+[data-tooltip-content]::after {
+  content: '';
+  border: 6px solid transparent;
+  border-top-color: rgba(30, 30, 30, 0.9); /* Match arrow color to background */
+  margin-bottom: -6px;
+}
+
+/* Show the tooltip on hover */
+[data-tooltip-content]:hover::before,
+[data-tooltip-content]:hover::after {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* Animation for edge paths */
+.react-flow__edge-path {
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  animation: dash 5s linear forwards infinite;
+}
+
+/* Keyframes for the dash animation */
+@keyframes dash {
   to {
-    stroke-dashoffset: -10;
-  }
-}
-
-.cosmic-controls .react-flow__controls-button {
-  background: hsl(var(--glass-backdrop)) !important;
-  border: 1px solid hsl(var(--border)) !important;
-  color: hsl(var(--foreground)) !important;
-  backdrop-filter: blur(12px);
-  transition: all 0.3s ease;
-}
-
-.cosmic-controls .react-flow__controls-button:hover {
-  background: hsl(var(--glass-primary)) !important;
-  border-color: hsl(var(--cosmic-stellar)) !important;
-  box-shadow: 0 0 8px hsl(var(--cosmic-stellar) / 0.3);
-}
-
-.cosmic-minimap {
-  background: hsl(var(--glass-backdrop)) !important;
-  border: 1px solid hsl(var(--border)) !important;
-  border-radius: 8px;
-  backdrop-filter: blur(12px);
-}
-
-.cosmic-minimap .react-flow__minimap-mask {
-  fill: hsl(var(--cosmic-stellar) / 0.2) !important;
-}
-
-.cosmic-minimap .react-flow__minimap-node {
-  stroke: hsl(var(--cosmic-stellar)) !important;
-  stroke-width: 1;
-}
-
-@keyframes stellar-drift {
-  0% { transform: translateX(-100px) translateY(0px); }
-  25% { transform: translateX(0px) translateY(-50px); }
-  50% { transform: translateX(100px) translateY(0px); }
-  75% { transform: translateX(50px) translateY(50px); }
-  100% { transform: translateX(-100px) translateY(0px); }
-}
-
-@keyframes quantum-shift {
-  0% { 
-    box-shadow: 0 0 20px hsl(var(--cosmic-quantum) / 0.3);
-    filter: hue-rotate(0deg);
-  }
-  33% { 
-    box-shadow: 0 0 25px hsl(var(--cosmic-plasma) / 0.4);
-    filter: hue-rotate(120deg);
-  }
-  66% { 
-    box-shadow: 0 0 30px hsl(var(--cosmic-stellar) / 0.5);
-    filter: hue-rotate(240deg);
-  }
-  100% { 
-    box-shadow: 0 0 20px hsl(var(--cosmic-quantum) / 0.3);
-    filter: hue-rotate(360deg);
-  }
-}
-
-@keyframes void-ripple {
-  0% { 
-    transform: scale(1);
-    opacity: 0.8;
-  }
-  50% { 
-    transform: scale(1.1);
-    opacity: 0.4;
-  }
-  100% { 
-    transform: scale(1.2);
-    opacity: 0;
+    stroke-dashoffset: 0;
   }
 }
 
@@ -695,41 +242,8 @@ body::after {
   font-family: 'Cinzel', serif;
 }
 
-.react-flow__node {
-  @apply backdrop-blur-sm bg-zinc-800/50 border border-zinc-700 rounded-lg shadow-lg;
-}
-
-.react-flow__node-input {
-  @apply bg-zinc-800/50;
-}
-
-.react-flow__handle {
-  @apply !bg-teal-500 !w-3 !h-3;
-}
-
-.react-flow__edge-path {
-  @apply !stroke-teal-500 !stroke-2;
-}
-
-.react-flow__controls button {
-  @apply !bg-zinc-800/50 !border-zinc-700 !backdrop-blur-sm;
-}
-
-.react-flow__controls button:hover {
-  @apply !bg-zinc-700/50;
-}
-
-@layer base {
-  * {
-    @apply border-border;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
-
-  @keyframes dash {
-    to {
-      stroke-dashoffset: -24;
-    }
+@keyframes dash {
+  to {
+    stroke-dashoffset: 0;
   }
 }

@@ -518,7 +518,7 @@ const StudioCanvasInner = ({
   }
 
   return (
-    <div className="w-full h-full bg-background relative" ref={rfRef}>
+    <div className="w-full h-full relative" style={{ background: '#0A0A0B' }}>
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -558,140 +558,136 @@ const StudioCanvasInner = ({
         proOptions={{ hideAttribution: true }}
       >
         <Background
-          color="hsl(var(--border))"
-          gap={20}
-          size={1}
-          className="opacity-30"
+          color="#27272A"
+          gap={24}
+          size={0.5}
+          style={{ background: '#0A0A0B' }}
         />
 
         <Controls
-          className="!bg-card !border-border !rounded-lg"
+          className="!bg-[#141416] !border-[#3F3F46] !rounded-xl !shadow-[0_8px_24px_rgba(0,0,0,0.4)]"
           showInteractive={false}
         />
 
         <MiniMap
-          className="!bg-card !border-2 !border-border !rounded-lg"
-          maskColor="hsla(var(--background), 0.6)"
+          className="!bg-[#141416] !border-[#3F3F46] !rounded-xl !shadow-[0_8px_24px_rgba(0,0,0,0.4)]"
+          maskColor="rgba(20, 20, 22, 0.6)"
           nodeColor={(node) => {
             switch (node.type) {
               case 'video':
-                return 'hsl(var(--primary))';
+                return '#3b82f6';
               case 'image':
-                return 'hsl(var(--accent))';
+                return '#10b981';
               default:
-                return 'hsl(var(--secondary))';
+                return '#6366F1';
             }
           }}
           nodeBorderRadius={12}
         />
 
-        {/* Floating Action Panel - Top Left */}
+        {/* Floating Action Panel - Top Left - Sleek Design */}
         <Panel position="top-left" className="space-y-2">
           <motion.div
             initial={{ x: -100, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             transition={{ duration: 0.3 }}
-            className="space-y-2"
+            className="flex gap-2"
           >
-            <Button
+            <button
               onClick={() => addNode('text')}
-              className="w-full bg-card hover:bg-muted border border-border text-foreground shadow-lg"
-              size="sm"
+              className="px-3 py-2 bg-[#141416] hover:bg-[#1C1C1F] border border-[#3F3F46] hover:border-[#52525B] rounded-lg text-xs font-medium text-[#FAFAFA] transition-all duration-200 flex items-center gap-2 shadow-[0_4px_12px_rgba(0,0,0,0.3)]"
             >
-              <Type className="w-4 h-4 mr-2" />
-              Text Node
-            </Button>
+              <Type className="w-3.5 h-3.5" />
+              Text
+            </button>
             
-            <Button
+            <button
               onClick={() => addNode('image')}
-              className="w-full bg-card hover:bg-muted border border-border text-foreground shadow-lg"
-              size="sm"
+              className="px-3 py-2 bg-[#141416] hover:bg-[#1C1C1F] border border-[#3F3F46] hover:border-[#52525B] rounded-lg text-xs font-medium text-[#FAFAFA] transition-all duration-200 flex items-center gap-2 shadow-[0_4px_12px_rgba(0,0,0,0.3)]"
             >
-              <ImageIcon className="w-4 h-4 mr-2" />
-              Image Node
-            </Button>
+              <ImageIcon className="w-3.5 h-3.5" />
+              Image
+            </button>
             
-            <Button
+            <button
               onClick={() => addNode('video')}
-              className="w-full bg-card hover:bg-muted border border-border text-foreground shadow-lg"
-              size="sm"
+              className="px-3 py-2 bg-[#141416] hover:bg-[#1C1C1F] border border-[#3F3F46] hover:border-[#52525B] rounded-lg text-xs font-medium text-[#FAFAFA] transition-all duration-200 flex items-center gap-2 shadow-[0_4px_12px_rgba(0,0,0,0.3)]"
             >
-              <Video className="w-4 h-4 mr-2" />
-              Video Node
-            </Button>
+              <Video className="w-3.5 h-3.5" />
+              Video
+            </button>
           </motion.div>
         </Panel>
 
-        {/* Stats & Actions Panel - Top Right */}
+        {/* Stats & Actions Panel - Top Right - Professional Design */}
         <Panel position="top-right" className="space-y-2">
           <motion.div
             initial={{ x: 100, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             transition={{ duration: 0.3 }}
-            className="bg-card/95 backdrop-blur-md border border-border rounded-lg p-3 shadow-lg space-y-2"
+            className="bg-[#141416] border border-[#3F3F46] rounded-lg p-3 shadow-[0_4px_12px_rgba(0,0,0,0.3)]"
           >
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Zap className="w-4 h-4 text-primary" />
-              <span>{nodes.length} nodes • {edges.length} connections</span>
+            <div className="flex items-center gap-4 mb-3">
+              <div className="flex items-center gap-3 text-[11px] text-[#A1A1AA] font-medium">
+                <span className="flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-indigo-400"></span>
+                  {nodes.length} nodes
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-purple-400"></span>
+                  {edges.length} connections
+                </span>
+              </div>
             </div>
             
-            <div className="flex gap-2">
-              <Button
+            <div className="flex gap-2 mb-2">
+              <button
                 onClick={handleUndo}
                 disabled={!canUndo}
-                variant="outline"
-                size="sm"
-                className="flex-1"
+                className="flex-1 p-2 bg-[#1C1C1F] hover:bg-[#27272A] disabled:opacity-30 disabled:cursor-not-allowed rounded-md text-[#FAFAFA] transition-all duration-200 border border-[#3F3F46] hover:border-[#52525B]"
                 title="Undo (⌘Z)"
               >
-                <Undo className="w-4 h-4" />
-              </Button>
-              <Button
+                <Undo className="w-3.5 h-3.5" />
+              </button>
+              <button
                 onClick={handleRedo}
                 disabled={!canRedo}
-                variant="outline"
-                size="sm"
-                className="flex-1"
+                className="flex-1 p-2 bg-[#1C1C1F] hover:bg-[#27272A] disabled:opacity-30 disabled:cursor-not-allowed rounded-md text-[#FAFAFA] transition-all duration-200 border border-[#3F3F46] hover:border-[#52525B]"
                 title="Redo (⌘⇧Z)"
               >
-                <Redo className="w-4 h-4" />
-              </Button>
+                <Redo className="w-3.5 h-3.5" />
+              </button>
             </div>
 
-            <div className="flex gap-2">
-              <Button
+            <div className="flex gap-2 mb-2">
+              <button
                 onClick={handleExport}
-                variant="outline"
-                size="sm"
-                className="flex-1"
+                className="flex-1 p-2 bg-[#1C1C1F] hover:bg-[#27272A] rounded-md text-[#FAFAFA] transition-all duration-200 border border-[#3F3F46] hover:border-[#52525B]"
                 title="Export (⌘E)"
               >
-                <Download className="w-4 h-4" />
-              </Button>
-              <Button
+                <Download className="w-3.5 h-3.5" />
+              </button>
+              <button
                 onClick={handleImport}
-                variant="outline"
-                size="sm"
-                className="flex-1"
+                className="flex-1 p-2 bg-[#1C1C1F] hover:bg-[#27272A] rounded-md text-[#FAFAFA] transition-all duration-200 border border-[#3F3F46] hover:border-[#52525B]"
                 title="Import (⌘I)"
               >
-                <Upload className="w-4 h-4" />
-              </Button>
+                <Upload className="w-3.5 h-3.5" />
+              </button>
             </div>
             
-            <Button
+            <button
               onClick={handleSave}
               disabled={isSaving}
-              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-md"
-              size="sm"
+              className="w-full px-3 py-2 bg-[#6366F1] hover:bg-[#5558E3] disabled:opacity-50 disabled:cursor-not-allowed rounded-md text-xs font-semibold text-white transition-all duration-200 flex items-center justify-center gap-2 shadow-[0_0_12px_rgba(99,102,241,0.3)]"
             >
-              <Save className="w-4 h-4 mr-2" />
+              <Save className="w-3.5 h-3.5" />
               {isSaving ? 'Saving...' : 'Save Project'}
-            </Button>
+            </button>
           </motion.div>
         </Panel>
 
-        {/* Keyboard Shortcuts Help - Bottom Left */}
+        {/* Keyboard Shortcuts Help - Bottom Left - Sleek Design */}
         <Panel position="bottom-left">
           <AnimatePresence>
             {showShortcuts && (
@@ -700,16 +696,16 @@ const StudioCanvasInner = ({
                 animate={{ y: 0, opacity: 1 }}
                 exit={{ y: 50, opacity: 0 }}
                 transition={{ duration: 0.3 }}
-                className="bg-card/95 backdrop-blur-md border border-border rounded-lg p-4 shadow-lg max-w-xs"
+                className="bg-[#141416]/98 backdrop-blur-xl border border-[#3F3F46] rounded-xl p-4 shadow-[0_8px_32px_rgba(0,0,0,0.5)] max-w-xs mb-2"
               >
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <Keyboard className="w-4 h-4 text-primary" />
-                    <h3 className="text-sm font-semibold text-foreground">Keyboard Shortcuts</h3>
+                    <Keyboard className="w-4 h-4 text-[#6366F1]" />
+                    <h3 className="text-sm font-semibold text-[#FAFAFA]">Shortcuts</h3>
                   </div>
                   <button
                     onClick={() => setShowShortcuts(false)}
-                    className="text-muted-foreground hover:text-foreground text-xs"
+                    className="text-[#A1A1AA] hover:text-[#FAFAFA] text-xs transition-colors"
                   >
                     Hide
                   </button>
@@ -717,77 +713,58 @@ const StudioCanvasInner = ({
                 
                 <div className="space-y-2 text-xs">
                   <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Undo</span>
-                    <kbd className="px-2 py-1 bg-muted rounded text-foreground font-mono">⌘ Z</kbd>
+                    <span className="text-[#A1A1AA]">Undo</span>
+                    <kbd className="px-2 py-1 bg-[#1C1C1F] border border-[#3F3F46] rounded text-[#FAFAFA] font-mono text-[11px]">⌘ Z</kbd>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Redo</span>
-                    <kbd className="px-2 py-1 bg-muted rounded text-foreground font-mono">⌘⇧ Z</kbd>
+                    <span className="text-[#A1A1AA]">Redo</span>
+                    <kbd className="px-2 py-1 bg-[#1C1C1F] border border-[#3F3F46] rounded text-[#FAFAFA] font-mono text-[11px]">⌘⇧ Z</kbd>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Add Text Node</span>
-                    <kbd className="px-2 py-1 bg-muted rounded text-foreground font-mono">⌘ 1</kbd>
+                    <span className="text-[#A1A1AA]">Add Text Node</span>
+                    <kbd className="px-2 py-1 bg-[#1C1C1F] border border-[#3F3F46] rounded text-[#FAFAFA] font-mono text-[11px]">⌘ 1</kbd>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Add Image Node</span>
-                    <kbd className="px-2 py-1 bg-muted rounded text-foreground font-mono">⌘ 2</kbd>
+                    <span className="text-[#A1A1AA]">Add Image Node</span>
+                    <kbd className="px-2 py-1 bg-[#1C1C1F] border border-[#3F3F46] rounded text-[#FAFAFA] font-mono text-[11px]">⌘ 2</kbd>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Add Video Node</span>
-                    <kbd className="px-2 py-1 bg-muted rounded text-foreground font-mono">⌘ 3</kbd>
-                  </div>
-                  
-                  <div className="border-t border-border my-2" />
-                  
-                  <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Save Project</span>
-                    <kbd className="px-2 py-1 bg-muted rounded text-foreground font-mono">⌘ S</kbd>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Export</span>
-                    <kbd className="px-2 py-1 bg-muted rounded text-foreground font-mono">⌘ E</kbd>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Import</span>
-                    <kbd className="px-2 py-1 bg-muted rounded text-foreground font-mono">⌘ I</kbd>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Select All</span>
-                    <kbd className="px-2 py-1 bg-muted rounded text-foreground font-mono">⌘ A</kbd>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Delete Selected</span>
-                    <kbd className="px-2 py-1 bg-muted rounded text-foreground font-mono">Del</kbd>
+                    <span className="text-[#A1A1AA]">Add Video Node</span>
+                    <kbd className="px-2 py-1 bg-[#1C1C1F] border border-[#3F3F46] rounded text-[#FAFAFA] font-mono text-[11px]">⌘ 3</kbd>
                   </div>
                   
-                  <div className="border-t border-border my-2" />
+                  <div className="border-t border-[#27272A] my-2" />
                   
                   <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Fit View</span>
-                    <kbd className="px-2 py-1 bg-muted rounded text-foreground font-mono">F</kbd>
+                    <span className="text-[#A1A1AA]">Save Project</span>
+                    <kbd className="px-2 py-1 bg-[#1C1C1F] border border-[#3F3F46] rounded text-[#FAFAFA] font-mono text-[11px]">⌘ S</kbd>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Zoom In/Out</span>
-                    <kbd className="px-2 py-1 bg-muted rounded text-foreground font-mono">+/-</kbd>
+                    <span className="text-[#A1A1AA]">Export</span>
+                    <kbd className="px-2 py-1 bg-[#1C1C1F] border border-[#3F3F46] rounded text-[#FAFAFA] font-mono text-[11px]">⌘ E</kbd>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Multi-select</span>
-                    <kbd className="px-2 py-1 bg-muted rounded text-foreground font-mono">Shift</kbd>
+                    <span className="text-[#A1A1AA]">Select All</span>
+                    <kbd className="px-2 py-1 bg-[#1C1C1F] border border-[#3F3F46] rounded text-[#FAFAFA] font-mono text-[11px]">⌘ A</kbd>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Pan Canvas</span>
-                    <kbd className="px-2 py-1 bg-muted rounded text-foreground font-mono">Space</kbd>
+                    <span className="text-[#A1A1AA]">Delete</span>
+                    <kbd className="px-2 py-1 bg-[#1C1C1F] border border-[#3F3F46] rounded text-[#FAFAFA] font-mono text-[11px]">Del</kbd>
                   </div>
                   
-                  <div className="border-t border-border my-2" />
+                  <div className="border-t border-[#27272A] my-2" />
                   
                   <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Toggle Shortcuts</span>
-                    <kbd className="px-2 py-1 bg-muted rounded text-foreground font-mono">?</kbd>
+                    <span className="text-[#A1A1AA]">Fit View</span>
+                    <kbd className="px-2 py-1 bg-[#1C1C1F] border border-[#3F3F46] rounded text-[#FAFAFA] font-mono text-[11px]">F</kbd>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Right-click</span>
-                    <span className="text-xs text-muted-foreground">Context Menu</span>
+                    <span className="text-[#A1A1AA]">Zoom</span>
+                    <kbd className="px-2 py-1 bg-[#1C1C1F] border border-[#3F3F46] rounded text-[#FAFAFA] font-mono text-[11px]">+/-</kbd>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-[#A1A1AA]">Right-click</span>
+                    <span className="text-xs text-[#52525B]">Context Menu</span>
                   </div>
                 </div>
               </motion.div>
@@ -799,9 +776,9 @@ const StudioCanvasInner = ({
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               onClick={() => setShowShortcuts(true)}
-              className="bg-card/95 backdrop-blur-md border border-border rounded-lg p-2 shadow-lg hover:bg-muted transition-colors"
+              className="bg-[#141416] border border-[#3F3F46] rounded-lg p-2.5 shadow-[0_4px_12px_rgba(0,0,0,0.3)] hover:bg-[#1C1C1F] hover:border-[#52525B] transition-all duration-200"
             >
-              <Keyboard className="w-5 h-5 text-muted-foreground" />
+              <Keyboard className="w-5 h-5 text-[#A1A1AA]" />
             </motion.button>
           )}
         </Panel>

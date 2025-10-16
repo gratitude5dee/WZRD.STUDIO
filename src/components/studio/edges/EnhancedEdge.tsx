@@ -13,26 +13,29 @@ const EnhancedEdge: FC<EdgeProps> = ({
   markerEnd,
   selected,
 }) => {
-  const [edgePath, labelX, labelY] = getBezierPath({
+  const [edgePath] = getBezierPath({
     sourceX,
     sourceY,
     sourcePosition,
     targetX,
     targetY,
     targetPosition,
-    curvature: 0.25,
+    curvature: 0.3, // Smoother, more professional curves
   });
 
   return (
     <>
       <defs>
+        {/* Professional gradient */}
         <linearGradient id={`gradient-${id}`} x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor="hsl(var(--primary))" />
-          <stop offset="50%" stopColor="hsl(var(--accent))" />
-          <stop offset="100%" stopColor="hsl(var(--primary))" />
+          <stop offset="0%" stopColor="#6366F1" stopOpacity="1" />
+          <stop offset="50%" stopColor="#8B5CF6" stopOpacity="1" />
+          <stop offset="100%" stopColor="#3B82F6" stopOpacity="1" />
         </linearGradient>
+        
+        {/* Glow filter */}
         <filter id={`glow-${id}`}>
-          <feGaussianBlur stdDeviation={selected ? "4" : "2"} result="coloredBlur" />
+          <feGaussianBlur stdDeviation={selected ? "6" : "3"} result="coloredBlur" />
           <feMerge>
             <feMergeNode in="coloredBlur" />
             <feMergeNode in="SourceGraphic" />
@@ -40,32 +43,55 @@ const EnhancedEdge: FC<EdgeProps> = ({
         </filter>
       </defs>
 
-      {/* Glow effect */}
+      {/* Outer glow layer */}
       <path
         className="react-flow__edge-path"
         d={edgePath}
-        strokeWidth={selected ? 8 : 6}
+        strokeWidth={selected ? 10 : 8}
         stroke={`url(#gradient-${id})`}
         fill="none"
-        opacity={0.3}
+        opacity={0.2}
         filter={`url(#glow-${id})`}
+        style={{ pointerEvents: 'none' }}
       />
 
-      {/* Main edge path */}
+      {/* Main edge path with smooth gradient */}
       <path
         className="react-flow__edge-path"
         d={edgePath}
         strokeWidth={selected ? 3 : 2.5}
         stroke={`url(#gradient-${id})`}
         fill="none"
-        style={style}
+        style={{
+          ...style,
+          filter: 'drop-shadow(0 0 8px rgba(99, 102, 241, 0.3))',
+        }}
         markerEnd={markerEnd}
       />
 
-      {/* Animated flow particle */}
-      <circle r="3" fill="hsl(var(--accent))">
-        <animateMotion dur="2s" repeatCount="indefinite" path={edgePath} />
-      </circle>
+      {/* Animated flow particles - Multiple for better effect */}
+      {[0, 0.4, 0.8].map((delay, i) => (
+        <circle 
+          key={i}
+          r="3" 
+          fill="#60A5FA"
+          opacity={0.8}
+        >
+          <animateMotion 
+            dur="2s" 
+            repeatCount="indefinite" 
+            path={edgePath}
+            begin={`${delay}s`}
+          />
+          <animate
+            attributeName="opacity"
+            values="0;1;1;0"
+            dur="2s"
+            repeatCount="indefinite"
+            begin={`${delay}s`}
+          />
+        </circle>
+      ))}
     </>
   );
 };

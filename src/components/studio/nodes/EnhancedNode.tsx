@@ -1,13 +1,15 @@
 import { useState, memo } from 'react';
 import { Handle, Position, NodeProps } from 'reactflow';
 import { motion, AnimatePresence } from 'framer-motion';
-import { GripVertical, Sparkles, Image as ImageIcon, Video } from 'lucide-react';
+import { GripVertical, Type, Image as ImageIcon, Video, MoreHorizontal } from 'lucide-react';
 
 interface NodeData {
   type: string;
   label: string;
   model?: string;
   imageUrl?: string;
+  status?: 'idle' | 'generating' | 'complete' | 'error';
+  progress?: number;
 }
 
 const EnhancedNode = memo(({ data, selected, id }: NodeProps<NodeData>) => {
@@ -18,15 +20,17 @@ const EnhancedNode = memo(({ data, selected, id }: NodeProps<NodeData>) => {
     const type = data.type.toLowerCase();
     if (type.includes('image')) return <ImageIcon className="w-4 h-4" />;
     if (type.includes('video')) return <Video className="w-4 h-4" />;
-    return <Sparkles className="w-4 h-4" />;
+    return <Type className="w-4 h-4" />;
   };
 
   const getTypeColor = () => {
     const type = data.type.toLowerCase();
-    if (type.includes('image')) return 'from-emerald-500/10 to-emerald-600/5';
-    if (type.includes('video')) return 'from-blue-500/10 to-blue-600/5';
-    return 'from-purple-500/10 to-purple-600/5';
+    if (type.includes('image')) return { gradient: 'from-emerald-500/20 to-emerald-600/10', icon: 'text-emerald-400', border: 'border-emerald-500/30' };
+    if (type.includes('video')) return { gradient: 'from-blue-500/20 to-blue-600/10', icon: 'text-blue-400', border: 'border-blue-500/30' };
+    return { gradient: 'from-indigo-500/20 to-indigo-600/10', icon: 'text-indigo-400', border: 'border-indigo-500/30' };
   };
+
+  const typeColors = getTypeColor();
 
   return (
     <div
@@ -72,64 +76,120 @@ const EnhancedNode = memo(({ data, selected, id }: NodeProps<NodeData>) => {
       {/* Node Container */}
       <motion.div
         className={`
-          min-w-[280px] rounded-xl bg-card border-2 
-          transition-all duration-200 overflow-hidden
+          min-w-[280px] max-w-[320px] rounded-xl bg-[#1C1C1F] border-[1.5px]
+          transition-all duration-200 overflow-hidden relative
           ${selected 
-            ? 'border-primary shadow-[0_0_0_4px_hsl(var(--primary)/.15),0_8px_32px_hsl(var(--primary)/.3)]' 
+            ? `${typeColors.border} shadow-[0_0_0_3px_rgba(99,102,241,0.15),0_8px_32px_rgba(99,102,241,0.2)]` 
             : isHovered 
-              ? 'border-border shadow-[0_8px_24px_hsl(var(--foreground)/.1)]' 
-              : 'border-border/50 shadow-[0_4px_16px_hsl(var(--foreground)/.05)]'
+              ? 'border-[#52525B] shadow-[0_8px_24px_rgba(0,0,0,0.4)]' 
+              : 'border-[#3F3F46] shadow-[0_4px_12px_rgba(0,0,0,0.3)]'
           }
         `}
-        whileHover={{ scale: 1.02 }}
-        transition={{ duration: 0.2 }}
+        whileHover={{ y: -2 }}
+        transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
       >
         {/* Header */}
-        <div className={`px-4 py-3 border-b border-border bg-gradient-to-b ${getTypeColor()}`}>
+        <div className={`px-4 py-3 border-b border-[#27272A] bg-gradient-to-br ${typeColors.gradient} relative`}>
           <div className="flex items-center gap-3">
-            <div className="drag-handle cursor-grab active:cursor-grabbing">
-              <GripVertical className="w-4 h-4 text-muted-foreground hover:text-foreground transition-colors" />
-            </div>
+            {/* Drag Handle - Shows on hover */}
+            <AnimatePresence>
+              {(isHovered || selected) && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  className="drag-handle cursor-grab active:cursor-grabbing"
+                >
+                  <GripVertical className="w-4 h-4 text-[#A1A1AA] hover:text-[#FAFAFA] transition-colors" />
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             <div className="flex items-center justify-between flex-1">
-              <div className="flex items-center gap-2">
-                <span className="text-muted-foreground">{getIcon()}</span>
-                <span className="text-sm font-medium text-foreground">{data.type}</span>
+              <div className="flex items-center gap-2.5">
+                <span className={typeColors.icon}>{getIcon()}</span>
+                <span className="text-sm font-semibold text-[#FAFAFA] tracking-tight">{data.type}</span>
               </div>
-              <span className="text-xs font-medium text-muted-foreground px-2 py-1 bg-muted rounded-md border border-border">
+              
+              {/* Model Badge - Clickable */}
+              <button 
+                className="text-[11px] font-medium text-[#A1A1AA] px-2.5 py-1 bg-[#141416] hover:bg-[#1C1C1F] rounded-md border border-[#3F3F46] hover:border-[#52525B] transition-all duration-200"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  // Handle model selection
+                }}
+              >
                 {data.model || 'GPT-5'}
-              </span>
+              </button>
+
+              {/* Menu Button - Shows on hover */}
+              <AnimatePresence>
+                {(isHovered || selected) && (
+                  <motion.button
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    className="ml-2 w-6 h-6 flex items-center justify-center rounded hover:bg-[#27272A] transition-colors"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      // Handle menu
+                    }}
+                  >
+                    <MoreHorizontal className="w-4 h-4 text-[#A1A1AA] hover:text-[#FAFAFA]" />
+                  </motion.button>
+                )}
+              </AnimatePresence>
             </div>
           </div>
         </div>
 
-        {/* Content */}
+        {/* Content Body */}
         {data.imageUrl ? (
-          <div className="aspect-square bg-muted/30 overflow-hidden">
+          <div className="aspect-square bg-[#0A0A0B] overflow-hidden relative group">
             <img 
               src={data.imageUrl} 
               alt={data.label}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
             />
+            {/* Overlay on hover */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
           </div>
         ) : (
-          <div className="p-4">
-            <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">
+          <div className="p-4 min-h-[100px] flex items-start">
+            <p className="text-sm text-[#A1A1AA] leading-relaxed line-clamp-3">
               {data.label || 'Enter your prompt...'}
             </p>
           </div>
         )}
 
-        {/* Hover Overlay Effect */}
-        <AnimatePresence>
-          {isHovered && !selected && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className={`absolute inset-0 bg-gradient-to-t ${getTypeColor()} rounded-xl pointer-events-none`}
-            />
-          )}
-        </AnimatePresence>
+        {/* Footer with Status */}
+        {data.status && (
+          <div className="px-4 py-2 border-t border-[#27272A] bg-[#141416]/50">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-[#52525B]">
+                {data.status === 'generating' ? 'Generating...' : data.status === 'complete' ? 'Complete' : data.status === 'error' ? 'Error' : 'Ready'}
+              </span>
+              {data.status === 'generating' && data.progress && (
+                <span className="text-[#A1A1AA]">{data.progress}%</span>
+              )}
+            </div>
+            {data.status === 'generating' && data.progress && (
+              <div className="mt-1 h-1 bg-[#27272A] rounded-full overflow-hidden">
+                <motion.div 
+                  className={`h-full bg-gradient-to-r ${typeColors.gradient}`}
+                  initial={{ width: 0 }}
+                  animate={{ width: `${data.progress}%` }}
+                  transition={{ duration: 0.3 }}
+                />
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Subtle glow effect when selected */}
+        {selected && (
+          <div className={`absolute inset-0 bg-gradient-to-br ${typeColors.gradient} opacity-10 pointer-events-none rounded-xl`} />
+        )}
       </motion.div>
     </div>
   );
