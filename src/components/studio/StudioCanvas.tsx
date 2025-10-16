@@ -21,13 +21,14 @@ import {
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Save, Zap, Type, Image as ImageIcon, Video, Keyboard, Undo, Redo, Download, Upload, PanelRightOpen } from 'lucide-react';
+import { Plus, Save, Zap, Type, Image as ImageIcon, Video, Keyboard, Undo, Redo, Download, Upload, PanelRightOpen, Sparkles } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import EnhancedNode from './nodes/EnhancedNode';
 import EnhancedEdge from './edges/EnhancedEdge';
 import { ContextMenu } from './ContextMenu';
 import { RightPanel } from './RightPanel';
+import { QueueStatus, QueueItem } from './QueueStatus';
 import { useUndoRedo } from '@/hooks/useUndoRedo';
 import { supabaseService } from '@/services/supabaseService';
 import { useParams } from 'react-router-dom';
@@ -44,6 +45,8 @@ export interface Block {
     mode?: string;
     connectedImageUrl?: string;
     connectedImagePrompt?: string;
+    status?: 'idle' | 'queued' | 'generating' | 'complete' | 'error';
+    progress?: number;
   };
 }
 
@@ -106,6 +109,7 @@ const StudioCanvasInner = ({
   const [isLoading, setIsLoading] = useState(true);
   const [rightPanelOpen, setRightPanelOpen] = useState(false);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
+  const [queue, setQueue] = useState<QueueItem[]>([]);
   const { fitView, zoomIn, zoomOut, getNodes, getEdges } = useReactFlow();
   const { takeSnapshot, undo, redo, canUndo, canRedo } = useUndoRedo(nodes, edges);
   const rfRef = useRef<HTMLDivElement>(null);
@@ -235,6 +239,7 @@ const StudioCanvasInner = ({
         },
         initialData: {
           prompt: `New ${type} node`,
+          status: 'idle',
         },
       };
 
@@ -243,6 +248,112 @@ const StudioCanvasInner = ({
     },
     [onAddBlock]
   );
+
+  // Simulate generation (mock - replace with real API calls)
+  const handleGenerate = useCallback((nodeId: string, type: 'text' | 'image' | 'video') => {
+    const queueItem: QueueItem = {
+      id: `queue-${Date.now()}`,
+      nodeId,
+      nodeType: type,
+      status: 'queued',
+      startedAt: new Date(),
+    };
+
+    setQueue((prev) => [...prev, queueItem]);
+
+    // Update node status to queued
+    setNodes((nds) =>
+      nds.map((node) =>
+        node.id === nodeId
+          ? { ...node, data: { ...node.data, status: 'queued' } }
+          : node
+      )
+    );
+
+    // Simulate generation after 1 second
+    setTimeout(() => {
+      setQueue((prev) =>
+        prev.map((item) =>
+          item.id === queueItem.id
+            ? { ...item, status: 'generating', progress: 0 }
+            : item
+        )
+      );
+
+      setNodes((nds) =>
+        nds.map((node) =>
+          node.id === nodeId
+            ? { ...node, data: { ...node.data, status: 'generating', progress: 0 } }
+            : node
+        )
+      );
+
+      // Simulate progress
+      let progress = 0;
+      const progressInterval = setInterval(() => {
+        progress += 10;
+        
+        setQueue((prev) =>
+          prev.map((item) =>
+            item.id === queueItem.id ? { ...item, progress } : item
+          )
+        );
+
+        setNodes((nds) =>
+          nds.map((node) =>
+            node.id === nodeId
+              ? { ...node, data: { ...node.data, progress } }
+              : node
+          )
+        );
+
+        if (progress >= 100) {
+          clearInterval(progressInterval);
+
+          // Mark as complete
+          setQueue((prev) =>
+            prev.map((item) =>
+              item.id === queueItem.id
+                ? { ...item, status: 'complete', progress: 100, completedAt: new Date() }
+                : item
+            )
+          );
+
+          setNodes((nds) =>
+            nds.map((node) =>
+              node.id === nodeId
+                ? { ...node, data: { ...node.data, status: 'complete', progress: 100 } }
+                : node
+            )
+          );
+
+          toast({ title: 'Generation complete!', description: `${type} node ready` });
+
+          // Remove from queue after 3 seconds
+          setTimeout(() => {
+            setQueue((prev) => prev.filter((item) => item.id !== queueItem.id));
+          }, 3000);
+        }
+      }, 300);
+    }, 1000);
+  }, [setNodes]);
+
+  const handleCancelGeneration = useCallback((itemId: string) => {
+    const item = queue.find((q) => q.id === itemId);
+    if (!item) return;
+
+    setQueue((prev) => prev.filter((q) => q.id !== itemId));
+    
+    setNodes((nds) =>
+      nds.map((node) =>
+        node.id === item.nodeId
+          ? { ...node, data: { ...node.data, status: 'idle', progress: 0 } }
+          : node
+      )
+    );
+
+    toast({ title: 'Generation cancelled' });
+  }, [queue, setNodes]);
 
   // Save project to Supabase
   const handleSave = useCallback(async () => {
@@ -627,6 +738,25 @@ const StudioCanvasInner = ({
               <Video className="w-3.5 h-3.5" />
               Video
             </button>
+
+            {selectedNode && (
+              <button
+                onClick={() => {
+                  const nodeType = selectedNode.data.type?.toLowerCase();
+                  if (nodeType.includes('text')) {
+                    handleGenerate(selectedNode.id, 'text');
+                  } else if (nodeType.includes('image')) {
+                    handleGenerate(selectedNode.id, 'image');
+                  } else if (nodeType.includes('video')) {
+                    handleGenerate(selectedNode.id, 'video');
+                  }
+                }}
+                className="px-3 py-2 bg-[#6366F1] hover:bg-[#5558E3] border border-[#6366F1] rounded-lg text-xs font-semibold text-white transition-all duration-200 flex items-center gap-2 shadow-[0_4px_12px_rgba(99,102,241,0.3)]"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                Generate
+              </button>
+            )}
           </motion.div>
         </Panel>
 
@@ -817,6 +947,16 @@ const StudioCanvasInner = ({
           onDuplicate={handleDuplicateNode}
           onDelete={handleDeleteNode}
           onEdit={handleEditNode}
+          onGenerate={(node) => {
+            const nodeType = node.data.type?.toLowerCase();
+            if (nodeType.includes('text')) {
+              handleGenerate(node.id, 'text');
+            } else if (nodeType.includes('image')) {
+              handleGenerate(node.id, 'image');
+            } else if (nodeType.includes('video')) {
+              handleGenerate(node.id, 'video');
+            }
+          }}
           onFitView={() => fitView({ padding: 0.3, duration: 300 })}
         />
       )}
@@ -839,6 +979,9 @@ const StudioCanvasInner = ({
           }
         }}
       />
+
+      {/* Queue Status System */}
+      <QueueStatus queue={queue} onCancelItem={handleCancelGeneration} />
     </div>
   );
 };

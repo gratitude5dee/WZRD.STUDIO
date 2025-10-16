@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { Node } from 'reactflow';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Copy, Trash2, Maximize2, Edit } from 'lucide-react';
+import { Copy, Trash2, Maximize2, Edit, Sparkles } from 'lucide-react';
 
 interface ContextMenuProps {
   id: string;
@@ -12,6 +12,7 @@ interface ContextMenuProps {
   onDuplicate?: (node: Node) => void;
   onDelete?: (node: Node) => void;
   onEdit?: (node: Node) => void;
+  onGenerate?: (node: Node) => void;
   onFitView?: () => void;
 }
 
@@ -23,6 +24,7 @@ export const ContextMenu = ({
   onDuplicate,
   onDelete,
   onEdit,
+  onGenerate,
   onFitView,
 }: ContextMenuProps) => {
   const handleDuplicate = useCallback(() => {
@@ -46,6 +48,13 @@ export const ContextMenu = ({
     onClose();
   }, [node, onEdit, onClose]);
 
+  const handleGenerate = useCallback(() => {
+    if (node && onGenerate) {
+      onGenerate(node);
+    }
+    onClose();
+  }, [node, onGenerate, onClose]);
+
   const handleFitView = useCallback(() => {
     if (onFitView) {
       onFitView();
@@ -66,6 +75,15 @@ export const ContextMenu = ({
         <div className="py-1">
           {node && (
             <>
+              {onGenerate && (
+                <button
+                  onClick={handleGenerate}
+                  className="w-full px-4 py-2 text-left text-sm text-[#6366F1] hover:bg-muted transition-colors flex items-center gap-2 font-medium"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  Generate
+                </button>
+              )}
               {onEdit && (
                 <button
                   onClick={handleEdit}
