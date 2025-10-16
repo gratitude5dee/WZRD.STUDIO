@@ -959,19 +959,18 @@ export const studioBlockService = {
   }
 };
 
-// Studio Connections service (assuming table exists)
+// Studio Connections service
 export const studioConnectionService = {
   async listByProject(projectId: string): Promise<StudioConnection[]> {
     try {
-      // Note: If studio_connections table doesn't exist yet, this will return empty array
       const { data, error } = await supabase
-        .from('studio_connections' as any)
+        .from('studio_connections')
         .select('*')
         .eq('project_id', projectId)
         .order('created_at', { ascending: true });
         
       if (error) {
-        console.warn('studio_connections table may not exist yet:', error);
+        console.warn('Error listing studio connections:', error);
         return [];
       }
       return data || [];
@@ -984,12 +983,15 @@ export const studioConnectionService = {
   async create(connection: Omit<StudioConnection, 'id' | 'created_at'>): Promise<string> {
     try {
       const { data, error } = await supabase
-        .from('studio_connections' as any)
+        .from('studio_connections')
         .insert(connection)
         .select('id')
         .single();
         
-      if (error) throw error;
+      if (error) {
+        console.warn('Error creating studio connection:', error);
+        return '';
+      }
       return data?.id || '';
     } catch (error) {
       console.warn('Error creating studio connection:', error);
@@ -1000,11 +1002,13 @@ export const studioConnectionService = {
   async delete(id: string): Promise<void> {
     try {
       const { error } = await supabase
-        .from('studio_connections' as any)
+        .from('studio_connections')
         .delete()
         .eq('id', id);
         
-      if (error) throw error;
+      if (error) {
+        console.warn('Error deleting studio connection:', error);
+      }
     } catch (error) {
       console.warn('Error deleting studio connection:', error);
     }
