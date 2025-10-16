@@ -53,15 +53,25 @@
   animation: dash 1s linear infinite;
 }
 
+.react-flow__controls {
+  box-shadow: 0 4px 16px hsla(var(--foreground), 0.1);
+}
+
 .react-flow__controls-button {
   background: hsl(var(--card)) !important;
   border-color: hsl(var(--border)) !important;
   color: hsl(var(--muted-foreground)) !important;
+  transition: all 0.2s ease !important;
 }
 
 .react-flow__controls-button:hover {
   background: hsl(var(--muted)) !important;
   color: hsl(var(--foreground)) !important;
+  transform: scale(1.05);
+}
+
+.react-flow__minimap {
+  box-shadow: 0 4px 16px hsla(var(--foreground), 0.1);
 }
 
 .react-flow__minimap-mask {
@@ -71,10 +81,18 @@
 .react-flow__minimap-node {
   fill: hsl(var(--primary));
   stroke: none;
+  transition: all 0.2s ease;
+}
+
+.react-flow__minimap-node:hover {
+  fill: hsl(var(--accent));
+  opacity: 0.9;
 }
 
 .react-flow__minimap-node.selected {
   fill: hsl(var(--accent));
+  stroke: hsl(var(--primary));
+  stroke-width: 2;
 }
 
 @keyframes glow-pulse {
