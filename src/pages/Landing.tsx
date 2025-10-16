@@ -8,6 +8,7 @@ import { GlassCard } from '@/components/ui/glass-card';
 import { Button } from '@/components/ui/button';
 import { AnimatedLogo } from '@/components/ui/animated-logo';
 import { CinematicIntro } from '@/components/landing/CinematicIntro';
+import { MatrixLoader } from '@/components/landing/MatrixLoader';
 import { ParticleField } from '@/components/landing/ParticleField';
 
 const Landing = () => {
@@ -16,7 +17,8 @@ const Landing = () => {
   const [activeDemo, setActiveDemo] = useState('emotional');
   const [scrollProgress, setScrollProgress] = useState(0);
   const [scrollRevealed, setScrollRevealed] = useState<string[]>([]);
-  const [showIntro, setShowIntro] = useState(true);
+  const [showMatrixLoader, setShowMatrixLoader] = useState(true);
+  const [showIntro, setShowIntro] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -49,6 +51,11 @@ const Landing = () => {
     };
   }, []);
 
+  const handleMatrixComplete = () => {
+    setShowMatrixLoader(false);
+    setShowIntro(true);
+  };
+
   const handleGetStarted = () => {
     navigate('/login');
   };
@@ -64,6 +71,11 @@ const Landing = () => {
 
   return (
     <>
+      {/* Matrix Loader */}
+      {showMatrixLoader && (
+        <MatrixLoader onComplete={handleMatrixComplete} />
+      )}
+
       {/* Cinematic Intro */}
       {showIntro && (
         <CinematicIntro onComplete={() => setShowIntro(false)} />
