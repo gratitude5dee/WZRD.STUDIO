@@ -8,18 +8,26 @@ import { ProductShowcase } from '@/components/landing/ProductShowcase';
 import { MetricsSection } from '@/components/landing/MetricsSection';
 import { UseCasesSection } from '@/components/landing/UseCasesSection';
 import { PricingCard } from '@/components/landing/PricingCard';
+import { MatrixIntroAnimation } from '@/components/landing/MatrixIntroAnimation';
 
 const Landing = () => {
   const navigate = useNavigate();
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
+  const [showIntro, setShowIntro] = useState(true);
 
   const handleGetStarted = () => {
     navigate('/login');
   };
 
   return (
-    <div className="min-h-screen bg-black text-white overflow-x-hidden">
-      {/* Clean Navigation */}
+    <>
+      {/* Matrix Intro Animation */}
+      {showIntro && (
+        <MatrixIntroAnimation onComplete={() => setShowIntro(false)} />
+      )}
+
+      <div className="min-h-screen bg-black text-white overflow-x-hidden">
+        {/* Clean Navigation */}
       <nav className="fixed top-0 w-full z-50 border-b border-zinc-800 backdrop-blur-xl bg-black/80">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
@@ -357,7 +365,8 @@ const Landing = () => {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 };
 
