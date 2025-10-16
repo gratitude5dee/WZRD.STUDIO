@@ -1,7 +1,7 @@
-import { useState, memo } from 'react';
+import { useState, memo, useRef, useEffect } from 'react';
 import { Handle, Position, NodeProps } from 'reactflow';
 import { motion, AnimatePresence } from 'framer-motion';
-import { GripVertical, Type, Image as ImageIcon, Video, MoreHorizontal } from 'lucide-react';
+import { GripVertical, Type, Image as ImageIcon, Video, MoreHorizontal, Edit3, ChevronDown, ChevronUp, CheckCircle2, AlertCircle } from 'lucide-react';
 
 interface NodeData {
   type: string;
@@ -10,11 +10,58 @@ interface NodeData {
   imageUrl?: string;
   status?: 'idle' | 'generating' | 'complete' | 'error';
   progress?: number;
+  contentType?: 'text' | 'content' | 'critique' | 'question';
+  outputs?: string[];
 }
+
+type ContentType = 'text' | 'content' | 'critique' | 'question';
 
 const EnhancedNode = memo(({ data, selected, id }: NodeProps<NodeData>) => {
   const [isHovered, setIsHovered] = useState(false);
   const [hoveredHandle, setHoveredHandle] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editValue, setEditValue] = useState(data.label || '');
+  const [isExpanded, setIsExpanded] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (isEditing && textareaRef.current) {
+      textareaRef.current.focus();
+      textareaRef.current.select();
+    }
+  }, [isEditing]);
+
+  const detectContentType = (): ContentType => {
+    if (data.contentType) return data.contentType;
+    const label = data.label?.toLowerCase() || '';
+    if (label.includes('?') || label.startsWith('what') || label.startsWith('how') || label.startsWith('why')) return 'question';
+    if (label.includes('critique') || label.includes('feedback') || label.includes('review')) return 'critique';
+    if (label.length > 50 || label.includes('\n')) return 'content';
+    return 'text';
+  };
+
+  const contentType = detectContentType();
+  const shouldTruncate = !isExpanded && data.label && data.label.length > 120;
+  const displayText = shouldTruncate ? data.label.slice(0, 120) + '...' : data.label;
+
+  const handleEditSave = () => {
+    setIsEditing(false);
+    // TODO: Integrate with node update handler
+    // onNodeChange?.(id, { ...data, label: editValue });
+  };
+
+  const handleEditCancel = () => {
+    setIsEditing(false);
+    setEditValue(data.label || '');
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+      handleEditSave();
+    } else if (e.key === 'Escape') {
+      handleEditCancel();
+    }
+  };
 
   const getIcon = () => {
     const type = data.type.toLowerCase();
@@ -153,34 +200,156 @@ const EnhancedNode = memo(({ data, selected, id }: NodeProps<NodeData>) => {
             />
             {/* Overlay on hover */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+            
+            {/* Output count badge */}
+            {data.outputs && data.outputs.length > 1 && (
+              <div className="absolute top-2 right-2 px-2 py-1 bg-black/80 backdrop-blur-sm rounded-md text-xs text-white">
+                → {data.outputs.length}
+              </div>
+            )}
           </div>
         ) : (
-          <div className="p-4 min-h-[100px] flex items-start">
-            <p className="text-sm text-[#A1A1AA] leading-relaxed line-clamp-3">
-              {data.label || 'Enter your prompt...'}
-            </p>
+          <div className="p-4 min-h-[100px] relative">
+            {isEditing ? (
+              <div className="space-y-2">
+                <textarea
+                  ref={textareaRef}
+                  value={editValue}
+                  onChange={(e) => setEditValue(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  onBlur={handleEditSave}
+                  className="w-full min-h-[80px] bg-[#141416] text-sm text-[#FAFAFA] border border-[#6366F1] rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-[#6366F1]/30 resize-none"
+                  placeholder="Enter your prompt..."
+                />
+                <div className="flex items-center gap-2 text-xs text-[#A1A1AA]">
+                  <kbd className="px-1.5 py-0.5 bg-[#27272A] rounded">⌘ Enter</kbd> to save
+                  <span>•</span>
+                  <kbd className="px-1.5 py-0.5 bg-[#27272A] rounded">Esc</kbd> to cancel
+                </div>
+              </div>
+            ) : (
+              <>
+                <div
+                  onClick={() => setIsEditing(true)}
+                  className="cursor-text group/content relative"
+                >
+                  {contentType === 'question' && (
+                    <div className="flex items-start gap-2 mb-2">
+                      <div className="w-6 h-6 rounded-full bg-[#3B82F6]/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <span className="text-[#3B82F6] text-xs">?</span>
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm text-[#FAFAFA] leading-relaxed font-medium">
+                          {displayText || 'Enter your question...'}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {contentType === 'critique' && (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 mb-2">
+                        <CheckCircle2 className="w-4 h-4 text-[#10B981]" />
+                        <span className="text-xs font-semibold text-[#10B981] uppercase tracking-wide">Critique</span>
+                      </div>
+                      <div className="space-y-1.5 pl-1">
+                        {data.label?.split('\n').filter(line => line.trim()).slice(0, isExpanded ? undefined : 3).map((line, i) => (
+                          <div key={i} className="flex items-start gap-2">
+                            <span className="text-[#52525B] text-xs mt-1">•</span>
+                            <p className="text-sm text-[#A1A1AA] leading-relaxed flex-1">{line}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {contentType === 'content' && (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-1 h-4 bg-gradient-to-b from-[#6366F1] to-[#8B5CF6] rounded-full" />
+                        <span className="text-xs font-semibold text-[#A1A1AA] uppercase tracking-wide">Content</span>
+                      </div>
+                      <p className="text-sm text-[#FAFAFA] leading-relaxed whitespace-pre-wrap">
+                        {displayText || 'Enter your content...'}
+                      </p>
+                    </div>
+                  )}
+
+                  {contentType === 'text' && (
+                    <p className="text-sm text-[#A1A1AA] leading-relaxed">
+                      {displayText || 'Enter your prompt...'}
+                    </p>
+                  )}
+
+                  {/* Edit icon on hover */}
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: isHovered ? 1 : 0 }}
+                    className="absolute top-0 right-0 p-1 bg-[#141416]/90 backdrop-blur-sm rounded-md border border-[#3F3F46]"
+                  >
+                    <Edit3 className="w-3 h-3 text-[#A1A1AA]" />
+                  </motion.div>
+                </div>
+
+                {/* Expand/Collapse button */}
+                {data.label && data.label.length > 120 && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsExpanded(!isExpanded);
+                    }}
+                    className="mt-2 flex items-center gap-1 text-xs text-[#6366F1] hover:text-[#8B5CF6] transition-colors"
+                  >
+                    {isExpanded ? (
+                      <>
+                        <ChevronUp className="w-3 h-3" />
+                        Show less
+                      </>
+                    ) : (
+                      <>
+                        <ChevronDown className="w-3 h-3" />
+                        Show more
+                      </>
+                    )}
+                  </button>
+                )}
+              </>
+            )}
           </div>
         )}
 
         {/* Footer with Status */}
-        {data.status && (
+        {data.status && data.status !== 'idle' && (
           <div className="px-4 py-2 border-t border-[#27272A] bg-[#141416]/50">
             <div className="flex items-center justify-between text-xs">
-              <span className="text-[#52525B]">
-                {data.status === 'generating' ? 'Generating...' : data.status === 'complete' ? 'Complete' : data.status === 'error' ? 'Error' : 'Ready'}
-              </span>
+              <div className="flex items-center gap-1.5">
+                {data.status === 'complete' && <CheckCircle2 className="w-3.5 h-3.5 text-[#10B981]" />}
+                {data.status === 'error' && <AlertCircle className="w-3.5 h-3.5 text-[#EF4444]" />}
+                {data.status === 'generating' && (
+                  <div className="w-3.5 h-3.5 rounded-full border-2 border-[#6366F1] border-t-transparent animate-spin" />
+                )}
+                <span className={`
+                  ${data.status === 'generating' ? 'text-[#6366F1]' : ''}
+                  ${data.status === 'complete' ? 'text-[#10B981]' : ''}
+                  ${data.status === 'error' ? 'text-[#EF4444]' : ''}
+                `}>
+                  {data.status === 'generating' ? 'Generating...' : data.status === 'complete' ? 'Complete' : 'Error'}
+                </span>
+              </div>
               {data.status === 'generating' && data.progress && (
-                <span className="text-[#A1A1AA]">{data.progress}%</span>
+                <span className="text-[#A1A1AA] font-medium">{data.progress}%</span>
               )}
             </div>
             {data.status === 'generating' && data.progress && (
-              <div className="mt-1 h-1 bg-[#27272A] rounded-full overflow-hidden">
+              <div className="mt-1.5 h-1 bg-[#27272A] rounded-full overflow-hidden">
                 <motion.div 
-                  className={`h-full bg-gradient-to-r ${typeColors.gradient}`}
+                  className={`h-full bg-gradient-to-r ${typeColors.gradient} relative`}
                   initial={{ width: 0 }}
                   animate={{ width: `${data.progress}%` }}
                   transition={{ duration: 0.3 }}
-                />
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer" />
+                </motion.div>
               </div>
             )}
           </div>
