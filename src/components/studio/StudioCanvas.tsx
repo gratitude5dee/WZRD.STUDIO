@@ -21,12 +21,13 @@ import {
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Save, Zap, Type, Image as ImageIcon, Video, Keyboard, Undo, Redo, Download, Upload } from 'lucide-react';
+import { Plus, Save, Zap, Type, Image as ImageIcon, Video, Keyboard, Undo, Redo, Download, Upload, PanelRightOpen } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import EnhancedNode from './nodes/EnhancedNode';
 import EnhancedEdge from './edges/EnhancedEdge';
 import { ContextMenu } from './ContextMenu';
+import { RightPanel } from './RightPanel';
 import { useUndoRedo } from '@/hooks/useUndoRedo';
 import { supabaseService } from '@/services/supabaseService';
 import { useParams } from 'react-router-dom';
@@ -103,6 +104,8 @@ const StudioCanvasInner = ({
   const [isSaving, setIsSaving] = useState(false);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; node?: Node } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [rightPanelOpen, setRightPanelOpen] = useState(false);
+  const [selectedNode, setSelectedNode] = useState<Node | null>(null);
   const { fitView, zoomIn, zoomOut, getNodes, getEdges } = useReactFlow();
   const { takeSnapshot, undo, redo, canUndo, canRedo } = useUndoRedo(nodes, edges);
   const rfRef = useRef<HTMLDivElement>(null);
@@ -404,11 +407,19 @@ const StudioCanvasInner = ({
     }
   }, [redo, setNodes, setEdges]);
 
-  // Track changes for undo/redo
+  // Track changes for undo/redo and handle right panel
   const onSelectionChange = useCallback(
     ({ nodes: selectedNodes, edges: selectedEdges }: OnSelectionChangeParams) => {
       if (selectedNodes.length > 0 || selectedEdges.length > 0) {
         takeSnapshot(getNodes(), getEdges());
+      }
+      
+      // Update selected node for right panel
+      if (selectedNodes.length === 1) {
+        setSelectedNode(selectedNodes[0]);
+        setRightPanelOpen(true);
+      } else {
+        setSelectedNode(null);
       }
     },
     [getNodes, getEdges, takeSnapshot]
@@ -674,6 +685,17 @@ const StudioCanvasInner = ({
               >
                 <Upload className="w-3.5 h-3.5" />
               </button>
+              <button
+                onClick={() => setRightPanelOpen(!rightPanelOpen)}
+                className={`flex-1 p-2 rounded-md text-[#FAFAFA] transition-all duration-200 border ${
+                  rightPanelOpen
+                    ? 'bg-[#6366F1] border-[#6366F1]'
+                    : 'bg-[#1C1C1F] hover:bg-[#27272A] border-[#3F3F46] hover:border-[#52525B]'
+                }`}
+                title="Toggle Panel"
+              >
+                <PanelRightOpen className="w-3.5 h-3.5" />
+              </button>
             </div>
             
             <button
@@ -798,6 +820,25 @@ const StudioCanvasInner = ({
           onFitView={() => fitView({ padding: 0.3, duration: 300 })}
         />
       )}
+
+      {/* Right Panel - Output Gallery & Settings */}
+      <RightPanel
+        selectedNode={selectedNode}
+        isOpen={rightPanelOpen}
+        onClose={() => setRightPanelOpen(false)}
+        onModelChange={(model) => {
+          if (selectedNode) {
+            // Handle model change logic here
+            toast({ title: `Model changed to ${model}` });
+          }
+        }}
+        onAspectRatioChange={(ratio) => {
+          if (selectedNode) {
+            // Handle aspect ratio change logic here
+            toast({ title: `Aspect ratio changed to ${ratio}` });
+          }
+        }}
+      />
     </div>
   );
 };
