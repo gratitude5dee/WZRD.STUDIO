@@ -250,13 +250,127 @@
 
 @keyframes shimmer {
   0% {
-    transform: translateX(-100%);
+    background-position: -1000px 0;
   }
   100% {
-    transform: translateX(100%);
+    background-position: 1000px 0;
   }
 }
 
 .animate-shimmer {
-  animation: shimmer 2s ease-in-out infinite;
+  background: linear-gradient(90deg, 
+    #6366F1 0%, 
+    #8B5CF6 50%, 
+    #6366F1 100%
+  );
+  background-size: 1000px 100%;
+  animation: shimmer 2s infinite;
+}
+
+/* Icon Sidebar Styles */
+.icon-sidebar-button {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #71717A;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.icon-sidebar-button:hover {
+  background: #1C1C1F;
+  color: #FAFAFA;
+}
+
+.icon-sidebar-button.active {
+  background: #27272A;
+  color: #6366F1;
+}
+
+.icon-sidebar-button.active::before {
+  content: '';
+  position: absolute;
+  left: -10px;
+  width: 3px;
+  height: 20px;
+  background: #6366F1;
+  border-radius: 0 2px 2px 0;
+}
+
+.credit-display {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: #27272A;
+  border: 1px solid #3F3F46;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+
+/* Enhanced React Flow Styles */
+.react-flow__background {
+  background: radial-gradient(circle at center, #0F0F10 0%, #0A0A0B 100%);
+}
+
+.react-flow__edge-path {
+  stroke-width: 2.5;
+  filter: drop-shadow(0 0 6px rgba(99, 102, 241, 0.3));
+}
+
+.react-flow__edge.animated .react-flow__edge-path {
+  stroke-dasharray: 8 4;
+  animation: dash-flow 20s linear infinite;
+}
+
+@keyframes dash-flow {
+  to {
+    stroke-dashoffset: -1000;
+  }
+}
+
+.react-flow__edge:hover .react-flow__edge-path {
+  stroke-width: 3.5;
+  filter: drop-shadow(0 0 12px rgba(99, 102, 241, 0.5));
+}
+
+/* Output Card Enhanced Styles */
+.output-card {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #1C1C1F;
+  border: 1px solid #27272A;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.output-card:hover {
+  border-color: #3F3F46;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+}
+
+.output-card-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.8) 100%);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 12px;
+}
+
+.output-card:hover .output-card-overlay {
+  opacity: 1;
 }

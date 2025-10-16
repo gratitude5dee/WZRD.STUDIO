@@ -29,6 +29,7 @@ import EnhancedEdge from './edges/EnhancedEdge';
 import { ContextMenu } from './ContextMenu';
 import { RightPanel } from './RightPanel';
 import { QueueStatus, QueueItem } from './QueueStatus';
+import { IconSidebar } from './IconSidebar';
 import { useUndoRedo } from '@/hooks/useUndoRedo';
 import { supabaseService } from '@/services/supabaseService';
 import { useParams } from 'react-router-dom';
@@ -640,45 +641,50 @@ const StudioCanvasInner = ({
   }
 
   return (
-    <div className="w-full h-full relative" style={{ background: '#0A0A0B' }}>
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
-        onNodesDelete={onNodesDelete}
-        onEdgesDelete={onEdgesDelete}
-        onNodeClick={onNodeClick}
-        onNodeDragStop={onNodeDragStop}
-        onNodeContextMenu={onNodeContextMenu}
-        onPaneContextMenu={onPaneContextMenu}
-        onSelectionChange={onSelectionChange}
-        nodeTypes={nodeTypes}
-        edgeTypes={edgeTypes}
-        connectionLineType={ConnectionLineType.Bezier}
-        connectionLineStyle={{
-          stroke: 'hsl(var(--primary))',
-          strokeWidth: 2.5,
-          strokeDasharray: '8 4',
-        }}
-        defaultEdgeOptions={{
-          type: 'custom',
-          animated: true,
-        }}
-        fitView
-        fitViewOptions={{
-          padding: 0.3,
-        }}
-        minZoom={0.2}
-        maxZoom={2.5}
-        snapToGrid
-        snapGrid={[15, 15]}
-        deleteKeyCode="Delete"
-        multiSelectionKeyCode="Shift"
-        className="bg-background"
-        proOptions={{ hideAttribution: true }}
-      >
+    <div className="w-full h-full flex relative" style={{ background: '#0A0A0B' }}>
+      {/* Icon Sidebar */}
+      <IconSidebar onAddNode={() => addNode('text')} credits={92} />
+
+      {/* Main Canvas Area */}
+      <div className="flex-1 ml-[52px]">
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
+          onNodesDelete={onNodesDelete}
+          onEdgesDelete={onEdgesDelete}
+          onNodeClick={onNodeClick}
+          onNodeDragStop={onNodeDragStop}
+          onNodeContextMenu={onNodeContextMenu}
+          onPaneContextMenu={onPaneContextMenu}
+          onSelectionChange={onSelectionChange}
+          nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
+          connectionLineType={ConnectionLineType.Bezier}
+          connectionLineStyle={{
+            stroke: 'hsl(var(--primary))',
+            strokeWidth: 2.5,
+            strokeDasharray: '8 4',
+          }}
+          defaultEdgeOptions={{
+            type: 'custom',
+            animated: true,
+          }}
+          fitView
+          fitViewOptions={{
+            padding: 0.3,
+          }}
+          minZoom={0.2}
+          maxZoom={2.5}
+          snapToGrid
+          snapGrid={[15, 15]}
+          deleteKeyCode="Delete"
+          multiSelectionKeyCode="Shift"
+          className="bg-background"
+          proOptions={{ hideAttribution: true }}
+        >
         <Background
           color="#27272A"
           gap={24}
@@ -934,7 +940,8 @@ const StudioCanvasInner = ({
             </motion.button>
           )}
         </Panel>
-      </ReactFlow>
+        </ReactFlow>
+      </div>
 
       {/* Context Menu */}
       {contextMenu && (

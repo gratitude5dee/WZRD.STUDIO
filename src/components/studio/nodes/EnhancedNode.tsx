@@ -1,7 +1,7 @@
 import { useState, memo, useRef, useEffect } from 'react';
 import { Handle, Position, NodeProps } from 'reactflow';
 import { motion, AnimatePresence } from 'framer-motion';
-import { GripVertical, Type, Image as ImageIcon, Video, MoreHorizontal, Edit3, ChevronDown, ChevronUp, CheckCircle2, AlertCircle } from 'lucide-react';
+import { GripVertical, Type, Image as ImageIcon, Video, MoreHorizontal, Edit3, ChevronDown, ChevronUp, CheckCircle2, AlertCircle, Loader2, Clock, Zap } from 'lucide-react';
 
 interface NodeData {
   type: string;
@@ -72,9 +72,24 @@ const EnhancedNode = memo(({ data, selected, id }: NodeProps<NodeData>) => {
 
   const getTypeColor = () => {
     const type = data.type.toLowerCase();
-    if (type.includes('image')) return { gradient: 'from-emerald-500/20 to-emerald-600/10', icon: 'text-emerald-400', border: 'border-emerald-500/30' };
-    if (type.includes('video')) return { gradient: 'from-blue-500/20 to-blue-600/10', icon: 'text-blue-400', border: 'border-blue-500/30' };
-    return { gradient: 'from-indigo-500/20 to-indigo-600/10', icon: 'text-indigo-400', border: 'border-indigo-500/30' };
+    if (type.includes('image')) return { 
+      gradient: 'from-emerald-500/20 to-emerald-600/10', 
+      icon: 'text-emerald-400', 
+      border: 'border-emerald-500/30',
+      bg: '#10B981'
+    };
+    if (type.includes('video')) return { 
+      gradient: 'from-blue-500/20 to-blue-600/10', 
+      icon: 'text-blue-400', 
+      border: 'border-blue-500/30',
+      bg: '#3B82F6'
+    };
+    return { 
+      gradient: 'from-indigo-500/20 to-indigo-600/10', 
+      icon: 'text-indigo-400', 
+      border: 'border-indigo-500/30',
+      bg: '#6366F1'
+    };
   };
 
   const typeColors = getTypeColor();
@@ -104,15 +119,15 @@ const EnhancedNode = memo(({ data, selected, id }: NodeProps<NodeData>) => {
                   onMouseEnter={() => setHoveredHandle(pos)}
                   onMouseLeave={() => setHoveredHandle(null)}
                   className={`
-                    !w-3 !h-3 !rounded-full !border-2 !border-background
+                    !w-3.5 !h-3.5 !rounded-full !border-[3px] !border-[#27272A]
                     transition-all duration-200
+                    ${pos === 'left' || pos === 'top' ? '!bg-[#3B82F6]' : '!bg-[#8B5CF6]'}
                     ${hoveredHandle === pos 
-                      ? '!bg-accent !scale-125 !shadow-[0_0_12px_hsl(var(--accent)/.6)]' 
-                      : selected
-                        ? '!bg-primary'
-                        : '!bg-muted-foreground'
+                      ? '!scale-140 !border-[#1C1C1F] !shadow-[0_0_0_4px_rgba(99,102,241,0.2),0_0_20px_rgba(99,102,241,0.4)]' 
+                      : '!scale-100'
                     }
                   `}
+                  style={{ cursor: 'crosshair' }}
                 />
               </motion.div>
             ))}
@@ -123,70 +138,71 @@ const EnhancedNode = memo(({ data, selected, id }: NodeProps<NodeData>) => {
       {/* Node Container */}
       <motion.div
         className={`
-          min-w-[280px] max-w-[320px] rounded-xl bg-[#1C1C1F] border-[1.5px]
-          transition-all duration-200 overflow-hidden relative
+          min-w-[280px] max-w-[320px] rounded-2xl overflow-hidden relative
+          bg-gradient-to-b from-[#1C1C1F] to-[#141416] border-2
+          transition-all duration-300
           ${selected 
-            ? `${typeColors.border} shadow-[0_0_0_3px_rgba(99,102,241,0.15),0_8px_32px_rgba(99,102,241,0.2)]` 
+            ? `${typeColors.border} shadow-[0_0_0_4px_rgba(99,102,241,0.15),0_12px_40px_rgba(99,102,241,0.3)]` 
             : isHovered 
-              ? 'border-[#52525B] shadow-[0_8px_24px_rgba(0,0,0,0.4)]' 
-              : 'border-[#3F3F46] shadow-[0_4px_12px_rgba(0,0,0,0.3)]'
+              ? 'border-[#3F3F46] shadow-[0_12px_32px_rgba(0,0,0,0.5)]' 
+              : 'border-[#27272A] shadow-[0_8px_24px_rgba(0,0,0,0.4)]'
           }
+          ${data.status === 'generating' ? 'border-[#8B5CF6]' : ''}
+          ${data.status === 'error' ? 'border-[#EF4444] shadow-[0_0_0_4px_rgba(239,68,68,0.15)]' : ''}
         `}
-        whileHover={{ y: -2 }}
-        transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+        whileHover={{ y: -4 }}
+        transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
       >
+        {/* Status Bar */}
+        <div 
+          className={`
+            absolute top-0 left-0 right-0 h-[3px] transition-all duration-300
+            ${data.status === 'generating' ? 'bg-gradient-to-r from-[#6366F1] to-[#8B5CF6] animate-shimmer' : ''}
+            ${data.status === 'complete' ? 'bg-[#10B981]' : ''}
+            ${data.status === 'error' ? 'bg-[#EF4444]' : ''}
+          `}
+          style={{
+            transform: data.status === 'generating' && data.progress 
+              ? `scaleX(${data.progress / 100})` 
+              : data.status === 'complete' ? 'scaleX(1)' : 'scaleX(0)',
+            transformOrigin: 'left'
+          }}
+        />
         {/* Header */}
-        <div className={`px-4 py-3 border-b border-[#27272A] bg-gradient-to-br ${typeColors.gradient} relative`}>
+        <div className="px-4 pt-4 pb-3 flex items-start justify-between border-b border-[#27272A]">
           <div className="flex items-center gap-3">
-            {/* Drag Handle - Shows on hover */}
-            <AnimatePresence>
-              {(isHovered || selected) && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.8 }}
-                  className="drag-handle cursor-grab active:cursor-grabbing"
-                >
-                  <GripVertical className="w-4 h-4 text-[#A1A1AA] hover:text-[#FAFAFA] transition-colors" />
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            <div className="flex items-center justify-between flex-1">
-              <div className="flex items-center gap-2.5">
-                <span className={typeColors.icon}>{getIcon()}</span>
-                <span className="text-sm font-semibold text-[#FAFAFA] tracking-tight">{data.type}</span>
-              </div>
-              
-              {/* Model Badge - Clickable */}
-              <button 
-                className="text-[11px] font-medium text-[#A1A1AA] px-2.5 py-1 bg-[#141416] hover:bg-[#1C1C1F] rounded-md border border-[#3F3F46] hover:border-[#52525B] transition-all duration-200"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  // Handle model selection
-                }}
-              >
-                {data.model || 'GPT-5'}
-              </button>
-
-              {/* Menu Button - Shows on hover */}
-              <AnimatePresence>
-                {(isHovered || selected) && (
-                  <motion.button
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.8 }}
-                    className="ml-2 w-6 h-6 flex items-center justify-center rounded hover:bg-[#27272A] transition-colors"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      // Handle menu
-                    }}
-                  >
-                    <MoreHorizontal className="w-4 h-4 text-[#A1A1AA] hover:text-[#FAFAFA]" />
-                  </motion.button>
-                )}
-              </AnimatePresence>
+            <div 
+              className="w-9 h-9 rounded-lg flex items-center justify-center"
+              style={{ backgroundColor: typeColors.bg }}
+            >
+              {getIcon()}
             </div>
+            <span className="text-sm font-semibold text-[#FAFAFA]">
+              {data.type}
+            </span>
+          </div>
+          {/* Status Indicator */}
+          <div className="flex items-center gap-2">
+            {data.status === 'generating' && (
+              <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-[#8B5CF6]/10 border border-[#8B5CF6]/20">
+                <Loader2 className="w-3.5 h-3.5 text-[#8B5CF6] animate-spin" />
+                <span className="text-xs text-[#8B5CF6] font-medium">
+                  {data.progress ? `${data.progress}%` : 'Processing'}
+                </span>
+              </div>
+            )}
+            {data.status === 'complete' && (
+              <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-[#10B981]/10 border border-[#10B981]/20">
+                <CheckCircle2 className="w-3.5 h-3.5 text-[#10B981]" />
+                <span className="text-xs text-[#10B981] font-medium">Complete</span>
+              </div>
+            )}
+            {data.status === 'error' && (
+              <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-[#EF4444]/10 border border-[#EF4444]/20">
+                <AlertCircle className="w-3.5 h-3.5 text-[#EF4444]" />
+                <span className="text-xs text-[#EF4444] font-medium">Error</span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -318,42 +334,24 @@ const EnhancedNode = memo(({ data, selected, id }: NodeProps<NodeData>) => {
           </div>
         )}
 
-        {/* Footer with Status */}
-        {data.status && data.status !== 'idle' && (
-          <div className="px-4 py-2 border-t border-[#27272A] bg-[#141416]/50">
-            <div className="flex items-center justify-between text-xs">
-              <div className="flex items-center gap-1.5">
-                {data.status === 'complete' && <CheckCircle2 className="w-3.5 h-3.5 text-[#10B981]" />}
-                {data.status === 'error' && <AlertCircle className="w-3.5 h-3.5 text-[#EF4444]" />}
-                {data.status === 'generating' && (
-                  <div className="w-3.5 h-3.5 rounded-full border-2 border-[#6366F1] border-t-transparent animate-spin" />
-                )}
-                <span className={`
-                  ${data.status === 'generating' ? 'text-[#6366F1]' : ''}
-                  ${data.status === 'complete' ? 'text-[#10B981]' : ''}
-                  ${data.status === 'error' ? 'text-[#EF4444]' : ''}
-                `}>
-                  {data.status === 'generating' ? 'Generating...' : data.status === 'complete' ? 'Complete' : 'Error'}
-                </span>
-              </div>
-              {data.status === 'generating' && data.progress && (
-                <span className="text-[#A1A1AA] font-medium">{data.progress}%</span>
-              )}
+        {/* Footer with Metadata */}
+        <div className="px-4 py-3 border-t border-[#27272A] flex items-center justify-between text-xs text-[#71717A]">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1">
+              <Clock className="w-3 h-3" />
+              <span>2m ago</span>
             </div>
-            {data.status === 'generating' && data.progress && (
-              <div className="mt-1.5 h-1 bg-[#27272A] rounded-full overflow-hidden">
-                <motion.div 
-                  className={`h-full bg-gradient-to-r ${typeColors.gradient} relative`}
-                  initial={{ width: 0 }}
-                  animate={{ width: `${data.progress}%` }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer" />
-                </motion.div>
+            {data.type.toLowerCase().includes('text') && (
+              <div className="flex items-center gap-1">
+                <span>1,234 tokens</span>
               </div>
             )}
           </div>
-        )}
+          <div className="flex items-center gap-1">
+            <Zap className="w-3 h-3 text-[#F59E0B]" />
+            <span>$0.02</span>
+          </div>
+        </div>
 
         {/* Subtle glow effect when selected */}
         {selected && (
