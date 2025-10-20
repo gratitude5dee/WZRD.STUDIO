@@ -1,27 +1,104 @@
 import React, { createContext, useContext, ReactNode, useEffect, useState } from 'react';
-import { useVideoEditorStore } from '@/store/videoEditorStore';
+import { useVideoEditorStore, Clip, AudioTrack, MediaItem as StoreMediaItem } from '@/store/videoEditorStore';
 import { supabase } from '@/integrations/supabase/client';
 import { supabaseService } from '@/services/supabaseService';
 import { toast } from "sonner";
 import { useParams } from "react-router-dom";
 
-// Helper function to validate and normalize media types
-function validateMediaType(mediaType: string | null | undefined): 'video' | 'image' | 'audio' {
-  const normalized = (mediaType || '').toLowerCase().trim();
-  
-  if (normalized === 'video') return 'video';
-  if (normalized === 'image') return 'image';
-  if (normalized === 'audio') return 'audio';
-  
-  // Default fallback based on common patterns
-  if (normalized.includes('video')) return 'video';
-  if (normalized.includes('image') || normalized.includes('img')) return 'image';
-  if (normalized.includes('audio') || normalized.includes('sound')) return 'audio';
-  
-  // Ultimate fallback
-  console.warn(`Unknown media type: ${mediaType}, defaulting to 'video'`);
-  return 'video';
-}
+const MIN_MEDIA_DURATION = 5;
+
+const getValidNumber = (value: unknown): number | undefined =>
+  typeof value === 'number' && !Number.isNaN(value) ? value : undefined;
+
+const resolveStartTime = (value?: number | null): number => getValidNumber(value) ?? 0;
+
+const resolveDuration = (
+  startTime: number,
+  duration?: number | null,
+  endTime?: number | null
+): number => {
+  const validDuration = getValidNumber(duration);
+  if (typeof validDuration === 'number' && validDuration > 0) {
+    return validDuration;
+  }
+
+  const validEndTime = getValidNumber(endTime);
+  if (typeof validEndTime === 'number') {
+    const computed = validEndTime - startTime;
+    if (computed > 0) {
+      return computed;
+    }
+  }
+
+  return MIN_MEDIA_DURATION;
+};
+
+const resolveEndTime = (startTime: number, duration: number, endTime?: number | null): number => {
+  const validEndTime = getValidNumber(endTime);
+  if (typeof validEndTime === 'number' && validEndTime >= startTime) {
+    return validEndTime;
+  }
+
+  return startTime + duration;
+};
+
+const resolveVolume = (value?: number | null): number => {
+  const validVolume = getValidNumber(value);
+  if (typeof validVolume === 'number') {
+    return Math.min(1, Math.max(0, validVolume));
+  }
+
+  return 1;
+};
+
+const normalizeClip = (clip: Clip): Clip => {
+  const startTime = resolveStartTime(clip.startTime);
+  const duration = resolveDuration(startTime, clip.duration, clip.endTime);
+  const endTime = resolveEndTime(startTime, duration, clip.endTime);
+
+  return {
+    ...clip,
+    startTime,
+    duration,
+    endTime,
+    layer: typeof clip.layer === 'number' ? clip.layer : 0,
+    transforms:
+      clip.transforms ?? {
+        position: { x: 0, y: 0 },
+        scale: { x: 1, y: 1 },
+        rotation: 0,
+        opacity: 1,
+      },
+  };
+};
+
+const normalizeAudioTrack = (track: AudioTrack): AudioTrack => {
+  const startTime = resolveStartTime(track.startTime);
+  const duration = resolveDuration(startTime, track.duration, track.endTime);
+  const endTime = resolveEndTime(startTime, duration, track.endTime);
+
+  return {
+    ...track,
+    startTime,
+    duration,
+    endTime,
+    volume: resolveVolume(track.volume),
+    isMuted: typeof track.isMuted === 'boolean' ? track.isMuted : false,
+  };
+};
+
+const isAudioItem = (item: StoreMediaItem): item is AudioTrack => item.type === 'audio';
+const isClipItem = (item: StoreMediaItem): item is Clip => item.type === 'video' || item.type === 'image';
+
+const clearMediaState = () => {
+  useVideoEditorStore.setState((state) => ({
+    ...state,
+    clips: [],
+    audioTracks: [],
+    selectedClipIds: [],
+    selectedAudioTrackIds: [],
+  }));
+};
 
 // Create context with a more complete type definition
 type VideoEditorContextType = {
@@ -38,8 +115,6 @@ export function VideoEditorProvider({ children }: { children: ReactNode }) {
     project,
     setProjectId,
     setProjectName,
-    addClip,
-    addAudioTrack,
     reset,
   } = useVideoEditorStore();
   const [isLoading, setIsLoading] = useState(true);
@@ -48,87 +123,47 @@ export function VideoEditorProvider({ children }: { children: ReactNode }) {
   // Load project data if we have a project ID (either from params or stored)
   useEffect(() => {
     const loadProjectData = async () => {
+      const urlProjectId = params.projectId;
+
+      if (urlProjectId && urlProjectId !== project.id) {
+        setProjectId(urlProjectId);
+        return;
+      }
+
+      const activeProjectId = project.id ?? urlProjectId;
+
+      if (!activeProjectId) {
+        clearMediaState();
+        setIsLoading(false);
+        return;
+      }
+
+      setIsLoading(true);
+      clearMediaState();
+
       try {
-        // Check if we have a project ID in URL params
-        const urlProjectId = params.projectId;
-        
-        if (urlProjectId) {
-          setProjectId(urlProjectId);
-        }
-        
-        // If we have a project ID (from params or previously set), load the project
-        if (project.id) {
-          setIsLoading(true);
+        const { data: projectData, error: projectError } = await supabase
+          .from('projects')
+          .select('*')
+          .eq('id', activeProjectId)
+          .single();
 
-          // Fetch project details
-          const { data: projectData, error: projectError } = await supabase
-            .from('projects')
-            .select('*')
-            .eq('id', project.id)
-            .single();
-            
-          if (projectError) throw projectError;
-          
-          if (projectData) {
-            setProjectName(projectData.title);
-            
-            // Fetch media items for this project
-            const { data: mediaItems, error: mediaError } = await supabase
-              .from('media_items')
-              .select('*')
-              .eq('project_id', project.id);
+        if (projectError) throw projectError;
 
-            if (mediaError) throw mediaError;
+        if (projectData) {
+          setProjectName(projectData.title);
 
-            // Add media items to the store
-            if (mediaItems && mediaItems.length > 0) {
-              useVideoEditorStore.setState((state) => ({
-                ...state,
-                clips: [],
-                audioTracks: [],
-              }));
-              mediaItems.forEach(item => {
-                // Ensure media_type is one of the allowed types
-                const mediaType = validateMediaType(item.media_type);
-                if (mediaType === 'audio') {
-              if (useVideoEditorStore.getState().audioTracks.some(track => track.id === item.id)) {
-                    return;
-                  }
-                  addAudioTrack({
-                    id: item.id,
-                    type: 'audio',
-                    url: item.url || '',
-                    name: item.name,
-                    duration: item.duration ?? Math.max((item.end_time ?? 0) - (item.start_time ?? 0), 5),
-                    startTime: item.start_time ?? 0,
-                    volume: 1,
-                    isMuted: false,
-                  });
-                } else {
-                  if (useVideoEditorStore.getState().clips.some(clip => clip.id === item.id)) {
-                    return;
-                  }
-                  addClip({
-                    id: item.id,
-                    type: mediaType,
-                    url: item.url || '',
-                    name: item.name,
-                    duration: item.duration ?? Math.max((item.end_time ?? 0) - (item.start_time ?? 0), 5),
-                    startTime: item.start_time ?? 0,
-                    layer: 0,
-                    transforms: {
-                      position: { x: 0, y: 0 },
-                      scale: { x: 1, y: 1 },
-                      rotation: 0,
-                      opacity: 1,
-                    },
-                  });
-                }
-              });
-            }
+          const mediaItems = await supabaseService.media.listByProject(activeProjectId);
+          const clips = mediaItems.filter(isClipItem).map(normalizeClip);
+          const audioTracks = mediaItems.filter(isAudioItem).map(normalizeAudioTrack);
 
-            // We could also load tracks, track items, and keyframes here
-          }
+          useVideoEditorStore.setState((state) => ({
+            ...state,
+            clips,
+            audioTracks,
+            selectedClipIds: [],
+            selectedAudioTrackIds: [],
+          }));
         }
       } catch (error) {
         console.error('Error loading project data:', error);
@@ -139,7 +174,7 @@ export function VideoEditorProvider({ children }: { children: ReactNode }) {
     };
 
     loadProjectData();
-  }, [project.id, params.projectId]);
+  }, [params.projectId, project.id, setProjectId, setProjectName]);
   
   // Clean up when unmounting
   useEffect(() => {
@@ -151,7 +186,7 @@ export function VideoEditorProvider({ children }: { children: ReactNode }) {
 
   // Create context value with proper shape
   const contextValue = {
-    isLoading
+    isLoading,
     // We can add more shared state or methods here as needed
   };
 
