@@ -356,12 +356,13 @@ const AIGenerationPanel: React.FC = () => {
       fileBuffer = await blob.arrayBuffer();
     }
 
+    const bucket = media.type === 'audio' ? 'audio' : 'videos';
     const extension = contentTypeToExtension(contentType, media.type);
     const fileName = `${uuidv4()}.${extension}`;
     const filePath = `${project.id}/${fileName}`;
 
     const { error: uploadError } = await supabase.storage
-      .from('media')
+      .from(bucket)
       .upload(filePath, fileBuffer, {
         cacheControl: '3600',
         upsert: false,
@@ -373,7 +374,7 @@ const AIGenerationPanel: React.FC = () => {
     }
 
     const { data: { publicUrl } } = supabase.storage
-      .from('media')
+      .from(bucket)
       .getPublicUrl(filePath);
 
     const mediaName = `AI ${media.type.charAt(0).toUpperCase() + media.type.slice(1)} ${new Date().toLocaleTimeString()}`;
@@ -381,7 +382,7 @@ const AIGenerationPanel: React.FC = () => {
     const mediaId = await supabaseService.media.create(project.id!, {
       type: media.type === 'image' ? 'image' : media.type === 'audio' ? 'audio' : 'video',
       name: mediaName,
-      bucket: media.type === 'audio' ? 'audio' : 'videos',
+      bucket,
       storagePath: filePath,
       durationMs: (media.duration || DEFAULT_DURATIONS[media.type]) * 1000,
       startTimeMs: 0,
