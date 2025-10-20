@@ -24,21 +24,32 @@ export const CustomConnectionLine = ({
 
   return (
     <g>
+      {/* Glow effect */}
       <path
         fill="none"
         stroke={getHandleColor()}
-        strokeWidth={2.5}
+        strokeWidth={8}
+        strokeOpacity={0.3}
+        d={edgePath}
+        style={{ filter: 'blur(4px)' }}
+      />
+      {/* Main line */}
+      <path
+        fill="none"
+        stroke={getHandleColor()}
+        strokeWidth={3}
         strokeDasharray="8 4"
         d={edgePath}
         className="animated"
       />
+      {/* End circle */}
       <circle
         cx={toX}
         cy={toY}
         fill="hsl(var(--background))"
-        r={3}
+        r={6}
         stroke={getHandleColor()}
-        strokeWidth={2}
+        strokeWidth={3}
       />
     </g>
   );

@@ -44,11 +44,13 @@ export const BaseNode = forwardRef<HTMLDivElement, BaseNodeProps>(
             type={handle.type}
             position={handle.position}
             className={cn(
-              'w-3 h-3 border-2 bg-background transition-all',
-              'hover:scale-150 hover:shadow-lg'
+              'w-4 h-4 border-2 bg-background transition-all cursor-pointer',
+              'hover:scale-[1.75] hover:shadow-xl hover:z-50',
+              'active:scale-150'
             )}
             style={{
               borderColor: getDataTypeColor(handle.dataType),
+              boxShadow: `0 0 8px ${getDataTypeColor(handle.dataType)}40`,
             }}
           />
         ))}

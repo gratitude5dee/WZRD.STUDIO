@@ -17,6 +17,7 @@ import {
   ReactFlowProvider,
   useReactFlow,
   BackgroundVariant,
+  ConnectionMode,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
@@ -321,6 +322,8 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         connectionLineComponent={CustomConnectionLine}
+        connectionMode={ConnectionMode.Loose}
+        connectionRadius={30}
         isValidConnection={isValidConnection}
         defaultEdgeOptions={defaultEdgeOptions}
         fitView
