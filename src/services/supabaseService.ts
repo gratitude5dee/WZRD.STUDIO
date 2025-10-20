@@ -195,12 +195,23 @@ const secondsToMs = (value?: number): number | null => {
   return null;
 };
 
-const resolvePublicUrl = (bucket?: string | null, path?: string | null): string => {
+const SIGNED_URL_EXPIRATION_SECONDS = 60 * 60; // 1 hour
+
+const resolveSignedUrl = async (bucket?: string | null, path?: string | null): Promise<string> => {
   if (!bucket || !path) {
     return '';
   }
-  const { data } = supabase.storage.from(bucket).getPublicUrl(path);
-  return data.publicUrl;
+
+  const { data, error } = await supabase.storage
+    .from(bucket)
+    .createSignedUrl(path, SIGNED_URL_EXPIRATION_SECONDS);
+
+  if (error) {
+    console.error('Error creating signed URL for storage object', { bucket, path, error });
+    return '';
+  }
+
+  return data?.signedUrl ?? '';
 };
 
 type VideoClipRecord = {
@@ -237,10 +248,12 @@ const clipAssetTypeToMediaType = (assetType?: string | null): 'video' | 'image' 
   return assetType === 'image' ? 'image' : 'video';
 };
 
-const mapVideoClipToMediaItem = (clip: VideoClipRecord): MediaItem => {
+const mapVideoClipToMediaItem = async (clip: VideoClipRecord): Promise<MediaItem> => {
   const type = clipAssetTypeToMediaType(clip.asset_type);
-  const url = resolvePublicUrl(clip.storage_bucket, clip.storage_path);
-  const thumbnailUrl = resolvePublicUrl(clip.thumbnail_bucket ?? undefined, clip.thumbnail_path ?? undefined);
+  const [url, thumbnailUrl] = await Promise.all([
+    resolveSignedUrl(clip.storage_bucket, clip.storage_path),
+    resolveSignedUrl(clip.thumbnail_bucket ?? undefined, clip.thumbnail_path ?? undefined)
+  ]);
 
   return {
     id: clip.id,
@@ -258,8 +271,8 @@ const mapVideoClipToMediaItem = (clip: VideoClipRecord): MediaItem => {
   };
 };
 
-const mapAudioTrackToMediaItem = (track: AudioTrackRecord): MediaItem => {
-  const url = resolvePublicUrl(track.storage_bucket, track.storage_path);
+const mapAudioTrackToMediaItem = async (track: AudioTrackRecord): Promise<MediaItem> => {
+  const url = await resolveSignedUrl(track.storage_bucket, track.storage_path);
 
   return {
     id: track.id,
@@ -316,7 +329,7 @@ export const mediaService = {
 
       if (clipError && clipError.code !== 'PGRST116') throw clipError;
       if (clip) {
-        return mapVideoClipToMediaItem(clip as VideoClipRecord);
+        return await mapVideoClipToMediaItem(clip as VideoClipRecord);
       }
 
       const { data: track, error: trackError } = await supabase
@@ -327,7 +340,7 @@ export const mediaService = {
 
       if (trackError && trackError.code !== 'PGRST116') throw trackError;
       if (track) {
-        return mapAudioTrackToMediaItem(track as AudioTrackRecord);
+        return await mapAudioTrackToMediaItem(track as AudioTrackRecord);
       }
 
       return null;
@@ -355,8 +368,12 @@ export const mediaService = {
       if (videoClipsResult.error) throw videoClipsResult.error;
       if (audioTracksResult.error) throw audioTracksResult.error;
 
-      const clips = (videoClipsResult.data || []).map((clip) => mapVideoClipToMediaItem(clip as VideoClipRecord));
-      const tracks = (audioTracksResult.data || []).map((track) => mapAudioTrackToMediaItem(track as AudioTrackRecord));
+      const clips = await Promise.all(
+        (videoClipsResult.data || []).map((clip) => mapVideoClipToMediaItem(clip as VideoClipRecord))
+      );
+      const tracks = await Promise.all(
+        (audioTracksResult.data || []).map((track) => mapAudioTrackToMediaItem(track as AudioTrackRecord))
+      );
 
       return [...clips, ...tracks];
     } catch (error) {
@@ -388,7 +405,7 @@ export const mediaService = {
           .single();
 
         if (error) throw error;
-        return mapAudioTrackToMediaItem(data as AudioTrackRecord);
+        return await mapAudioTrackToMediaItem(data as AudioTrackRecord);
       }
 
       const { data, error } = await supabase
@@ -411,7 +428,7 @@ export const mediaService = {
         .single();
 
       if (error) throw error;
-      return mapVideoClipToMediaItem(data as VideoClipRecord);
+      return await mapVideoClipToMediaItem(data as VideoClipRecord);
     } catch (error) {
       handleError(error, 'creating media item');
       throw error;
