@@ -1,4 +1,4 @@
-import { Grid, Users, Globe, Star, Settings, HelpCircle, ChevronDown, LogOut } from 'lucide-react';
+import { Grid, Users, Globe, Star, Settings, HelpCircle, ChevronDown, LogOut, Layers } from 'lucide-react';
 import { WorkspaceSwitcher } from './WorkspaceSwitcher';
 import CreditsDisplay from '../CreditsDisplay';
 import { useState } from 'react';
@@ -29,6 +29,7 @@ export const Sidebar = ({ activeView, onViewChange }: SidebarProps) => {
     { id: 'all', label: 'All', icon: Grid },
     { id: 'shared', label: 'Shared with me', icon: Users },
     { id: 'community', label: 'Community', icon: Globe },
+    { id: 'kanvas', label: 'Kanvas', icon: Layers, isRoute: true },
   ];
 
   return (
@@ -43,11 +44,17 @@ export const Sidebar = ({ activeView, onViewChange }: SidebarProps) => {
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeView === item.id;
-          
+
           return (
             <button
               key={item.id}
-              onClick={() => onViewChange(item.id)}
+              onClick={() => {
+                if (item.isRoute) {
+                  navigate('/kanvas');
+                } else {
+                  onViewChange(item.id);
+                }
+              }}
               className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
                 isActive
                   ? 'bg-white/[0.08] text-white'

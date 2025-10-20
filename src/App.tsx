@@ -23,6 +23,7 @@ const EditorPage = lazy(() => import("./pages/EditorPage"));
 const Storyboard = lazy(() => import("./pages/Storyboard"));
 const ShotEditor = lazy(() => import("./pages/ShotEditor"));
 const VideoEditor = lazy(() => import("./pages/VideoEditor"));
+const KanvasPage = lazy(() => import("./pages/KanvasPage"));
 
 const RedirectToTimeline = () => {
   const { projectId } = useParams();
@@ -142,6 +143,14 @@ const App = () => {
                     element={
                       <ProtectedRoute>
                         <VideoEditor />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/kanvas"
+                    element={
+                      <ProtectedRoute>
+                        <KanvasPage />
                       </ProtectedRoute>
                     }
                   />
