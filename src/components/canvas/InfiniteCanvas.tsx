@@ -1,9 +1,7 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
-import { Stage, Layer, Image, Rect, Text as KonvaText, Transformer } from 'react-konva';
-import { KonvaEventObject } from 'konva/lib/Node';
-import Konva from 'konva';
+import { useEffect, useRef, useCallback } from 'react';
+import { Canvas as FabricCanvas, FabricImage, Rect, IText, Circle } from 'fabric';
 import { useCanvasStore } from '@/lib/stores/canvas-store';
-import type { CanvasObject, ViewportState } from '@/types/canvas';
+import type { CanvasObject } from '@/types/canvas';
 
 interface InfiniteCanvasProps {
   projectId: string;
@@ -12,158 +10,13 @@ interface InfiniteCanvasProps {
   onObjectSelect?: (objectId: string) => void;
 }
 
-// Helper function to check if object is in viewport
-const isInViewport = (obj: CanvasObject, viewport: any) => {
-  const objBounds = {
-    left: obj.transform.x,
-    top: obj.transform.y,
-    right: obj.transform.x + ((obj.data as any).width || 100),
-    bottom: obj.transform.y + ((obj.data as any).height || 100),
-  };
-
-  return !(
-    objBounds.right < viewport.x ||
-    objBounds.left > viewport.x + viewport.width ||
-    objBounds.bottom < viewport.y ||
-    objBounds.top > viewport.y + viewport.height
-  );
-};
-
-// Canvas Object Renderer Component
-const CanvasObjectRenderer = ({
-  object,
-  isSelected,
-  onSelect,
-  onTransformEnd,
-}: {
-  object: CanvasObject;
-  isSelected: boolean;
-  onSelect: () => void;
-  onTransformEnd: (transform: any) => void;
-}) => {
-  const shapeRef = useRef<any>(null);
-  const transformerRef = useRef<Konva.Transformer>(null);
-  const [image, setImage] = useState<HTMLImageElement | null>(null);
-
-  // Load image if type is image
-  useEffect(() => {
-    if (object.type === 'image' && object.data && 'url' in object.data) {
-      const img = new window.Image();
-      img.crossOrigin = 'anonymous';
-      img.src = object.data.url;
-      img.onload = () => setImage(img);
-    }
-  }, [object]);
-
-  // Attach transformer when selected
-  useEffect(() => {
-    if (isSelected && shapeRef.current && transformerRef.current) {
-      transformerRef.current.nodes([shapeRef.current]);
-      transformerRef.current.getLayer()?.batchDraw();
-    }
-  }, [isSelected]);
-
-  const handleDragEnd = (e: KonvaEventObject<DragEvent>) => {
-    onTransformEnd({
-      x: e.target.x(),
-      y: e.target.y(),
-    });
-  };
-
-  const handleTransformEnd = (e: KonvaEventObject<Event>) => {
-    const node = shapeRef.current;
-    if (!node) return;
-
-    const scaleX = node.scaleX();
-    const scaleY = node.scaleY();
-
-    // Reset scale to 1 and adjust width/height instead
-    node.scaleX(1);
-    node.scaleY(1);
-
-    onTransformEnd({
-      x: node.x(),
-      y: node.y(),
-      scaleX,
-      scaleY,
-      rotation: node.rotation(),
-    });
-  };
-
-  // Render based on object type
-  const renderObject = () => {
-    const commonProps = {
-      ref: shapeRef,
-      x: object.transform.x,
-      y: object.transform.y,
-      scaleX: object.transform.scaleX,
-      scaleY: object.transform.scaleY,
-      rotation: object.transform.rotation,
-      draggable: !object.locked,
-      onClick: onSelect,
-      onTap: onSelect,
-      onDragEnd: handleDragEnd,
-      onTransformEnd: handleTransformEnd,
-      visible: object.visibility,
-    };
-
-    switch (object.type) {
-      case 'image':
-        if (!image) return null;
-        return (
-          <Image
-            {...commonProps}
-            image={image}
-            width={(object.data as any).width}
-            height={(object.data as any).height}
-          />
-        );
-
-      case 'shape':
-        const shapeData = object.data as any;
-        if (shapeData.shapeType === 'rectangle') {
-          return (
-            <Rect
-              {...commonProps}
-              width={shapeData.width || 100}
-              height={shapeData.height || 100}
-              fill={shapeData.fill}
-              stroke={shapeData.stroke}
-              strokeWidth={shapeData.strokeWidth}
-            />
-          );
-        }
-        return null;
-
-      case 'text':
-        const textData = object.data as any;
-        return (
-          <KonvaText
-            {...commonProps}
-            text={textData.text}
-            fontSize={textData.fontSize}
-            fontFamily={textData.fontFamily}
-            fill={textData.color}
-            align={textData.align}
-          />
-        );
-
-      default:
-        return null;
-    }
-  };
-
-  return (
-    <>
-      {renderObject()}
-      {isSelected && <Transformer ref={transformerRef} />}
-    </>
-  );
-};
-
 // Main InfiniteCanvas Component
 export function InfiniteCanvas({ projectId, width, height, onObjectSelect }: InfiniteCanvasProps) {
-  const stageRef = useRef<Konva.Stage>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const fabricCanvasRef = useRef<FabricCanvas | null>(null);
+  const objectMapRef = useRef<Map<string, any>>(new Map());
+  const dragStateRef = useRef({ isDragging: false, lastX: 0, lastY: 0 });
+  
   const {
     objects,
     selectedIds,
@@ -179,65 +32,201 @@ export function InfiniteCanvas({ projectId, width, height, onObjectSelect }: Inf
     setProjectId(projectId);
   }, [projectId, setProjectId]);
 
-  // Viewport culling for performance
-  const getVisibleObjects = useCallback(() => {
-    const stage = stageRef.current;
-    if (!stage) return objects;
+  // Initialize Fabric canvas
+  useEffect(() => {
+    if (!canvasRef.current) return;
 
-    const viewportBounds = {
-      x: -viewport.x / viewport.scale,
-      y: -viewport.y / viewport.scale,
-      width: stage.width() / viewport.scale,
-      height: stage.height() / viewport.scale,
-    };
-
-    return objects.filter((obj) => isInViewport(obj, viewportBounds));
-  }, [objects, viewport]);
-
-  // Wheel handler for zoom
-  const handleWheel = (e: KonvaEventObject<WheelEvent>) => {
-    e.evt.preventDefault();
-    const stage = e.target.getStage();
-    if (!stage) return;
-
-    const oldScale = viewport.scale;
-    const pointer = stage.getPointerPosition();
-    if (!pointer) return;
-
-    const mousePointTo = {
-      x: (pointer.x - viewport.x) / oldScale,
-      y: (pointer.y - viewport.y) / oldScale,
-    };
-
-    const direction = e.evt.deltaY > 0 ? -1 : 1;
-    const scaleBy = 1.05;
-    const newScale = direction > 0 ? oldScale * scaleBy : oldScale / scaleBy;
-
-    const clampedScale = Math.max(0.1, Math.min(10, newScale));
-
-    setViewport({
-      scale: clampedScale,
-      x: pointer.x - mousePointTo.x * clampedScale,
-      y: pointer.y - mousePointTo.y * clampedScale,
+    const canvas = new FabricCanvas(canvasRef.current, {
+      width,
+      height,
+      backgroundColor: '#0A0A0A',
+      selection: true,
+      preserveObjectStacking: true,
     });
-  };
 
-  // Pan with drag
-  const handleDragEnd = (e: KonvaEventObject<DragEvent>) => {
-    setViewport({
-      x: e.target.x(),
-      y: e.target.y(),
+    fabricCanvasRef.current = canvas;
+
+    // Mouse wheel zoom
+    canvas.on('mouse:wheel', (opt) => {
+      const evt = opt.e;
+      evt.preventDefault();
+      evt.stopPropagation();
+
+      const delta = evt.deltaY;
+      let zoom = canvas.getZoom();
+      zoom *= 0.999 ** delta;
+      zoom = Math.max(0.1, Math.min(10, zoom));
+
+      const point = canvas.getScenePoint(evt);
+      canvas.zoomToPoint(point, zoom);
+
+      // Update viewport in store
+      const vpt = canvas.viewportTransform;
+      if (vpt) {
+        setViewport({
+          x: vpt[4],
+          y: vpt[5],
+          scale: zoom,
+        });
+      }
     });
-  };
 
-  // Handle stage click for deselection
-  const handleStageClick = (e: KonvaEventObject<MouseEvent>) => {
-    // Check if clicked on empty area
-    const clickedOnEmpty = e.target === e.target.getStage();
-    if (clickedOnEmpty) {
+    // Pan with mouse drag (when no object is selected)
+    canvas.on('mouse:down', (opt) => {
+      const evt = opt.e as MouseEvent;
+      if (evt.altKey || evt.ctrlKey) {
+        canvas.selection = false;
+        dragStateRef.current.isDragging = true;
+        dragStateRef.current.lastX = evt.clientX;
+        dragStateRef.current.lastY = evt.clientY;
+        canvas.defaultCursor = 'grabbing';
+      }
+    });
+
+    canvas.on('mouse:move', (opt) => {
+      if (dragStateRef.current.isDragging) {
+        const evt = opt.e as MouseEvent;
+        const vpt = canvas.viewportTransform;
+        if (vpt) {
+          vpt[4] += evt.clientX - dragStateRef.current.lastX;
+          vpt[5] += evt.clientY - dragStateRef.current.lastY;
+          dragStateRef.current.lastX = evt.clientX;
+          dragStateRef.current.lastY = evt.clientY;
+          canvas.requestRenderAll();
+
+          setViewport({
+            x: vpt[4],
+            y: vpt[5],
+            scale: canvas.getZoom(),
+          });
+        }
+      }
+    });
+
+    canvas.on('mouse:up', () => {
+      dragStateRef.current.isDragging = false;
+      canvas.selection = true;
+      canvas.defaultCursor = 'default';
+    });
+
+    // Selection events
+    canvas.on('selection:created', (e) => {
+      const selected = e.selected;
+      if (selected && selected.length > 0) {
+        const ids = selected
+          .map((obj) => (obj as any).canvasObjectId)
+          .filter(Boolean);
+        if (ids.length > 0) {
+          setSelectedIds(ids);
+          onObjectSelect?.(ids[0]);
+        }
+      }
+    });
+
+    canvas.on('selection:updated', (e) => {
+      const selected = e.selected;
+      if (selected && selected.length > 0) {
+        const ids = selected
+          .map((obj) => (obj as any).canvasObjectId)
+          .filter(Boolean);
+        if (ids.length > 0) {
+          setSelectedIds(ids);
+          onObjectSelect?.(ids[0]);
+        }
+      }
+    });
+
+    canvas.on('selection:cleared', () => {
       clearSelection();
+    });
+
+    // Object modification events
+    canvas.on('object:modified', (e) => {
+      const obj = e.target as any;
+      if (obj && obj.canvasObjectId) {
+        updateTransform(obj.canvasObjectId, {
+          x: obj.left || 0,
+          y: obj.top || 0,
+          scaleX: obj.scaleX || 1,
+          scaleY: obj.scaleY || 1,
+          rotation: obj.angle || 0,
+        });
+      }
+    });
+
+    return () => {
+      canvas.dispose();
+      fabricCanvasRef.current = null;
+    };
+  }, [width, height, setProjectId, setViewport, setSelectedIds, clearSelection, updateTransform, onObjectSelect]);
+
+  // Sync canvas objects with store
+  useEffect(() => {
+    const canvas = fabricCanvasRef.current;
+    if (!canvas) return;
+
+    // Remove objects that no longer exist
+    const currentObjects = canvas.getObjects();
+    currentObjects.forEach((fabricObj: any) => {
+      const id = fabricObj.canvasObjectId;
+      if (id && !objects.find((obj) => obj.id === id)) {
+        canvas.remove(fabricObj);
+        objectMapRef.current.delete(id);
+      }
+    });
+
+    // Add or update objects
+    objects.forEach((obj) => {
+      let fabricObj = objectMapRef.current.get(obj.id);
+
+      if (!fabricObj) {
+        // Create new fabric object
+        const result = createFabricObject(obj);
+        if (result instanceof Promise) {
+          result.then((newObj) => {
+            if (newObj) {
+              (newObj as any).canvasObjectId = obj.id;
+              canvas.add(newObj);
+              objectMapRef.current.set(obj.id, newObj);
+              canvas.requestRenderAll();
+            }
+          });
+        } else if (result) {
+          (result as any).canvasObjectId = obj.id;
+          canvas.add(result);
+          objectMapRef.current.set(obj.id, result);
+        }
+      } else {
+        // Update existing object
+        updateFabricObject(fabricObj, obj);
+      }
+    });
+
+    canvas.requestRenderAll();
+  }, [objects]);
+
+  // Update selection
+  useEffect(() => {
+    const canvas = fabricCanvasRef.current;
+    if (!canvas) return;
+
+    const selectedObjects = selectedIds
+      .map((id) => objectMapRef.current.get(id))
+      .filter(Boolean);
+
+    if (selectedObjects.length === 1) {
+      canvas.setActiveObject(selectedObjects[0]);
+    } else if (selectedObjects.length > 1) {
+      const selection = new (canvas as any).ActiveSelection(selectedObjects, {
+        canvas,
+      });
+      canvas.setActiveObject(selection);
+    } else {
+      canvas.discardActiveObject();
     }
-  };
+
+    canvas.requestRenderAll();
+  }, [selectedIds]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -289,51 +278,9 @@ export function InfiniteCanvas({ projectId, width, height, onObjectSelect }: Inf
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  const visibleObjects = getVisibleObjects();
-  const sortedObjects = [...visibleObjects].sort((a, b) => a.layerIndex - b.layerIndex);
-
   return (
     <div className="relative w-full h-full bg-zinc-900">
-      <Stage
-        ref={stageRef}
-        width={width}
-        height={height}
-        draggable
-        onWheel={handleWheel}
-        onDragEnd={handleDragEnd}
-        onClick={handleStageClick}
-        x={viewport.x}
-        y={viewport.y}
-        scaleX={viewport.scale}
-        scaleY={viewport.scale}
-      >
-        <Layer>
-          {/* Grid background */}
-          <Rect
-            x={-10000}
-            y={-10000}
-            width={20000}
-            height={20000}
-            fill="#0A0A0A"
-          />
-
-          {/* Render canvas objects */}
-          {sortedObjects.map((obj) => (
-            <CanvasObjectRenderer
-              key={obj.id}
-              object={obj}
-              isSelected={selectedIds.includes(obj.id)}
-              onSelect={() => {
-                setSelectedIds([obj.id]);
-                onObjectSelect?.(obj.id);
-              }}
-              onTransformEnd={(transform) => {
-                updateTransform(obj.id, transform);
-              }}
-            />
-          ))}
-        </Layer>
-      </Stage>
+      <canvas ref={canvasRef} />
 
       {/* Viewport indicator */}
       <div className="absolute bottom-4 right-4 px-3 py-1.5 bg-black/50 backdrop-blur-sm rounded-lg text-xs text-white/60 font-mono">
@@ -341,4 +288,99 @@ export function InfiniteCanvas({ projectId, width, height, onObjectSelect }: Inf
       </div>
     </div>
   );
+}
+
+// Helper function to create Fabric object from CanvasObject
+function createFabricObject(obj: CanvasObject) {
+  const commonProps = {
+    left: obj.transform.x,
+    top: obj.transform.y,
+    scaleX: obj.transform.scaleX,
+    scaleY: obj.transform.scaleY,
+    angle: obj.transform.rotation,
+    selectable: !obj.locked,
+    visible: obj.visibility,
+  };
+
+  switch (obj.type) {
+    case 'image': {
+      const imageData = obj.data as any;
+      return FabricImage.fromURL(imageData.url, {
+        crossOrigin: 'anonymous',
+      }).then((img) => {
+        Object.assign(img, commonProps);
+        img.scaleToWidth(imageData.width);
+        return img;
+      });
+    }
+
+    case 'shape': {
+      const shapeData = obj.data as any;
+      if (shapeData.shapeType === 'rectangle') {
+        return new Rect({
+          ...commonProps,
+          width: shapeData.width || 100,
+          height: shapeData.height || 100,
+          fill: shapeData.fill,
+          stroke: shapeData.stroke,
+          strokeWidth: shapeData.strokeWidth,
+        });
+      } else if (shapeData.shapeType === 'circle') {
+        return new Circle({
+          ...commonProps,
+          radius: shapeData.radius || 50,
+          fill: shapeData.fill,
+          stroke: shapeData.stroke,
+          strokeWidth: shapeData.strokeWidth,
+        });
+      }
+      return null;
+    }
+
+    case 'text': {
+      const textData = obj.data as any;
+      return new IText(textData.text, {
+        ...commonProps,
+        fontSize: textData.fontSize,
+        fontFamily: textData.fontFamily,
+        fill: textData.color,
+        textAlign: textData.align,
+      });
+    }
+
+    default:
+      return null;
+  }
+}
+
+// Helper function to update Fabric object
+function updateFabricObject(fabricObj: any, obj: CanvasObject) {
+  fabricObj.set({
+    left: obj.transform.x,
+    top: obj.transform.y,
+    scaleX: obj.transform.scaleX,
+    scaleY: obj.transform.scaleY,
+    angle: obj.transform.rotation,
+    selectable: !obj.locked,
+    visible: obj.visibility,
+  });
+
+  // Update type-specific properties
+  if (obj.type === 'text') {
+    const textData = obj.data as any;
+    fabricObj.set({
+      text: textData.text,
+      fontSize: textData.fontSize,
+      fontFamily: textData.fontFamily,
+      fill: textData.color,
+      textAlign: textData.align,
+    });
+  } else if (obj.type === 'shape') {
+    const shapeData = obj.data as any;
+    fabricObj.set({
+      fill: shapeData.fill,
+      stroke: shapeData.stroke,
+      strokeWidth: shapeData.strokeWidth,
+    });
+  }
 }
