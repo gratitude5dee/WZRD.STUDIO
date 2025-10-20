@@ -177,23 +177,23 @@ const EnhancedNode = memo(({ data, selected, id }: NodeProps<ComputeFlowNodeData
         />
       ))}
 
-      {/* Node Container */}
+      {/* Node Container - Softer styling matching screenshot */}
       <motion.div
         className={`
-          min-w-[280px] max-w-[320px] rounded-2xl overflow-hidden relative
-          bg-gradient-to-b from-[#1C1C1F] to-[#141416] border-2
-          transition-all duration-300
+          min-w-[280px] max-w-[320px] rounded-xl overflow-hidden relative
+          bg-[#1C1C1F] border
+          transition-all duration-200
           ${selected 
-            ? `${typeColors.border} shadow-[0_0_0_4px_rgba(99,102,241,0.15),0_12px_40px_rgba(99,102,241,0.3)]` 
+            ? 'border-[#6366F1] shadow-[0_0_0_3px_rgba(99,102,241,0.2),0_8px_24px_rgba(0,0,0,0.4)]' 
             : isHovered 
-              ? 'border-[#3F3F46] shadow-[0_12px_32px_rgba(0,0,0,0.5)]' 
-              : 'border-[#27272A] shadow-[0_8px_24px_rgba(0,0,0,0.4)]'
+              ? 'border-[#3F3F46] shadow-[0_8px_24px_rgba(0,0,0,0.5)]' 
+              : 'border-[#27272A] shadow-[0_4px_16px_rgba(0,0,0,0.4)]'
           }
           ${data.status === 'generating' ? 'border-[#8B5CF6]' : ''}
-          ${data.status === 'error' ? 'border-[#EF4444] shadow-[0_0_0_4px_rgba(239,68,68,0.15)]' : ''}
+          ${data.status === 'error' ? 'border-[#EF4444]' : ''}
         `}
-        whileHover={{ y: -4 }}
-        transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+        whileHover={{ y: -2 }}
+        transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
       >
         {/* Status Bar */}
         <div 
@@ -248,9 +248,9 @@ const EnhancedNode = memo(({ data, selected, id }: NodeProps<ComputeFlowNodeData
           </div>
         </div>
 
-        {/* Content Body */}
+        {/* Content Body - Larger image preview */}
         {data.imageUrl ? (
-          <div className="aspect-square bg-[#0A0A0B] overflow-hidden relative group">
+          <div className="relative bg-[#0A0A0B] overflow-hidden group" style={{ aspectRatio: '4/3' }}>
             <img 
               src={data.imageUrl} 
               alt={data.label}
@@ -259,12 +259,12 @@ const EnhancedNode = memo(({ data, selected, id }: NodeProps<ComputeFlowNodeData
             {/* Overlay on hover */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
             
-            {/* Output count badge */}
-            {data.outputs && data.outputs.length > 1 && (
-              <div className="absolute top-2 right-2 px-2 py-1 bg-black/80 backdrop-blur-sm rounded-md text-xs text-white">
-                → {data.outputs.length}
-              </div>
-            )}
+            {/* Title overlay at top */}
+            <div className="absolute top-0 left-0 right-0 p-3 bg-gradient-to-b from-black/60 to-transparent">
+              <p className="text-sm text-white font-medium truncate">
+                {data.label || 'Untitled'}
+              </p>
+            </div>
           </div>
         ) : (
           <div className="p-4 min-h-[100px] relative">
@@ -376,24 +376,15 @@ const EnhancedNode = memo(({ data, selected, id }: NodeProps<ComputeFlowNodeData
           </div>
         )}
 
-        {/* Footer with Metadata */}
-        <div className="px-4 py-3 border-t border-[#27272A] flex items-center justify-between text-xs text-[#71717A]">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1">
-              <Clock className="w-3 h-3" />
-              <span>2m ago</span>
+        {/* Footer - Minimal caption style like screenshot */}
+        {data.imageUrl && (
+          <div className="px-3 py-2 border-t border-[#27272A] bg-[#141416]">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-[#71717A]">Kling Pro 1.6</span>
+              <span className="text-[10px] text-[#52525B]">2m ago</span>
             </div>
-            {data.type.toLowerCase().includes('text') && (
-              <div className="flex items-center gap-1">
-                <span>1,234 tokens</span>
-              </div>
-            )}
           </div>
-          <div className="flex items-center gap-1">
-            <Zap className="w-3 h-3 text-[#F59E0B]" />
-            <span>$0.02</span>
-          </div>
-        </div>
+        )}
 
         {/* Subtle glow effect when selected */}
         {selected && (

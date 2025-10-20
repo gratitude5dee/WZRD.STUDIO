@@ -64,16 +64,29 @@ interface StudioCanvasProps {
   onModelChange: (blockId: string, modelId: string) => void;
 }
 
-// Node types configuration
+// Node types configuration - Defined outside component to prevent recreation
 const nodeTypes: NodeTypes = {
   text: EnhancedNode,
   image: EnhancedNode,
   video: EnhancedNode,
 };
 
-// Edge types configuration
+// Edge types configuration - Defined outside component to prevent recreation
 const edgeTypes: EdgeTypes = {
   custom: EnhancedEdge,
+};
+
+// Connection line style - Defined outside component
+const connectionLineStyle = {
+  stroke: '#6366F1',
+  strokeWidth: 2.5,
+  strokeDasharray: '8 4',
+};
+
+// Default edge options - Defined outside component
+const defaultEdgeOptions = {
+  type: 'custom',
+  animated: true,
 };
 
 // Convert Block to React Flow Node
@@ -395,7 +408,8 @@ const StudioCanvasInner = ({
           nodeTypes={nodeTypes}
           edgeTypes={edgeTypes}
           connectionLineType={ConnectionLineType.Bezier}
-          defaultEdgeOptions={{ type: 'custom', animated: true }}
+          connectionLineStyle={connectionLineStyle}
+          defaultEdgeOptions={defaultEdgeOptions}
           fitView
           fitViewOptions={{ padding: 0.3 }}
           minZoom={0.2}
