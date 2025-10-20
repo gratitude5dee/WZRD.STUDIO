@@ -15,7 +15,14 @@ const VideoEditorContext = createContext<VideoEditorContextType | null>(null);
 
 // Provider component
 export function VideoEditorProvider({ children }: { children: ReactNode }) {
-  const { projectId, setProjectId, setProjectName, addMediaItem, reset } = useVideoEditorStore();
+  const {
+    project,
+    setProjectId,
+    setProjectName,
+    addClip,
+    addAudioTrack,
+    reset,
+  } = useVideoEditorStore();
   const [isLoading, setIsLoading] = useState(true);
   const params = useParams();
 
@@ -31,14 +38,14 @@ export function VideoEditorProvider({ children }: { children: ReactNode }) {
         }
         
         // If we have a project ID (from params or previously set), load the project
-        if (projectId) {
+        if (project.id) {
           setIsLoading(true);
-          
+
           // Fetch project details
           const { data: projectData, error: projectError } = await supabase
             .from('projects')
             .select('*')
-            .eq('id', projectId)
+            .eq('id', project.id)
             .single();
             
           if (projectError) throw projectError;
@@ -50,25 +57,54 @@ export function VideoEditorProvider({ children }: { children: ReactNode }) {
             const { data: mediaItems, error: mediaError } = await supabase
               .from('media_items')
               .select('*')
-              .eq('project_id', projectId);
-              
+              .eq('project_id', project.id);
+
             if (mediaError) throw mediaError;
-            
+
             // Add media items to the store
             if (mediaItems && mediaItems.length > 0) {
+              useVideoEditorStore.setState((state) => ({
+                ...state,
+                clips: [],
+                audioTracks: [],
+              }));
               mediaItems.forEach(item => {
                 // Ensure media_type is one of the allowed types
                 const mediaType = validateMediaType(item.media_type);
-                
-                addMediaItem({
-                  id: item.id,
-                  type: mediaType,
-                  url: item.url || '',
-                  name: item.name,
-                  duration: item.duration,
-                  startTime: item.start_time,
-                  endTime: item.end_time
-                });
+                if (mediaType === 'audio') {
+                  if (useVideoEditorStore.getState().audioTracks.some(track => track.id === item.id)) {
+                    return;
+                  }
+                  addAudioTrack({
+                    id: item.id,
+                    type: 'audio',
+                    url: item.url || '',
+                    name: item.name,
+                    duration: item.duration ?? Math.max((item.end_time ?? 0) - (item.start_time ?? 0), 5),
+                    startTime: item.start_time ?? 0,
+                    volume: 1,
+                    isMuted: false,
+                  });
+                } else {
+                  if (useVideoEditorStore.getState().clips.some(clip => clip.id === item.id)) {
+                    return;
+                  }
+                  addClip({
+                    id: item.id,
+                    type: mediaType,
+                    url: item.url || '',
+                    name: item.name,
+                    duration: item.duration ?? Math.max((item.end_time ?? 0) - (item.start_time ?? 0), 5),
+                    startTime: item.start_time ?? 0,
+                    layer: item.track_index ?? 0,
+                    transforms: {
+                      position: { x: 0, y: 0 },
+                      scale: { x: 1, y: 1 },
+                      rotation: 0,
+                      opacity: 1,
+                    },
+                  });
+                }
               });
             }
             
@@ -84,7 +120,7 @@ export function VideoEditorProvider({ children }: { children: ReactNode }) {
     };
 
     loadProjectData();
-  }, [projectId, params.projectId]);
+  }, [project.id, params.projectId]);
   
   // Helper function to validate media type
   const validateMediaType = (type: string): 'video' | 'image' | 'audio' => {

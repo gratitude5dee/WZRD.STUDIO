@@ -5,10 +5,11 @@ interface TimelinePlayheadProps {
   currentTime: number;
   duration: number;
   pixelsPerSecond: number;
+  scrollOffset?: number;
 }
 
-const TimelinePlayhead: React.FC<TimelinePlayheadProps> = ({ currentTime, duration, pixelsPerSecond }) => {
-  const position = currentTime * pixelsPerSecond;
+const TimelinePlayhead: React.FC<TimelinePlayheadProps> = ({ currentTime, duration, pixelsPerSecond, scrollOffset = 0 }) => {
+  const position = Math.max(0, currentTime * pixelsPerSecond - scrollOffset);
 
   return (
     <motion.div

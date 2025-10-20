@@ -2,15 +2,16 @@ import React, { useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { GripVertical, Video, Volume2, Image as ImageIcon, Check, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { MediaItem } from '@/store/videoEditorStore';
+import { AudioTrack, Clip } from '@/store/videoEditorStore';
 
 interface TimelineClipProps {
-  clip: MediaItem;
+  clip: Clip | AudioTrack;
   isSelected: boolean;
   onSelect: () => void;
   onConnectionPointClick: (clipId: string, point: 'left' | 'right', e: React.MouseEvent) => void;
   connectedPoints: Array<'left' | 'right'>;
   pixelsPerSecond: number;
+  scrollOffset: number;
 }
 
 const TimelineClip: React.FC<TimelineClipProps> = ({
@@ -20,6 +21,7 @@ const TimelineClip: React.FC<TimelineClipProps> = ({
   onConnectionPointClick,
   connectedPoints,
   pixelsPerSecond,
+  scrollOffset,
 }) => {
   const [isHovered, setIsHovered] = useState(false);
   const clipRef = useRef<HTMLDivElement>(null);
@@ -81,8 +83,8 @@ const TimelineClip: React.FC<TimelineClipProps> = ({
         `bg-gradient-to-br ${getClipGradient()}`
       )}
       style={{
-        left: `${(clip.startTime || 0) * pixelsPerSecond}px`,
-        width: `${((clip.endTime || clip.duration || 5) - (clip.startTime || 0)) * pixelsPerSecond}px`,
+        left: `${((clip.startTime ?? 0) - scrollOffset) * pixelsPerSecond}px`,
+        width: `${(clip.duration ?? 5) * pixelsPerSecond}px`,
         height: '48px',
         top: '8px'
       }}

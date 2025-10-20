@@ -1,15 +1,48 @@
-
 import { create } from 'zustand';
 
-// Types for our store
-export interface MediaItem {
-  id: string;
-  type: 'video' | 'image' | 'audio';
-  url: string;
+export interface ProjectMetadata {
+  id: string | null;
   name: string;
-  duration?: number;
-  startTime?: number;
-  endTime?: number;
+  duration: number;
+  fps: number;
+  resolution: {
+    width: number;
+    height: number;
+  };
+  transforms: {
+    position: { x: number; y: number };
+    scale: { x: number; y: number };
+    rotation: number;
+  };
+}
+
+export interface Clip {
+  id: string;
+  type: 'video' | 'image';
+  name: string;
+  url: string;
+  sourceId?: string | null;
+  startTime: number;
+  duration: number;
+  layer: number;
+  transforms: {
+    position: { x: number; y: number };
+    scale: { x: number; y: number };
+    rotation: number;
+    opacity: number;
+  };
+}
+
+export interface AudioTrack {
+  id: string;
+  type: 'audio';
+  name: string;
+  url: string;
+  sourceId?: string | null;
+  startTime: number;
+  duration: number;
+  volume: number;
+  isMuted: boolean;
 }
 
 export interface ClipConnection {
@@ -29,7 +62,7 @@ export interface ActiveConnection {
 
 export interface Keyframe {
   id: string;
-  mediaId: string;
+  targetId: string;
   time: number;
   properties: Record<string, any>;
 }
@@ -48,220 +81,433 @@ export interface DialogState {
   mediaLibrary: boolean;
 }
 
-export interface VideoEditorState {
-  // Project data
-  projectId: string | null;
-  projectName: string;
-  
-  // Playback state
+export interface PlaybackState {
   isPlaying: boolean;
   currentTime: number;
-  duration: number;
+  playbackRate: number;
   volume: number;
-  
-  // Media and timeline
-  mediaItems: MediaItem[];
-  selectedMediaIds: string[];
-  
-  // Timeline connections
+  isLooping: boolean;
+}
+
+export interface TimelineState {
+  zoom: number;
+  scroll: number;
+}
+
+export interface AIGenerationState {
+  status: 'idle' | 'running' | 'completed' | 'failed';
+  progress: number;
+  message?: string;
+  lastGeneratedId?: string;
+}
+
+export interface VideoEditorState {
+  project: ProjectMetadata;
+  playback: PlaybackState;
+  clips: Clip[];
+  audioTracks: AudioTrack[];
+  selectedClipIds: string[];
+  selectedAudioTrackIds: string[];
   clipConnections: ClipConnection[];
   activeConnection: ActiveConnection | null;
-  
-  // Keyframes
   keyframes: Keyframe[];
   selectedKeyframeIds: string[];
-  
-  // Dialogs
   dialogs: DialogState;
-  
-  // Media generation
   generationParams: GenerationParams;
-  isGenerating: boolean;
-  
-  // Actions
+  aiGeneration: AIGenerationState;
+  timeline: TimelineState;
+
   setProjectId: (id: string | null) => void;
   setProjectName: (name: string) => void;
-  
-  // Playback controls
+  updateProjectMetadata: (metadata: Partial<Omit<ProjectMetadata, 'id' | 'name'>> & { id?: string | null; name?: string }) => void;
+
   play: () => void;
   pause: () => void;
   togglePlayPause: () => void;
   setCurrentTime: (time: number) => void;
+  setPlaybackRate: (rate: number) => void;
   setDuration: (duration: number) => void;
   setVolume: (volume: number) => void;
-  
-  // Media management
-  addMediaItem: (item: MediaItem) => void;
-  updateMediaItem: (id: string, updates: Partial<MediaItem>) => void;
-  removeMediaItem: (id: string) => void;
-  selectMediaItem: (id: string, addToSelection?: boolean) => void;
-  deselectMediaItem: (id: string) => void;
-  clearMediaSelection: () => void;
-  
-  // Connection management
+  setIsLooping: (isLooping: boolean) => void;
+
+  addClip: (clip: Clip) => void;
+  updateClip: (id: string, updates: Partial<Clip>) => void;
+  removeClip: (id: string) => void;
+
+  addAudioTrack: (track: AudioTrack) => void;
+  updateAudioTrack: (id: string, updates: Partial<AudioTrack>) => void;
+  removeAudioTrack: (id: string) => void;
+
+  selectClip: (id: string, addToSelection?: boolean) => void;
+  deselectClip: (id: string) => void;
+  clearClipSelection: () => void;
+
+  selectAudioTrack: (id: string, addToSelection?: boolean) => void;
+  deselectAudioTrack: (id: string) => void;
+  clearAudioTrackSelection: () => void;
+
   addClipConnection: (connection: ClipConnection) => void;
   removeClipConnection: (id: string) => void;
   setActiveConnection: (connection: ActiveConnection | null) => void;
   updateActiveConnectionCursor: (x: number, y: number) => void;
-  
-  // Keyframe management
+
   addKeyframe: (keyframe: Keyframe) => void;
   updateKeyframe: (id: string, updates: Partial<Keyframe>) => void;
   removeKeyframe: (id: string) => void;
   selectKeyframe: (id: string, addToSelection?: boolean) => void;
   deselectKeyframe: (id: string) => void;
   clearKeyframeSelection: () => void;
-  
-  // Dialog controls
+
   openDialog: (dialog: keyof DialogState) => void;
   closeDialog: (dialog: keyof DialogState) => void;
   toggleDialog: (dialog: keyof DialogState) => void;
-  
-  // Generation controls
+
   setGenerationParams: (params: Partial<GenerationParams>) => void;
-  startGeneration: () => void;
-  finishGeneration: (success: boolean) => void;
-  
-  // Utility functions
+  startGeneration: (message?: string) => void;
+  updateGenerationProgress: (progress: number, message?: string) => void;
+  finishGeneration: (status?: 'completed' | 'failed', message?: string, lastGeneratedId?: string) => void;
+
+  setTimelineZoom: (zoom: number) => void;
+  zoomTimelineIn: (step?: number) => void;
+  zoomTimelineOut: (step?: number) => void;
+  setTimelineScroll: (scroll: number) => void;
+  scrollTimelineBy: (delta: number) => void;
+
   reset: () => void;
 }
 
-// Initial state
-const initialState = {
-  // Project data
-  projectId: null,
-  projectName: 'Untitled Project',
-  
-  // Playback state
-  isPlaying: false,
-  currentTime: 0,
-  duration: 0,
-  volume: 1,
-  
-  // Media and timeline
-  mediaItems: [],
-  selectedMediaIds: [],
-  
-  // Timeline connections
+const initialState: Pick<
+  VideoEditorState,
+  | 'project'
+  | 'playback'
+  | 'clips'
+  | 'audioTracks'
+  | 'selectedClipIds'
+  | 'selectedAudioTrackIds'
+  | 'clipConnections'
+  | 'activeConnection'
+  | 'keyframes'
+  | 'selectedKeyframeIds'
+  | 'dialogs'
+  | 'generationParams'
+  | 'aiGeneration'
+  | 'timeline'
+> = {
+  project: {
+    id: null,
+    name: 'Untitled Project',
+    duration: 0,
+    fps: 24,
+    resolution: { width: 1920, height: 1080 },
+    transforms: {
+      position: { x: 0, y: 0 },
+      scale: { x: 1, y: 1 },
+      rotation: 0,
+    },
+  },
+  playback: {
+    isPlaying: false,
+    currentTime: 0,
+    playbackRate: 1,
+    volume: 1,
+    isLooping: false,
+  },
+  clips: [],
+  audioTracks: [],
+  selectedClipIds: [],
+  selectedAudioTrackIds: [],
   clipConnections: [],
   activeConnection: null,
-  
-  // Keyframes
   keyframes: [],
   selectedKeyframeIds: [],
-  
-  // Dialogs
   dialogs: {
     projectSettings: false,
     export: false,
     mediaGeneration: false,
     mediaLibrary: false,
   },
-  
-  // Media generation
   generationParams: {
     prompt: '',
     imageUrl: undefined,
     model: 'default',
     settings: {},
   },
-  isGenerating: false,
+  aiGeneration: {
+    status: 'idle',
+    progress: 0,
+    message: undefined,
+    lastGeneratedId: undefined,
+  },
+  timeline: {
+    zoom: 1,
+    scroll: 0,
+  },
 };
 
-// Create the store
 export const useVideoEditorStore = create<VideoEditorState>((set) => ({
   ...initialState,
-  
-  // Project actions
-  setProjectId: (id) => set({ projectId: id }),
-  setProjectName: (name) => set({ projectName: name }),
-  
-  // Playback controls
-  play: () => set({ isPlaying: true }),
-  pause: () => set({ isPlaying: false }),
-  togglePlayPause: () => set((state) => ({ isPlaying: !state.isPlaying })),
-  setCurrentTime: (time) => set({ currentTime: time }),
-  setDuration: (duration) => set({ duration }),
-  setVolume: (volume) => set({ volume: Math.max(0, Math.min(1, volume)) }),
-  
-  // Media management
-  addMediaItem: (item) => set((state) => ({ 
-    mediaItems: [...state.mediaItems, item] 
-  })),
-  updateMediaItem: (id, updates) => set((state) => ({
-    mediaItems: state.mediaItems.map((item) => 
-      item.id === id ? { ...item, ...updates } : item
-    ),
-  })),
-  removeMediaItem: (id) => set((state) => ({
-    mediaItems: state.mediaItems.filter((item) => item.id !== id),
-    selectedMediaIds: state.selectedMediaIds.filter((itemId) => itemId !== id),
-  })),
-  selectMediaItem: (id, addToSelection = false) => set((state) => ({
-    selectedMediaIds: addToSelection 
-      ? [...state.selectedMediaIds, id]
-      : [id],
-  })),
-  deselectMediaItem: (id) => set((state) => ({
-    selectedMediaIds: state.selectedMediaIds.filter((itemId) => itemId !== id),
-  })),
-  clearMediaSelection: () => set({ selectedMediaIds: [] }),
-  
-  // Connection management
-  addClipConnection: (connection) => set((state) => ({
-    clipConnections: [...state.clipConnections, connection]
-  })),
-  removeClipConnection: (id) => set((state) => ({
-    clipConnections: state.clipConnections.filter((conn) => conn.id !== id)
-  })),
+
+  setProjectId: (id) =>
+    set((state) => ({
+      project: { ...state.project, id },
+    })),
+  setProjectName: (name) =>
+    set((state) => ({
+      project: { ...state.project, name },
+    })),
+  updateProjectMetadata: (metadata) =>
+    set((state) => ({
+      project: {
+        ...state.project,
+        ...('id' in metadata ? { id: metadata.id ?? state.project.id } : {}),
+        ...('name' in metadata ? { name: metadata.name ?? state.project.name } : {}),
+        duration: metadata.duration ?? state.project.duration,
+        fps: metadata.fps ?? state.project.fps,
+        resolution: metadata.resolution
+          ? {
+              ...state.project.resolution,
+              ...metadata.resolution,
+            }
+          : state.project.resolution,
+        transforms: metadata.transforms
+          ? {
+              position: {
+                ...state.project.transforms.position,
+                ...(metadata.transforms.position ?? {}),
+              },
+              scale: {
+                ...state.project.transforms.scale,
+                ...(metadata.transforms.scale ?? {}),
+              },
+              rotation: metadata.transforms.rotation ?? state.project.transforms.rotation,
+            }
+          : state.project.transforms,
+      },
+    })),
+
+  play: () =>
+    set((state) => ({
+      playback: { ...state.playback, isPlaying: true },
+    })),
+  pause: () =>
+    set((state) => ({
+      playback: { ...state.playback, isPlaying: false },
+    })),
+  togglePlayPause: () =>
+    set((state) => ({
+      playback: { ...state.playback, isPlaying: !state.playback.isPlaying },
+    })),
+  setCurrentTime: (time) =>
+    set((state) => ({
+      playback: { ...state.playback, currentTime: Math.max(0, time) },
+    })),
+  setPlaybackRate: (rate) =>
+    set((state) => ({
+      playback: { ...state.playback, playbackRate: Math.max(0.1, rate) },
+    })),
+  setDuration: (duration) =>
+    set((state) => ({
+      project: { ...state.project, duration: Math.max(0, duration) },
+      playback: {
+        ...state.playback,
+        currentTime: Math.min(state.playback.currentTime, Math.max(0, duration)),
+      },
+    })),
+  setVolume: (volume) =>
+    set((state) => ({
+      playback: {
+        ...state.playback,
+        volume: Math.max(0, Math.min(1, volume)),
+      },
+    })),
+  setIsLooping: (isLooping) =>
+    set((state) => ({
+      playback: { ...state.playback, isLooping },
+    })),
+
+  addClip: (clip) =>
+    set((state) => ({
+      clips: [...state.clips, clip],
+    })),
+  updateClip: (id, updates) =>
+    set((state) => ({
+      clips: state.clips.map((clip) =>
+        clip.id === id
+          ? {
+              ...clip,
+              ...updates,
+              transforms: updates.transforms ?? clip.transforms,
+            }
+          : clip
+      ),
+    })),
+  removeClip: (id) =>
+    set((state) => ({
+      clips: state.clips.filter((clip) => clip.id !== id),
+      selectedClipIds: state.selectedClipIds.filter((clipId) => clipId !== id),
+      clipConnections: state.clipConnections.filter(
+        (connection) => connection.sourceId !== id && connection.targetId !== id
+      ),
+      keyframes: state.keyframes.filter((keyframe) => keyframe.targetId !== id),
+      selectedKeyframeIds: state.selectedKeyframeIds.filter((keyframeId) => keyframeId !== id),
+    })),
+
+  addAudioTrack: (track) =>
+    set((state) => ({
+      audioTracks: [...state.audioTracks, track],
+    })),
+  updateAudioTrack: (id, updates) =>
+    set((state) => ({
+      audioTracks: state.audioTracks.map((track) =>
+        track.id === id
+          ? {
+              ...track,
+              ...updates,
+            }
+          : track
+      ),
+    })),
+  removeAudioTrack: (id) =>
+    set((state) => ({
+      audioTracks: state.audioTracks.filter((track) => track.id !== id),
+      selectedAudioTrackIds: state.selectedAudioTrackIds.filter((trackId) => trackId !== id),
+    })),
+
+  selectClip: (id, addToSelection = false) =>
+    set((state) => ({
+      selectedClipIds: addToSelection ? [...state.selectedClipIds, id] : [id],
+    })),
+  deselectClip: (id) =>
+    set((state) => ({
+      selectedClipIds: state.selectedClipIds.filter((clipId) => clipId !== id),
+    })),
+  clearClipSelection: () => set({ selectedClipIds: [] }),
+
+  selectAudioTrack: (id, addToSelection = false) =>
+    set((state) => ({
+      selectedAudioTrackIds: addToSelection ? [...state.selectedAudioTrackIds, id] : [id],
+    })),
+  deselectAudioTrack: (id) =>
+    set((state) => ({
+      selectedAudioTrackIds: state.selectedAudioTrackIds.filter((trackId) => trackId !== id),
+    })),
+  clearAudioTrackSelection: () => set({ selectedAudioTrackIds: [] }),
+
+  addClipConnection: (connection) =>
+    set((state) => ({
+      clipConnections: [...state.clipConnections, connection],
+    })),
+  removeClipConnection: (id) =>
+    set((state) => ({
+      clipConnections: state.clipConnections.filter((conn) => conn.id !== id),
+    })),
   setActiveConnection: (connection) => set({ activeConnection: connection }),
-  updateActiveConnectionCursor: (x, y) => set((state) => 
-    state.activeConnection 
-      ? { activeConnection: { ...state.activeConnection, cursorX: x, cursorY: y } }
-      : {}
-  ),
-  
-  // Keyframe management
-  addKeyframe: (keyframe) => set((state) => ({ 
-    keyframes: [...state.keyframes, keyframe] 
-  })),
-  updateKeyframe: (id, updates) => set((state) => ({
-    keyframes: state.keyframes.map((keyframe) => 
-      keyframe.id === id ? { ...keyframe, ...updates } : keyframe
+  updateActiveConnectionCursor: (x, y) =>
+    set((state) =>
+      state.activeConnection
+        ? { activeConnection: { ...state.activeConnection, cursorX: x, cursorY: y } }
+        : state
     ),
-  })),
-  removeKeyframe: (id) => set((state) => ({
-    keyframes: state.keyframes.filter((keyframe) => keyframe.id !== id),
-    selectedKeyframeIds: state.selectedKeyframeIds.filter((kfId) => kfId !== id),
-  })),
-  selectKeyframe: (id, addToSelection = false) => set((state) => ({
-    selectedKeyframeIds: addToSelection 
-      ? [...state.selectedKeyframeIds, id]
-      : [id],
-  })),
-  deselectKeyframe: (id) => set((state) => ({
-    selectedKeyframeIds: state.selectedKeyframeIds.filter((kfId) => kfId !== id),
-  })),
+
+  addKeyframe: (keyframe) =>
+    set((state) => ({
+      keyframes: [...state.keyframes, keyframe],
+    })),
+  updateKeyframe: (id, updates) =>
+    set((state) => ({
+      keyframes: state.keyframes.map((keyframe) =>
+        keyframe.id === id ? { ...keyframe, ...updates } : keyframe
+      ),
+    })),
+  removeKeyframe: (id) =>
+    set((state) => ({
+      keyframes: state.keyframes.filter((keyframe) => keyframe.id !== id),
+      selectedKeyframeIds: state.selectedKeyframeIds.filter((keyframeId) => keyframeId !== id),
+    })),
+  selectKeyframe: (id, addToSelection = false) =>
+    set((state) => ({
+      selectedKeyframeIds: addToSelection ? [...state.selectedKeyframeIds, id] : [id],
+    })),
+  deselectKeyframe: (id) =>
+    set((state) => ({
+      selectedKeyframeIds: state.selectedKeyframeIds.filter((keyframeId) => keyframeId !== id),
+    })),
   clearKeyframeSelection: () => set({ selectedKeyframeIds: [] }),
-  
-  // Dialog controls
-  openDialog: (dialog) => set((state) => ({
-    dialogs: { ...state.dialogs, [dialog]: true },
-  })),
-  closeDialog: (dialog) => set((state) => ({
-    dialogs: { ...state.dialogs, [dialog]: false },
-  })),
-  toggleDialog: (dialog) => set((state) => ({
-    dialogs: { ...state.dialogs, [dialog]: !state.dialogs[dialog] },
-  })),
-  
-  // Generation controls
-  setGenerationParams: (params) => set((state) => ({
-    generationParams: { ...state.generationParams, ...params },
-  })),
-  startGeneration: () => set({ isGenerating: true }),
-  finishGeneration: (success) => set({ isGenerating: false }),
-  
-  // Reset the entire state
-  reset: () => set(initialState),
+
+  openDialog: (dialog) =>
+    set((state) => ({
+      dialogs: { ...state.dialogs, [dialog]: true },
+    })),
+  closeDialog: (dialog) =>
+    set((state) => ({
+      dialogs: { ...state.dialogs, [dialog]: false },
+    })),
+  toggleDialog: (dialog) =>
+    set((state) => ({
+      dialogs: { ...state.dialogs, [dialog]: !state.dialogs[dialog] },
+    })),
+
+  setGenerationParams: (params) =>
+    set((state) => ({
+      generationParams: { ...state.generationParams, ...params },
+    })),
+  startGeneration: (message) =>
+    set((state) => ({
+      aiGeneration: {
+        status: 'running',
+        progress: 0,
+        message,
+        lastGeneratedId: undefined,
+      },
+    })),
+  updateGenerationProgress: (progress, message) =>
+    set((state) => ({
+      aiGeneration: {
+        ...state.aiGeneration,
+        status: 'running',
+        progress: Math.max(0, Math.min(1, progress)),
+        message: message ?? state.aiGeneration.message,
+      },
+    })),
+  finishGeneration: (status = 'completed', message, lastGeneratedId) =>
+    set((state) => ({
+      aiGeneration: {
+        status,
+        progress: status === 'completed' ? 1 : state.aiGeneration.progress,
+        message,
+        lastGeneratedId,
+      },
+    })),
+
+  setTimelineZoom: (zoom) =>
+    set((state) => ({
+      timeline: { ...state.timeline, zoom: Math.max(0.1, Math.min(zoom, 10)) },
+    })),
+  zoomTimelineIn: (step = 0.1) =>
+    set((state) => ({
+      timeline: {
+        ...state.timeline,
+        zoom: Math.max(0.1, Math.min(state.timeline.zoom + step, 10)),
+      },
+    })),
+  zoomTimelineOut: (step = 0.1) =>
+    set((state) => ({
+      timeline: {
+        ...state.timeline,
+        zoom: Math.max(0.1, Math.min(state.timeline.zoom - step, 10)),
+      },
+    })),
+  setTimelineScroll: (scroll) =>
+    set((state) => ({
+      timeline: { ...state.timeline, scroll: Math.max(0, scroll) },
+    })),
+  scrollTimelineBy: (delta) =>
+    set((state) => ({
+      timeline: {
+        ...state.timeline,
+        scroll: Math.max(0, state.timeline.scroll + delta),
+      },
+    })),
+
+  reset: () => ({ ...initialState }),
 }));

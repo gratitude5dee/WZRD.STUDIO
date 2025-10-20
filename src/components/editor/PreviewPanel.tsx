@@ -10,15 +10,12 @@ interface PreviewPanelProps {
 }
 
 const PreviewPanel = ({ videoRef }: PreviewPanelProps) => {
-  const { 
-    isPlaying, 
-    currentTime, 
-    duration, 
-    volume,
-    togglePlayPause, 
-    setCurrentTime, 
-    setDuration,
-    setVolume
+  const {
+    playback,
+    project,
+    togglePlayPause,
+    setCurrentTime,
+    setDuration
   } = useVideoEditor();
 
   // Update duration when video metadata is loaded
@@ -76,16 +73,16 @@ const PreviewPanel = ({ videoRef }: PreviewPanelProps) => {
         {/* Timeline slider */}
         <div className="mb-2 px-2">
           <Slider
-            value={[currentTime]}
+            value={[playback.currentTime]}
             min={0}
-            max={duration || 100}
+            max={project.duration || 100}
             step={0.01}
             onValueChange={handleSeek}
             className="cursor-pointer"
           />
           <div className="flex justify-between text-xs text-zinc-400 mt-1">
-            <span>{formatTime(currentTime)}</span>
-            <span>{formatTime(duration)}</span>
+            <span>{formatTime(playback.currentTime)}</span>
+            <span>{formatTime(project.duration)}</span>
           </div>
         </div>
         
@@ -106,7 +103,7 @@ const PreviewPanel = ({ videoRef }: PreviewPanelProps) => {
             className="text-white hover:bg-[#1D2130] bg-[#1D2130] p-2 h-10 w-10 rounded-full"
             onClick={togglePlayPause}
           >
-            {isPlaying ? (
+            {playback.isPlaying ? (
               <Pause className="h-5 w-5" />
             ) : (
               <Play className="h-5 w-5 ml-0.5" />
@@ -119,8 +116,9 @@ const PreviewPanel = ({ videoRef }: PreviewPanelProps) => {
             className="text-white hover:bg-[#1D2130] p-2 h-9 w-9"
             onClick={() => {
               if (videoRef.current) {
-                setCurrentTime(Math.min(duration, currentTime + 10));
-                videoRef.current.currentTime = Math.min(duration, currentTime + 10);
+                const nextTime = Math.min(project.duration, playback.currentTime + 10);
+                setCurrentTime(nextTime);
+                videoRef.current.currentTime = nextTime;
               }
             }}
           >
