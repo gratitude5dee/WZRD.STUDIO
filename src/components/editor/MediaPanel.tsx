@@ -58,26 +58,27 @@ const MediaPanel = () => {
       try {
         toast.info(`Uploading ${file.name}...`);
 
+        const bucket = mediaType === 'audio' ? 'audio' : 'videos';
         const fileExt = file.name.split('.').pop();
         const fileName = `${uuidv4()}.${fileExt}`;
         const filePath = `${project.id}/${fileName}`;
 
         const { error: uploadError } = await supabase
           .storage
-          .from('media')
+          .from(bucket)
           .upload(filePath, file);
 
         if (uploadError) throw uploadError;
 
         const { data: { publicUrl } } = supabase
           .storage
-          .from('media')
+          .from(bucket)
           .getPublicUrl(filePath);
 
         const mediaItemId = await supabaseService.media.create(project.id, {
           type: mediaType,
           name: file.name,
-          bucket: mediaType === 'audio' ? 'audio' : 'videos',
+          bucket,
           storagePath: filePath,
           durationMs: mediaType === 'image' ? 5000 : undefined,
           startTimeMs: 0,
