@@ -565,15 +565,17 @@ const AIGenerationPanel: React.FC = () => {
       }
 
       await fetchAndUploadMedia(mediaInfo);
+      const successMessage = 'Generation completed successfully.';
       toast.success('AI media generated and added to your project!');
-      setStatusMessage('Generation completed successfully.');
+      setStatusMessage(successMessage);
+      finishGeneration('completed', successMessage);
     } catch (error) {
       console.error('AI generation failed:', error);
       const message = error instanceof Error ? error.message : 'Failed to generate media. Please try again later.';
       setErrorMessage(message);
+      setStatusMessage(message);
       toast.error(message);
-    } finally {
-      finishGeneration('completed');
+      finishGeneration('failed', message);
     }
   };
 
