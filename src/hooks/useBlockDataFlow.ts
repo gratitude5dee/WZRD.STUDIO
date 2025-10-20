@@ -1,9 +1,20 @@
 import { useState, useCallback } from 'react';
 import { BlockData, Connection } from '@/types/blockTypes';
+import { 
+  EdgeDefinition, 
+  NodeDefinition, 
+  Port, 
+  ConnectionValidator,
+  DirtyStateTracker,
+  EdgeStatus,
+  NodeStatus
+} from '@/types/computeFlow';
 
 export const useBlockDataFlow = () => {
   const [blockData, setBlockData] = useState<Record<string, BlockData>>({});
   const [connections, setConnections] = useState<Connection[]>([]);
+  const [edgeStatuses, setEdgeStatuses] = useState<Record<string, EdgeStatus>>({});
+  const [nodeStatuses, setNodeStatuses] = useState<Record<string, NodeStatus>>({});
 
   // Update block output and propagate to connected blocks
   const updateBlockOutput = useCallback((blockId: string, outputId: string, value: any) => {
@@ -53,8 +64,12 @@ export const useBlockDataFlow = () => {
     return block?.outputs?.[outputId] || null;
   }, [blockData]);
 
-  // Add a new connection
-  const addConnection = useCallback((connection: Connection) => {
+  // Validate and add a new connection
+  const addConnection = useCallback((
+    connection: Connection,
+    sourcePort?: Port,
+    targetPort?: Port
+  ) => {
     setConnections(prev => {
       // Check if connection already exists
       const exists = prev.some(
@@ -66,22 +81,52 @@ export const useBlockDataFlow = () => {
       
       if (exists) return prev;
 
+      // Validate connection if ports provided
+      if (sourcePort && targetPort) {
+        const edgeDefinitions: EdgeDefinition[] = prev.map(c => ({
+          id: c.id,
+          source: { nodeId: c.sourceBlockId, portId: c.sourcePointId || '' },
+          target: { nodeId: c.targetBlockId, portId: c.targetPointId || '' },
+          dataType: c.dataType,
+          status: 'idle'
+        }));
+
+        const validation = ConnectionValidator.validateConnection(
+          sourcePort,
+          targetPort,
+          edgeDefinitions,
+          connection.sourceBlockId,
+          connection.targetBlockId
+        );
+
+        if (!validation.valid) {
+          console.error('Connection validation failed:', validation.error);
+          return prev;
+        }
+      }
+
       const newConnections = [...prev, connection];
       
       // Propagate existing output data to the new connection
       const sourceBlock = blockData[connection.sourceBlockId];
-      if (sourceBlock?.outputs?.[connection.sourcePointId]) {
+      if (sourceBlock?.outputs?.[connection.sourcePointId || '']) {
         setBlockData(current => ({
           ...current,
           [connection.targetBlockId]: {
             ...current[connection.targetBlockId],
             inputs: {
               ...current[connection.targetBlockId]?.inputs,
-              [connection.targetPointId]: sourceBlock.outputs[connection.sourcePointId]
+              [connection.targetPointId || '']: sourceBlock.outputs[connection.sourcePointId || '']
             }
           }
         }));
       }
+
+      // Mark target node as dirty
+      setNodeStatuses(current => ({
+        ...current,
+        [connection.targetBlockId]: 'dirty'
+      }));
 
       return newConnections;
     });
@@ -106,15 +151,97 @@ export const useBlockDataFlow = () => {
     }));
   }, []);
 
+  // Update edge status
+  const updateEdgeStatus = useCallback((edgeId: string, status: EdgeStatus) => {
+    setEdgeStatuses(prev => ({
+      ...prev,
+      [edgeId]: status
+    }));
+  }, []);
+
+  // Update node status
+  const updateNodeStatus = useCallback((nodeId: string, status: NodeStatus) => {
+    setNodeStatuses(prev => ({
+      ...prev,
+      [nodeId]: status
+    }));
+  }, []);
+
+  // Mark node and downstream as dirty
+  const markNodeDirty = useCallback((nodeId: string) => {
+    const nodes = Object.values(blockData).map(bd => ({
+      id: bd.id,
+      kind: bd.type === 'text' ? 'Text' : bd.type === 'image' ? 'Image' : 'Video',
+      version: '1.0',
+      label: bd.id,
+      position: bd.position,
+      inputs: [],
+      outputs: [],
+      params: {},
+      status: 'idle' as NodeStatus,
+      isDirty: false
+    })) as NodeDefinition[];
+
+    const edges = connections.map(c => ({
+      id: c.id,
+      source: { nodeId: c.sourceBlockId, portId: c.sourcePointId || '' },
+      target: { nodeId: c.targetBlockId, portId: c.targetPointId || '' },
+      dataType: c.dataType,
+      status: 'idle' as EdgeStatus
+    }));
+
+    const dirtyNodeIds = DirtyStateTracker.markDirtyDownstream(nodeId, nodes, edges);
+    
+    setNodeStatuses(current => {
+      const updated = { ...current };
+      dirtyNodeIds.forEach(id => {
+        updated[id] = 'dirty';
+      });
+      return updated;
+    });
+  }, [blockData, connections]);
+
+  // Get dirty subgraph for partial execution
+  const getDirtySubgraph = useCallback(() => {
+    const nodes = Object.values(blockData).map(bd => ({
+      id: bd.id,
+      kind: bd.type === 'text' ? 'Text' : bd.type === 'image' ? 'Image' : 'Video',
+      version: '1.0',
+      label: bd.id,
+      position: bd.position,
+      inputs: [],
+      outputs: [],
+      params: {},
+      status: nodeStatuses[bd.id] || 'idle',
+      isDirty: nodeStatuses[bd.id] === 'dirty'
+    })) as NodeDefinition[];
+
+    const edges = connections.map(c => ({
+      id: c.id,
+      source: { nodeId: c.sourceBlockId, portId: c.sourcePointId || '' },
+      target: { nodeId: c.targetBlockId, portId: c.targetPointId || '' },
+      dataType: c.dataType,
+      status: edgeStatuses[c.id] || 'idle'
+    }));
+
+    return DirtyStateTracker.computeDirtySubgraph(nodes, edges);
+  }, [blockData, connections, nodeStatuses, edgeStatuses]);
+
   return {
     blockData,
     connections,
+    edgeStatuses,
+    nodeStatuses,
     updateBlockOutput,
     getBlockInput,
     getBlockOutput,
     addConnection,
     removeConnection,
     initializeBlock,
-    setConnections
+    setConnections,
+    updateEdgeStatus,
+    updateNodeStatus,
+    markNodeDirty,
+    getDirtySubgraph
   };
 };
