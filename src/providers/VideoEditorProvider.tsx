@@ -1,6 +1,7 @@
 import React, { createContext, useContext, ReactNode, useEffect, useState } from 'react';
 import { useVideoEditorStore } from '@/store/videoEditorStore';
 import { supabase } from '@/integrations/supabase/client';
+import { supabaseService } from '@/services/supabaseService';
 import { toast } from "sonner";
 import { useParams } from "react-router-dom";
 
@@ -107,7 +108,7 @@ export function VideoEditorProvider({ children }: { children: ReactNode }) {
                 }
               });
             }
-            
+
             // We could also load tracks, track items, and keyframes here
           }
         }
@@ -121,16 +122,6 @@ export function VideoEditorProvider({ children }: { children: ReactNode }) {
 
     loadProjectData();
   }, [project.id, params.projectId]);
-  
-  // Helper function to validate media type
-  const validateMediaType = (type: string): 'video' | 'image' | 'audio' => {
-    if (type === 'video' || type === 'image' || type === 'audio') {
-      return type;
-    }
-    // Default to 'image' if type is invalid
-    console.warn(`Invalid media type: ${type}, defaulting to 'image'`);
-    return 'image';
-  };
   
   // Clean up when unmounting
   useEffect(() => {

@@ -64,7 +64,7 @@ const MediaPanel = () => {
 
         const { error: uploadError } = await supabase
           .storage
-          .from('media')
+          .from(bucket)
           .upload(filePath, file);
 
         if (uploadError) throw uploadError;

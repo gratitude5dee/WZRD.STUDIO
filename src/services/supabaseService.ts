@@ -55,6 +55,23 @@ export interface Keyframe {
   updated_at?: string;
 }
 
+export interface RenderJob {
+  id: string;
+  project_id: string;
+  user_id: string;
+  status: 'queued' | 'processing' | 'completed' | 'failed' | 'cancelled';
+  render_profile?: string | null;
+  payload: Record<string, any>;
+  result_bucket?: string | null;
+  result_path?: string | null;
+  progress: number;
+  error_message?: string | null;
+  created_at?: string;
+  updated_at?: string;
+  started_at?: string | null;
+  completed_at?: string | null;
+}
+
 // Helper functions to validate and convert types
 const validateTrackType = (type: string): 'video' | 'audio' => {
   if (type === 'video' || type === 'audio') {
@@ -162,124 +179,336 @@ export const projectService = {
   }
 };
 
+const MS_PER_SECOND = 1000;
+
+const msToSeconds = (value?: number | null): number | undefined => {
+  if (typeof value === 'number' && !Number.isNaN(value)) {
+    return value / MS_PER_SECOND;
+  }
+  return undefined;
+};
+
+const secondsToMs = (value?: number): number | null => {
+  if (typeof value === 'number' && !Number.isNaN(value)) {
+    return Math.round(value * MS_PER_SECOND);
+  }
+  return null;
+};
+
+const resolvePublicUrl = (bucket?: string | null, path?: string | null): string => {
+  if (!bucket || !path) {
+    return '';
+  }
+  const { data } = supabase.storage.from(bucket).getPublicUrl(path);
+  return data.publicUrl;
+};
+
+type VideoClipRecord = {
+  id: string;
+  project_id: string;
+  user_id: string;
+  name: string;
+  asset_type: string;
+  storage_bucket: string;
+  storage_path: string;
+  thumbnail_bucket: string | null;
+  thumbnail_path: string | null;
+  duration_ms: number | null;
+  start_time_ms: number | null;
+  end_time_ms: number | null;
+  metadata: Json | null;
+};
+
+type AudioTrackRecord = {
+  id: string;
+  project_id: string;
+  user_id: string;
+  name: string;
+  storage_bucket: string;
+  storage_path: string;
+  duration_ms: number | null;
+  start_time_ms: number | null;
+  end_time_ms: number | null;
+  waveform: Json | null;
+  metadata: Json | null;
+};
+
+const clipAssetTypeToMediaType = (assetType?: string | null): 'video' | 'image' => {
+  return assetType === 'image' ? 'image' : 'video';
+};
+
+const mapVideoClipToMediaItem = (clip: VideoClipRecord): MediaItem => {
+  const type = clipAssetTypeToMediaType(clip.asset_type);
+  const url = resolvePublicUrl(clip.storage_bucket, clip.storage_path);
+  const thumbnailUrl = resolvePublicUrl(clip.thumbnail_bucket ?? undefined, clip.thumbnail_path ?? undefined);
+
+  return {
+    id: clip.id,
+    type,
+    url,
+    name: clip.name,
+    duration: msToSeconds(clip.duration_ms),
+    startTime: msToSeconds(clip.start_time_ms),
+    endTime: msToSeconds(clip.end_time_ms),
+    storageBucket: clip.storage_bucket,
+    storagePath: clip.storage_path,
+    thumbnailBucket: clip.thumbnail_bucket ?? undefined,
+    thumbnailPath: clip.thumbnail_path ?? undefined,
+    thumbnailUrl: thumbnailUrl || undefined
+  };
+};
+
+const mapAudioTrackToMediaItem = (track: AudioTrackRecord): MediaItem => {
+  const url = resolvePublicUrl(track.storage_bucket, track.storage_path);
+
+  return {
+    id: track.id,
+    type: 'audio',
+    url,
+    name: track.name,
+    duration: msToSeconds(track.duration_ms),
+    startTime: msToSeconds(track.start_time_ms),
+    endTime: msToSeconds(track.end_time_ms),
+    storageBucket: track.storage_bucket,
+    storagePath: track.storage_path
+  };
+};
+
+const mapRenderJobRow = (job: any): RenderJob => ({
+  id: job.id,
+  project_id: job.project_id,
+  user_id: job.user_id,
+  status: job.status,
+  render_profile: job.render_profile,
+  payload: convertJsonToRecord(job.payload ?? {}),
+  result_bucket: job.result_bucket ?? null,
+  result_path: job.result_path ?? null,
+  progress: typeof job.progress === 'number' ? job.progress : 0,
+  error_message: job.error_message ?? null,
+  created_at: job.created_at ?? undefined,
+  updated_at: job.updated_at ?? undefined,
+  started_at: job.started_at ?? null,
+  completed_at: job.completed_at ?? null,
+});
+
+interface CreateMediaPayload {
+  type: 'video' | 'image' | 'audio';
+  name: string;
+  bucket: 'videos' | 'audio';
+  storagePath: string;
+  durationMs?: number;
+  startTimeMs?: number;
+  endTimeMs?: number;
+  metadata?: Record<string, any>;
+  thumbnailPath?: string;
+  thumbnailBucket?: string;
+}
+
 // Media Items
 export const mediaService = {
   async find(id: string): Promise<MediaItem | null> {
     try {
-      const { data, error } = await supabase
-        .from('media_items')
+      const { data: clip, error: clipError } = await supabase
+        .from('video_clips')
         .select('*')
         .eq('id', id)
-        .single();
-        
-      if (error) throw error;
-      
-      // Convert to MediaItem format
-      return data ? {
-        id: data.id,
-        type: validateMediaType(data.media_type), // Reusing the function from VideoEditorProvider
-        url: data.url || '',
-        name: data.name,
-        duration: data.duration,
-        startTime: data.start_time,
-        endTime: data.end_time
-      } : null;
+        .maybeSingle();
+
+      if (clipError && clipError.code !== 'PGRST116') throw clipError;
+      if (clip) {
+        return mapVideoClipToMediaItem(clip as VideoClipRecord);
+      }
+
+      const { data: track, error: trackError } = await supabase
+        .from('audio_tracks')
+        .select('*')
+        .eq('id', id)
+        .maybeSingle();
+
+      if (trackError && trackError.code !== 'PGRST116') throw trackError;
+      if (track) {
+        return mapAudioTrackToMediaItem(track as AudioTrackRecord);
+      }
+
+      return null;
     } catch (error) {
       handleError(error, 'fetching media item');
       return null;
     }
   },
-  
+
   async listByProject(projectId: string): Promise<MediaItem[]> {
     try {
-      const { data, error } = await supabase
-        .from('media_items')
-        .select('*')
-        .eq('project_id', projectId)
-        .order('created_at', { ascending: false });
-        
-      if (error) throw error;
-      
-      // Convert to MediaItem format
-      return (data || []).map(item => ({
-        id: item.id,
-        type: validateMediaType(item.media_type),
-        url: item.url || '',
-        name: item.name,
-        duration: item.duration,
-        startTime: item.start_time,
-        endTime: item.end_time
-      }));
+      const [videoClipsResult, audioTracksResult] = await Promise.all([
+        supabase
+          .from('video_clips')
+          .select('*')
+          .eq('project_id', projectId)
+          .order('created_at', { ascending: true }),
+        supabase
+          .from('audio_tracks')
+          .select('*')
+          .eq('project_id', projectId)
+          .order('created_at', { ascending: true })
+      ]);
+
+      if (videoClipsResult.error) throw videoClipsResult.error;
+      if (audioTracksResult.error) throw audioTracksResult.error;
+
+      const clips = (videoClipsResult.data || []).map((clip) => mapVideoClipToMediaItem(clip as VideoClipRecord));
+      const tracks = (audioTracksResult.data || []).map((track) => mapAudioTrackToMediaItem(track as AudioTrackRecord));
+
+      return [...clips, ...tracks];
     } catch (error) {
       handleError(error, 'listing media items');
       return [];
     }
   },
-  
-  async create(projectId: string, mediaItem: {
-    type: 'video' | 'image' | 'audio';
-    name: string;
-    url?: string;
-    duration?: number;
-    startTime?: number;
-    endTime?: number;
-  }): Promise<string> {
+
+  async create(projectId: string, mediaItem: CreateMediaPayload): Promise<MediaItem> {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      if (mediaItem.type === 'audio') {
+        const { data, error } = await supabase
+          .from('audio_tracks')
+          .insert({
+            project_id: projectId,
+            user_id: user.id,
+            name: mediaItem.name,
+            storage_bucket: mediaItem.bucket,
+            storage_path: mediaItem.storagePath,
+            duration_ms: mediaItem.durationMs ?? null,
+            start_time_ms: mediaItem.startTimeMs ?? null,
+            end_time_ms: mediaItem.endTimeMs ?? null,
+            metadata: mediaItem.metadata ?? {},
+          })
+          .select('*')
+          .single();
+
+        if (error) throw error;
+        return mapAudioTrackToMediaItem(data as AudioTrackRecord);
+      }
+
       const { data, error } = await supabase
-        .from('media_items')
+        .from('video_clips')
         .insert({
           project_id: projectId,
-          media_type: mediaItem.type,
+          user_id: user.id,
           name: mediaItem.name,
-          url: mediaItem.url,
-          duration: mediaItem.duration,
-          start_time: mediaItem.startTime || 0,
-          end_time: mediaItem.endTime
+          asset_type: mediaItem.type,
+          storage_bucket: mediaItem.bucket,
+          storage_path: mediaItem.storagePath,
+          thumbnail_bucket: mediaItem.thumbnailBucket ?? null,
+          thumbnail_path: mediaItem.thumbnailPath ?? null,
+          duration_ms: mediaItem.durationMs ?? null,
+          start_time_ms: mediaItem.startTimeMs ?? null,
+          end_time_ms: mediaItem.endTimeMs ?? null,
+          metadata: mediaItem.metadata ?? {},
         })
-        .select('id')
+        .select('*')
         .single();
-        
+
       if (error) throw error;
-      return data.id;
+      return mapVideoClipToMediaItem(data as VideoClipRecord);
     } catch (error) {
       handleError(error, 'creating media item');
       throw error;
     }
   },
-  
-  async update(id: string, updates: {
+
+  async update(id: string, type: 'video' | 'image' | 'audio', updates: {
     name?: string;
-    url?: string;
     duration?: number;
     startTime?: number;
     endTime?: number;
+    metadata?: Record<string, any>;
   }): Promise<void> {
     try {
+      if (type === 'audio') {
+        const updatePayload: Record<string, any> = {};
+        if (typeof updates.name !== 'undefined') updatePayload.name = updates.name;
+        if (typeof updates.duration !== 'undefined') updatePayload.duration_ms = secondsToMs(updates.duration);
+        if (typeof updates.startTime !== 'undefined') updatePayload.start_time_ms = secondsToMs(updates.startTime);
+        if (typeof updates.endTime !== 'undefined') updatePayload.end_time_ms = secondsToMs(updates.endTime);
+        if (typeof updates.metadata !== 'undefined') updatePayload.metadata = updates.metadata;
+
+        const { error } = await supabase
+          .from('audio_tracks')
+          .update(updatePayload)
+          .eq('id', id);
+
+        if (error) throw error;
+        return;
+      }
+
+      const updatePayload: Record<string, any> = {};
+      if (typeof updates.name !== 'undefined') updatePayload.name = updates.name;
+      if (typeof updates.duration !== 'undefined') updatePayload.duration_ms = secondsToMs(updates.duration);
+      if (typeof updates.startTime !== 'undefined') updatePayload.start_time_ms = secondsToMs(updates.startTime);
+      if (typeof updates.endTime !== 'undefined') updatePayload.end_time_ms = secondsToMs(updates.endTime);
+      if (typeof updates.metadata !== 'undefined') updatePayload.metadata = updates.metadata;
+
       const { error } = await supabase
-        .from('media_items')
-        .update({
-          name: updates.name,
-          url: updates.url,
-          duration: updates.duration,
-          start_time: updates.startTime,
-          end_time: updates.endTime
-        })
+        .from('video_clips')
+        .update(updatePayload)
         .eq('id', id);
-        
+
       if (error) throw error;
     } catch (error) {
       handleError(error, 'updating media item');
     }
   },
-  
-  async delete(id: string): Promise<void> {
+
+  async delete(id: string, type: 'video' | 'image' | 'audio'): Promise<void> {
     try {
-      const { error } = await supabase
-        .from('media_items')
+      if (type === 'audio') {
+        const { data, error } = await supabase
+          .from('audio_tracks')
+          .select('*')
+          .eq('id', id)
+          .single();
+
+        if (error) throw error;
+
+        const track = data as AudioTrackRecord;
+        if (track.storage_path) {
+          await supabase.storage.from(track.storage_bucket).remove([track.storage_path]);
+        }
+
+        const { error: deleteError } = await supabase
+          .from('audio_tracks')
+          .delete()
+          .eq('id', id);
+
+        if (deleteError) throw deleteError;
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('video_clips')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (error) throw error;
+
+      const clip = data as VideoClipRecord;
+      if (clip.storage_path) {
+        await supabase.storage.from(clip.storage_bucket).remove([clip.storage_path]);
+      }
+      if (clip.thumbnail_path) {
+        const thumbBucket = clip.thumbnail_bucket ?? 'thumbnails';
+        await supabase.storage.from(thumbBucket).remove([clip.thumbnail_path]);
+      }
+
+      const { error: deleteError } = await supabase
+        .from('video_clips')
         .delete()
         .eq('id', id);
-        
-      if (error) throw error;
+
+      if (deleteError) throw deleteError;
     } catch (error) {
       handleError(error, 'deleting media item');
     }
@@ -546,14 +775,95 @@ export const keyframeService = {
   }
 };
 
-// Define the validateMediaType function used earlier
-const validateMediaType = (type: string): 'video' | 'image' | 'audio' => {
-  if (type === 'video' || type === 'image' || type === 'audio') {
-    return type;
+// Render jobs
+export const renderJobService = {
+  async listByProject(projectId: string): Promise<RenderJob[]> {
+    try {
+      const { data, error } = await supabase
+        .from('render_jobs')
+        .select('*')
+        .eq('project_id', projectId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return (data || []).map(mapRenderJobRow);
+    } catch (error) {
+      handleError(error, 'listing render jobs');
+      return [];
+    }
+  },
+
+  async create(projectId: string, options: {
+    renderProfile?: string;
+    payload?: Record<string, any>;
+  }): Promise<RenderJob> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      const { data, error } = await supabase
+        .from('render_jobs')
+        .insert({
+          project_id: projectId,
+          user_id: user.id,
+          render_profile: options.renderProfile ?? 'default',
+          payload: options.payload ?? {},
+        })
+        .select('*')
+        .single();
+
+      if (error) throw error;
+      return mapRenderJobRow(data);
+    } catch (error) {
+      handleError(error, 'creating render job');
+      throw error;
+    }
+  },
+
+  async update(id: string, updates: {
+    status?: RenderJob['status'];
+    progress?: number;
+    error_message?: string | null;
+    result_bucket?: string | null;
+    result_path?: string | null;
+    started_at?: string | null;
+    completed_at?: string | null;
+    payload?: Record<string, any>;
+  }): Promise<void> {
+    try {
+      const updatePayload: Record<string, any> = {};
+      if (typeof updates.status !== 'undefined') updatePayload.status = updates.status;
+      if (typeof updates.progress !== 'undefined') updatePayload.progress = updates.progress;
+      if (typeof updates.error_message !== 'undefined') updatePayload.error_message = updates.error_message;
+      if (typeof updates.result_bucket !== 'undefined') updatePayload.result_bucket = updates.result_bucket;
+      if (typeof updates.result_path !== 'undefined') updatePayload.result_path = updates.result_path;
+      if (typeof updates.started_at !== 'undefined') updatePayload.started_at = updates.started_at;
+      if (typeof updates.completed_at !== 'undefined') updatePayload.completed_at = updates.completed_at;
+      if (typeof updates.payload !== 'undefined') updatePayload.payload = updates.payload;
+
+      const { error } = await supabase
+        .from('render_jobs')
+        .update(updatePayload)
+        .eq('id', id);
+
+      if (error) throw error;
+    } catch (error) {
+      handleError(error, 'updating render job');
+    }
+  },
+
+  async delete(id: string): Promise<void> {
+    try {
+      const { error } = await supabase
+        .from('render_jobs')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+    } catch (error) {
+      handleError(error, 'deleting render job');
+    }
   }
-  // Default to 'image' if type is invalid
-  console.warn(`Invalid media type: ${type}, defaulting to 'image'`);
-  return 'image';
 };
 
 // Scene types
@@ -871,6 +1181,7 @@ export const supabaseService = {
   tracks: trackService,
   trackItems: trackItemService,
   keyframes: keyframeService,
+  renderJobs: renderJobService,
   scenes: sceneService,
   characters: characterService,
   storylines: storylineService,
