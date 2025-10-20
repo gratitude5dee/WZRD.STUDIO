@@ -78,10 +78,6 @@ const PreviewPanel = ({ clips, audioTracks }: PreviewPanelProps) => {
   }, [playback.volume]);
 
   useEffect(() => {
-    playerRef.current?.setPlaybackRate?.(playback.playbackRate);
-  }, [playback.playbackRate]);
-
-  useEffect(() => {
     if (effectiveDuration > 0 && Math.abs(duration - effectiveDuration) > 0.001) {
       setDuration(effectiveDuration);
     }
@@ -102,7 +98,7 @@ const PreviewPanel = ({ clips, audioTracks }: PreviewPanelProps) => {
           <div className="w-full h-full" style={{ aspectRatio: `${compositionWidth} / ${compositionHeight}` }}>
             <Player
               ref={playerRef}
-              component={VideoComposition}
+              component={VideoComposition as any}
               durationInFrames={durationInFrames}
               fps={fps}
               compositionWidth={compositionWidth}
@@ -113,23 +109,8 @@ const PreviewPanel = ({ clips, audioTracks }: PreviewPanelProps) => {
               autoPlay={false}
               clickToPlay={false}
               doubleClickToFullscreen={false}
-              renderLoading={() => null}
-              frame={currentFrame}
+              playbackRate={playback.playbackRate}
               style={{ width: '100%', height: '100%' }}
-              onPlay={play}
-              onPause={pause}
-              onEnded={() => {
-                pause();
-                if (!playback.isLooping) {
-                  setCurrentTime(effectiveDuration);
-                }
-              }}
-              onFrameUpdate={(frame) => {
-                const nextTime = frame / fps;
-                if (Math.abs(nextTime - playback.currentTime) > 1 / fps / 2) {
-                  setCurrentTime(nextTime);
-                }
-              }}
             />
           </div>
         </div>
