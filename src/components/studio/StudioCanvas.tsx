@@ -21,21 +21,18 @@ import {
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Save, Zap, Type, Image as ImageIcon, Video, Keyboard, Undo, Redo, Download, Upload, PanelRightOpen, Sparkles } from 'lucide-react';
+import { Save, Zap, History, Keyboard } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
-import { Button } from '@/components/ui/button';
 import EnhancedNode from './nodes/EnhancedNode';
 import EnhancedEdge from './edges/EnhancedEdge';
 import { ContextMenu } from './ContextMenu';
-import { RightPanel } from './RightPanel';
-import { QueueStatus, QueueItem } from './QueueStatus';
-import { IconSidebar } from './IconSidebar';
+import { SimplifiedSidebar } from './SimplifiedSidebar';
+import { ResultsGallery } from './ResultsGallery';
 import { useUndoRedo } from '@/hooks/useUndoRedo';
 import { supabaseService } from '@/services/supabaseService';
 import { useParams } from 'react-router-dom';
 import { ConnectionValidator } from '@/lib/validation/connectionValidator';
 import { GraphExecutor } from '@/lib/execution/graphExecutor';
-import { supabase } from '@/integrations/supabase/client';
 import { useRealtimeExecution } from '@/hooks/useRealtimeExecution';
 
 export interface Block {
@@ -108,18 +105,16 @@ const StudioCanvasInner = ({
     blocks.map(block => blockToNode(block, blockModels))
   );
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
-  const [showShortcuts, setShowShortcuts] = useState(true);
+  const [showShortcuts, setShowShortcuts] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; node?: Node } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [rightPanelOpen, setRightPanelOpen] = useState(false);
+  const [galleryOpen, setGalleryOpen] = useState(true);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
-  const [queue, setQueue] = useState<QueueItem[]>([]);
   const [currentRunId, setCurrentRunId] = useState<string | null>(null);
   const [isExecuting, setIsExecuting] = useState(false);
-  const { fitView, zoomIn, zoomOut, getNodes, getEdges } = useReactFlow();
-  const { takeSnapshot, undo, redo, canUndo, canRedo } = useUndoRedo(nodes, edges);
-  const rfRef = useRef<HTMLDivElement>(null);
+  const { fitView, getNodes, getEdges } = useReactFlow();
+  const { takeSnapshot, undo, redo } = useUndoRedo(nodes, edges);
   const validator = useRef(new ConnectionValidator()).current;
   const executor = useRef(new GraphExecutor()).current;
 
@@ -127,11 +122,8 @@ const StudioCanvasInner = ({
   const { resetNodeStatuses } = useRealtimeExecution(
     currentRunId,
     () => {
-      // On workflow completion
       setIsExecuting(false);
       setCurrentRunId(null);
-      
-      // Update nodes with final outputs
       const currentNodes = getNodes();
       setNodes(currentNodes.map(node => {
         if (node.data.outputs?.['image-out']?.url) {
@@ -146,8 +138,7 @@ const StudioCanvasInner = ({
         return node;
       }));
     },
-    (error) => {
-      // On workflow failure
+    () => {
       setIsExecuting(false);
       setCurrentRunId(null);
     }
@@ -160,8 +151,6 @@ const StudioCanvasInner = ({
 
       try {
         setIsLoading(true);
-        
-        // Load blocks
         const loadedBlocks = await supabaseService.studioBlocks.listByProject(projectId);
         const flowNodes = loadedBlocks.map((block): Node => ({
           id: block.id,
@@ -176,7 +165,6 @@ const StudioCanvasInner = ({
         }));
         setNodes(flowNodes);
 
-        // Load connections
         const loadedConnections = await supabaseService.studioConnections.listByProject(projectId);
         const flowEdges = loadedConnections.map((conn): Edge => ({
           id: conn.id,
@@ -195,7 +183,7 @@ const StudioCanvasInner = ({
         }));
         setEdges(flowEdges);
 
-        toast({ title: 'Project loaded', description: 'Your canvas has been restored' });
+        toast({ title: 'Project loaded' });
       } catch (error) {
         console.error('Error loading studio data:', error);
         toast({ title: 'Error loading project', variant: 'destructive' });
@@ -213,16 +201,8 @@ const StudioCanvasInner = ({
       const sourceNode = nodes.find((n) => n.id === params.source);
       const targetNode = nodes.find((n) => n.id === params.target);
 
-      if (!sourceNode || !targetNode) {
-        toast({
-          title: 'Invalid Connection',
-          description: 'Source or target node not found',
-          variant: 'destructive',
-        });
-        return;
-      }
+      if (!sourceNode || !targetNode) return;
 
-      // Validate connection using ConnectionValidator
       const validation = validator.validateConnection(
         sourceNode,
         targetNode,
@@ -232,15 +212,10 @@ const StudioCanvasInner = ({
       );
 
       if (!validation.valid) {
-        toast({
-          title: 'Invalid Connection',
-          description: validation.reason,
-          variant: 'destructive',
-        });
+        toast({ title: 'Invalid Connection', description: validation.reason, variant: 'destructive' });
         return;
       }
 
-      // Connection is valid, create it
       setEdges((eds) =>
         addEdge(
           {
@@ -259,15 +234,10 @@ const StudioCanvasInner = ({
       );
       
       takeSnapshot(nodes, edges);
-      toast({ 
-        title: 'Connection created',
-        description: `Connected ${sourceNode.data.type} to ${targetNode.data.type}`,
-      });
     },
     [setEdges, nodes, edges, validator, takeSnapshot]
   );
 
-  // Handle node selection
   const onNodeClick = useCallback(
     (_: React.MouseEvent, node: Node) => {
       onSelectBlock(node.id);
@@ -275,7 +245,6 @@ const StudioCanvasInner = ({
     [onSelectBlock]
   );
 
-  // Handle node drag end - update block position
   const onNodeDragStop = useCallback(
     (_: React.MouseEvent, node: Node) => {
       onUpdateBlockPosition(node.id, node.position);
@@ -283,26 +252,14 @@ const StudioCanvasInner = ({
     [onUpdateBlockPosition]
   );
 
-  // Handle node deletion
   const onNodesDelete = useCallback(
     (deleted: Node[]) => {
-      deleted.forEach((node) => {
-        onDeleteBlock(node.id);
-      });
+      deleted.forEach((node) => onDeleteBlock(node.id));
       toast({ title: `${deleted.length} node(s) deleted` });
     },
     [onDeleteBlock]
   );
 
-  // Handle edge deletion
-  const onEdgesDelete = useCallback(
-    (deleted: Edge[]) => {
-      toast({ title: `${deleted.length} connection(s) deleted` });
-    },
-    []
-  );
-
-  // Add new node at center
   const addNode = useCallback(
     (type: 'text' | 'image' | 'video') => {
       const newBlock: Block = {
@@ -324,113 +281,6 @@ const StudioCanvasInner = ({
     [onAddBlock]
   );
 
-  // Simulate generation (mock - replace with real API calls)
-  const handleGenerate = useCallback((nodeId: string, type: 'text' | 'image' | 'video') => {
-    const queueItem: QueueItem = {
-      id: `queue-${Date.now()}`,
-      nodeId,
-      nodeType: type,
-      status: 'queued',
-      startedAt: new Date(),
-    };
-
-    setQueue((prev) => [...prev, queueItem]);
-
-    // Update node status to queued
-    setNodes((nds) =>
-      nds.map((node) =>
-        node.id === nodeId
-          ? { ...node, data: { ...node.data, status: 'queued' } }
-          : node
-      )
-    );
-
-    // Simulate generation after 1 second
-    setTimeout(() => {
-      setQueue((prev) =>
-        prev.map((item) =>
-          item.id === queueItem.id
-            ? { ...item, status: 'generating', progress: 0 }
-            : item
-        )
-      );
-
-      setNodes((nds) =>
-        nds.map((node) =>
-          node.id === nodeId
-            ? { ...node, data: { ...node.data, status: 'generating', progress: 0 } }
-            : node
-        )
-      );
-
-      // Simulate progress
-      let progress = 0;
-      const progressInterval = setInterval(() => {
-        progress += 10;
-        
-        setQueue((prev) =>
-          prev.map((item) =>
-            item.id === queueItem.id ? { ...item, progress } : item
-          )
-        );
-
-        setNodes((nds) =>
-          nds.map((node) =>
-            node.id === nodeId
-              ? { ...node, data: { ...node.data, progress } }
-              : node
-          )
-        );
-
-        if (progress >= 100) {
-          clearInterval(progressInterval);
-
-          // Mark as complete
-          setQueue((prev) =>
-            prev.map((item) =>
-              item.id === queueItem.id
-                ? { ...item, status: 'complete', progress: 100, completedAt: new Date() }
-                : item
-            )
-          );
-
-          setNodes((nds) =>
-            nds.map((node) =>
-              node.id === nodeId
-                ? { ...node, data: { ...node.data, status: 'complete', progress: 100 } }
-                : node
-            )
-          );
-
-          toast({ title: 'Generation complete!', description: `${type} node ready` });
-
-          // Remove from queue after 3 seconds
-          setTimeout(() => {
-            setQueue((prev) => prev.filter((item) => item.id !== queueItem.id));
-          }, 3000);
-        }
-      }, 300);
-    }, 1000);
-  }, [setNodes]);
-
-  const handleCancelGeneration = useCallback((itemId: string) => {
-    const item = queue.find((q) => q.id === itemId);
-    if (!item) return;
-
-    setQueue((prev) => prev.filter((q) => q.id !== itemId));
-    
-    setNodes((nds) =>
-      nds.map((node) =>
-        node.id === item.nodeId
-          ? { ...node, data: { ...node.data, status: 'idle', progress: 0 } }
-          : node
-      )
-    );
-
-    toast({ title: 'Generation cancelled' });
-  }, [queue, setNodes]);
-
-  // Save project to Supabase
   const handleSave = useCallback(async () => {
     if (!projectId) return;
     
@@ -439,7 +289,6 @@ const StudioCanvasInner = ({
       const currentNodes = getNodes();
       const currentEdges = getEdges();
 
-      // Delete all existing blocks and connections for this project
       const existingBlocks = await supabaseService.studioBlocks.listByProject(projectId);
       const existingConnections = await supabaseService.studioConnections.listByProject(projectId);
       
@@ -448,7 +297,6 @@ const StudioCanvasInner = ({
         ...existingConnections.map(conn => supabaseService.studioConnections.delete(conn.id)),
       ]);
 
-      // Save new blocks
       for (const node of currentNodes) {
         await supabaseService.studioBlocks.create({
           project_id: projectId,
@@ -462,7 +310,6 @@ const StudioCanvasInner = ({
         });
       }
 
-      // Save new connections
       for (const edge of currentEdges) {
         await supabaseService.studioConnections.create({
           project_id: projectId,
@@ -474,45 +321,37 @@ const StudioCanvasInner = ({
         });
       }
 
-      toast({ title: 'Project saved', description: 'All changes have been saved successfully' });
+      toast({ title: 'Project saved' });
     } catch (error) {
       console.error('Error saving project:', error);
-      toast({ title: 'Save failed', description: 'Failed to save project', variant: 'destructive' });
+      toast({ title: 'Save failed', variant: 'destructive' });
     } finally {
       setIsSaving(false);
     }
   }, [projectId, getNodes, getEdges]);
 
-  // Execute workflow graph
   const handleRunWorkflow = useCallback(async () => {
     if (!projectId) return;
 
     try {
       setIsExecuting(true);
 
-      // Validate graph before execution
       const validation = validator.validateGraph(nodes, edges);
       if (!validation.valid) {
         toast({
           title: 'Cannot Run Workflow',
-          description: `Please fix these issues:\n${validation.errors.slice(0, 3).join('\n')}`,
+          description: `Issues: ${validation.errors.slice(0, 3).join(', ')}`,
           variant: 'destructive',
         });
         setIsExecuting(false);
         return;
       }
 
-      // Reset all node statuses to idle
       resetNodeStatuses();
-
-      // Execute graph
       const result = await executor.executeGraph(nodes, edges, projectId);
       setCurrentRunId(result.runId);
 
-      toast({
-        title: 'Workflow Started',
-        description: `Executing ${nodes.length} nodes in sequence`,
-      });
+      toast({ title: 'Workflow Started', description: `Executing ${nodes.length} nodes` });
 
     } catch (error) {
       console.error('Execution error:', error);
@@ -525,253 +364,25 @@ const StudioCanvasInner = ({
     }
   }, [projectId, nodes, edges, validator, executor, resetNodeStatuses]);
 
-  // Subscribe to execution status updates via Realtime
-  // NOTE: This is now handled by useRealtimeExecution hook
-
-  // Context menu handlers
-  const onNodeContextMenu = useCallback((event: React.MouseEvent, node: Node) => {
-    event.preventDefault();
-    setContextMenu({
-      x: event.clientX,
-      y: event.clientY,
-      node,
-    });
-  }, []);
-
-  const onPaneContextMenu = useCallback((event: React.MouseEvent) => {
-    event.preventDefault();
-    setContextMenu({
-      x: event.clientX,
-      y: event.clientY,
-    });
-  }, []);
-
-  const closeContextMenu = useCallback(() => {
-    setContextMenu(null);
-  }, []);
-
-  const handleDuplicateNode = useCallback((node: Node) => {
-    const newNode = {
-      ...node,
-      id: `node-${Date.now()}`,
-      position: {
-        x: node.position.x + 50,
-        y: node.position.y + 50,
-      },
-    };
-    setNodes((nds) => [...nds, newNode]);
-    takeSnapshot([...getNodes(), newNode], getEdges());
-    toast({ title: 'Node duplicated' });
-  }, [setNodes, getNodes, getEdges, takeSnapshot]);
-
-  const handleDeleteNode = useCallback((node: Node) => {
-    onDeleteBlock(node.id);
-    setNodes((nds) => nds.filter((n) => n.id !== node.id));
-    takeSnapshot(getNodes().filter((n) => n.id !== node.id), getEdges());
-    toast({ title: 'Node deleted' });
-  }, [onDeleteBlock, setNodes, getNodes, getEdges, takeSnapshot]);
-
-  const handleEditNode = useCallback((node: Node) => {
-    onSelectBlock(node.id);
-  }, [onSelectBlock]);
-
-  // Export/Import handlers
-  const handleExport = useCallback(() => {
-    const data = {
-      nodes: getNodes(),
-      edges: getEdges(),
-      viewport: { x: 0, y: 0, zoom: 1 },
-    };
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `studio-${projectId}-${Date.now()}.json`;
-    link.click();
-    URL.revokeObjectURL(url);
-    toast({ title: 'Canvas exported', description: 'Your canvas has been downloaded as JSON' });
-  }, [getNodes, getEdges, projectId]);
-
-  const handleImport = useCallback(() => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.json';
-    input.onchange = async (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (!file) return;
-
-      try {
-        const text = await file.text();
-        const data = JSON.parse(text);
-        if (data.nodes && data.edges) {
-          setNodes(data.nodes);
-          setEdges(data.edges);
-          takeSnapshot(data.nodes, data.edges);
-          toast({ title: 'Canvas imported', description: 'Your canvas has been restored from file' });
-        } else {
-          toast({ title: 'Invalid file', description: 'The file format is not recognized', variant: 'destructive' });
-        }
-      } catch (error) {
-        console.error('Error importing:', error);
-        toast({ title: 'Import failed', description: 'Failed to import canvas', variant: 'destructive' });
-      }
-    };
-    input.click();
-  }, [setNodes, setEdges, takeSnapshot]);
-
-  // Undo/Redo handlers
-  const handleUndo = useCallback(() => {
-    const state = undo();
-    if (state) {
-      setNodes(state.nodes);
-      setEdges(state.edges);
-      toast({ title: 'Undone' });
-    }
-  }, [undo, setNodes, setEdges]);
-
-  const handleRedo = useCallback(() => {
-    const state = redo();
-    if (state) {
-      setNodes(state.nodes);
-      setEdges(state.edges);
-      toast({ title: 'Redone' });
-    }
-  }, [redo, setNodes, setEdges]);
-
-  // Track changes for undo/redo and handle right panel
-  const onSelectionChange = useCallback(
-    ({ nodes: selectedNodes, edges: selectedEdges }: OnSelectionChangeParams) => {
-      if (selectedNodes.length > 0 || selectedEdges.length > 0) {
-        takeSnapshot(getNodes(), getEdges());
-      }
-      
-      // Update selected node for right panel
-      if (selectedNodes.length === 1) {
-        setSelectedNode(selectedNodes[0]);
-        setRightPanelOpen(true);
-      } else {
-        setSelectedNode(null);
-      }
-    },
-    [getNodes, getEdges, takeSnapshot]
-  );
-
-  // Keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Close context menu on Escape
-      if (e.key === 'Escape' && contextMenu) {
-        closeContextMenu();
-        return;
-      }
-
-      // Cmd/Ctrl + S: Save
-      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
-        e.preventDefault();
-        handleSave();
-      }
-      
-      // Cmd/Ctrl + Z: Undo
-      if ((e.metaKey || e.ctrlKey) && e.key === 'z' && !e.shiftKey) {
-        e.preventDefault();
-        handleUndo();
-      }
-
-      // Cmd/Ctrl + Shift + Z or Cmd/Ctrl + Y: Redo
-      if ((e.metaKey || e.ctrlKey) && (e.shiftKey && e.key === 'z' || e.key === 'y')) {
-        e.preventDefault();
-        handleRedo();
-      }
-      
-      // Cmd/Ctrl + A: Select all
-      if ((e.metaKey || e.ctrlKey) && e.key === 'a') {
-        e.preventDefault();
-        setNodes((nds) => nds.map((node) => ({ ...node, selected: true })));
-        toast({ title: 'All nodes selected' });
-      }
-
-      // Cmd/Ctrl + E: Export
-      if ((e.metaKey || e.ctrlKey) && e.key === 'e') {
-        e.preventDefault();
-        handleExport();
-      }
-
-      // Cmd/Ctrl + I: Import
-      if ((e.metaKey || e.ctrlKey) && e.key === 'i') {
-        e.preventDefault();
-        handleImport();
-      }
-
-      // Cmd/Ctrl + R: Run workflow
-      if ((e.metaKey || e.ctrlKey) && e.key === 'r') {
-        e.preventDefault();
-        handleRunWorkflow();
-      }
-
-      // Cmd/Ctrl + 1/2/3: Add node shortcuts
-      if ((e.metaKey || e.ctrlKey) && ['1', '2', '3'].includes(e.key)) {
-        e.preventDefault();
-        const types = { '1': 'text', '2': 'image', '3': 'video' } as const;
-        addNode(types[e.key as '1' | '2' | '3']);
-      }
-
-      // F: Fit view
-      if (e.key === 'f' || e.key === 'F') {
-        e.preventDefault();
-        fitView({ padding: 0.3, duration: 300 });
-        toast({ title: 'View fitted to canvas' });
-      }
-
-      // +/-: Zoom
-      if (e.key === '+' || e.key === '=') {
-        e.preventDefault();
-        zoomIn({ duration: 200 });
-      }
-      if (e.key === '-' || e.key === '_') {
-        e.preventDefault();
-        zoomOut({ duration: 200 });
-      }
-
-      // ?: Show keyboard shortcuts
-      if (e.key === '?' && e.shiftKey) {
-        e.preventDefault();
-        setShowShortcuts((prev) => !prev);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [addNode, fitView, handleSave, setNodes, zoomIn, zoomOut, handleUndo, handleRedo, handleExport, handleImport, contextMenu, closeContextMenu]);
-
-  // Close context menu when clicking outside
-  useEffect(() => {
-    const handleClick = () => closeContextMenu();
-    if (contextMenu) {
-      window.addEventListener('click', handleClick);
-      return () => window.removeEventListener('click', handleClick);
-    }
-  }, [contextMenu, closeContextMenu]);
-
   if (isLoading) {
     return (
-      <div className="w-full h-full bg-background flex items-center justify-center">
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-        >
-          <Zap className="w-8 h-8 text-primary" />
-        </motion.div>
+      <div className="w-full h-full bg-[#0F0F10] flex items-center justify-center">
+        <Zap className="w-8 h-8 text-primary animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="w-full h-full flex relative" style={{ background: '#0A0A0B' }}>
-      {/* Icon Sidebar */}
-      <IconSidebar onAddNode={() => addNode('text')} credits={92} />
+    <div className="w-full h-full flex relative" style={{ background: '#0F0F10' }}>
+      {/* Left Sidebar */}
+      <SimplifiedSidebar
+        onAddBlock={addNode}
+        onRunWorkflow={handleRunWorkflow}
+        credits={92}
+      />
 
-      {/* Main Canvas Area */}
-      <div className="flex-1 ml-[52px]">
+      {/* Main Canvas */}
+      <div className="flex-1 ml-16">
         <ReactFlow
           nodes={nodes}
           edges={edges}
@@ -779,369 +390,81 @@ const StudioCanvasInner = ({
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
           onNodesDelete={onNodesDelete}
-          onEdgesDelete={onEdgesDelete}
           onNodeClick={onNodeClick}
           onNodeDragStop={onNodeDragStop}
-          onNodeContextMenu={onNodeContextMenu}
-          onPaneContextMenu={onPaneContextMenu}
-          onSelectionChange={onSelectionChange}
           nodeTypes={nodeTypes}
           edgeTypes={edgeTypes}
           connectionLineType={ConnectionLineType.Bezier}
-          connectionLineStyle={{
-            stroke: 'hsl(var(--primary))',
-            strokeWidth: 2.5,
-            strokeDasharray: '8 4',
-          }}
-          defaultEdgeOptions={{
-            type: 'custom',
-            animated: true,
-          }}
+          defaultEdgeOptions={{ type: 'custom', animated: true }}
           fitView
-          fitViewOptions={{
-            padding: 0.3,
-          }}
+          fitViewOptions={{ padding: 0.3 }}
           minZoom={0.2}
           maxZoom={2.5}
           snapToGrid
           snapGrid={[15, 15]}
           deleteKeyCode="Delete"
           multiSelectionKeyCode="Shift"
-          className="bg-background"
           proOptions={{ hideAttribution: true }}
         >
-        <Background
-          color="#27272A"
-          gap={24}
-          size={0.5}
-          style={{ background: '#0A0A0B' }}
-        />
+          <Background
+            color="#27272A"
+            gap={32}
+            size={1}
+            style={{ background: '#0F0F10' }}
+          />
 
-        <Controls
-          className="!bg-[#141416] !border-[#3F3F46] !rounded-xl !shadow-[0_8px_24px_rgba(0,0,0,0.4)]"
-          showInteractive={false}
-        />
+          <Controls className="!bg-[#141416] !border-[#3F3F46] !rounded-xl" showInteractive={false} />
+          <MiniMap className="!bg-[#141416] !border-[#3F3F46] !rounded-xl" maskColor="rgba(20, 20, 22, 0.6)" nodeBorderRadius={12} />
 
-        <MiniMap
-          className="!bg-[#141416] !border-[#3F3F46] !rounded-xl !shadow-[0_8px_24px_rgba(0,0,0,0.4)]"
-          maskColor="rgba(20, 20, 22, 0.6)"
-          nodeColor={(node) => {
-            switch (node.type) {
-              case 'video':
-                return '#3b82f6';
-              case 'image':
-                return '#10b981';
-              default:
-                return '#6366F1';
-            }
-          }}
-          nodeBorderRadius={12}
-        />
-
-        {/* Floating Action Panel - Top Left - Sleek Design */}
-        <Panel position="top-left" className="space-y-2">
-          <motion.div
-            initial={{ x: -100, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            transition={{ duration: 0.3 }}
-            className="flex gap-2"
-          >
-            <button
-              onClick={() => addNode('text')}
-              className="px-3 py-2 bg-[#141416] hover:bg-[#1C1C1F] border border-[#3F3F46] hover:border-[#52525B] rounded-lg text-xs font-medium text-[#FAFAFA] transition-all duration-200 flex items-center gap-2 shadow-[0_4px_12px_rgba(0,0,0,0.3)]"
+          {/* Workflow Label */}
+          <Panel position="top-left" className="!m-0 !p-0">
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="px-3 py-1.5 rounded-lg bg-[#1C1C1F] border border-[#3F3F46] shadow-lg"
             >
-              <Type className="w-3.5 h-3.5" />
-              Text
-            </button>
-            
-            <button
-              onClick={() => addNode('image')}
-              className="px-3 py-2 bg-[#141416] hover:bg-[#1C1C1F] border border-[#3F3F46] hover:border-[#52525B] rounded-lg text-xs font-medium text-[#FAFAFA] transition-all duration-200 flex items-center gap-2 shadow-[0_4px_12px_rgba(0,0,0,0.3)]"
+              <span className="text-sm font-medium text-[#FAFAFA]">360 Fashion Workflow</span>
+            </motion.div>
+          </Panel>
+
+          {/* Top Toolbar */}
+          <Panel position="top-right" className="!m-0 !p-0">
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center gap-2"
             >
-              <ImageIcon className="w-3.5 h-3.5" />
-              Image
-            </button>
-            
-            <button
-              onClick={() => addNode('video')}
-              className="px-3 py-2 bg-[#141416] hover:bg-[#1C1C1F] border border-[#3F3F46] hover:border-[#52525B] rounded-lg text-xs font-medium text-[#FAFAFA] transition-all duration-200 flex items-center gap-2 shadow-[0_4px_12px_rgba(0,0,0,0.3)]"
-            >
-              <Video className="w-3.5 h-3.5" />
-              Video
-            </button>
-
-            {selectedNode && (
               <button
-                onClick={() => {
-                  const nodeType = selectedNode.data.type?.toLowerCase();
-                  if (nodeType.includes('text')) {
-                    handleGenerate(selectedNode.id, 'text');
-                  } else if (nodeType.includes('image')) {
-                    handleGenerate(selectedNode.id, 'image');
-                  } else if (nodeType.includes('video')) {
-                    handleGenerate(selectedNode.id, 'video');
-                  }
-                }}
-                className="px-3 py-2 bg-[#6366F1] hover:bg-[#5558E3] border border-[#6366F1] rounded-lg text-xs font-semibold text-white transition-all duration-200 flex items-center gap-2 shadow-[0_4px_12px_rgba(99,102,241,0.3)]"
+                onClick={() => fitView({ padding: 0.3, duration: 300 })}
+                className="w-10 h-10 rounded-full flex items-center justify-center border border-[#3F3F46] hover:border-[#6366F1] bg-[#1C1C1F] text-[#A1A1AA] hover:text-[#FAFAFA]"
               >
-                <Sparkles className="w-3.5 h-3.5" />
-                Generate
-              </button>
-            )}
-
-            {/* Run Workflow Button */}
-            {nodes.length > 0 && (
-              <button
-                onClick={handleRunWorkflow}
-                disabled={isExecuting}
-                className={`
-                  px-3 py-2 border rounded-lg text-xs font-semibold transition-all duration-200 flex items-center gap-2 shadow-[0_4px_12px_rgba(139,92,246,0.3)]
-                  ${isExecuting 
-                    ? 'bg-[#27272A] border-[#3F3F46] text-[#71717A] cursor-not-allowed' 
-                    : 'bg-[#8B5CF6] hover:bg-[#7C3AED] border-[#8B5CF6] text-white'
-                  }
-                `}
-              >
-                <Sparkles className={`w-3.5 h-3.5 ${isExecuting ? 'animate-spin' : ''}`} />
-                {isExecuting ? 'Running...' : 'Run Workflow'}
-              </button>
-            )}
-          </motion.div>
-        </Panel>
-
-        {/* Stats & Actions Panel - Top Right - Professional Design */}
-        <Panel position="top-right" className="space-y-2">
-          <motion.div
-            initial={{ x: 100, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            transition={{ duration: 0.3 }}
-            className="bg-[#141416] border border-[#3F3F46] rounded-lg p-3 shadow-[0_4px_12px_rgba(0,0,0,0.3)]"
-          >
-            <div className="flex items-center gap-4 mb-3">
-              <div className="flex items-center gap-3 text-[11px] text-[#A1A1AA] font-medium">
-                <span className="flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-indigo-400"></span>
-                  {nodes.length} nodes
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-purple-400"></span>
-                  {edges.length} connections
-                </span>
-              </div>
-            </div>
-            
-            <div className="flex gap-2 mb-2">
-              <button
-                onClick={handleUndo}
-                disabled={!canUndo}
-                className="flex-1 p-2 bg-[#1C1C1F] hover:bg-[#27272A] disabled:opacity-30 disabled:cursor-not-allowed rounded-md text-[#FAFAFA] transition-all duration-200 border border-[#3F3F46] hover:border-[#52525B]"
-                title="Undo (⌘Z)"
-              >
-                <Undo className="w-3.5 h-3.5" />
+                <Zap className="w-5 h-5" />
               </button>
               <button
-                onClick={handleRedo}
-                disabled={!canRedo}
-                className="flex-1 p-2 bg-[#1C1C1F] hover:bg-[#27272A] disabled:opacity-30 disabled:cursor-not-allowed rounded-md text-[#FAFAFA] transition-all duration-200 border border-[#3F3F46] hover:border-[#52525B]"
-                title="Redo (⌘⇧Z)"
+                onClick={handleSave}
+                disabled={isSaving}
+                className="w-10 h-10 rounded-full flex items-center justify-center border border-[#3F3F46] hover:border-[#6366F1] bg-[#1C1C1F] text-[#A1A1AA] hover:text-[#FAFAFA]"
               >
-                <Redo className="w-3.5 h-3.5" />
+                <Save className="w-5 h-5" />
               </button>
-            </div>
-
-            <div className="flex gap-2 mb-2">
-              <button
-                onClick={handleExport}
-                className="flex-1 p-2 bg-[#1C1C1F] hover:bg-[#27272A] rounded-md text-[#FAFAFA] transition-all duration-200 border border-[#3F3F46] hover:border-[#52525B]"
-                title="Export (⌘E)"
-              >
-                <Download className="w-3.5 h-3.5" />
+              <button className="w-10 h-10 rounded-full flex items-center justify-center border border-[#3F3F46] hover:border-[#6366F1] bg-[#1C1C1F] text-[#A1A1AA] hover:text-[#FAFAFA]">
+                <History className="w-5 h-5" />
               </button>
-              <button
-                onClick={handleImport}
-                className="flex-1 p-2 bg-[#1C1C1F] hover:bg-[#27272A] rounded-md text-[#FAFAFA] transition-all duration-200 border border-[#3F3F46] hover:border-[#52525B]"
-                title="Import (⌘I)"
-              >
-                <Upload className="w-3.5 h-3.5" />
-              </button>
-              <button
-                onClick={() => setRightPanelOpen(!rightPanelOpen)}
-                className={`flex-1 p-2 rounded-md text-[#FAFAFA] transition-all duration-200 border ${
-                  rightPanelOpen
-                    ? 'bg-[#6366F1] border-[#6366F1]'
-                    : 'bg-[#1C1C1F] hover:bg-[#27272A] border-[#3F3F46] hover:border-[#52525B]'
-                }`}
-                title="Toggle Panel"
-              >
-                <PanelRightOpen className="w-3.5 h-3.5" />
-              </button>
-            </div>
-            
-            <button
-              onClick={handleSave}
-              disabled={isSaving}
-              className="w-full px-3 py-2 bg-[#6366F1] hover:bg-[#5558E3] disabled:opacity-50 disabled:cursor-not-allowed rounded-md text-xs font-semibold text-white transition-all duration-200 flex items-center justify-center gap-2 shadow-[0_0_12px_rgba(99,102,241,0.3)]"
-            >
-              <Save className="w-3.5 h-3.5" />
-              {isSaving ? 'Saving...' : 'Save Project'}
-            </button>
-          </motion.div>
-        </Panel>
-
-        {/* Keyboard Shortcuts Help - Bottom Left - Sleek Design */}
-        <Panel position="bottom-left">
-          <AnimatePresence>
-            {showShortcuts && (
-              <motion.div
-                initial={{ y: 50, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                exit={{ y: 50, opacity: 0 }}
-                transition={{ duration: 0.3 }}
-                className="bg-[#141416]/98 backdrop-blur-xl border border-[#3F3F46] rounded-xl p-4 shadow-[0_8px_32px_rgba(0,0,0,0.5)] max-w-xs mb-2"
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <Keyboard className="w-4 h-4 text-[#6366F1]" />
-                    <h3 className="text-sm font-semibold text-[#FAFAFA]">Shortcuts</h3>
-                  </div>
-                  <button
-                    onClick={() => setShowShortcuts(false)}
-                    className="text-[#A1A1AA] hover:text-[#FAFAFA] text-xs transition-colors"
-                  >
-                    Hide
-                  </button>
-                </div>
-                
-                <div className="space-y-2 text-xs">
-                  <div className="flex justify-between items-center">
-                    <span className="text-[#A1A1AA]">Undo</span>
-                    <kbd className="px-2 py-1 bg-[#1C1C1F] border border-[#3F3F46] rounded text-[#FAFAFA] font-mono text-[11px]">⌘ Z</kbd>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-[#A1A1AA]">Redo</span>
-                    <kbd className="px-2 py-1 bg-[#1C1C1F] border border-[#3F3F46] rounded text-[#FAFAFA] font-mono text-[11px]">⌘⇧ Z</kbd>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-[#A1A1AA]">Add Text Node</span>
-                    <kbd className="px-2 py-1 bg-[#1C1C1F] border border-[#3F3F46] rounded text-[#FAFAFA] font-mono text-[11px]">⌘ 1</kbd>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-[#A1A1AA]">Add Image Node</span>
-                    <kbd className="px-2 py-1 bg-[#1C1C1F] border border-[#3F3F46] rounded text-[#FAFAFA] font-mono text-[11px]">⌘ 2</kbd>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-[#A1A1AA]">Add Video Node</span>
-                    <kbd className="px-2 py-1 bg-[#1C1C1F] border border-[#3F3F46] rounded text-[#FAFAFA] font-mono text-[11px]">⌘ 3</kbd>
-                  </div>
-                  
-                  <div className="border-t border-[#27272A] my-2" />
-                  
-                  <div className="flex justify-between items-center">
-                    <span className="text-[#A1A1AA]">Save Project</span>
-                    <kbd className="px-2 py-1 bg-[#1C1C1F] border border-[#3F3F46] rounded text-[#FAFAFA] font-mono text-[11px]">⌘ S</kbd>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-[#A1A1AA]">Export</span>
-                    <kbd className="px-2 py-1 bg-[#1C1C1F] border border-[#3F3F46] rounded text-[#FAFAFA] font-mono text-[11px]">⌘ E</kbd>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-[#A1A1AA]">Run Workflow</span>
-                    <kbd className="px-2 py-1 bg-[#1C1C1F] border border-[#3F3F46] rounded text-[#FAFAFA] font-mono text-[11px]">⌘ R</kbd>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-[#A1A1AA]">Select All</span>
-                    <kbd className="px-2 py-1 bg-[#1C1C1F] border border-[#3F3F46] rounded text-[#FAFAFA] font-mono text-[11px]">⌘ A</kbd>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-[#A1A1AA]">Delete</span>
-                    <kbd className="px-2 py-1 bg-[#1C1C1F] border border-[#3F3F46] rounded text-[#FAFAFA] font-mono text-[11px]">Del</kbd>
-                  </div>
-                  
-                  <div className="border-t border-[#27272A] my-2" />
-                  
-                  <div className="flex justify-between items-center">
-                    <span className="text-[#A1A1AA]">Fit View</span>
-                    <kbd className="px-2 py-1 bg-[#1C1C1F] border border-[#3F3F46] rounded text-[#FAFAFA] font-mono text-[11px]">F</kbd>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-[#A1A1AA]">Zoom</span>
-                    <kbd className="px-2 py-1 bg-[#1C1C1F] border border-[#3F3F46] rounded text-[#FAFAFA] font-mono text-[11px]">+/-</kbd>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-[#A1A1AA]">Right-click</span>
-                    <span className="text-xs text-[#52525B]">Context Menu</span>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-          
-          {!showShortcuts && (
-            <motion.button
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              onClick={() => setShowShortcuts(true)}
-              className="bg-[#141416] border border-[#3F3F46] rounded-lg p-2.5 shadow-[0_4px_12px_rgba(0,0,0,0.3)] hover:bg-[#1C1C1F] hover:border-[#52525B] transition-all duration-200"
-            >
-              <Keyboard className="w-5 h-5 text-[#A1A1AA]" />
-            </motion.button>
-          )}
-        </Panel>
+            </motion.div>
+          </Panel>
         </ReactFlow>
       </div>
 
-      {/* Context Menu */}
-      {contextMenu && (
-        <ContextMenu
-          id="context-menu"
-          top={contextMenu.y}
-          left={contextMenu.x}
-          node={contextMenu.node}
-          onClose={closeContextMenu}
-          onDuplicate={handleDuplicateNode}
-          onDelete={handleDeleteNode}
-          onEdit={handleEditNode}
-          onGenerate={(node) => {
-            const nodeType = node.data.type?.toLowerCase();
-            if (nodeType.includes('text')) {
-              handleGenerate(node.id, 'text');
-            } else if (nodeType.includes('image')) {
-              handleGenerate(node.id, 'image');
-            } else if (nodeType.includes('video')) {
-              handleGenerate(node.id, 'video');
-            }
-          }}
-          onFitView={() => fitView({ padding: 0.3, duration: 300 })}
-        />
-      )}
-
-      {/* Right Panel - Output Gallery & Settings */}
-      <RightPanel
-        selectedNode={selectedNode}
-        isOpen={rightPanelOpen}
-        onClose={() => setRightPanelOpen(false)}
-        onModelChange={(model) => {
-          if (selectedNode) {
-            // Handle model change logic here
-            toast({ title: `Model changed to ${model}` });
-          }
-        }}
-        onAspectRatioChange={(ratio) => {
-          if (selectedNode) {
-            // Handle aspect ratio change logic here
-            toast({ title: `Aspect ratio changed to ${ratio}` });
-          }
-        }}
+      {/* Results Gallery */}
+      <ResultsGallery
+        isOpen={galleryOpen}
+        onClose={() => setGalleryOpen(false)}
       />
-
-      {/* Queue Status System */}
-      <QueueStatus queue={queue} onCancelItem={handleCancelGeneration} />
     </div>
   );
 };
 
-// Wrap with ReactFlowProvider
-const StudioCanvas = (props: StudioCanvasProps) => (
+export const StudioCanvas = (props: StudioCanvasProps) => (
   <ReactFlowProvider>
     <StudioCanvasInner {...props} />
   </ReactFlowProvider>

@@ -105,56 +105,26 @@ export const AppHeader = ({
 
   return (
     <header className={cn(
-      "w-full bg-black border-b border-zinc-800/50 px-6 py-3 flex items-center justify-between",
+      "w-full bg-[#0F0F10] border-b border-[#27272A] px-6 py-3 flex items-center justify-between",
       className
     )}>
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3">
         <div onClick={handleLogoClick} className="cursor-pointer">
           <Logo size="sm" showVersion={false} />
         </div>
-        <h1 className="text-lg font-medium text-white">
+        <h1 className="text-base font-medium text-[#FAFAFA]">
           {activeProjectName || 'Untitled'}
         </h1>
-        <Button variant="ghost" size="icon" className="text-zinc-400 hover:text-white">
-          <MoreVertical className="h-5 w-5" />
-        </Button>
       </div>
 
-      <div className="flex-1 flex justify-center">
-        <div className="flex items-center space-x-1 bg-zinc-900/80 rounded-lg p-1">
-          <Button
-            variant="ghost"
-            className={getButtonClass('studio')}
-            onClick={() => handleNavigate('studio')}
-          >
-            Studio
-          </Button>
-          
-          <Button
-            variant="ghost" 
-            className={getButtonClass('timeline')}
-            onClick={() => handleNavigate('timeline')}
-          >
-            Timeline
-          </Button>
-          
-          <Button
-            variant="ghost"
-            className={getButtonClass('editor')}
-            onClick={() => handleNavigate('editor')}
-          >
-            Editor
-          </Button>
-        </div>
-      </div>
+      {/* Removed center view toggle - keeping header minimal */}
 
-      <div className="flex items-center gap-3">
-        <CreditsDisplay showTooltip={true} />
-        <Button variant="ghost" className="text-white hover:bg-zinc-800">
-          <User className="h-5 w-5" />
+      <div className="flex items-center gap-2">
+        <Button variant="ghost" size="icon" className="text-[#A1A1AA] hover:text-[#FAFAFA] hover:bg-[#27272A]">
+          <User className="h-4 w-4" />
         </Button>
         {showShareButton && (
-          <Button className="bg-zinc-800 hover:bg-zinc-700 text-white">
+          <Button className="bg-[#1C1C1F] hover:bg-[#27272A] text-[#FAFAFA] border border-[#3F3F46] h-9 px-3">
             <Share className="h-4 w-4 mr-2" />
             Share
           </Button>
