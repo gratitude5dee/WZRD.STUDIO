@@ -33,6 +33,7 @@ import { IconSidebar } from './IconSidebar';
 import { useUndoRedo } from '@/hooks/useUndoRedo';
 import { supabaseService } from '@/services/supabaseService';
 import { useParams } from 'react-router-dom';
+import { ConnectionValidator } from '@/lib/validation/connectionValidator';
 
 export interface Block {
   id: string;
@@ -114,6 +115,7 @@ const StudioCanvasInner = ({
   const { fitView, zoomIn, zoomOut, getNodes, getEdges } = useReactFlow();
   const { takeSnapshot, undo, redo, canUndo, canRedo } = useUndoRedo(nodes, edges);
   const rfRef = useRef<HTMLDivElement>(null);
+  const validator = useRef(new ConnectionValidator()).current;
 
   // Load blocks and connections from Supabase
   useEffect(() => {
@@ -169,9 +171,40 @@ const StudioCanvasInner = ({
     loadData();
   }, [projectId, setNodes, setEdges]);
 
-  // Handle new connections
+  // Handle new connections with validation
   const onConnect = useCallback(
     (params: Connection) => {
+      const sourceNode = nodes.find((n) => n.id === params.source);
+      const targetNode = nodes.find((n) => n.id === params.target);
+
+      if (!sourceNode || !targetNode) {
+        toast({
+          title: 'Invalid Connection',
+          description: 'Source or target node not found',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Validate connection using ConnectionValidator
+      const validation = validator.validateConnection(
+        sourceNode,
+        targetNode,
+        params.sourceHandle,
+        params.targetHandle,
+        edges
+      );
+
+      if (!validation.valid) {
+        toast({
+          title: 'Invalid Connection',
+          description: validation.reason,
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Connection is valid, create it
       setEdges((eds) =>
         addEdge(
           {
@@ -188,9 +221,14 @@ const StudioCanvasInner = ({
           eds
         )
       );
-      toast({ title: 'Connection created' });
+      
+      takeSnapshot(nodes, edges);
+      toast({ 
+        title: 'Connection created',
+        description: `Connected ${sourceNode.data.type} to ${targetNode.data.type}`,
+      });
     },
-    [setEdges]
+    [setEdges, nodes, edges, validator, takeSnapshot]
   );
 
   // Handle node selection

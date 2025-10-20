@@ -3,7 +3,7 @@ import { Node, Edge } from 'reactflow';
 export interface Port {
   id: string;
   name: string;
-  datatype: 'text/plain' | 'image/*' | 'video/*' | 'any';
+  datatype: string; // MIME type like 'text/plain', 'image/*', 'image/png', 'video/*', 'any'
   position: 'top' | 'right' | 'bottom' | 'left';
   type: 'input' | 'output';
   optional?: boolean;
