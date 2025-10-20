@@ -1,6 +1,7 @@
 import React, { createContext, useContext, ReactNode, useEffect, useState } from 'react';
 import { useVideoEditorStore } from '@/store/videoEditorStore';
 import { supabase } from '@/integrations/supabase/client';
+import { supabaseService } from '@/services/supabaseService';
 import { toast } from "sonner";
 import { useParams } from "react-router-dom";
 
@@ -45,33 +46,18 @@ export function VideoEditorProvider({ children }: { children: ReactNode }) {
           
           if (projectData) {
             setProjectName(projectData.title);
-            
-            // Fetch media items for this project
-            const { data: mediaItems, error: mediaError } = await supabase
-              .from('media_items')
-              .select('*')
-              .eq('project_id', projectId);
-              
-            if (mediaError) throw mediaError;
-            
-            // Add media items to the store
-            if (mediaItems && mediaItems.length > 0) {
+
+            const mediaItems = await supabaseService.media.listByProject(projectId);
+            if (mediaItems.length > 0) {
+              const existingIds = new Set(useVideoEditorStore.getState().mediaItems.map(item => item.id));
               mediaItems.forEach(item => {
-                // Ensure media_type is one of the allowed types
-                const mediaType = validateMediaType(item.media_type);
-                
-                addMediaItem({
-                  id: item.id,
-                  type: mediaType,
-                  url: item.url || '',
-                  name: item.name,
-                  duration: item.duration,
-                  startTime: item.start_time,
-                  endTime: item.end_time
-                });
+                if (!existingIds.has(item.id)) {
+                  addMediaItem(item);
+                  existingIds.add(item.id);
+                }
               });
             }
-            
+
             // We could also load tracks, track items, and keyframes here
           }
         }
@@ -85,16 +71,6 @@ export function VideoEditorProvider({ children }: { children: ReactNode }) {
 
     loadProjectData();
   }, [projectId, params.projectId]);
-  
-  // Helper function to validate media type
-  const validateMediaType = (type: string): 'video' | 'image' | 'audio' => {
-    if (type === 'video' || type === 'image' || type === 'audio') {
-      return type;
-    }
-    // Default to 'image' if type is invalid
-    console.warn(`Invalid media type: ${type}, defaulting to 'image'`);
-    return 'image';
-  };
   
   // Clean up when unmounting
   useEffect(() => {

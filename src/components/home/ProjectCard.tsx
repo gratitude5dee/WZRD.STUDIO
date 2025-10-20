@@ -37,17 +37,32 @@ export const ProjectCard = ({ project, onOpen, onDelete }: ProjectCardProps) => 
     const fetchProjectMedia = async () => {
       try {
         const { data, error } = await supabase
-          .from('media_items')
-          .select('url, media_type')
+          .from('video_clips')
+          .select('storage_bucket, storage_path, thumbnail_bucket, thumbnail_path, asset_type')
           .eq('project_id', project.id)
           .order('created_at', { ascending: true })
           .limit(1)
-          .single();
+          .maybeSingle();
 
-        if (error || !data) return;
+        if (error && error.code !== 'PGRST116') {
+          console.error('Failed to load project media preview', error);
+          return;
+        }
 
-        setMediaUrl(data.url);
-        setMediaType(data.media_type as 'video' | 'image');
+        if (!data) return;
+
+        const previewBucket = data.thumbnail_path ? data.thumbnail_bucket ?? 'thumbnails' : data.storage_bucket;
+        const previewPath = data.thumbnail_path ?? data.storage_path;
+
+        if (!previewBucket || !previewPath) return;
+
+        const { data: publicData } = supabase
+          .storage
+          .from(previewBucket)
+          .getPublicUrl(previewPath);
+
+        setMediaUrl(publicData.publicUrl);
+        setMediaType((data.asset_type as 'video' | 'image') ?? 'image');
       } catch (err) {
         // No media items for this project - that's okay
         console.log('No media items found for project', project.id);
