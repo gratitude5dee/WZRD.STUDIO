@@ -119,10 +119,11 @@ const PreviewPanel = ({ clips, audioTracks }: PreviewPanelProps) => {
               onPlay={play}
               onPause={pause}
               onEnded={() => {
-                pause();
-                if (!playback.isLooping) {
-                  setCurrentTime(effectiveDuration);
+                if (playback.isLooping) {
+                  return;
                 }
+                pause();
+                setCurrentTime(effectiveDuration);
               }}
               onFrameUpdate={(frame) => {
                 const nextTime = frame / fps;
