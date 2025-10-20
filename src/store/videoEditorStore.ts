@@ -176,7 +176,7 @@ export interface VideoEditorState {
   reset: () => void;
 }
 
-const initialState: Pick<
+const createInitialState = (): Pick<
   VideoEditorState,
   | 'project'
   | 'playback'
@@ -192,7 +192,7 @@ const initialState: Pick<
   | 'generationParams'
   | 'aiGeneration'
   | 'timeline'
-> = {
+> => ({
   project: {
     id: null,
     name: 'Untitled Project',
@@ -242,10 +242,10 @@ const initialState: Pick<
     zoom: 1,
     scroll: 0,
   },
-};
+});
 
 export const useVideoEditorStore = create<VideoEditorState>((set) => ({
-  ...initialState,
+  ...createInitialState(),
 
   setProjectId: (id) =>
     set((state) => ({
@@ -509,5 +509,5 @@ export const useVideoEditorStore = create<VideoEditorState>((set) => ({
       },
     })),
 
-  reset: () => ({ ...initialState }),
+  reset: () => set(() => createInitialState()),
 }));
