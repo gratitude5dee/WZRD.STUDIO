@@ -4,18 +4,14 @@ import { useVideoEditor } from '@/providers/VideoEditorProvider';
 import { Play, Pause, SkipBack, SkipForward } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
-// import { Player, PlayerRef } from '@remotion/player';
-// import VideoComposition from './VideoComposition';
+import { Player, PlayerRef } from '@remotion/player';
+import VideoComposition from './VideoComposition';
 import type { MediaItem } from '@/store/videoEditorStore';
 
 interface PreviewPanelProps {
   clips: MediaItem[];
   audioTracks: MediaItem[];
 }
-
-const FPS = 30;
-const CANVAS_WIDTH = 1280;
-const CANVAS_HEIGHT = 720;
 
 const PreviewPanel = ({ clips, audioTracks }: PreviewPanelProps) => {
   const {
@@ -28,12 +24,16 @@ const PreviewPanel = ({ clips, audioTracks }: PreviewPanelProps) => {
     pause
   } = useVideoEditor();
 
-  // const playerRef = useRef<PlayerRef>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const lastFrameRef = useRef(0);
-  
-  const { isPlaying, currentTime, volume } = playback;
-  const { duration } = project;
+  const playerRef = useRef<PlayerRef>(null);
+
+  const { isPlaying, currentTime } = playback;
+  const { duration, fps: projectFps, resolution } = project;
+
+  const fps = projectFps > 0 ? projectFps : 30;
+  const compositionWidth = resolution?.width ?? 1920;
+  const compositionHeight = resolution?.height ?? 1080;
+
+  const compositionProps = useMemo(() => ({ clips, audioTracks }), [clips, audioTracks]);
 
   const fallbackDuration = useMemo(() => {
     const clipMax = clips.reduce((max, clip) => {
@@ -52,24 +52,40 @@ const PreviewPanel = ({ clips, audioTracks }: PreviewPanelProps) => {
   }, [clips, audioTracks]);
 
   const effectiveDuration = duration > 0 ? duration : fallbackDuration;
-  const durationInFrames = Math.max(Math.round((effectiveDuration || 0) * FPS), 1);
+  const durationInFrames = Math.max(Math.round((effectiveDuration || 0) * fps), 1);
+  const currentFrame = Math.min(durationInFrames - 1, Math.max(0, Math.round(currentTime * fps)));
 
   const handleSeek = (newValue: number[]) => {
     const newTime = newValue[0];
     setCurrentTime(newTime);
-    if (videoRef.current) {
-      videoRef.current.currentTime = newTime;
+    if (playerRef.current) {
+      const targetFrame = Math.max(0, Math.min(durationInFrames - 1, Math.round(newTime * fps)));
+      playerRef.current.seekTo(targetFrame);
     }
   };
 
   useEffect(() => {
-    if (!videoRef.current) return;
+    if (!playerRef.current) return;
     if (isPlaying) {
-      videoRef.current.play();
+      playerRef.current.play();
     } else {
-      videoRef.current.pause();
+      playerRef.current.pause();
     }
   }, [isPlaying]);
+
+  useEffect(() => {
+    playerRef.current?.setVolume?.(playback.volume);
+  }, [playback.volume]);
+
+  useEffect(() => {
+    playerRef.current?.setPlaybackRate?.(playback.playbackRate);
+  }, [playback.playbackRate]);
+
+  useEffect(() => {
+    if (effectiveDuration > 0 && Math.abs(duration - effectiveDuration) > 0.001) {
+      setDuration(effectiveDuration);
+    }
+  }, [duration, effectiveDuration, setDuration]);
 
   // Format time as MM:SS
   const formatTime = (time: number) => {
@@ -82,10 +98,39 @@ const PreviewPanel = ({ clips, audioTracks }: PreviewPanelProps) => {
     <div className="w-full h-full flex flex-col">
       {/* Video preview */}
       <div className="flex-1 bg-black flex items-center justify-center">
-        <div className="w-full h-full flex items-center justify-center">
-          <div className="text-white text-center">
-            <p className="text-lg mb-2">Video Preview</p>
-            <p className="text-sm text-zinc-400">Remotion integration coming soon</p>
+        <div className="w-full h-full max-h-full flex items-center justify-center">
+          <div className="w-full h-full" style={{ aspectRatio: `${compositionWidth} / ${compositionHeight}` }}>
+            <Player
+              ref={playerRef}
+              component={VideoComposition}
+              durationInFrames={durationInFrames}
+              fps={fps}
+              compositionWidth={compositionWidth}
+              compositionHeight={compositionHeight}
+              inputProps={compositionProps}
+              controls={false}
+              loop={playback.isLooping}
+              autoPlay={false}
+              clickToPlay={false}
+              doubleClickToFullscreen={false}
+              renderLoading={() => null}
+              frame={currentFrame}
+              style={{ width: '100%', height: '100%' }}
+              onPlay={play}
+              onPause={pause}
+              onEnded={() => {
+                pause();
+                if (!playback.isLooping) {
+                  setCurrentTime(effectiveDuration);
+                }
+              }}
+              onFrameUpdate={(frame) => {
+                const nextTime = frame / fps;
+                if (Math.abs(nextTime - playback.currentTime) > 1 / fps / 2) {
+                  setCurrentTime(nextTime);
+                }
+              }}
+            />
           </div>
         </div>
       </div>
@@ -97,14 +142,14 @@ const PreviewPanel = ({ clips, audioTracks }: PreviewPanelProps) => {
           <Slider
             value={[playback.currentTime]}
             min={0}
-            max={project.duration || 100}
+            max={effectiveDuration || 0}
             step={0.01}
             onValueChange={handleSeek}
             className="cursor-pointer"
           />
           <div className="flex justify-between text-xs text-zinc-400 mt-1">
             <span>{formatTime(playback.currentTime)}</span>
-            <span>{formatTime(project.duration)}</span>
+            <span>{formatTime(effectiveDuration)}</span>
           </div>
         </div>
 
@@ -116,9 +161,7 @@ const PreviewPanel = ({ clips, audioTracks }: PreviewPanelProps) => {
             className="text-white hover:bg-[#1D2130] p-2 h-9 w-9"
             onClick={() => {
               setCurrentTime(0);
-              if (videoRef.current) {
-                videoRef.current.currentTime = 0;
-              }
+              playerRef.current?.seekTo(0);
             }}
           >
             <SkipBack className="h-5 w-5" />
@@ -142,10 +185,11 @@ const PreviewPanel = ({ clips, audioTracks }: PreviewPanelProps) => {
             size="sm"
             className="text-white hover:bg-[#1D2130] p-2 h-9 w-9"
             onClick={() => {
-              const nextTime = Math.min(project.duration, playback.currentTime + 10);
+              const nextTime = Math.min(effectiveDuration, playback.currentTime + 10);
               setCurrentTime(nextTime);
-              if (videoRef.current) {
-                videoRef.current.currentTime = nextTime;
+              if (playerRef.current) {
+                const nextFrame = Math.round(nextTime * fps);
+                playerRef.current.seekTo(Math.min(durationInFrames - 1, nextFrame));
               }
             }}
           >
