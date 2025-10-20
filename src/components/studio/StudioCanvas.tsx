@@ -24,7 +24,7 @@ import '@xyflow/react/dist/style.css';
 import { ReactFlowTextNode } from './nodes/ReactFlowTextNode';
 import { ReactFlowImageNode } from './nodes/ReactFlowImageNode';
 import { ReactFlowVideoNode } from './nodes/ReactFlowVideoNode';
-import { StudioEdge } from './edges/StudioEdge';
+import { EnhancedStudioEdge } from './edges/EnhancedStudioEdge';
 import { CustomConnectionLine } from './ConnectionLine';
 import { ConnectionNodeSelector } from './ConnectionNodeSelector';
 import { useConnectionValidation } from '@/hooks/useConnectionValidation';
@@ -67,7 +67,8 @@ const nodeTypes: NodeTypes = {
 
 // Edge types configuration
 const edgeTypes: EdgeTypes = {
-  studio: StudioEdge,
+  studio: EnhancedStudioEdge,
+  default: EnhancedStudioEdge,
 };
 
 // Default edge options
