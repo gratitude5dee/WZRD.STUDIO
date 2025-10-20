@@ -34,6 +34,8 @@ import { useUndoRedo } from '@/hooks/useUndoRedo';
 import { supabaseService } from '@/services/supabaseService';
 import { useParams } from 'react-router-dom';
 import { ConnectionValidator } from '@/lib/validation/connectionValidator';
+import { GraphExecutor } from '@/lib/execution/graphExecutor';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface Block {
   id: string;
@@ -112,10 +114,13 @@ const StudioCanvasInner = ({
   const [rightPanelOpen, setRightPanelOpen] = useState(false);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
   const [queue, setQueue] = useState<QueueItem[]>([]);
+  const [currentRunId, setCurrentRunId] = useState<string | null>(null);
+  const [isExecuting, setIsExecuting] = useState(false);
   const { fitView, zoomIn, zoomOut, getNodes, getEdges } = useReactFlow();
   const { takeSnapshot, undo, redo, canUndo, canRedo } = useUndoRedo(nodes, edges);
   const rfRef = useRef<HTMLDivElement>(null);
   const validator = useRef(new ConnectionValidator()).current;
+  const executor = useRef(new GraphExecutor()).current;
 
   // Load blocks and connections from Supabase
   useEffect(() => {
@@ -447,6 +452,139 @@ const StudioCanvasInner = ({
     }
   }, [projectId, getNodes, getEdges]);
 
+  // Execute workflow graph
+  const handleRunWorkflow = useCallback(async () => {
+    if (!projectId) return;
+
+    try {
+      setIsExecuting(true);
+
+      // Validate graph before execution
+      const validation = validator.validateGraph(nodes, edges);
+      if (!validation.valid) {
+        toast({
+          title: 'Cannot Run Workflow',
+          description: `Please fix these issues:\n${validation.errors.slice(0, 3).join('\n')}`,
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Reset all node statuses to idle
+      setNodes((nds) =>
+        nds.map((n) => ({
+          ...n,
+          data: { ...n.data, status: 'idle', progress: 0 },
+        }))
+      );
+
+      // Execute graph
+      const result = await executor.executeGraph(nodes, edges, projectId);
+      setCurrentRunId(result.runId);
+
+      toast({
+        title: 'Workflow Started',
+        description: `Executing ${nodes.length} nodes in sequence`,
+      });
+
+    } catch (error) {
+      console.error('Execution error:', error);
+      toast({
+        title: 'Execution Failed',
+        description: error instanceof Error ? error.message : 'Unknown error',
+        variant: 'destructive',
+      });
+      setIsExecuting(false);
+    }
+  }, [projectId, nodes, edges, validator, executor, setNodes]);
+
+  // Subscribe to execution status updates via Realtime
+  useEffect(() => {
+    if (!currentRunId) return;
+
+    const channel = supabase
+      .channel(`execution:${currentRunId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'execution_node_status',
+          filter: `run_id=eq.${currentRunId}`,
+        },
+        (payload) => {
+          const { node_id, status, progress, outputs, error } = payload.new;
+
+          // Update node status in real-time
+          setNodes((nds) =>
+            nds.map((node) => {
+              if (node.id === node_id) {
+                return {
+                  ...node,
+                  data: {
+                    ...node.data,
+                    status,
+                    progress,
+                    outputs,
+                    error,
+                  },
+                };
+              }
+              return node;
+            })
+          );
+
+          // Show completion toast
+          if (status === 'complete') {
+            toast({
+              title: 'Node Complete',
+              description: `${nodes.find(n => n.id === node_id)?.data.label || 'Node'} finished successfully`,
+            });
+          } else if (status === 'error') {
+            toast({
+              title: 'Node Error',
+              description: error || 'Unknown error occurred',
+              variant: 'destructive',
+            });
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'execution_runs',
+          filter: `id=eq.${currentRunId}`,
+        },
+        (payload) => {
+          const { status } = payload.new;
+
+          if (status === 'completed') {
+            setIsExecuting(false);
+            setCurrentRunId(null);
+            toast({
+              title: 'Workflow Complete',
+              description: 'All nodes executed successfully',
+            });
+          } else if (status === 'failed') {
+            setIsExecuting(false);
+            setCurrentRunId(null);
+            toast({
+              title: 'Workflow Failed',
+              description: payload.new.error_message || 'Execution failed',
+              variant: 'destructive',
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [currentRunId, setNodes, nodes]);
+
   // Context menu handlers
   const onNodeContextMenu = useCallback((event: React.MouseEvent, node: Node) => {
     event.preventDefault();
@@ -619,6 +757,12 @@ const StudioCanvasInner = ({
       if ((e.metaKey || e.ctrlKey) && e.key === 'i') {
         e.preventDefault();
         handleImport();
+      }
+
+      // Cmd/Ctrl + R: Run workflow
+      if ((e.metaKey || e.ctrlKey) && e.key === 'r') {
+        e.preventDefault();
+        handleRunWorkflow();
       }
 
       // Cmd/Ctrl + 1/2/3: Add node shortcuts
@@ -801,6 +945,24 @@ const StudioCanvasInner = ({
                 Generate
               </button>
             )}
+
+            {/* Run Workflow Button */}
+            {nodes.length > 0 && (
+              <button
+                onClick={handleRunWorkflow}
+                disabled={isExecuting}
+                className={`
+                  px-3 py-2 border rounded-lg text-xs font-semibold transition-all duration-200 flex items-center gap-2 shadow-[0_4px_12px_rgba(139,92,246,0.3)]
+                  ${isExecuting 
+                    ? 'bg-[#27272A] border-[#3F3F46] text-[#71717A] cursor-not-allowed' 
+                    : 'bg-[#8B5CF6] hover:bg-[#7C3AED] border-[#8B5CF6] text-white'
+                  }
+                `}
+              >
+                <Sparkles className={`w-3.5 h-3.5 ${isExecuting ? 'animate-spin' : ''}`} />
+                {isExecuting ? 'Running...' : 'Run Workflow'}
+              </button>
+            )}
           </motion.div>
         </Panel>
 
@@ -938,6 +1100,10 @@ const StudioCanvasInner = ({
                   <div className="flex justify-between items-center">
                     <span className="text-[#A1A1AA]">Export</span>
                     <kbd className="px-2 py-1 bg-[#1C1C1F] border border-[#3F3F46] rounded text-[#FAFAFA] font-mono text-[11px]">⌘ E</kbd>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-[#A1A1AA]">Run Workflow</span>
+                    <kbd className="px-2 py-1 bg-[#1C1C1F] border border-[#3F3F46] rounded text-[#FAFAFA] font-mono text-[11px]">⌘ R</kbd>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-[#A1A1AA]">Select All</span>

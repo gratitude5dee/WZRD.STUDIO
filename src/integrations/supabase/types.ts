@@ -1421,6 +1421,92 @@ export type Database = {
           },
         ]
       }
+      execution_node_status: {
+        Row: {
+          created_at: string | null
+          error: string | null
+          id: string
+          node_id: string
+          outputs: Json | null
+          progress: number | null
+          run_id: string
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          error?: string | null
+          id?: string
+          node_id: string
+          outputs?: Json | null
+          progress?: number | null
+          run_id: string
+          status: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          error?: string | null
+          id?: string
+          node_id?: string
+          outputs?: Json | null
+          progress?: number | null
+          run_id?: string
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "execution_node_status_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "execution_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      execution_runs: {
+        Row: {
+          completed_nodes: number
+          created_at: string | null
+          error_message: string | null
+          execution_order: Json | null
+          finished_at: string | null
+          id: string
+          project_id: string
+          started_at: string | null
+          status: string
+          total_nodes: number
+          updated_at: string | null
+        }
+        Insert: {
+          completed_nodes?: number
+          created_at?: string | null
+          error_message?: string | null
+          execution_order?: Json | null
+          finished_at?: string | null
+          id?: string
+          project_id: string
+          started_at?: string | null
+          status: string
+          total_nodes?: number
+          updated_at?: string | null
+        }
+        Update: {
+          completed_nodes?: number
+          created_at?: string | null
+          error_message?: string | null
+          execution_order?: Json | null
+          finished_at?: string | null
+          id?: string
+          project_id?: string
+          started_at?: string | null
+          status?: string
+          total_nodes?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       falai_job_updates: {
         Row: {
           created_at: string | null
