@@ -2,8 +2,12 @@ import { memo } from 'react';
 import { NodeProps, Position } from '@xyflow/react';
 import { BaseNode } from './BaseNode';
 import VideoBlock from '../blocks/VideoBlock';
+import { NodeStatusBadge } from '../status/NodeStatusBadge';
 
 export const ReactFlowVideoNode = memo(({ id, data, selected }: NodeProps) => {
+  const status = (data as any)?.status || 'idle';
+  const progress = (data as any)?.progress || 0;
+  const error = (data as any)?.error;
   const handles = [
     {
       id: 'text-input',
@@ -32,6 +36,12 @@ export const ReactFlowVideoNode = memo(({ id, data, selected }: NodeProps) => {
 
   return (
     <BaseNode handles={handles}>
+      <NodeStatusBadge 
+        status={status}
+        progress={progress}
+        error={error}
+      />
+      
       <div className="w-80">
         <VideoBlock
           id={id}

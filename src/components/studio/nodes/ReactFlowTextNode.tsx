@@ -1,9 +1,14 @@
 import { memo } from 'react';
 import { NodeProps, Position } from '@xyflow/react';
-import { BaseNode, BaseNodeHeader, BaseNodeHeaderTitle, BaseNodeContent } from './BaseNode';
+import { BaseNode } from './BaseNode';
 import TextBlock from '../blocks/TextBlock';
+import { NodeStatusBadge } from '../status/NodeStatusBadge';
 
 export const ReactFlowTextNode = memo(({ id, data, selected }: NodeProps) => {
+  // Extract status from data if available
+  const status = (data as any)?.status || 'idle';
+  const progress = (data as any)?.progress || 0;
+  const error = (data as any)?.error;
   const handles = [
     {
       id: 'text-input',
@@ -32,6 +37,13 @@ export const ReactFlowTextNode = memo(({ id, data, selected }: NodeProps) => {
 
   return (
     <BaseNode handles={handles}>
+      {/* Status indicator */}
+      <NodeStatusBadge 
+        status={status}
+        progress={progress}
+        error={error}
+      />
+      
       <div className="w-80">
         <TextBlock
           id={id}

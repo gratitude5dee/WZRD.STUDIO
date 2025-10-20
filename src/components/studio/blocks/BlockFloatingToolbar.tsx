@@ -131,32 +131,43 @@ export const BlockFloatingToolbar: React.FC<BlockFloatingToolbarProps> = ({
 
   return (
     <motion.div 
-      initial={{ opacity: 0, y: -10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -10 }}
-      transition={{ duration: 0.2 }}
+      initial={{ opacity: 0, y: -10, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: -10, scale: 0.95 }}
+      transition={{ 
+        duration: 0.2,
+        type: 'spring',
+        stiffness: 300,
+        damping: 25
+      }}
       className={cn(
-        "flex items-center gap-2 px-3 py-2 bg-zinc-900/95 backdrop-blur-md border border-zinc-800 rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.4)]",
+        "flex items-center gap-2 px-3 py-2",
+        "bg-gradient-to-br from-zinc-900/98 to-zinc-800/98 backdrop-blur-xl",
+        "border border-zinc-700/50 rounded-xl",
+        "shadow-[0_8px_32px_rgba(0,0,0,0.5),0_0_0_1px_rgba(255,255,255,0.05)]",
         className
       )}
       onMouseDown={(e) => e.stopPropagation()}
       onClick={(e) => e.stopPropagation()}
     >
       <TooltipProvider>
-        {/* Magic Wand Icon */}
+        {/* Magic Wand Icon with keyboard hint */}
         <Tooltip>
           <TooltipTrigger asChild>
             <button
-              className="p-1.5 hover:bg-zinc-800/50 rounded-md transition-colors"
+              className="p-1.5 hover:bg-zinc-800/70 rounded-lg transition-all hover:scale-105 group/btn relative"
               onClick={(e) => {
                 e.stopPropagation();
                 onAISuggestion?.();
               }}
             >
-              <Wand2 className="w-4 h-4 text-zinc-400" />
+              <Wand2 className="w-4 h-4 text-zinc-400 group-hover/btn:text-purple-400 transition-colors" />
             </button>
           </TooltipTrigger>
-          <TooltipContent>AI Suggestions</TooltipContent>
+          <TooltipContent side="bottom" className="flex items-center gap-2">
+            <span>AI Suggestions</span>
+            <kbd className="px-1.5 py-0.5 text-[10px] font-mono bg-zinc-800 rounded">⌘K</kbd>
+          </TooltipContent>
         </Tooltip>
 
         {/* Count Selector for Image/Video blocks */}
@@ -232,7 +243,7 @@ export const BlockFloatingToolbar: React.FC<BlockFloatingToolbarProps> = ({
 
         <div className="w-px h-5 bg-zinc-800" />
 
-        {/* More Options Button */}
+        {/* More Options Button with keyboard hint */}
         <Tooltip>
           <TooltipTrigger asChild>
             <button
@@ -240,12 +251,15 @@ export const BlockFloatingToolbar: React.FC<BlockFloatingToolbarProps> = ({
                 e.stopPropagation();
                 onSettingsClick?.();
               }}
-              className="p-1.5 hover:bg-zinc-800/50 rounded-md transition-colors"
+              className="p-1.5 hover:bg-zinc-800/70 rounded-lg transition-all hover:scale-105 group/btn"
             >
-              <MoreHorizontal className="w-4 h-4 text-zinc-400" />
+              <MoreHorizontal className="w-4 h-4 text-zinc-400 group-hover/btn:text-white transition-colors" />
             </button>
           </TooltipTrigger>
-          <TooltipContent>More Options</TooltipContent>
+          <TooltipContent side="bottom" className="flex items-center gap-2">
+            <span>More Options</span>
+            <kbd className="px-1.5 py-0.5 text-[10px] font-mono bg-zinc-800 rounded">⌘.</kbd>
+          </TooltipContent>
         </Tooltip>
       </TooltipProvider>
     </motion.div>
