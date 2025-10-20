@@ -22,12 +22,6 @@ const VideoEditor = () => {
     playback,
     setProjectId,
     setProjectName,
-    generationParams,
-    setGenerationParams,
-    aiGeneration,
-    startGeneration,
-    updateGenerationProgress,
-    finishGeneration,
   } = useVideoEditor();
   
   const navigate = useNavigate();
@@ -235,74 +229,7 @@ const VideoEditor = () => {
             </TabsContent>
             <TabsContent value="generate" className="p-0 m-0 h-[calc(100%-40px)]">
               <ScrollArea className="h-full">
-                <div className="p-4 space-y-4">
-                  <div>
-                    <h3 className="text-lg font-medium">AI Generation</h3>
-                    <p className="text-sm text-zinc-400">Track and control AI-assisted renders for this project.</p>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-xs uppercase tracking-wide text-zinc-500">Prompt</label>
-                    <textarea
-                      value={generationParams.prompt}
-                      onChange={(e) => setGenerationParams({ prompt: e.target.value })}
-                      placeholder="Describe what you'd like to generate"
-                      className="w-full min-h-[80px] rounded-md bg-[#0F1117] border border-[#1D2130] px-3 py-2 text-sm text-zinc-200 focus:outline-none focus:ring-2 focus:ring-purple-500/40"
-                    />
-                  </div>
-
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between text-xs text-zinc-400">
-                      <span>Status: <span className="text-zinc-200 font-medium">{aiGeneration.status}</span></span>
-                      <span>{Math.round(aiGeneration.progress * 100)}%</span>
-                    </div>
-                    <div className="h-2 rounded-full bg-[#1D2130] overflow-hidden">
-                      <div
-                        className="h-full bg-gradient-to-r from-purple-500 via-blue-500 to-emerald-400 transition-all"
-                        style={{ width: `${Math.min(100, Math.max(0, aiGeneration.progress * 100))}%` }}
-                      />
-                    </div>
-                    {aiGeneration.message && (
-                      <div className="text-xs text-zinc-400 bg-[#111520] border border-[#1D2130] rounded-md px-3 py-2">
-                        {aiGeneration.message}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex flex-wrap gap-2">
-                    <Button
-                      size="sm"
-                      onClick={() => startGeneration('Preparing generation...')}
-                      disabled={aiGeneration.status === 'running'}
-                    >
-                      Start
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      onClick={() => updateGenerationProgress(Math.min(aiGeneration.progress + 0.1, 1))}
-                      disabled={aiGeneration.status !== 'running'}
-                    >
-                      Advance 10%
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      onClick={() => finishGeneration('completed', 'Generation complete')}
-                      disabled={aiGeneration.status !== 'running'}
-                    >
-                      Complete
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => finishGeneration('failed', 'Generation cancelled')}
-                      disabled={aiGeneration.status !== 'running'}
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                </div>
+                <AIGenerationPanel />
               </ScrollArea>
             </TabsContent>
           </Tabs>
