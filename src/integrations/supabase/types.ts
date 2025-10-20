@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_logs: {
+        Row: {
+          action: string
+          created_at: string | null
+          entity_id: string
+          entity_type: string
+          id: string
+          metadata: Json | null
+          new_values: Json | null
+          old_values: Json | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          entity_id: string
+          entity_type: string
+          id?: string
+          metadata?: Json | null
+          new_values?: Json | null
+          old_values?: Json | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          metadata?: Json | null
+          new_values?: Json | null
+          old_values?: Json | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       ai_runs: {
         Row: {
           board_id: string
@@ -192,6 +228,65 @@ export type Database = {
         }
         Relationships: []
       }
+      audio_tracks: {
+        Row: {
+          created_at: string
+          duration_ms: number | null
+          end_time_ms: number | null
+          id: string
+          is_muted: boolean | null
+          metadata: Json | null
+          name: string
+          project_id: string
+          start_time_ms: number | null
+          storage_bucket: string
+          storage_path: string
+          updated_at: string
+          user_id: string
+          volume: number | null
+        }
+        Insert: {
+          created_at?: string
+          duration_ms?: number | null
+          end_time_ms?: number | null
+          id?: string
+          is_muted?: boolean | null
+          metadata?: Json | null
+          name: string
+          project_id: string
+          start_time_ms?: number | null
+          storage_bucket: string
+          storage_path: string
+          updated_at?: string
+          user_id: string
+          volume?: number | null
+        }
+        Update: {
+          created_at?: string
+          duration_ms?: number | null
+          end_time_ms?: number | null
+          id?: string
+          is_muted?: boolean | null
+          metadata?: Json | null
+          name?: string
+          project_id?: string
+          start_time_ms?: number | null
+          storage_bucket?: string
+          storage_path?: string
+          updated_at?: string
+          user_id?: string
+          volume?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audio_tracks_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       automation_analytics: {
         Row: {
           action_id: string | null
@@ -369,11 +464,13 @@ export type Database = {
       boards: {
         Row: {
           canvas_data: Json
+          content: Json | null
           created_at: string
           description: string | null
           id: string
           is_public: boolean
           slug: string | null
+          source_project_id: string | null
           thumbnail_url: string | null
           title: string
           updated_at: string
@@ -381,11 +478,13 @@ export type Database = {
         }
         Insert: {
           canvas_data?: Json
+          content?: Json | null
           created_at?: string
           description?: string | null
           id?: string
           is_public?: boolean
           slug?: string | null
+          source_project_id?: string | null
           thumbnail_url?: string | null
           title?: string
           updated_at?: string
@@ -393,14 +492,117 @@ export type Database = {
         }
         Update: {
           canvas_data?: Json
+          content?: Json | null
           created_at?: string
           description?: string | null
           id?: string
           is_public?: boolean
           slug?: string | null
+          source_project_id?: string | null
           thumbnail_url?: string | null
           title?: string
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      booking_communications: {
+        Row: {
+          body: string | null
+          booking_id: string
+          communication_type: string | null
+          direction: string | null
+          id: string
+          sent_at: string | null
+          status: string | null
+          subject: string | null
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          booking_id: string
+          communication_type?: string | null
+          direction?: string | null
+          id?: string
+          sent_at?: string | null
+          status?: string | null
+          subject?: string | null
+          user_id: string
+        }
+        Update: {
+          body?: string | null
+          booking_id?: string
+          communication_type?: string | null
+          direction?: string | null
+          id?: string
+          sent_at?: string | null
+          status?: string | null
+          subject?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_communications_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "venue_bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      brand_kits: {
+        Row: {
+          auto_apply_to_designs: boolean | null
+          color_palette: Json | null
+          created_at: string | null
+          guidelines_pdf_url: string | null
+          id: string
+          is_default: boolean | null
+          logo_clear_space: number | null
+          logo_icon_url: string | null
+          logo_min_size: number | null
+          logo_primary_url: string | null
+          logo_secondary_url: string | null
+          name: string
+          typography: Json | null
+          updated_at: string | null
+          usage_rules: string[] | null
+          user_id: string
+        }
+        Insert: {
+          auto_apply_to_designs?: boolean | null
+          color_palette?: Json | null
+          created_at?: string | null
+          guidelines_pdf_url?: string | null
+          id?: string
+          is_default?: boolean | null
+          logo_clear_space?: number | null
+          logo_icon_url?: string | null
+          logo_min_size?: number | null
+          logo_primary_url?: string | null
+          logo_secondary_url?: string | null
+          name: string
+          typography?: Json | null
+          updated_at?: string | null
+          usage_rules?: string[] | null
+          user_id: string
+        }
+        Update: {
+          auto_apply_to_designs?: boolean | null
+          color_palette?: Json | null
+          created_at?: string | null
+          guidelines_pdf_url?: string | null
+          id?: string
+          is_default?: boolean | null
+          logo_clear_space?: number | null
+          logo_icon_url?: string | null
+          logo_min_size?: number | null
+          logo_primary_url?: string | null
+          logo_secondary_url?: string | null
+          name?: string
+          typography?: Json | null
+          updated_at?: string | null
+          usage_rules?: string[] | null
           user_id?: string
         }
         Relationships: []
@@ -510,6 +712,48 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      contact_venues: {
+        Row: {
+          contact_id: string
+          created_at: string | null
+          id: string
+          notes: string | null
+          relationship_type: string | null
+          venue_id: string
+        }
+        Insert: {
+          contact_id: string
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          relationship_type?: string | null
+          venue_id: string
+        }
+        Update: {
+          contact_id?: string
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          relationship_type?: string | null
+          venue_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_venues_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "tour_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_venues_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       content_assets: {
         Row: {
@@ -654,6 +898,7 @@ export type Database = {
           id: string
           metadata: Json | null
           qr_code_data: string | null
+          storage_path: string | null
           tags: string[] | null
           thumbnail_url: string | null
           title: string
@@ -670,6 +915,7 @@ export type Database = {
           id?: string
           metadata?: Json | null
           qr_code_data?: string | null
+          storage_path?: string | null
           tags?: string[] | null
           thumbnail_url?: string | null
           title: string
@@ -686,6 +932,7 @@ export type Database = {
           id?: string
           metadata?: Json | null
           qr_code_data?: string | null
+          storage_path?: string | null
           tags?: string[] | null
           thumbnail_url?: string | null
           title?: string
@@ -897,6 +1144,187 @@ export type Database = {
         }
         Relationships: []
       }
+      design_analytics: {
+        Row: {
+          created_at: string | null
+          design_id: string
+          event_data: Json | null
+          event_type: string
+          id: string
+        }
+        Insert: {
+          created_at?: string | null
+          design_id: string
+          event_data?: Json | null
+          event_type: string
+          id?: string
+        }
+        Update: {
+          created_at?: string | null
+          design_id?: string
+          event_data?: Json | null
+          event_type?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "design_analytics_design_id_fkey"
+            columns: ["design_id"]
+            isOneToOne: false
+            referencedRelation: "designs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      design_templates: {
+        Row: {
+          canvas_data: Json
+          category: string
+          created_at: string | null
+          creator_id: string | null
+          description: string | null
+          downloads: number | null
+          id: string
+          is_active: boolean | null
+          is_featured: boolean | null
+          name: string
+          preview_images: string[] | null
+          price: number
+          rating: number | null
+          review_count: number | null
+          style: string
+          tags: string[] | null
+          thumbnail_url: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          canvas_data: Json
+          category: string
+          created_at?: string | null
+          creator_id?: string | null
+          description?: string | null
+          downloads?: number | null
+          id?: string
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          name: string
+          preview_images?: string[] | null
+          price?: number
+          rating?: number | null
+          review_count?: number | null
+          style: string
+          tags?: string[] | null
+          thumbnail_url?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          canvas_data?: Json
+          category?: string
+          created_at?: string | null
+          creator_id?: string | null
+          description?: string | null
+          downloads?: number | null
+          id?: string
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          name?: string
+          preview_images?: string[] | null
+          price?: number
+          rating?: number | null
+          review_count?: number | null
+          style?: string
+          tags?: string[] | null
+          thumbnail_url?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      design_versions: {
+        Row: {
+          canvas_data: Json | null
+          changes_description: string | null
+          created_at: string
+          created_by: string | null
+          design_id: string
+          design_image_url: string | null
+          id: string
+          version_number: number
+        }
+        Insert: {
+          canvas_data?: Json | null
+          changes_description?: string | null
+          created_at?: string
+          created_by?: string | null
+          design_id: string
+          design_image_url?: string | null
+          id?: string
+          version_number: number
+        }
+        Update: {
+          canvas_data?: Json | null
+          changes_description?: string | null
+          created_at?: string
+          created_by?: string | null
+          design_id?: string
+          design_image_url?: string | null
+          id?: string
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "design_versions_design_id_fkey"
+            columns: ["design_id"]
+            isOneToOne: false
+            referencedRelation: "designs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      designs: {
+        Row: {
+          ai_json_prompt: Json | null
+          ai_prompt: string | null
+          canvas_data: Json | null
+          created_at: string | null
+          description: string | null
+          design_image_url: string | null
+          design_type: string | null
+          id: string
+          name: string
+          status: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          ai_json_prompt?: Json | null
+          ai_prompt?: string | null
+          canvas_data?: Json | null
+          created_at?: string | null
+          description?: string | null
+          design_image_url?: string | null
+          design_type?: string | null
+          id?: string
+          name: string
+          status?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          ai_json_prompt?: Json | null
+          ai_prompt?: string | null
+          canvas_data?: Json | null
+          created_at?: string | null
+          description?: string | null
+          design_image_url?: string | null
+          design_type?: string | null
+          id?: string
+          name?: string
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       edges: {
         Row: {
           created_at: string | null
@@ -945,6 +1373,50 @@ export type Database = {
             columns: ["workflow_id"]
             isOneToOne: false
             referencedRelation: "workflows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_assets: {
+        Row: {
+          ai_model_used: string | null
+          asset_type: string
+          booking_id: string
+          created_at: string | null
+          file_url: string | null
+          generation_prompt: string | null
+          id: string
+          metadata: Json | null
+          user_id: string
+        }
+        Insert: {
+          ai_model_used?: string | null
+          asset_type: string
+          booking_id: string
+          created_at?: string | null
+          file_url?: string | null
+          generation_prompt?: string | null
+          id?: string
+          metadata?: Json | null
+          user_id: string
+        }
+        Update: {
+          ai_model_used?: string | null
+          asset_type?: string
+          booking_id?: string
+          created_at?: string | null
+          file_url?: string | null
+          generation_prompt?: string | null
+          id?: string
+          metadata?: Json | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_assets_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "venue_bookings"
             referencedColumns: ["id"]
           },
         ]
@@ -1007,6 +1479,92 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      execution_node_status: {
+        Row: {
+          created_at: string | null
+          error: string | null
+          id: string
+          node_id: string
+          outputs: Json | null
+          progress: number | null
+          run_id: string
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          error?: string | null
+          id?: string
+          node_id: string
+          outputs?: Json | null
+          progress?: number | null
+          run_id: string
+          status: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          error?: string | null
+          id?: string
+          node_id?: string
+          outputs?: Json | null
+          progress?: number | null
+          run_id?: string
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "execution_node_status_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "execution_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      execution_runs: {
+        Row: {
+          completed_nodes: number
+          created_at: string | null
+          error_message: string | null
+          execution_order: Json | null
+          finished_at: string | null
+          id: string
+          project_id: string
+          started_at: string | null
+          status: string
+          total_nodes: number
+          updated_at: string | null
+        }
+        Insert: {
+          completed_nodes?: number
+          created_at?: string | null
+          error_message?: string | null
+          execution_order?: Json | null
+          finished_at?: string | null
+          id?: string
+          project_id: string
+          started_at?: string | null
+          status: string
+          total_nodes?: number
+          updated_at?: string | null
+        }
+        Update: {
+          completed_nodes?: number
+          created_at?: string | null
+          error_message?: string | null
+          execution_order?: Json | null
+          finished_at?: string | null
+          id?: string
+          project_id?: string
+          started_at?: string | null
+          status?: string
+          total_nodes?: number
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       falai_job_updates: {
         Row: {
@@ -1361,42 +1919,60 @@ export type Database = {
       invoices: {
         Row: {
           amount: number
+          balance_due: number | null
           created_at: string | null
+          currency: string | null
           due_date: string | null
           gig_id: string
           id: string
           invoice_number: string | null
+          line_items: Json | null
           notes: string | null
+          paid_at: string | null
           paid_date: string | null
           payment_method: string | null
           status: string | null
+          tax_amount: number | null
           updated_at: string | null
+          user_id: string
         }
         Insert: {
           amount: number
+          balance_due?: number | null
           created_at?: string | null
+          currency?: string | null
           due_date?: string | null
           gig_id: string
           id?: string
           invoice_number?: string | null
+          line_items?: Json | null
           notes?: string | null
+          paid_at?: string | null
           paid_date?: string | null
           payment_method?: string | null
           status?: string | null
+          tax_amount?: number | null
           updated_at?: string | null
+          user_id: string
         }
         Update: {
           amount?: number
+          balance_due?: number | null
           created_at?: string | null
+          currency?: string | null
           due_date?: string | null
           gig_id?: string
           id?: string
           invoice_number?: string | null
+          line_items?: Json | null
           notes?: string | null
+          paid_at?: string | null
           paid_date?: string | null
           payment_method?: string | null
           status?: string | null
+          tax_amount?: number | null
           updated_at?: string | null
+          user_id?: string
         }
         Relationships: [
           {
@@ -1664,62 +2240,6 @@ export type Database = {
             foreignKeyName: "media_assets_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
-          referencedRelation: "projects"
-          referencedColumns: ["id"]
-        },
-      ]
-      }
-      audio_tracks: {
-        Row: {
-          created_at: string
-          duration_ms: number | null
-          end_time_ms: number | null
-          id: string
-          metadata: Json
-          name: string
-          project_id: string
-          start_time_ms: number | null
-          storage_bucket: string
-          storage_path: string
-          updated_at: string
-          user_id: string
-          waveform: Json | null
-        }
-        Insert: {
-          created_at?: string
-          duration_ms?: number | null
-          end_time_ms?: number | null
-          id?: string
-          metadata?: Json
-          name: string
-          project_id: string
-          start_time_ms?: number | null
-          storage_bucket?: string
-          storage_path: string
-          updated_at?: string
-          user_id: string
-          waveform?: Json | null
-        }
-        Update: {
-          created_at?: string
-          duration_ms?: number | null
-          end_time_ms?: number | null
-          id?: string
-          metadata?: Json
-          name?: string
-          project_id?: string
-          start_time_ms?: number | null
-          storage_bucket?: string
-          storage_path?: string
-          updated_at?: string
-          user_id?: string
-          waveform?: Json | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "audio_tracks_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
@@ -1778,123 +2298,146 @@ export type Database = {
           },
         ]
       }
-      render_jobs: {
+      merchandise_orders: {
         Row: {
-          completed_at: string | null
-          created_at: string
-          error_message: string | null
+          cancelled_at: string | null
+          created_at: string | null
+          delivered_at: string | null
+          design_id: string | null
+          estimated_delivery: string | null
+          external_order_id: string | null
+          fulfillment_provider: string | null
           id: string
-          payload: Json
-          progress: number
-          project_id: string
-          render_profile: string | null
-          result_bucket: string | null
-          result_path: string | null
-          started_at: string | null
+          mockup_urls: string[] | null
+          notes: string | null
+          order_type: string
+          product_details: Json
+          product_template_id: string | null
+          quantity: number
+          shipped_at: string | null
+          shipping_address: Json
+          shipping_cost: number | null
           status: string
-          updated_at: string
+          tax_amount: number | null
+          total_cost: number
+          tracking_number: string | null
+          tracking_url: string | null
+          unit_price: number
+          updated_at: string | null
           user_id: string
         }
         Insert: {
-          completed_at?: string | null
-          created_at?: string
-          error_message?: string | null
+          cancelled_at?: string | null
+          created_at?: string | null
+          delivered_at?: string | null
+          design_id?: string | null
+          estimated_delivery?: string | null
+          external_order_id?: string | null
+          fulfillment_provider?: string | null
           id?: string
-          payload?: Json
-          progress?: number
-          project_id: string
-          render_profile?: string | null
-          result_bucket?: string | null
-          result_path?: string | null
-          started_at?: string | null
+          mockup_urls?: string[] | null
+          notes?: string | null
+          order_type: string
+          product_details: Json
+          product_template_id?: string | null
+          quantity?: number
+          shipped_at?: string | null
+          shipping_address: Json
+          shipping_cost?: number | null
           status?: string
-          updated_at?: string
+          tax_amount?: number | null
+          total_cost: number
+          tracking_number?: string | null
+          tracking_url?: string | null
+          unit_price: number
+          updated_at?: string | null
           user_id: string
         }
         Update: {
-          completed_at?: string | null
-          created_at?: string
-          error_message?: string | null
+          cancelled_at?: string | null
+          created_at?: string | null
+          delivered_at?: string | null
+          design_id?: string | null
+          estimated_delivery?: string | null
+          external_order_id?: string | null
+          fulfillment_provider?: string | null
           id?: string
-          payload?: Json
-          progress?: number
-          project_id?: string
-          render_profile?: string | null
-          result_bucket?: string | null
-          result_path?: string | null
-          started_at?: string | null
+          mockup_urls?: string[] | null
+          notes?: string | null
+          order_type?: string
+          product_details?: Json
+          product_template_id?: string | null
+          quantity?: number
+          shipped_at?: string | null
+          shipping_address?: Json
+          shipping_cost?: number | null
           status?: string
-          updated_at?: string
+          tax_amount?: number | null
+          total_cost?: number
+          tracking_number?: string | null
+          tracking_url?: string | null
+          unit_price?: number
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "render_jobs_project_id_fkey"
-            columns: ["project_id"]
+            foreignKeyName: "merchandise_orders_design_id_fkey"
+            columns: ["design_id"]
             isOneToOne: false
-            referencedRelation: "projects"
+            referencedRelation: "designs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "merchandise_orders_product_template_id_fkey"
+            columns: ["product_template_id"]
+            isOneToOne: false
+            referencedRelation: "product_templates"
             referencedColumns: ["id"]
           },
         ]
       }
-      video_clips: {
+      mockups: {
         Row: {
-          asset_type: string
-          created_at: string
-          duration_ms: number | null
-          end_time_ms: number | null
+          created_at: string | null
+          design_id: string
           id: string
-          metadata: Json
-          name: string
-          project_id: string
-          start_time_ms: number | null
-          storage_bucket: string
-          storage_path: string
-          thumbnail_bucket: string | null
-          thumbnail_path: string | null
-          updated_at: string
-          user_id: string
+          image_url: string
+          product_template_id: string
+          render_settings: Json | null
+          scene_type: string | null
         }
         Insert: {
-          asset_type: string
-          created_at?: string
-          duration_ms?: number | null
-          end_time_ms?: number | null
+          created_at?: string | null
+          design_id: string
           id?: string
-          metadata?: Json
-          name: string
-          project_id: string
-          start_time_ms?: number | null
-          storage_bucket?: string
-          storage_path: string
-          thumbnail_bucket?: string | null
-          thumbnail_path?: string | null
-          updated_at?: string
-          user_id: string
+          image_url: string
+          product_template_id: string
+          render_settings?: Json | null
+          scene_type?: string | null
         }
         Update: {
-          asset_type?: string
-          created_at?: string
-          duration_ms?: number | null
-          end_time_ms?: number | null
+          created_at?: string | null
+          design_id?: string
           id?: string
-          metadata?: Json
-          name?: string
-          project_id?: string
-          start_time_ms?: number | null
-          storage_bucket?: string
-          storage_path?: string
-          thumbnail_bucket?: string | null
-          thumbnail_path?: string | null
-          updated_at?: string
-          user_id?: string
+          image_url?: string
+          product_template_id?: string
+          render_settings?: Json | null
+          scene_type?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "video_clips_project_id_fkey"
-            columns: ["project_id"]
+            foreignKeyName: "mockups_design_id_fkey"
+            columns: ["design_id"]
             isOneToOne: false
-            referencedRelation: "projects"
+            referencedRelation: "designs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mockups_product_template_id_fkey"
+            columns: ["product_template_id"]
+            isOneToOne: false
+            referencedRelation: "product_templates"
             referencedColumns: ["id"]
           },
         ]
@@ -2042,6 +2585,165 @@ export type Database = {
           },
         ]
       }
+      order_items: {
+        Row: {
+          color: string | null
+          created_at: string | null
+          customizations: Json | null
+          design_id: string | null
+          id: string
+          order_id: string
+          product_template_id: string | null
+          quantity: number
+          size: string | null
+          subtotal: number
+          unit_price: number
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string | null
+          customizations?: Json | null
+          design_id?: string | null
+          id?: string
+          order_id: string
+          product_template_id?: string | null
+          quantity?: number
+          size?: string | null
+          subtotal: number
+          unit_price: number
+        }
+        Update: {
+          color?: string | null
+          created_at?: string | null
+          customizations?: Json | null
+          design_id?: string | null
+          id?: string
+          order_id?: string
+          product_template_id?: string | null
+          quantity?: number
+          size?: string | null
+          subtotal?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_design_id_fkey"
+            columns: ["design_id"]
+            isOneToOne: false
+            referencedRelation: "designs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "merchandise_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_product_template_id_fkey"
+            columns: ["product_template_id"]
+            isOneToOne: false
+            referencedRelation: "product_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      order_status_history: {
+        Row: {
+          created_at: string | null
+          id: string
+          metadata: Json | null
+          notes: string | null
+          order_id: string
+          status: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          notes?: string | null
+          order_id: string
+          status: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          notes?: string | null
+          order_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_status_history_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "merchandise_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      podcasts: {
+        Row: {
+          audio_format: string | null
+          audio_signed_url: string | null
+          audio_url: string
+          created_at: string
+          description: string | null
+          duration_seconds: number | null
+          file_size: number | null
+          id: string
+          outline: Json | null
+          script: string | null
+          segments: Json | null
+          show_notes: string | null
+          style: string | null
+          title: string
+          updated_at: string | null
+          user_id: string
+          voice_id: string | null
+        }
+        Insert: {
+          audio_format?: string | null
+          audio_signed_url?: string | null
+          audio_url: string
+          created_at?: string
+          description?: string | null
+          duration_seconds?: number | null
+          file_size?: number | null
+          id?: string
+          outline?: Json | null
+          script?: string | null
+          segments?: Json | null
+          show_notes?: string | null
+          style?: string | null
+          title: string
+          updated_at?: string | null
+          user_id: string
+          voice_id?: string | null
+        }
+        Update: {
+          audio_format?: string | null
+          audio_signed_url?: string | null
+          audio_url?: string
+          created_at?: string
+          description?: string | null
+          duration_seconds?: number | null
+          file_size?: number | null
+          id?: string
+          outline?: Json | null
+          script?: string | null
+          segments?: Json | null
+          show_notes?: string | null
+          style?: string | null
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+          voice_id?: string | null
+        }
+        Relationships: []
+      }
       press_quotes: {
         Row: {
           created_at: string | null
@@ -2069,6 +2771,81 @@ export type Database = {
           source?: string
           updated_at?: string | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      print_partner_connections: {
+        Row: {
+          api_key_hash: string
+          created_at: string
+          id: string
+          is_enabled: boolean
+          provider: string
+          provider_data: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          api_key_hash: string
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          provider: string
+          provider_data?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          api_key_hash?: string
+          created_at?: string
+          id?: string
+          is_enabled?: boolean
+          provider?: string
+          provider_data?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      product_templates: {
+        Row: {
+          available: boolean | null
+          base_cost: number
+          category: string
+          created_at: string | null
+          id: string
+          image_url: string | null
+          mockup_settings: Json | null
+          name: string
+          print_areas: Json | null
+          specifications: Json | null
+          subcategory: string
+        }
+        Insert: {
+          available?: boolean | null
+          base_cost: number
+          category: string
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          mockup_settings?: Json | null
+          name: string
+          print_areas?: Json | null
+          specifications?: Json | null
+          subcategory: string
+        }
+        Update: {
+          available?: boolean | null
+          base_cost?: number
+          category?: string
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          mockup_settings?: Json | null
+          name?: string
+          print_areas?: Json | null
+          specifications?: Json | null
+          subcategory?: string
         }
         Relationships: []
       }
@@ -2787,6 +3564,238 @@ export type Database = {
           },
         ]
       }
+      studio_connections: {
+        Row: {
+          animated: boolean | null
+          created_at: string | null
+          id: string
+          project_id: string
+          source_block_id: string
+          source_handle: string | null
+          target_block_id: string
+          target_handle: string | null
+        }
+        Insert: {
+          animated?: boolean | null
+          created_at?: string | null
+          id?: string
+          project_id: string
+          source_block_id: string
+          source_handle?: string | null
+          target_block_id: string
+          target_handle?: string | null
+        }
+        Update: {
+          animated?: boolean | null
+          created_at?: string | null
+          id?: string
+          project_id?: string
+          source_block_id?: string
+          source_handle?: string | null
+          target_block_id?: string
+          target_handle?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "studio_connections_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "studio_connections_source_block_id_fkey"
+            columns: ["source_block_id"]
+            isOneToOne: false
+            referencedRelation: "studio_blocks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "studio_connections_target_block_id_fkey"
+            columns: ["target_block_id"]
+            isOneToOne: false
+            referencedRelation: "studio_blocks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tech_packs: {
+        Row: {
+          created_at: string | null
+          design_id: string
+          id: string
+          materials: Json | null
+          measurements: Json | null
+          pdf_url: string | null
+          print_specs: Json | null
+          product_template_id: string
+          specifications: Json | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          design_id: string
+          id?: string
+          materials?: Json | null
+          measurements?: Json | null
+          pdf_url?: string | null
+          print_specs?: Json | null
+          product_template_id: string
+          specifications?: Json | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          design_id?: string
+          id?: string
+          materials?: Json | null
+          measurements?: Json | null
+          pdf_url?: string | null
+          print_specs?: Json | null
+          product_template_id?: string
+          specifications?: Json | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tech_packs_design_id_fkey"
+            columns: ["design_id"]
+            isOneToOne: false
+            referencedRelation: "designs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tech_packs_product_template_id_fkey"
+            columns: ["product_template_id"]
+            isOneToOne: false
+            referencedRelation: "product_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      template_downloads: {
+        Row: {
+          downloaded_at: string | null
+          id: string
+          price_paid: number
+          template_id: string
+          user_id: string
+        }
+        Insert: {
+          downloaded_at?: string | null
+          id?: string
+          price_paid: number
+          template_id: string
+          user_id: string
+        }
+        Update: {
+          downloaded_at?: string | null
+          id?: string
+          price_paid?: number
+          template_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "template_downloads_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "design_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      template_reviews: {
+        Row: {
+          created_at: string | null
+          id: string
+          rating: number
+          review_text: string | null
+          template_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          rating: number
+          review_text?: string | null
+          template_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          rating?: number
+          review_text?: string | null
+          template_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "template_reviews_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "design_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ticket_sales: {
+        Row: {
+          booking_id: string
+          created_at: string | null
+          id: string
+          metadata: Json | null
+          price: number
+          quantity_sold: number
+          quantity_total: number
+          sale_end_date: string | null
+          sale_start_date: string | null
+          ticket_type: string
+          ticket_url: string | null
+          user_id: string
+        }
+        Insert: {
+          booking_id: string
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          price: number
+          quantity_sold?: number
+          quantity_total?: number
+          sale_end_date?: string | null
+          sale_start_date?: string | null
+          ticket_type: string
+          ticket_url?: string | null
+          user_id: string
+        }
+        Update: {
+          booking_id?: string
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          price?: number
+          quantity_sold?: number
+          quantity_total?: number
+          sale_end_date?: string | null
+          sale_start_date?: string | null
+          ticket_type?: string
+          ticket_url?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_sales_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "venue_bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       timelines: {
         Row: {
           composition_data: Json
@@ -3103,6 +4112,129 @@ export type Database = {
         }
         Relationships: []
       }
+      venue_bookings: {
+        Row: {
+          ai_match_score: number | null
+          ai_reasoning: string | null
+          contract_signed_at: string | null
+          contract_url: string | null
+          created_at: string | null
+          event_date: string | null
+          event_time: string | null
+          gig_id: string | null
+          id: string
+          invoice_id: string | null
+          metadata: Json | null
+          offer_amount: number | null
+          offer_sent_at: string | null
+          payment_received_at: string | null
+          status: string | null
+          updated_at: string | null
+          user_id: string
+          venue_capacity: number | null
+          venue_city: string | null
+          venue_contact_email: string | null
+          venue_location: string | null
+          venue_name: string
+          venue_state: string | null
+          workflow_stage: string | null
+        }
+        Insert: {
+          ai_match_score?: number | null
+          ai_reasoning?: string | null
+          contract_signed_at?: string | null
+          contract_url?: string | null
+          created_at?: string | null
+          event_date?: string | null
+          event_time?: string | null
+          gig_id?: string | null
+          id?: string
+          invoice_id?: string | null
+          metadata?: Json | null
+          offer_amount?: number | null
+          offer_sent_at?: string | null
+          payment_received_at?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id: string
+          venue_capacity?: number | null
+          venue_city?: string | null
+          venue_contact_email?: string | null
+          venue_location?: string | null
+          venue_name: string
+          venue_state?: string | null
+          workflow_stage?: string | null
+        }
+        Update: {
+          ai_match_score?: number | null
+          ai_reasoning?: string | null
+          contract_signed_at?: string | null
+          contract_url?: string | null
+          created_at?: string | null
+          event_date?: string | null
+          event_time?: string | null
+          gig_id?: string | null
+          id?: string
+          invoice_id?: string | null
+          metadata?: Json | null
+          offer_amount?: number | null
+          offer_sent_at?: string | null
+          payment_received_at?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string
+          venue_capacity?: number | null
+          venue_city?: string | null
+          venue_contact_email?: string | null
+          venue_location?: string | null
+          venue_name?: string
+          venue_state?: string | null
+          workflow_stage?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "venue_bookings_gig_id_fkey"
+            columns: ["gig_id"]
+            isOneToOne: false
+            referencedRelation: "gigs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "venue_bookings_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      venue_searches: {
+        Row: {
+          created_at: string | null
+          extracted_filters: Json | null
+          id: string
+          query: string
+          results: Json | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          extracted_filters?: Json | null
+          id?: string
+          query: string
+          results?: Json | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          extracted_filters?: Json | null
+          id?: string
+          query?: string
+          results?: Json | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       venues: {
         Row: {
           address: string | null
@@ -3154,6 +4286,74 @@ export type Database = {
         }
         Relationships: []
       }
+      video_clips: {
+        Row: {
+          created_at: string
+          duration_ms: number | null
+          end_time_ms: number | null
+          id: string
+          layer: number | null
+          metadata: Json | null
+          name: string
+          project_id: string
+          start_time_ms: number | null
+          storage_bucket: string
+          storage_path: string
+          thumbnail_bucket: string | null
+          thumbnail_path: string | null
+          transforms: Json | null
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          duration_ms?: number | null
+          end_time_ms?: number | null
+          id?: string
+          layer?: number | null
+          metadata?: Json | null
+          name: string
+          project_id: string
+          start_time_ms?: number | null
+          storage_bucket: string
+          storage_path: string
+          thumbnail_bucket?: string | null
+          thumbnail_path?: string | null
+          transforms?: Json | null
+          type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          duration_ms?: number | null
+          end_time_ms?: number | null
+          id?: string
+          layer?: number | null
+          metadata?: Json | null
+          name?: string
+          project_id?: string
+          start_time_ms?: number | null
+          storage_bucket?: string
+          storage_path?: string
+          thumbnail_bucket?: string | null
+          thumbnail_path?: string | null
+          transforms?: Json | null
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_clips_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       video_highlights: {
         Row: {
           created_at: string | null
@@ -3184,6 +4384,33 @@ export type Database = {
           updated_at?: string | null
           url?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      voice_clones: {
+        Row: {
+          created_at: string | null
+          id: string
+          metadata: Json | null
+          updated_at: string | null
+          user_id: string
+          voice_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          updated_at?: string | null
+          user_id: string
+          voice_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          updated_at?: string | null
+          user_id?: string
+          voice_id?: string
         }
         Relationships: []
       }
@@ -3453,6 +4680,15 @@ export type Database = {
         }
         Returns: boolean
       }
+      calculate_gig_revenue: {
+        Args: { gig_id_param: string }
+        Returns: {
+          door_split_estimate: number
+          guaranteed: number
+          ticket_revenue: number
+          total_potential: number
+        }[]
+      }
       check_rate_limit: {
         Args: { func_name: string; max_calls?: number; window_minutes?: number }
         Returns: boolean
@@ -3461,9 +4697,28 @@ export type Database = {
         Args: { board_title: string }
         Returns: string
       }
+      generate_invoice_number: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_available_credits: {
         Args: Record<PropertyKey, never>
         Returns: number
+      }
+      get_dashboard_stats: {
+        Args: { user_id_param: string }
+        Returns: {
+          avg_payment_days: number
+          overdue_invoices_count: number
+          pending_gigs: number
+          total_contacts: number
+          total_gigs: number
+          total_revenue: number
+          total_venues: number
+          unpaid_invoices_amount: number
+          unpaid_invoices_count: number
+          upcoming_gigs: number
+        }[]
       }
       get_public_waitlist_count: {
         Args: Record<PropertyKey, never>
@@ -3497,6 +4752,10 @@ export type Database = {
       }
       use_credits: {
         Args: { credit_cost?: number; metadata?: Json; resource_type: string }
+        Returns: boolean
+      }
+      user_has_board_access: {
+        Args: { board_id_param: string; user_id_param: string }
         Returns: boolean
       }
     }
