@@ -14,6 +14,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { supabaseService } from '@/services/supabaseService';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import AIGenerationPanel from './AIGenerationPanel';
 
 const VideoEditor = () => {
   const { 
@@ -200,8 +201,7 @@ const VideoEditor = () => {
             <TabsContent value="generate" className="p-0 m-0 h-[calc(100%-40px)]">
               <ScrollArea className="h-full">
                 <div className="p-4">
-                  <h3 className="text-lg font-medium mb-2">AI Generation</h3>
-                  <p className="text-sm text-zinc-400">Generate new media with AI</p>
+                  <AIGenerationPanel />
                 </div>
               </ScrollArea>
             </TabsContent>
