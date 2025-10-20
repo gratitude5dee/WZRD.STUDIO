@@ -27,7 +27,10 @@ import { ReactFlowVideoNode } from './nodes/ReactFlowVideoNode';
 import { EnhancedStudioEdge } from './edges/EnhancedStudioEdge';
 import { CustomConnectionLine } from './ConnectionLine';
 import { ConnectionNodeSelector } from './ConnectionNodeSelector';
+import { CanvasToolbar } from './canvas/CanvasToolbar';
+import { ConnectionModeIndicator } from './canvas/ConnectionModeIndicator';
 import { useConnectionValidation } from '@/hooks/useConnectionValidation';
+import { useConnectionMode } from '@/hooks/useConnectionMode';
 import { v4 as uuidv4 } from 'uuid';
 import EmptyCanvasState from './EmptyCanvasState';
 
@@ -88,8 +91,15 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
   blockModels,
   onModelChange,
 }) => {
-  const { screenToFlowPosition, fitView } = useReactFlow();
+  const { screenToFlowPosition, fitView, zoomIn, zoomOut } = useReactFlow();
   const { isValidConnection } = useConnectionValidation();
+  const { 
+    connectionState, 
+    isClickMode, 
+    isConnecting,
+    toggleMode,
+    cancelClickConnection 
+  } = useConnectionMode();
   
   // Convert blocks to React Flow nodes
   const initialNodes: Node[] = useMemo(() => 
@@ -138,6 +148,10 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
   const [nodeSelectorPosition, setNodeSelectorPosition] = useState({ x: 0, y: 0 });
   const [activeConnection, setActiveConnection] = useState<any>(null);
   const [showGrid, setShowGrid] = useState(true);
+  
+  // Get selected nodes count
+  const selectedNodes = useMemo(() => nodes.filter(n => n.selected), [nodes]);
+  const selectedCount = selectedNodes.length;
 
   const onConnect = useCallback(
     (connection: Connection) => {
@@ -226,55 +240,75 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Escape: Close node selector or deselect
+      // Escape: Close node selector or deselect or cancel connection
       if (e.key === 'Escape') {
         setShowNodeSelector(false);
         setActiveConnection(null);
+        cancelClickConnection();
         onSelectBlock('');
       }
 
-      // Delete: Delete selected node
-      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedBlockId) {
-        const selectedNode = nodes.find(n => n.id === selectedBlockId);
-        if (selectedNode && document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
+      // Delete: Delete selected nodes
+      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedCount > 0) {
+        if (document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
           e.preventDefault();
-          onDeleteBlock(selectedBlockId);
+          selectedNodes.forEach(node => onDeleteBlock(node.id));
         }
       }
 
-      // Cmd/Ctrl + D: Duplicate selected node
-      if ((e.metaKey || e.ctrlKey) && e.key === 'd' && selectedBlockId) {
+      // Cmd/Ctrl + D: Duplicate selected nodes
+      if ((e.metaKey || e.ctrlKey) && e.key === 'd' && selectedCount > 0) {
         e.preventDefault();
-        const selectedNode = nodes.find(n => n.id === selectedBlockId);
-        if (selectedNode) {
+        selectedNodes.forEach(node => {
           const newBlock: Block = {
             id: uuidv4(),
-            type: selectedNode.type as 'text' | 'image' | 'video',
+            type: node.type as 'text' | 'image' | 'video',
             position: {
-              x: selectedNode.position.x + 50,
-              y: selectedNode.position.y + 50,
+              x: node.position.x + 50,
+              y: node.position.y + 50,
             },
-            initialData: (selectedNode.data as any)?.initialData,
+            initialData: (node.data as any)?.initialData,
           };
           onAddBlock(newBlock);
-        }
+        });
       }
 
-      // Cmd/Ctrl + 0: Fit view
-      if ((e.metaKey || e.ctrlKey) && e.key === '0') {
+      // Cmd/Ctrl + 0 or F: Fit view
+      if ((e.metaKey || e.ctrlKey) && e.key === '0' || e.key === 'f' || e.key === 'F') {
         e.preventDefault();
         fitView({ padding: 0.2, duration: 300 });
       }
 
       // G: Toggle grid
       if (e.key === 'g' || e.key === 'G') {
-        setShowGrid(prev => !prev);
+        if (document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
+          setShowGrid(prev => !prev);
+        }
+      }
+
+      // C: Toggle connection mode
+      if (e.key === 'c' || e.key === 'C') {
+        if (document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
+          toggleMode();
+        }
+      }
+
+      // +: Zoom in
+      if (e.key === '+' || e.key === '=') {
+        e.preventDefault();
+        zoomIn();
+      }
+
+      // -: Zoom out
+      if (e.key === '-' || e.key === '_') {
+        e.preventDefault();
+        zoomOut();
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [nodes, selectedBlockId, onDeleteBlock, onAddBlock, fitView, onSelectBlock]);
+  }, [nodes, selectedNodes, selectedCount, onDeleteBlock, onAddBlock, fitView, onSelectBlock, toggleMode, cancelClickConnection, zoomIn, zoomOut]);
 
   // Fit view on initial mount
   useEffect(() => {
@@ -363,12 +397,40 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
         </div>
       )}
 
-      {/* Grid toggle indicator */}
-      {!showGrid && (
-        <div className="absolute bottom-4 right-4 px-3 py-1.5 bg-zinc-900/90 border border-zinc-800 rounded-lg text-xs text-zinc-400 backdrop-blur-sm">
-          Grid hidden (press G to show)
-        </div>
-      )}
+      {/* Connection Mode Indicator */}
+      <ConnectionModeIndicator
+        isClickMode={isClickMode}
+        isConnecting={isConnecting}
+        sourceNodeLabel={connectionState.sourceNode ? `Node ${connectionState.sourceNode.slice(0, 8)}` : undefined}
+        onCancel={cancelClickConnection}
+      />
+
+      {/* Canvas Toolbar */}
+      <CanvasToolbar
+        connectionMode={isClickMode ? 'click' : 'drag'}
+        onToggleConnectionMode={toggleMode}
+        showGrid={showGrid}
+        onToggleGrid={() => setShowGrid(prev => !prev)}
+        onFitView={() => fitView({ padding: 0.2, duration: 300 })}
+        onZoomIn={() => zoomIn()}
+        onZoomOut={() => zoomOut()}
+        selectedCount={selectedCount}
+        onDeleteSelected={() => selectedNodes.forEach(node => onDeleteBlock(node.id))}
+        onDuplicateSelected={() => {
+          selectedNodes.forEach(node => {
+            const newBlock: Block = {
+              id: uuidv4(),
+              type: node.type as 'text' | 'image' | 'video',
+              position: {
+                x: node.position.x + 50,
+                y: node.position.y + 50,
+              },
+              initialData: (node.data as any)?.initialData,
+            };
+            onAddBlock(newBlock);
+          });
+        }}
+      />
     </div>
   );
 };
