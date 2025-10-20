@@ -296,8 +296,9 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
           >
             <ConnectionNodeSelector
               position={nodeSelectorPosition}
-              onSelectNodeType={handleSelectNodeType}
-              onClose={() => {
+              onSelectType={handleSelectNodeType}
+              onNavigate={() => {}}
+              onCancel={() => {
                 setShowNodeSelector(false);
                 setActiveConnection(null);
               }}
