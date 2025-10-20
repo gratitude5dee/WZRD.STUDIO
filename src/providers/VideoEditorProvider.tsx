@@ -5,6 +5,24 @@ import { supabaseService } from '@/services/supabaseService';
 import { toast } from "sonner";
 import { useParams } from "react-router-dom";
 
+// Helper function to validate and normalize media types
+function validateMediaType(mediaType: string | null | undefined): 'video' | 'image' | 'audio' {
+  const normalized = (mediaType || '').toLowerCase().trim();
+  
+  if (normalized === 'video') return 'video';
+  if (normalized === 'image') return 'image';
+  if (normalized === 'audio') return 'audio';
+  
+  // Default fallback based on common patterns
+  if (normalized.includes('video')) return 'video';
+  if (normalized.includes('image') || normalized.includes('img')) return 'image';
+  if (normalized.includes('audio') || normalized.includes('sound')) return 'audio';
+  
+  // Ultimate fallback
+  console.warn(`Unknown media type: ${mediaType}, defaulting to 'video'`);
+  return 'video';
+}
+
 // Create context with a more complete type definition
 type VideoEditorContextType = {
   isLoading: boolean;

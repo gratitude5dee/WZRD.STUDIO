@@ -11,10 +11,6 @@ const MIN_DURATION_FRAMES = 1;
 
 const getTimelineDuration = (item: MediaItem): number => {
   const start = item.startTime ?? 0;
-  if (typeof item.endTime === 'number') {
-    return Math.max(item.endTime - start, item.duration ?? 0, 0);
-  }
-
   return Math.max(item.duration ?? 0, 0);
 };
 

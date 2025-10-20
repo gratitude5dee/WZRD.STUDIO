@@ -1,5 +1,5 @@
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { useVideoEditor } from '@/providers/VideoEditorProvider';
 import TimelinePanel from './TimelinePanel';
 import MediaPanel from './MediaPanel';
@@ -33,15 +33,34 @@ const VideoEditor = () => {
   const navigate = useNavigate();
   const [isCreatingProject, setIsCreatingProject] = useState(false);
   const [userAuthenticated, setUserAuthenticated] = useState<boolean | null>(null);
+  
+  // Add missing refs and get clips/audioTracks from store
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const clips = useVideoEditor().clips;
+  const audioTracks = useVideoEditor().audioTracks;
+
+  // Create mediaItems array by combining clips and audioTracks
+  const mediaItems = useMemo(() => {
+    return [
+      ...clips.map(clip => ({
+        ...clip,
+        endTime: clip.startTime + clip.duration,
+      })),
+      ...audioTracks.map(track => ({
+        ...track,
+        endTime: track.startTime + track.duration,
+      }))
+    ];
+  }, [clips, audioTracks]);
 
   const videoClips = useMemo(
-    () => mediaItems.filter((item) => item.type === 'video' || item.type === 'image'),
-    [mediaItems]
+    () => clips.filter((item) => item.type === 'video' || item.type === 'image'),
+    [clips]
   );
 
-  const audioTracks = useMemo(
-    () => mediaItems.filter((item) => item.type === 'audio'),
-    [mediaItems]
+  const audioTracksFiltered = useMemo(
+    () => audioTracks.filter((item) => item.type === 'audio'),
+    [audioTracks]
   );
 
   const computedDuration = useMemo(() => {
@@ -185,7 +204,7 @@ const VideoEditor = () => {
         <ResizablePanel defaultSize={60} className="bg-[#0F1117]">
           <ResizablePanelGroup direction="vertical">
             <ResizablePanel defaultSize={70} className="flex items-center justify-center">
-              <PreviewPanel clips={videoClips} audioTracks={audioTracks} />
+              <PreviewPanel clips={videoClips} audioTracks={audioTracksFiltered} />
             </ResizablePanel>
             
             <ResizableHandle withHandle />

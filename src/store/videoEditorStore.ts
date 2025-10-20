@@ -24,6 +24,7 @@ export interface Clip {
   sourceId?: string | null;
   startTime: number;
   duration: number;
+  endTime?: number;
   layer: number;
   transforms: {
     position: { x: number; y: number };
@@ -41,9 +42,13 @@ export interface AudioTrack {
   sourceId?: string | null;
   startTime: number;
   duration: number;
+  endTime?: number;
   volume: number;
   isMuted: boolean;
 }
+
+// Union type for all media items
+export type MediaItem = Clip | AudioTrack;
 
 export interface ClipConnection {
   id: string;

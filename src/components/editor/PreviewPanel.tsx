@@ -13,32 +13,37 @@ interface PreviewPanelProps {
   audioTracks: MediaItem[];
 }
 
-const PreviewPanel = ({ videoRef }: PreviewPanelProps) => {
+const FPS = 30;
+const CANVAS_WIDTH = 1280;
+const CANVAS_HEIGHT = 720;
+
+const PreviewPanel = ({ clips, audioTracks }: PreviewPanelProps) => {
   const {
     playback,
     project,
     togglePlayPause,
     setCurrentTime,
-    setDuration
+    setDuration,
+    play,
+    pause
   } = useVideoEditor();
 
   const playerRef = useRef<PlayerRef>(null);
   const lastFrameRef = useRef(0);
+  
+  const { isPlaying, currentTime, volume } = playback;
+  const { duration } = project;
 
   const fallbackDuration = useMemo(() => {
     const clipMax = clips.reduce((max, clip) => {
       const start = clip.startTime ?? 0;
-      const clipDuration = clip.endTime
-        ? clip.endTime - start
-        : clip.duration ?? 0;
+      const clipDuration = clip.duration ?? 0;
       return Math.max(max, start + clipDuration);
     }, 0);
 
     const audioMax = audioTracks.reduce((max, track) => {
       const start = track.startTime ?? 0;
-      const trackDuration = track.endTime
-        ? track.endTime - start
-        : track.duration ?? 0;
+      const trackDuration = track.duration ?? 0;
       return Math.max(max, start + trackDuration);
     }, 0);
 
@@ -174,11 +179,11 @@ const PreviewPanel = ({ videoRef }: PreviewPanelProps) => {
             size="sm"
             className="text-white hover:bg-[#1D2130] p-2 h-9 w-9"
             onClick={() => {
-              if (videoRef.current) {
-                const nextTime = Math.min(project.duration, playback.currentTime + 10);
-                setCurrentTime(nextTime);
-                videoRef.current.currentTime = nextTime;
-              }
+              const nextTime = Math.min(project.duration, playback.currentTime + 10);
+              setCurrentTime(nextTime);
+              const frame = Math.round(nextTime * FPS);
+              lastFrameRef.current = frame;
+              playerRef.current?.seekTo(frame);
             }}
           >
             <SkipForward className="h-5 w-5" />
