@@ -208,15 +208,18 @@ type VideoClipRecord = {
   project_id: string;
   user_id: string;
   name: string;
-  asset_type: string;
+  type: string;
   storage_bucket: string;
   storage_path: string;
   thumbnail_bucket: string | null;
   thumbnail_path: string | null;
-  duration_ms: number | null;
-  start_time_ms: number | null;
-  end_time_ms: number | null;
-  metadata: Json | null;
+  duration_ms: number;
+  start_time_ms: number;
+  end_time_ms: number;
+  layer: number;
+  created_at: string;
+  updated_at: string;
+  metadata: Json;
 };
 
 type AudioTrackRecord = {
@@ -226,19 +229,22 @@ type AudioTrackRecord = {
   name: string;
   storage_bucket: string;
   storage_path: string;
-  duration_ms: number | null;
-  start_time_ms: number | null;
-  end_time_ms: number | null;
-  waveform: Json | null;
-  metadata: Json | null;
+  duration_ms: number;
+  start_time_ms: number;
+  end_time_ms: number;
+  volume: number;
+  is_muted: boolean;
+  created_at: string;
+  updated_at: string;
+  metadata: Json;
 };
 
-const clipAssetTypeToMediaType = (assetType?: string | null): 'video' | 'image' => {
-  return assetType === 'image' ? 'image' : 'video';
+const clipTypeToMediaType = (type?: string | null): 'video' | 'image' => {
+  return type === 'image' ? 'image' : 'video';
 };
 
 const mapVideoClipToMediaItem = (clip: VideoClipRecord): MediaItem => {
-  const type = clipAssetTypeToMediaType(clip.asset_type);
+  const type = clipTypeToMediaType(clip.type);
   const url = resolvePublicUrl(clip.storage_bucket, clip.storage_path);
   const thumbnailUrl = resolvePublicUrl(clip.thumbnail_bucket ?? undefined, clip.thumbnail_path ?? undefined);
 
@@ -393,24 +399,25 @@ export const mediaService = {
         return mapAudioTrackToMediaItem(data as AudioTrackRecord);
       }
 
-      const { data, error } = await supabase
-        .from('video_clips')
-        .insert({
-          project_id: projectId,
-          user_id: user.id,
-          name: mediaItem.name,
-          asset_type: mediaItem.type,
-          storage_bucket: mediaItem.bucket,
-          storage_path: mediaItem.storagePath,
-          thumbnail_bucket: mediaItem.thumbnailBucket ?? null,
-          thumbnail_path: mediaItem.thumbnailPath ?? null,
-          duration_ms: mediaItem.durationMs ?? null,
-          start_time_ms: mediaItem.startTimeMs ?? null,
-          end_time_ms: mediaItem.endTimeMs ?? null,
-          metadata: mediaItem.metadata ?? {},
-        })
-        .select('*')
-        .single();
+        const { data, error } = await supabase
+          .from('video_clips')
+          .insert({
+            project_id: projectId,
+            user_id: user.id,
+            name: mediaItem.name,
+            type: mediaItem.type,
+            storage_bucket: mediaItem.bucket,
+            storage_path: mediaItem.storagePath,
+            thumbnail_bucket: mediaItem.thumbnailBucket ?? null,
+            thumbnail_path: mediaItem.thumbnailPath ?? null,
+            duration_ms: mediaItem.durationMs ?? 0,
+            start_time_ms: mediaItem.startTimeMs ?? 0,
+            end_time_ms: mediaItem.endTimeMs ?? 0,
+            layer: 0,
+            metadata: mediaItem.metadata ?? {},
+          })
+          .select('*')
+          .single();
 
       if (error) throw error;
       return mapVideoClipToMediaItem(data as VideoClipRecord);
@@ -777,96 +784,13 @@ export const keyframeService = {
   }
 };
 
-// Render jobs
-export const renderJobService = {
-  async listByProject(projectId: string): Promise<RenderJob[]> {
-    try {
-      const { data, error } = await supabase
-        .from('render_jobs')
-        .select('*')
-        .eq('project_id', projectId)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      return (data || []).map(mapRenderJobRow);
-    } catch (error) {
-      handleError(error, 'listing render jobs');
-      return [];
-    }
-  },
-
-  async create(projectId: string, options: {
-    renderProfile?: string;
-    payload?: Record<string, any>;
-  }): Promise<RenderJob> {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
-
-      const { data, error } = await supabase
-        .from('render_jobs')
-        .insert({
-          project_id: projectId,
-          user_id: user.id,
-          render_profile: options.renderProfile ?? 'default',
-          payload: options.payload ?? {},
-        })
-        .select('*')
-        .single();
-
-      if (error) throw error;
-      return mapRenderJobRow(data);
-    } catch (error) {
-      handleError(error, 'creating render job');
-      throw error;
-    }
-  },
-
-  async update(id: string, updates: {
-    status?: RenderJob['status'];
-    progress?: number;
-    error_message?: string | null;
-    result_bucket?: string | null;
-    result_path?: string | null;
-    started_at?: string | null;
-    completed_at?: string | null;
-    payload?: Record<string, any>;
-  }): Promise<void> {
-    try {
-      const updatePayload: Record<string, any> = {};
-      if (typeof updates.status !== 'undefined') updatePayload.status = updates.status;
-      if (typeof updates.progress !== 'undefined') updatePayload.progress = updates.progress;
-      if (typeof updates.error_message !== 'undefined') updatePayload.error_message = updates.error_message;
-      if (typeof updates.result_bucket !== 'undefined') updatePayload.result_bucket = updates.result_bucket;
-      if (typeof updates.result_path !== 'undefined') updatePayload.result_path = updates.result_path;
-      if (typeof updates.started_at !== 'undefined') updatePayload.started_at = updates.started_at;
-      if (typeof updates.completed_at !== 'undefined') updatePayload.completed_at = updates.completed_at;
-      if (typeof updates.payload !== 'undefined') updatePayload.payload = updates.payload;
-
-      const { error } = await supabase
-        .from('render_jobs')
-        .update(updatePayload)
-        .eq('id', id);
-
-      if (error) throw error;
-    } catch (error) {
-      handleError(error, 'updating render job');
-    }
-  },
-
-  async delete(id: string): Promise<void> {
-    try {
-      const { error } = await supabase
-        .from('render_jobs')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-    } catch (error) {
-      handleError(error, 'deleting render job');
-    }
-  }
-};
+// Render jobs - Commented out as render_jobs table doesn't exist in current schema
+// export const renderJobService = {
+//   async listByProject(projectId: string): Promise<RenderJob[]> { ... }
+//   async create(projectId: string, options: { ... }): Promise<RenderJob> { ... }
+//   async update(id: string, updates: { ... }): Promise<void> { ... }
+//   async delete(id: string): Promise<void> { ... }
+// };
 
 // Scene types
 export interface Scene {
@@ -1183,7 +1107,7 @@ export const supabaseService = {
   tracks: trackService,
   trackItems: trackItemService,
   keyframes: keyframeService,
-  renderJobs: renderJobService,
+  // renderJobs: renderJobService, // Commented out - table doesn't exist
   scenes: sceneService,
   characters: characterService,
   storylines: storylineService,

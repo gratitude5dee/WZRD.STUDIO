@@ -38,7 +38,7 @@ export const ProjectCard = ({ project, onOpen, onDelete }: ProjectCardProps) => 
       try {
         const { data, error } = await supabase
           .from('video_clips')
-          .select('storage_bucket, storage_path, thumbnail_bucket, thumbnail_path, asset_type')
+          .select('storage_bucket, storage_path, thumbnail_bucket, thumbnail_path, type')
           .eq('project_id', project.id)
           .order('created_at', { ascending: true })
           .limit(1)
@@ -62,7 +62,7 @@ export const ProjectCard = ({ project, onOpen, onDelete }: ProjectCardProps) => 
           .getPublicUrl(previewPath);
 
         setMediaUrl(publicData.publicUrl);
-        setMediaType((data.asset_type as 'video' | 'image') ?? 'image');
+        setMediaType((data.type as 'video' | 'image') ?? 'image');
       } catch (err) {
         // No media items for this project - that's okay
         console.log('No media items found for project', project.id);
