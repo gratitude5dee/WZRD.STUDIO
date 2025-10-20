@@ -209,7 +209,7 @@ function getNodeInputs(
 }
 
 /**
- * Execute a single node
+ * Execute a single node with actual AI model calls
  */
 async function executeNode(
   node: ExecutionNode,
@@ -217,43 +217,136 @@ async function executeNode(
 ): Promise<Record<string, any>> {
   console.log(`Executing node ${node.id} (${node.type}):`, { inputs, params: node.params });
 
-  // Simulate processing time
-  await new Promise(resolve => setTimeout(resolve, 2000));
-
-  // Mock execution based on node type
   const outputs: Record<string, any> = {};
+  const nodeType = node.type.toLowerCase();
 
-  switch (node.type.toLowerCase()) {
-    case 'text':
-    case 'text.generate':
-      outputs['text-out'] = `Generated text from: ${node.label}`;
-      break;
+  try {
+    // Text generation nodes
+    if (nodeType.includes('text.generate')) {
+      const inputText = inputs['text-in'] || node.label || 'Generate content';
+      const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+      
+      if (!LOVABLE_API_KEY) {
+        throw new Error('LOVABLE_API_KEY not configured');
+      }
 
-    case 'image':
-    case 'image.generate':
-      // For image generation, we'd call the actual API here
+      const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'google/gemini-2.5-flash',
+          messages: [
+            { role: 'system', content: 'You are a helpful AI assistant.' },
+            { role: 'user', content: inputText }
+          ],
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`AI request failed: ${response.status}`);
+      }
+
+      const data = await response.json();
+      outputs['text-out'] = data.choices[0]?.message?.content || 'No response generated';
+    }
+    
+    // Image generation nodes
+    else if (nodeType.includes('image.generate')) {
+      const prompt = inputs['text-in'] || node.label || 'A beautiful image';
+      const FAL_KEY = Deno.env.get('FAL_KEY');
+      
+      if (!FAL_KEY) {
+        throw new Error('FAL_KEY not configured');
+      }
+
+      const response = await fetch('https://queue.fal.run/fal-ai/flux/schnell', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Key ${FAL_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          prompt,
+          image_size: 'square_hd',
+          num_inference_steps: 4,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Image generation failed: ${response.status}`);
+      }
+
+      const result = await response.json();
       outputs['image-out'] = {
-        url: '/placeholder.svg',
+        url: result.images?.[0]?.url || '/placeholder.svg',
         width: 1024,
         height: 1024,
+        prompt,
       };
-      break;
+    }
+    
+    // Video generation nodes
+    else if (nodeType.includes('video.generate')) {
+      const imageUrl = inputs['image-in']?.url || '/placeholder.svg';
+      const prompt = inputs['text-in'] || node.label || 'Animate this image';
+      const FAL_KEY = Deno.env.get('FAL_KEY');
+      
+      if (!FAL_KEY) {
+        throw new Error('FAL_KEY not configured');
+      }
 
-    case 'video':
-    case 'video.generate':
+      const response = await fetch('https://queue.fal.run/fal-ai/luma-dream-machine', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Key ${FAL_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          prompt,
+          image_url: imageUrl,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Video generation failed: ${response.status}`);
+      }
+
+      const result = await response.json();
       outputs['video-out'] = {
-        url: '/placeholder-video.mp4',
+        url: result.video?.url || '/placeholder-video.mp4',
         duration: 4,
         width: 1920,
         height: 1080,
       };
-      break;
+    }
+    
+    // Text input nodes (passthrough)
+    else if (nodeType.includes('text.input')) {
+      outputs['text-out'] = node.label || node.params?.value || '';
+    }
+    
+    // Image input nodes (passthrough)
+    else if (nodeType.includes('image.input')) {
+      outputs['image-out'] = {
+        url: node.params?.url || '/placeholder.svg',
+        width: 1024,
+        height: 1024,
+      };
+    }
+    
+    // Default fallback
+    else {
+      outputs['default'] = `Processed: ${node.label}`;
+    }
 
-    default:
-      outputs['default'] = `Output from ${node.label}`;
+    return outputs;
+  } catch (error) {
+    console.error(`Error executing node ${node.id}:`, error);
+    throw error;
   }
-
-  return outputs;
 }
 
 /**

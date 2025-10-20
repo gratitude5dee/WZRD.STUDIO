@@ -36,6 +36,7 @@ import { useParams } from 'react-router-dom';
 import { ConnectionValidator } from '@/lib/validation/connectionValidator';
 import { GraphExecutor } from '@/lib/execution/graphExecutor';
 import { supabase } from '@/integrations/supabase/client';
+import { useRealtimeExecution } from '@/hooks/useRealtimeExecution';
 
 export interface Block {
   id: string;
@@ -121,6 +122,36 @@ const StudioCanvasInner = ({
   const rfRef = useRef<HTMLDivElement>(null);
   const validator = useRef(new ConnectionValidator()).current;
   const executor = useRef(new GraphExecutor()).current;
+
+  // Use realtime execution hook
+  const { resetNodeStatuses } = useRealtimeExecution(
+    currentRunId,
+    () => {
+      // On workflow completion
+      setIsExecuting(false);
+      setCurrentRunId(null);
+      
+      // Update nodes with final outputs
+      const currentNodes = getNodes();
+      setNodes(currentNodes.map(node => {
+        if (node.data.outputs?.['image-out']?.url) {
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              imageUrl: node.data.outputs['image-out'].url,
+            },
+          };
+        }
+        return node;
+      }));
+    },
+    (error) => {
+      // On workflow failure
+      setIsExecuting(false);
+      setCurrentRunId(null);
+    }
+  );
 
   // Load blocks and connections from Supabase
   useEffect(() => {
@@ -467,16 +498,12 @@ const StudioCanvasInner = ({
           description: `Please fix these issues:\n${validation.errors.slice(0, 3).join('\n')}`,
           variant: 'destructive',
         });
+        setIsExecuting(false);
         return;
       }
 
       // Reset all node statuses to idle
-      setNodes((nds) =>
-        nds.map((n) => ({
-          ...n,
-          data: { ...n.data, status: 'idle', progress: 0 },
-        }))
-      );
+      resetNodeStatuses();
 
       // Execute graph
       const result = await executor.executeGraph(nodes, edges, projectId);
@@ -496,94 +523,10 @@ const StudioCanvasInner = ({
       });
       setIsExecuting(false);
     }
-  }, [projectId, nodes, edges, validator, executor, setNodes]);
+  }, [projectId, nodes, edges, validator, executor, resetNodeStatuses]);
 
   // Subscribe to execution status updates via Realtime
-  useEffect(() => {
-    if (!currentRunId) return;
-
-    const channel = supabase
-      .channel(`execution:${currentRunId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'execution_node_status',
-          filter: `run_id=eq.${currentRunId}`,
-        },
-        (payload) => {
-          const { node_id, status, progress, outputs, error } = payload.new;
-
-          // Update node status in real-time
-          setNodes((nds) =>
-            nds.map((node) => {
-              if (node.id === node_id) {
-                return {
-                  ...node,
-                  data: {
-                    ...node.data,
-                    status,
-                    progress,
-                    outputs,
-                    error,
-                  },
-                };
-              }
-              return node;
-            })
-          );
-
-          // Show completion toast
-          if (status === 'complete') {
-            toast({
-              title: 'Node Complete',
-              description: `${nodes.find(n => n.id === node_id)?.data.label || 'Node'} finished successfully`,
-            });
-          } else if (status === 'error') {
-            toast({
-              title: 'Node Error',
-              description: error || 'Unknown error occurred',
-              variant: 'destructive',
-            });
-          }
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'execution_runs',
-          filter: `id=eq.${currentRunId}`,
-        },
-        (payload) => {
-          const { status } = payload.new;
-
-          if (status === 'completed') {
-            setIsExecuting(false);
-            setCurrentRunId(null);
-            toast({
-              title: 'Workflow Complete',
-              description: 'All nodes executed successfully',
-            });
-          } else if (status === 'failed') {
-            setIsExecuting(false);
-            setCurrentRunId(null);
-            toast({
-              title: 'Workflow Failed',
-              description: payload.new.error_message || 'Execution failed',
-              variant: 'destructive',
-            });
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [currentRunId, setNodes, nodes]);
+  // NOTE: This is now handled by useRealtimeExecution hook
 
   // Context menu handlers
   const onNodeContextMenu = useCallback((event: React.MouseEvent, node: Node) => {
