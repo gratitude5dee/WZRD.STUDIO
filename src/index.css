@@ -6,6 +6,36 @@
 
 @layer base {
   :root {
+    /* Backgrounds */
+    --bg-canvas: 220 13% 4%;
+    --bg-elevated: 220 13% 6%;
+    --bg-panel: 220 13% 8%;
+    --bg-card: 220 13% 11%;
+    --bg-input: 220 9% 15%;
+    
+    /* Node Type Accents */
+    --accent-text: 238 77% 67%;
+    --accent-image: 158 64% 52%;
+    --accent-video: 217 91% 60%;
+    --accent-audio: 38 92% 50%;
+    
+    /* Status Colors */
+    --status-success: 158 64% 52%;
+    --status-warning: 38 92% 50%;
+    --status-error: 0 84% 60%;
+    --status-processing: 258 90% 66%;
+    
+    /* Borders */
+    --border-subtle: 220 9% 15%;
+    --border-default: 220 9% 25%;
+    --border-emphasis: 220 9% 32%;
+    
+    /* Text */
+    --text-primary: 0 0% 98%;
+    --text-secondary: 0 0% 63%;
+    --text-tertiary: 0 0% 45%;
+    --text-quaternary: 0 0% 32%;
+
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
     --card: 0 0% 100%;

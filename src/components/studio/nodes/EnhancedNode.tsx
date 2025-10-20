@@ -1,22 +1,15 @@
 import { useState, memo, useRef, useEffect } from 'react';
-import { Handle, Position, NodeProps } from 'reactflow';
-import { motion, AnimatePresence } from 'framer-motion';
-import { GripVertical, Type, Image as ImageIcon, Video, MoreHorizontal, Edit3, ChevronDown, ChevronUp, CheckCircle2, AlertCircle, Loader2, Clock, Zap } from 'lucide-react';
-
-interface NodeData {
-  type: string;
-  label: string;
-  model?: string;
-  imageUrl?: string;
-  status?: 'idle' | 'generating' | 'complete' | 'error';
-  progress?: number;
-  contentType?: 'text' | 'content' | 'critique' | 'question';
-  outputs?: string[];
-}
+import { NodeProps, useReactFlow } from 'reactflow';
+import { motion } from 'framer-motion';
+import { Type, Image as ImageIcon, Video, Edit3, ChevronDown, ChevronUp, CheckCircle2, AlertCircle, Loader2, Clock, Zap } from 'lucide-react';
+import { ComputeFlowNodeData } from '@/types/computeFlow';
+import { CustomHandle } from './CustomHandle';
+import { getNodeDefinitionByType } from '@/lib/nodeRegistry';
 
 type ContentType = 'text' | 'content' | 'critique' | 'question';
 
-const EnhancedNode = memo(({ data, selected, id }: NodeProps<NodeData>) => {
+const EnhancedNode = memo(({ data, selected, id }: NodeProps<ComputeFlowNodeData>) => {
+  const { setNodes } = useReactFlow();
   const [isHovered, setIsHovered] = useState(false);
   const [hoveredHandle, setHoveredHandle] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -44,10 +37,73 @@ const EnhancedNode = memo(({ data, selected, id }: NodeProps<NodeData>) => {
   const shouldTruncate = !isExpanded && data.label && data.label.length > 120;
   const displayText = shouldTruncate ? data.label.slice(0, 120) + '...' : data.label;
 
+  // Get node definition for ports and metadata
+  const nodeDef = getNodeDefinitionByType(data.type);
+
+  // Initialize ports if not present
+  useEffect(() => {
+    if (nodeDef && (!data.inputs || !data.outputs)) {
+      setNodes((nds) =>
+        nds.map((n) => {
+          if (n.id === id) {
+            return {
+              ...n,
+              data: {
+                ...n.data,
+                inputs: nodeDef.inputs.map(p => ({ ...p, value: undefined })),
+                outputs: nodeDef.outputs.map(p => ({ ...p, value: undefined })),
+              },
+            };
+          }
+          return n;
+        })
+      );
+    }
+  }, [nodeDef, data.inputs, data.outputs, id, setNodes]);
+
+  // Handle input changes from connected nodes
+  const handleInputChange = (portId: string, value: any) => {
+    setNodes((nds) =>
+      nds.map((n) => {
+        if (n.id === id) {
+          return {
+            ...n,
+            data: {
+              ...n.data,
+              inputs: n.data.inputs?.map((p: any) =>
+                p.id === portId ? { ...p, value } : p
+              ),
+            },
+          };
+        }
+        return n;
+      })
+    );
+    
+    // Check if all required inputs are satisfied and trigger computation
+    const allInputsSatisfied = data.inputs?.every(
+      (p) => p.optional || p.value !== undefined
+    );
+    
+    if (allInputsSatisfied) {
+      // TODO: Schedule node execution
+      console.log('All inputs satisfied for node:', id);
+    }
+  };
+
   const handleEditSave = () => {
     setIsEditing(false);
-    // TODO: Integrate with node update handler
-    // onNodeChange?.(id, { ...data, label: editValue });
+    setNodes((nds) =>
+      nds.map((n) => {
+        if (n.id === id) {
+          return {
+            ...n,
+            data: { ...n.data, label: editValue },
+          };
+        }
+        return n;
+      })
+    );
   };
 
   const handleEditCancel = () => {
@@ -100,40 +156,26 @@ const EnhancedNode = memo(({ data, selected, id }: NodeProps<NodeData>) => {
       onMouseLeave={() => setIsHovered(false)}
       className="relative group"
     >
-      {/* Dynamic Connection Handles */}
-      <AnimatePresence>
-        {(isHovered || selected) && (
-          <>
-            {(['top', 'right', 'bottom', 'left'] as const).map((pos) => (
-              <motion.div
-                key={pos}
-                initial={{ scale: 0, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0, opacity: 0 }}
-                transition={{ duration: 0.2, delay: 0.05 }}
-              >
-                <Handle
-                  type={pos === 'left' || pos === 'top' ? 'target' : 'source'}
-                  position={Position[pos.charAt(0).toUpperCase() + pos.slice(1) as 'Top' | 'Right' | 'Bottom' | 'Left']}
-                  id={pos}
-                  onMouseEnter={() => setHoveredHandle(pos)}
-                  onMouseLeave={() => setHoveredHandle(null)}
-                  className={`
-                    !w-3.5 !h-3.5 !rounded-full !border-[3px] !border-[#27272A]
-                    transition-all duration-200
-                    ${pos === 'left' || pos === 'top' ? '!bg-[#3B82F6]' : '!bg-[#8B5CF6]'}
-                    ${hoveredHandle === pos 
-                      ? '!scale-140 !border-[#1C1C1F] !shadow-[0_0_0_4px_rgba(99,102,241,0.2),0_0_20px_rgba(99,102,241,0.4)]' 
-                      : '!scale-100'
-                    }
-                  `}
-                  style={{ cursor: 'crosshair' }}
-                />
-              </motion.div>
-            ))}
-          </>
-        )}
-      </AnimatePresence>
+      {/* Render Input Handles from Port Definitions */}
+      {data.inputs?.map((port) => (
+        <CustomHandle
+          key={port.id}
+          nodeId={id}
+          port={port}
+          onChange={(value) => handleInputChange(port.id, value)}
+          isVisible={isHovered || selected}
+        />
+      ))}
+
+      {/* Render Output Handles from Port Definitions */}
+      {data.outputs?.map((port) => (
+        <CustomHandle
+          key={port.id}
+          nodeId={id}
+          port={port}
+          isVisible={isHovered || selected}
+        />
+      ))}
 
       {/* Node Container */}
       <motion.div
