@@ -25,44 +25,11 @@ const getStartFrame = (item: MediaItem, fps: number) => {
 };
 
 export const VideoComposition: React.FC<VideoCompositionProps> = ({ clips, audioTracks }) => {
-  const { fps } = useVideoConfig();
-
-  const orderedClips = useMemo(
-    () => [...clips].sort((a, b) => (a.startTime ?? 0) - (b.startTime ?? 0)),
-    [clips]
-  );
-
-  const orderedAudio = useMemo(
-    () => [...audioTracks].sort((a, b) => (a.startTime ?? 0) - (b.startTime ?? 0)),
-    [audioTracks]
-  );
-
+  // Remotion not available - placeholder component
   return (
-    <AbsoluteFill style={{ backgroundColor: '#000' }}>
-      {orderedClips.map((clip) => (
-        <Sequence
-          key={clip.id}
-          from={getStartFrame(clip, fps)}
-          durationInFrames={getDurationInFrames(clip, fps)}
-        >
-          {clip.type === 'image' ? (
-            <Img src={clip.url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-          ) : (
-            <Video src={clip.url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-          )}
-        </Sequence>
-      ))}
-
-      {orderedAudio.map((track) => (
-        <Sequence
-          key={track.id}
-          from={getStartFrame(track, fps)}
-          durationInFrames={getDurationInFrames(track, fps)}
-        >
-          <Audio src={track.url} />
-        </Sequence>
-      ))}
-    </AbsoluteFill>
+    <div style={{ backgroundColor: '#000', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
+      <p>Video Composition Placeholder</p>
+    </div>
   );
 };
 

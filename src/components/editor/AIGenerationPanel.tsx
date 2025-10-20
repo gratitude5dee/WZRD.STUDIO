@@ -321,7 +321,7 @@ const AIGenerationPanel: React.FC = () => {
   };
 
   const fetchAndUploadMedia = async (media: GeneratedMediaInfo): Promise<{ url: string; duration?: number; name: string }> => {
-    if (!projectId) {
+    if (!project.id) {
       throw new Error('Project not found. Please create or open a project first.');
     }
 
@@ -358,7 +358,7 @@ const AIGenerationPanel: React.FC = () => {
 
     const extension = contentTypeToExtension(contentType, media.type);
     const fileName = `${uuidv4()}.${extension}`;
-    const filePath = `${projectId}/${fileName}`;
+    const filePath = `${project.id}/${fileName}`;
 
     const { error: uploadError } = await supabase.storage
       .from('media')
@@ -381,14 +381,16 @@ const AIGenerationPanel: React.FC = () => {
     const mediaId = await supabaseService.media.create(project.id!, {
       type: media.type === 'image' ? 'image' : media.type === 'audio' ? 'audio' : 'video',
       name: mediaName,
-      duration: media.duration || DEFAULT_DURATIONS[media.type],
-      startTime: 0,
+      bucket: media.type === 'audio' ? 'audio' : 'videos',
+      storagePath: filePath,
+      durationMs: (media.duration || DEFAULT_DURATIONS[media.type]) * 1000,
+      startTimeMs: 0,
     });
 
     // Add to store based on type
     if (media.type === 'audio') {
       addAudioTrack({
-        id: mediaId,
+        id: mediaId.id,
         type: 'audio',
         url: publicUrl,
         name: mediaName,
@@ -399,7 +401,7 @@ const AIGenerationPanel: React.FC = () => {
       });
     } else {
       addClip({
-        id: mediaId,
+        id: mediaId.id,
         type: media.type === 'image' ? 'image' : 'video',
         url: publicUrl,
         name: mediaName,
@@ -458,7 +460,7 @@ const AIGenerationPanel: React.FC = () => {
       return;
     }
 
-    if (!projectId) {
+    if (!project.id) {
       toast.error('Please create or open a project before generating media.');
       return;
     }
@@ -487,7 +489,7 @@ const AIGenerationPanel: React.FC = () => {
     });
 
     try {
-      const metadata = { metadata: { projectId, source: 'timeline' as const } };
+      const metadata = { metadata: { projectId: project.id, source: 'timeline' as const } };
 
       const baseOptions = {
         modelId: selectedModel,
@@ -589,7 +591,7 @@ const AIGenerationPanel: React.FC = () => {
         <Select
           value={generationType}
           onValueChange={(value: GenerationType) => setGenerationType(value)}
-          disabled={isGenerating}
+          disabled={aiGeneration.status === 'running'}
         >
           <SelectTrigger className="bg-[#0A0D16] border-[#1D2130] text-white">
             <SelectValue placeholder="Select media type" />
@@ -607,7 +609,7 @@ const AIGenerationPanel: React.FC = () => {
         <Select
           value={selectedModel}
           onValueChange={setSelectedModel}
-          disabled={isGenerating || loadingModels}
+          disabled={aiGeneration.status === 'running' || loadingModels}
         >
           <SelectTrigger className="bg-[#0A0D16] border-[#1D2130] text-white">
             <SelectValue placeholder="Select a model" />
@@ -637,7 +639,7 @@ const AIGenerationPanel: React.FC = () => {
           onChange={(event) => setPrompt(event.target.value)}
           placeholder="Describe what you want to create..."
           className="min-h-[120px] bg-[#0A0D16] border-[#1D2130] text-white"
-          disabled={isGenerating}
+          disabled={aiGeneration.status === 'running'}
         />
       </div>
 
@@ -652,7 +654,7 @@ const AIGenerationPanel: React.FC = () => {
             onChange={(event) => setDurationOverride(event.target.value)}
             placeholder={DEFAULT_DURATIONS[generationType].toString()}
             className="bg-[#0A0D16] border-[#1D2130] text-white"
-            disabled={isGenerating}
+            disabled={aiGeneration.status === 'running'}
           />
           <p className="text-xs text-zinc-500">Optional. Leave blank to use the model default duration.</p>
         </div>
@@ -661,9 +663,9 @@ const AIGenerationPanel: React.FC = () => {
       <Button
         className="w-full bg-purple-600 hover:bg-purple-500"
         onClick={handleGenerate}
-        disabled={isGenerating}
+        disabled={aiGeneration.status === 'running'}
       >
-        {isGenerating ? (
+        {aiGeneration.status === 'running' ? (
           <span className="flex items-center gap-2">
             <Loader2 className="h-4 w-4 animate-spin" />
             Generating...
@@ -676,7 +678,7 @@ const AIGenerationPanel: React.FC = () => {
         )}
       </Button>
 
-      {(progress > 0 || isGenerating) && (
+      {(progress > 0 || aiGeneration.status === 'running') && (
         <div className="flex flex-col gap-2 rounded-lg border border-[#1D2130] bg-[#0A0D16] p-3">
           <div className="flex items-center justify-between text-xs text-zinc-400">
             <span>{statusMessage || 'Preparing generation...'}</span>

@@ -77,13 +77,15 @@ const MediaPanel = () => {
         const mediaItemId = await supabaseService.media.create(project.id, {
           type: mediaType,
           name: file.name,
-          duration: mediaType === 'image' ? 5 : undefined,
-          startTime: 0,
+          bucket: mediaType === 'audio' ? 'audio' : 'videos',
+          storagePath: filePath,
+          durationMs: mediaType === 'image' ? 5000 : undefined,
+          startTimeMs: 0,
         });
 
         if (mediaType === 'audio') {
           addAudioTrack({
-            id: mediaItemId,
+            id: mediaItemId.id,
             type: 'audio',
             url: publicUrl,
             name: file.name,
@@ -94,7 +96,7 @@ const MediaPanel = () => {
           });
         } else {
           addClip({
-            id: mediaItemId,
+            id: mediaItemId.id,
             type: mediaType,
             url: publicUrl,
             name: file.name,
@@ -164,7 +166,14 @@ const MediaPanel = () => {
 
   const handleDeleteMedia = async (id: string, projectId: string) => {
     try {
-      await supabaseService.media.delete(id, projectId);
+      // Find the media item to get its type
+      const clipItem = clips.find(c => c.id === id);
+      const audioItem = audioTracks.find(a => a.id === id);
+      const mediaType = clipItem ? clipItem.type : audioItem ? 'audio' : null;
+      
+      if (!mediaType) return;
+      
+      await supabaseService.media.delete(id, mediaType);
 
       if (clips.some(item => item.id === id)) {
         removeClip(id);
@@ -220,7 +229,7 @@ const MediaPanel = () => {
             variant="ghost"
             size="sm"
             className="h-7 w-7 p-0 text-zinc-400 hover:text-white hover:bg-red-900/30"
-            onClick={() => handleDeleteMedia(item.id)}
+            onClick={() => handleDeleteMedia(item.id, project.id!)}
           >
             <X className="h-4 w-4" />
           </Button>
