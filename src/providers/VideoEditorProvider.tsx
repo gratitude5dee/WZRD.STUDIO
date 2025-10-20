@@ -16,7 +16,14 @@ const VideoEditorContext = createContext<VideoEditorContextType | null>(null);
 
 // Provider component
 export function VideoEditorProvider({ children }: { children: ReactNode }) {
-  const { projectId, setProjectId, setProjectName, addMediaItem, reset } = useVideoEditorStore();
+  const {
+    project,
+    setProjectId,
+    setProjectName,
+    addClip,
+    addAudioTrack,
+    reset,
+  } = useVideoEditorStore();
   const [isLoading, setIsLoading] = useState(true);
   const params = useParams();
 
@@ -32,28 +39,72 @@ export function VideoEditorProvider({ children }: { children: ReactNode }) {
         }
         
         // If we have a project ID (from params or previously set), load the project
-        if (projectId) {
+        if (project.id) {
           setIsLoading(true);
-          
+
           // Fetch project details
           const { data: projectData, error: projectError } = await supabase
             .from('projects')
             .select('*')
-            .eq('id', projectId)
+            .eq('id', project.id)
             .single();
             
           if (projectError) throw projectError;
           
           if (projectData) {
             setProjectName(projectData.title);
+            
+            // Fetch media items for this project
+            const { data: mediaItems, error: mediaError } = await supabase
+              .from('media_items')
+              .select('*')
+              .eq('project_id', project.id);
 
-            const mediaItems = await supabaseService.media.listByProject(projectId);
-            if (mediaItems.length > 0) {
-              const existingIds = new Set(useVideoEditorStore.getState().mediaItems.map(item => item.id));
+            if (mediaError) throw mediaError;
+
+            // Add media items to the store
+            if (mediaItems && mediaItems.length > 0) {
+              useVideoEditorStore.setState((state) => ({
+                ...state,
+                clips: [],
+                audioTracks: [],
+              }));
               mediaItems.forEach(item => {
-                if (!existingIds.has(item.id)) {
-                  addMediaItem(item);
-                  existingIds.add(item.id);
+                // Ensure media_type is one of the allowed types
+                const mediaType = validateMediaType(item.media_type);
+                if (mediaType === 'audio') {
+                  if (useVideoEditorStore.getState().audioTracks.some(track => track.id === item.id)) {
+                    return;
+                  }
+                  addAudioTrack({
+                    id: item.id,
+                    type: 'audio',
+                    url: item.url || '',
+                    name: item.name,
+                    duration: item.duration ?? Math.max((item.end_time ?? 0) - (item.start_time ?? 0), 5),
+                    startTime: item.start_time ?? 0,
+                    volume: 1,
+                    isMuted: false,
+                  });
+                } else {
+                  if (useVideoEditorStore.getState().clips.some(clip => clip.id === item.id)) {
+                    return;
+                  }
+                  addClip({
+                    id: item.id,
+                    type: mediaType,
+                    url: item.url || '',
+                    name: item.name,
+                    duration: item.duration ?? Math.max((item.end_time ?? 0) - (item.start_time ?? 0), 5),
+                    startTime: item.start_time ?? 0,
+                    layer: item.track_index ?? 0,
+                    transforms: {
+                      position: { x: 0, y: 0 },
+                      scale: { x: 1, y: 1 },
+                      rotation: 0,
+                      opacity: 1,
+                    },
+                  });
                 }
               });
             }
@@ -70,7 +121,7 @@ export function VideoEditorProvider({ children }: { children: ReactNode }) {
     };
 
     loadProjectData();
-  }, [projectId, params.projectId]);
+  }, [project.id, params.projectId]);
   
   // Clean up when unmounting
   useEffect(() => {

@@ -2,92 +2,74 @@
 import { useVideoEditorStore } from '@/store/videoEditorStore';
 import { useEffect } from 'react';
 
-/**
- * This utility function creates selectors that connect your existing state 
- * management with the Zustand video editor store
- */
 export function createVideoEditorSelectors() {
   return {
-    // Read video editor state
-    selectProjectId: () => useVideoEditorStore.getState().projectId,
-    selectProjectName: () => useVideoEditorStore.getState().projectName,
-    selectIsPlaying: () => useVideoEditorStore.getState().isPlaying,
-    selectCurrentTime: () => useVideoEditorStore.getState().currentTime,
-    selectDuration: () => useVideoEditorStore.getState().duration,
-    selectMediaItems: () => useVideoEditorStore.getState().mediaItems,
-    // Add more selectors as needed
+    selectProjectId: () => useVideoEditorStore.getState().project.id,
+    selectProjectName: () => useVideoEditorStore.getState().project.name,
+    selectPlayback: () => useVideoEditorStore.getState().playback,
+    selectProjectMetadata: () => useVideoEditorStore.getState().project,
+    selectClips: () => useVideoEditorStore.getState().clips,
+    selectAudioTracks: () => useVideoEditorStore.getState().audioTracks,
+    selectTimeline: () => useVideoEditorStore.getState().timeline,
+    selectAIGeneration: () => useVideoEditorStore.getState().aiGeneration,
   };
 }
 
-/**
- * This hook synchronizes certain parts of your main state management
- * with the video editor state when needed
- * 
- * Example usage: 
- * 
- * // In a component that needs to sync state:
- * useSyncVideoEditorState({
- *   projectId: myReduxProjectId,
- *   onMediaItemsChange: (mediaItems) => {
- *     // Do something with updated media items in your main state
- *     dispatch(updateMediaItemsAction(mediaItems));
- *   }
- * });
- */
 export function useSyncVideoEditorState(options: {
   projectId?: string | null;
   projectName?: string;
-  onMediaItemsChange?: (mediaItems: any[]) => void;
-  // Add more sync options as needed
+  onClipsChange?: (clips: any[]) => void;
+  onAudioTracksChange?: (tracks: any[]) => void;
 }) {
   const {
     projectId: externalProjectId,
     projectName: externalProjectName,
-    onMediaItemsChange,
+    onClipsChange,
+    onAudioTracksChange,
   } = options;
 
   const videoEditorStore = useVideoEditorStore();
-  
-  // Sync project ID from external state to video editor
+
   useEffect(() => {
-    if (externalProjectId !== undefined && externalProjectId !== videoEditorStore.projectId) {
+    if (externalProjectId !== undefined && externalProjectId !== videoEditorStore.project.id) {
       videoEditorStore.setProjectId(externalProjectId);
     }
   }, [externalProjectId, videoEditorStore]);
-  
-  // Sync project name from external state to video editor
+
   useEffect(() => {
-    if (externalProjectName && externalProjectName !== videoEditorStore.projectName) {
+    if (externalProjectName && externalProjectName !== videoEditorStore.project.name) {
       videoEditorStore.setProjectName(externalProjectName);
     }
   }, [externalProjectName, videoEditorStore]);
-  
-  // Subscribe to media items changes and notify external state
+
   useEffect(() => {
-    if (onMediaItemsChange) {
-      // Fix: In Zustand v5+, subscribe method takes a single callback function
+    if (onClipsChange) {
       const unsubscribe = useVideoEditorStore.subscribe((state) => {
-        if (onMediaItemsChange) {
-          onMediaItemsChange(state.mediaItems);
-        }
+        onClipsChange(state.clips);
       });
-      
       return unsubscribe;
     }
-  }, [onMediaItemsChange]);
+  }, [onClipsChange]);
+
+  useEffect(() => {
+    if (onAudioTracksChange) {
+      const unsubscribe = useVideoEditorStore.subscribe((state) => {
+        onAudioTracksChange(state.audioTracks);
+      });
+      return unsubscribe;
+    }
+  }, [onAudioTracksChange]);
 }
 
-/**
- * Returns actions that can be dispatched to update the video editor state
- * from your existing state management
- */
 export function getVideoEditorActions() {
   return {
     setProjectId: (id: string | null) => useVideoEditorStore.getState().setProjectId(id),
     setProjectName: (name: string) => useVideoEditorStore.getState().setProjectName(name),
-    addMediaItem: (item: any) => useVideoEditorStore.getState().addMediaItem(item),
+    addClip: (clip: any) => useVideoEditorStore.getState().addClip(clip),
+    addAudioTrack: (track: any) => useVideoEditorStore.getState().addAudioTrack(track),
     play: () => useVideoEditorStore.getState().play(),
     pause: () => useVideoEditorStore.getState().pause(),
-    // Add more actions as needed
+    setTimelineZoom: (zoom: number) => useVideoEditorStore.getState().setTimelineZoom(zoom),
+    scrollTimelineBy: (delta: number) => useVideoEditorStore.getState().scrollTimelineBy(delta),
   };
 }

@@ -8,22 +8,29 @@ import TimelinePlayhead from './TimelinePlayhead';
 import TimelineTrack from './TimelineTrack';
 
 const TimelinePanel = () => {
-  const { 
-    mediaItems, 
-    currentTime, 
-    duration,
-    selectedMediaIds,
-    selectMediaItem,
+  const {
+    clips,
+    audioTracks,
+    playback,
+    project,
+    selectedClipIds,
+    selectedAudioTrackIds,
+    selectClip,
+    selectAudioTrack,
     clipConnections,
     activeConnection,
-    addClipConnection,
     setActiveConnection,
     updateActiveConnectionCursor,
+    timeline,
+    scrollTimelineBy,
+    zoomTimelineIn,
+    zoomTimelineOut,
   } = useVideoEditor();
 
   const [clipRefs, setClipRefs] = useState<Map<string, { x: number; y: number; width: number; height: number }>>(new Map());
   const timelineRef = useRef<HTMLDivElement>(null);
-  const pixelsPerSecond = 100;
+  const pixelsPerSecond = 100 * timeline.zoom;
+  const scrollOffset = timeline.scroll * pixelsPerSecond;
 
   const handleConnectionPointClick = (clipId: string, point: 'left' | 'right', e: React.MouseEvent) => {
     const rect = timelineRef.current?.getBoundingClientRect();
@@ -39,7 +46,7 @@ const TimelinePanel = () => {
 
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!activeConnection || !timelineRef.current) return;
-    
+
     const rect = timelineRef.current.getBoundingClientRect();
     updateActiveConnectionCursor(e.clientX - rect.left, e.clientY - rect.top);
   };
@@ -50,6 +57,23 @@ const TimelinePanel = () => {
     // Check if we're over a connection point (this would require more sophisticated hit detection)
     // For now, we'll just clear the active connection
     setActiveConnection(null);
+  };
+
+  const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    if (e.ctrlKey) {
+      e.preventDefault();
+      if (e.deltaY < 0) {
+        zoomTimelineIn();
+      } else if (e.deltaY > 0) {
+        zoomTimelineOut();
+      }
+      return;
+    }
+
+    if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
+      e.preventDefault();
+      scrollTimelineBy(e.deltaX / pixelsPerSecond);
+    }
   };
 
   const getConnectedPoints = (clipId: string): Array<'left' | 'right'> => {
@@ -64,19 +88,18 @@ const TimelinePanel = () => {
   // Update clip positions for connection line rendering
   useEffect(() => {
     const newClipRefs = new Map();
-    mediaItems.forEach(item => {
-      const startX = (item.startTime || 0) * pixelsPerSecond;
-      const width = ((item.endTime || item.duration || 5) - (item.startTime || 0)) * pixelsPerSecond;
-      
-      // Determine track position
-      let y = 0;
-      if (item.type === 'video' || item.type === 'image') y = 0;
-      if (item.type === 'audio') y = 64;
-      
-      newClipRefs.set(item.id, { x: startX, y, width, height: 48 });
+    clips.forEach(item => {
+      const startX = ((item.startTime ?? 0) - timeline.scroll) * pixelsPerSecond;
+      const width = (item.duration || 5) * pixelsPerSecond;
+      newClipRefs.set(item.id, { x: startX, y: 0, width, height: 48 });
+    });
+    audioTracks.forEach(track => {
+      const startX = ((track.startTime ?? 0) - timeline.scroll) * pixelsPerSecond;
+      const width = (track.duration || 5) * pixelsPerSecond;
+      newClipRefs.set(track.id, { x: startX, y: 64, width, height: 48 });
     });
     setClipRefs(newClipRefs);
-  }, [mediaItems, pixelsPerSecond]);
+  }, [clips, audioTracks, pixelsPerSecond, timeline.scroll]);
 
   return (
     <div className="w-full h-full flex flex-col">
@@ -84,7 +107,7 @@ const TimelinePanel = () => {
       <div className="flex-none bg-zinc-900/90 backdrop-blur-sm border-b border-zinc-800/40 p-3 flex items-center justify-between">
         <span className="text-sm font-medium text-zinc-200">Timeline</span>
         <div className="text-xs text-zinc-400">
-          {Math.floor(currentTime / 60)}:{Math.floor(currentTime % 60).toString().padStart(2, '0')}
+          {Math.floor(playback.currentTime / 60)}:{Math.floor(playback.currentTime % 60).toString().padStart(2, '0')}
         </div>
       </div>
       
@@ -94,12 +117,13 @@ const TimelinePanel = () => {
           className="min-h-[200px] relative"
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
+          onWheel={handleWheel}
         >
           {/* Timeline Ruler */}
-          <div className="h-8 border-b border-zinc-800/40 bg-gradient-to-b from-zinc-900/50 to-transparent backdrop-blur-sm flex sticky top-0 z-10">
-            {Array.from({ length: Math.ceil(duration || 10) }).map((_, i) => (
-              <div 
-                key={i} 
+          <div className="h-8 border-b border-zinc-800/40 bg-gradient-to-b from-zinc-900/50 to-transparent backdrop-blur-sm flex sticky top-0 z-10" style={{ transform: `translateX(-${scrollOffset}px)` }}>
+            {Array.from({ length: Math.ceil(Math.max(project.duration, 10)) }).map((_, i) => (
+              <div
+                key={i}
                 className="flex-none w-[100px] border-r border-zinc-800/30 text-[10px] font-medium text-zinc-500 flex items-center pl-2"
               >
                 {i}:00
@@ -108,14 +132,15 @@ const TimelinePanel = () => {
           </div>
           
           {/* Playhead */}
-          <TimelinePlayhead 
-            currentTime={currentTime}
-            duration={duration}
+          <TimelinePlayhead
+            currentTime={playback.currentTime}
+            duration={project.duration}
             pixelsPerSecond={pixelsPerSecond}
+            scrollOffset={scrollOffset}
           />
-          
+
           {/* Connection Lines */}
-          <TimelineConnectionLines 
+          <TimelineConnectionLines
             connections={clipConnections}
             clipRefs={clipRefs}
           />
@@ -155,35 +180,35 @@ const TimelinePanel = () => {
           <div className="flex flex-col">
             {/* Video Track */}
             <TimelineTrack type="video" label="Video">
-              {mediaItems
+              {clips
                 .filter(item => item.type === 'video' || item.type === 'image')
                 .map(item => (
                   <TimelineClip
                     key={item.id}
                     clip={item}
-                    isSelected={selectedMediaIds.includes(item.id)}
-                    onSelect={() => selectMediaItem(item.id)}
+                    isSelected={selectedClipIds.includes(item.id)}
+                    onSelect={() => selectClip(item.id)}
                     onConnectionPointClick={handleConnectionPointClick}
                     connectedPoints={getConnectedPoints(item.id)}
                     pixelsPerSecond={pixelsPerSecond}
+                    scrollOffset={timeline.scroll}
                   />
                 ))
               }
             </TimelineTrack>
-            
+
             {/* Audio Track */}
             <TimelineTrack type="audio" label="Audio">
-              {mediaItems
-                .filter(item => item.type === 'audio')
-                .map(item => (
+              {audioTracks.map(item => (
                   <TimelineClip
                     key={item.id}
                     clip={item}
-                    isSelected={selectedMediaIds.includes(item.id)}
-                    onSelect={() => selectMediaItem(item.id)}
+                    isSelected={selectedAudioTrackIds.includes(item.id)}
+                    onSelect={() => selectAudioTrack(item.id)}
                     onConnectionPointClick={handleConnectionPointClick}
                     connectedPoints={getConnectedPoints(item.id)}
                     pixelsPerSecond={pixelsPerSecond}
+                    scrollOffset={timeline.scroll}
                   />
                 ))
               }

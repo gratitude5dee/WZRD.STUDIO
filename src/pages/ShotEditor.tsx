@@ -13,10 +13,12 @@ const ShotEditor = () => {
   useSyncVideoEditorState({
     projectId: projectId || null,
     projectName: 'Untitled Project',
-    onMediaItemsChange: (mediaItems) => {
-      // Here you would connect to your external state management
-      console.log('Media items changed:', mediaItems);
-    }
+    onClipsChange: (clips) => {
+      console.log('Clips changed:', clips);
+    },
+    onAudioTracksChange: (tracks) => {
+      console.log('Audio tracks changed:', tracks);
+    },
   });
 
   return (

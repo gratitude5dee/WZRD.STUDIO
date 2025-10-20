@@ -21,11 +21,12 @@ const VideoEditorIntegration: React.FC<VideoEditorIntegrationProps> = ({
   useSyncVideoEditorState({
     projectId,
     projectName,
-    onMediaItemsChange: (mediaItems) => {
-      // When video editor media items change, you can update your external state here
-      console.log('Media items changed:', mediaItems);
-      // Example: dispatch({ type: 'UPDATE_MEDIA_ITEMS', payload: mediaItems });
-    }
+    onClipsChange: (clips) => {
+      console.log('Clips changed:', clips);
+    },
+    onAudioTracksChange: (tracks) => {
+      console.log('Audio tracks changed:', tracks);
+    },
   });
 
   return (

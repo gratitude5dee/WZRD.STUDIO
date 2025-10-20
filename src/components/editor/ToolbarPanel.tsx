@@ -2,11 +2,11 @@
 import React, { useState } from 'react';
 import { useVideoEditor } from '@/providers/VideoEditorProvider';
 import { Button } from '@/components/ui/button';
-import { Settings, Save, Upload, FileText, Scissors, Copy, Undo, Redo, Plus } from 'lucide-react';
+import { Settings, Save, FileText, Scissors, Copy, Undo, Redo, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { supabaseService } from '@/services/supabaseService';
-import { 
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -20,33 +20,29 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
 const ToolbarPanel = () => {
-  const { 
-    projectId,
-    projectName, 
+  const {
+    project,
     setProjectName,
     openDialog,
-    mediaItems
+    clips,
+    audioTracks,
   } = useVideoEditor();
-  
+
   const [newProjectName, setNewProjectName] = useState('');
   const [newProjectDescription, setNewProjectDescription] = useState('');
   const [isCreatingProject, setIsCreatingProject] = useState(false);
   const [isNewProjectDialogOpen, setIsNewProjectDialogOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Function to save project name
   const handleSaveProject = async () => {
-    if (!projectId) {
+    if (!project.id) {
       toast.error("No project to save");
       return;
     }
-    
+
     try {
       setIsSaving(true);
-      
-      // Update project in database
-      await supabaseService.projects.update(projectId, { title: projectName });
-      
+      await supabaseService.projects.update(project.id, { title: project.name });
       toast.success("Project saved successfully");
     } catch (error) {
       console.error('Error saving project:', error);
@@ -55,20 +51,17 @@ const ToolbarPanel = () => {
       setIsSaving(false);
     }
   };
-  
-  // Function to create a new project
+
   const handleCreateProject = async () => {
     try {
       setIsCreatingProject(true);
-      
-      // Check if user is logged in
+
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         toast.error("Please log in to create a project");
         return;
       }
-      
-      // Call the create-project edge function
+
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-project`, {
         method: 'POST',
         headers: {
@@ -80,17 +73,14 @@ const ToolbarPanel = () => {
           description: newProjectDescription,
         }),
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to create project');
       }
-      
-      const { project } = await response.json();
-      
-      // Navigate to the new project (or reload)
-      window.location.href = `/editor/${project.id}`;
-      
+
+      const { project: createdProject } = await response.json();
+      window.location.href = `/editor/${createdProject.id}`;
       toast.success("Project created successfully");
       setIsNewProjectDialogOpen(false);
     } catch (error) {
@@ -104,28 +94,26 @@ const ToolbarPanel = () => {
   return (
     <div className="flex-none bg-[#0A0D16] border-b border-[#1D2130] p-2 flex items-center justify-between">
       <div className="flex items-center space-x-2">
-        {/* Project name */}
         <div className="flex items-center mr-4">
           <input
             type="text"
-            value={projectName}
+            value={project.name}
             onChange={(e) => setProjectName(e.target.value)}
             className="bg-transparent border-none text-white focus:outline-none text-sm font-medium"
           />
         </div>
-        
-        {/* File operations */}
-        <Button 
-          variant="ghost" 
-          size="sm" 
+
+        <Button
+          variant="ghost"
+          size="sm"
           className="text-white hover:bg-[#1D2130] h-8"
           onClick={handleSaveProject}
-          disabled={isSaving || !projectId}
+          disabled={isSaving || !project.id}
         >
           <Save className="h-4 w-4 mr-2" />
           {isSaving ? 'Saving...' : 'Save'}
         </Button>
-        
+
         <Dialog open={isNewProjectDialogOpen} onOpenChange={setIsNewProjectDialogOpen}>
           <DialogTrigger asChild>
             <Button variant="ghost" size="sm" className="text-white hover:bg-[#1D2130] h-8">
@@ -161,13 +149,13 @@ const ToolbarPanel = () => {
               </div>
             </div>
             <DialogFooter>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => setIsNewProjectDialogOpen(false)}
               >
                 Cancel
               </Button>
-              <Button 
+              <Button
                 onClick={handleCreateProject}
                 disabled={isCreatingProject}
               >
@@ -176,21 +164,20 @@ const ToolbarPanel = () => {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-        
-        <Button 
-          variant="ghost" 
-          size="sm" 
+
+        <Button
+          variant="ghost"
+          size="sm"
           className="text-white hover:bg-[#1D2130] h-8"
           onClick={() => openDialog('export')}
-          disabled={mediaItems.length === 0}
+          disabled={clips.length + audioTracks.length === 0}
         >
           <FileText className="h-4 w-4 mr-2" />
           Export
         </Button>
       </div>
-      
+
       <div className="flex items-center space-x-2">
-        {/* Edit operations */}
         <Button variant="ghost" size="sm" className="text-white hover:bg-[#1D2130] h-8 px-2">
           <Undo className="h-4 w-4" />
         </Button>
@@ -205,14 +192,13 @@ const ToolbarPanel = () => {
           <Copy className="h-4 w-4 mr-2" />
           Copy
         </Button>
-        
-        {/* Settings */}
-        <Button 
-          variant="ghost" 
-          size="sm" 
+
+        <Button
+          variant="ghost"
+          size="sm"
           className="text-white hover:bg-[#1D2130] h-8"
           onClick={() => openDialog('projectSettings')}
-          disabled={!projectId}
+          disabled={!project.id}
         >
           <Settings className="h-4 w-4 mr-2" />
           Settings

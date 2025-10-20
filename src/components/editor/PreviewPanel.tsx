@@ -13,20 +13,13 @@ interface PreviewPanelProps {
   audioTracks: MediaItem[];
 }
 
-const FPS = 30;
-const CANVAS_WIDTH = 1280;
-const CANVAS_HEIGHT = 720;
-
-const PreviewPanel = ({ clips, audioTracks }: PreviewPanelProps) => {
+const PreviewPanel = ({ videoRef }: PreviewPanelProps) => {
   const {
-    isPlaying,
-    currentTime,
-    duration,
-    volume,
+    playback,
+    project,
     togglePlayPause,
     setCurrentTime,
-    play,
-    pause
+    setDuration
   } = useVideoEditor();
 
   const playerRef = useRef<PlayerRef>(null);
@@ -135,16 +128,16 @@ const PreviewPanel = ({ clips, audioTracks }: PreviewPanelProps) => {
         {/* Timeline slider */}
         <div className="mb-2 px-2">
           <Slider
-            value={[currentTime]}
+            value={[playback.currentTime]}
             min={0}
-            max={effectiveDuration || 1}
+            max={project.duration || 100}
             step={0.01}
             onValueChange={handleSeek}
             className="cursor-pointer"
           />
           <div className="flex justify-between text-xs text-zinc-400 mt-1">
-            <span>{formatTime(currentTime)}</span>
-            <span>{formatTime(effectiveDuration)}</span>
+            <span>{formatTime(playback.currentTime)}</span>
+            <span>{formatTime(project.duration)}</span>
           </div>
         </div>
 
@@ -169,7 +162,7 @@ const PreviewPanel = ({ clips, audioTracks }: PreviewPanelProps) => {
             className="text-white hover:bg-[#1D2130] bg-[#1D2130] p-2 h-10 w-10 rounded-full"
             onClick={togglePlayPause}
           >
-            {isPlaying ? (
+            {playback.isPlaying ? (
               <Pause className="h-5 w-5" />
             ) : (
               <Play className="h-5 w-5 ml-0.5" />
@@ -181,11 +174,11 @@ const PreviewPanel = ({ clips, audioTracks }: PreviewPanelProps) => {
             size="sm"
             className="text-white hover:bg-[#1D2130] p-2 h-9 w-9"
             onClick={() => {
-              const newTime = Math.min(effectiveDuration, currentTime + 10);
-              setCurrentTime(newTime);
-              const frame = Math.round(newTime * FPS);
-              lastFrameRef.current = frame;
-              playerRef.current?.seekTo(frame);
+              if (videoRef.current) {
+                const nextTime = Math.min(project.duration, playback.currentTime + 10);
+                setCurrentTime(nextTime);
+                videoRef.current.currentTime = nextTime;
+              }
             }}
           >
             <SkipForward className="h-5 w-5" />
