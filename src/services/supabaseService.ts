@@ -250,11 +250,13 @@ const mapVideoClipToMediaItem = (clip: VideoClipRecord): MediaItem => {
     duration: msToSeconds(clip.duration_ms),
     startTime: msToSeconds(clip.start_time_ms),
     endTime: msToSeconds(clip.end_time_ms),
-    storageBucket: clip.storage_bucket,
-    storagePath: clip.storage_path,
-    thumbnailBucket: clip.thumbnail_bucket ?? undefined,
-    thumbnailPath: clip.thumbnail_path ?? undefined,
-    thumbnailUrl: thumbnailUrl || undefined
+    layer: 0,
+    transforms: {
+      position: { x: 0, y: 0 },
+      scale: { x: 1, y: 1 },
+      rotation: 0,
+      opacity: 1,
+    },
   };
 };
 
@@ -269,8 +271,8 @@ const mapAudioTrackToMediaItem = (track: AudioTrackRecord): MediaItem => {
     duration: msToSeconds(track.duration_ms),
     startTime: msToSeconds(track.start_time_ms),
     endTime: msToSeconds(track.end_time_ms),
-    storageBucket: track.storage_bucket,
-    storagePath: track.storage_path
+    volume: 1,
+    isMuted: false,
   };
 };
 

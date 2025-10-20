@@ -64,7 +64,7 @@ const MediaPanel = () => {
 
         const { error: uploadError } = await supabase
           .storage
-          .from(bucket)
+          .from('media')
           .upload(filePath, file);
 
         if (uploadError) throw uploadError;
@@ -77,7 +77,6 @@ const MediaPanel = () => {
         const mediaItemId = await supabaseService.media.create(project.id, {
           type: mediaType,
           name: file.name,
-          url: publicUrl,
           duration: mediaType === 'image' ? 5 : undefined,
           startTime: 0,
         });
@@ -163,9 +162,9 @@ const MediaPanel = () => {
     });
   };
 
-  const handleDeleteMedia = async (id: string) => {
+  const handleDeleteMedia = async (id: string, projectId: string) => {
     try {
-      await supabaseService.media.delete(id);
+      await supabaseService.media.delete(id, projectId);
 
       if (clips.some(item => item.id === id)) {
         removeClip(id);

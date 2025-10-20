@@ -188,9 +188,10 @@ const DEFAULT_CONTENT_TYPES: Record<GenerationType, string> = {
 
 const AIGenerationPanel: React.FC = () => {
   const {
-    projectId,
-    addMediaItem,
-    isGenerating,
+    project,
+    addClip,
+    addAudioTrack,
+    aiGeneration,
     startGeneration,
     finishGeneration,
   } = useVideoEditor();
@@ -377,22 +378,42 @@ const AIGenerationPanel: React.FC = () => {
 
     const mediaName = `AI ${media.type.charAt(0).toUpperCase() + media.type.slice(1)} ${new Date().toLocaleTimeString()}`;
 
-    const mediaId = await supabaseService.media.create(projectId, {
+    const mediaId = await supabaseService.media.create(project.id!, {
       type: media.type === 'image' ? 'image' : media.type === 'audio' ? 'audio' : 'video',
       name: mediaName,
-      url: publicUrl,
       duration: media.duration || DEFAULT_DURATIONS[media.type],
       startTime: 0,
     });
 
-    addMediaItem({
-      id: mediaId,
-      type: media.type,
-      url: publicUrl,
-      name: mediaName,
-      duration: media.duration || DEFAULT_DURATIONS[media.type],
-      startTime: 0,
-    });
+    // Add to store based on type
+    if (media.type === 'audio') {
+      addAudioTrack({
+        id: mediaId,
+        type: 'audio',
+        url: publicUrl,
+        name: mediaName,
+        duration: media.duration || DEFAULT_DURATIONS[media.type],
+        startTime: 0,
+        volume: 1,
+        isMuted: false,
+      });
+    } else {
+      addClip({
+        id: mediaId,
+        type: media.type === 'image' ? 'image' : 'video',
+        url: publicUrl,
+        name: mediaName,
+        duration: media.duration || DEFAULT_DURATIONS[media.type],
+        startTime: 0,
+        layer: 0,
+        transforms: {
+          position: { x: 0, y: 0 },
+          scale: { x: 1, y: 1 },
+          rotation: 0,
+          opacity: 1,
+        },
+      });
+    }
 
     return { url: publicUrl, duration: media.duration, name: mediaName };
   };
@@ -550,7 +571,7 @@ const AIGenerationPanel: React.FC = () => {
       setErrorMessage(message);
       toast.error(message);
     } finally {
-      finishGeneration(true);
+      finishGeneration('completed');
     }
   };
 

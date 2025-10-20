@@ -91,7 +91,7 @@ export function VideoEditorProvider({ children }: { children: ReactNode }) {
                 // Ensure media_type is one of the allowed types
                 const mediaType = validateMediaType(item.media_type);
                 if (mediaType === 'audio') {
-                  if (useVideoEditorStore.getState().audioTracks.some(track => track.id === item.id)) {
+              if (useVideoEditorStore.getState().audioTracks.some(track => track.id === item.id)) {
                     return;
                   }
                   addAudioTrack({
@@ -115,7 +115,7 @@ export function VideoEditorProvider({ children }: { children: ReactNode }) {
                     name: item.name,
                     duration: item.duration ?? Math.max((item.end_time ?? 0) - (item.start_time ?? 0), 5),
                     startTime: item.start_time ?? 0,
-                    layer: item.track_index ?? 0,
+                    layer: 0,
                     transforms: {
                       position: { x: 0, y: 0 },
                       scale: { x: 1, y: 1 },

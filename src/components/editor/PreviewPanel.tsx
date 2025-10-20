@@ -4,8 +4,8 @@ import { useVideoEditor } from '@/providers/VideoEditorProvider';
 import { Play, Pause, SkipBack, SkipForward } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
-import { Player, PlayerRef } from '@remotion/player';
-import VideoComposition from './VideoComposition';
+// import { Player, PlayerRef } from '@remotion/player';
+// import VideoComposition from './VideoComposition';
 import type { MediaItem } from '@/store/videoEditorStore';
 
 interface PreviewPanelProps {
@@ -28,7 +28,8 @@ const PreviewPanel = ({ clips, audioTracks }: PreviewPanelProps) => {
     pause
   } = useVideoEditor();
 
-  const playerRef = useRef<PlayerRef>(null);
+  // const playerRef = useRef<PlayerRef>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const lastFrameRef = useRef(0);
   
   const { isPlaying, currentTime, volume } = playback;
@@ -56,26 +57,17 @@ const PreviewPanel = ({ clips, audioTracks }: PreviewPanelProps) => {
   const handleSeek = (newValue: number[]) => {
     const newTime = newValue[0];
     setCurrentTime(newTime);
-    const frame = Math.round(newTime * FPS);
-    lastFrameRef.current = frame;
-    playerRef.current?.seekTo(frame);
+    if (videoRef.current) {
+      videoRef.current.currentTime = newTime;
+    }
   };
 
   useEffect(() => {
-    if (!playerRef.current) return;
-    const targetFrame = Math.round(currentTime * FPS);
-    if (Math.abs(targetFrame - lastFrameRef.current) > 1) {
-      lastFrameRef.current = targetFrame;
-      playerRef.current.seekTo(targetFrame);
-    }
-  }, [currentTime]);
-
-  useEffect(() => {
-    if (!playerRef.current) return;
+    if (!videoRef.current) return;
     if (isPlaying) {
-      playerRef.current.play();
+      videoRef.current.play();
     } else {
-      playerRef.current.pause();
+      videoRef.current.pause();
     }
   }, [isPlaying]);
 
@@ -91,40 +83,10 @@ const PreviewPanel = ({ clips, audioTracks }: PreviewPanelProps) => {
       {/* Video preview */}
       <div className="flex-1 bg-black flex items-center justify-center">
         <div className="w-full h-full flex items-center justify-center">
-          <Player
-            ref={playerRef}
-            component={VideoComposition}
-            compositionWidth={CANVAS_WIDTH}
-            compositionHeight={CANVAS_HEIGHT}
-            fps={FPS}
-            durationInFrames={durationInFrames}
-            inputProps={{ clips, audioTracks }}
-            style={{ width: '100%', height: '100%' }}
-            className="max-h-full max-w-full"
-            controls={false}
-            loop={false}
-            autoPlay={false}
-            clickToPlay={false}
-            doubleClickToFullscreen
-            spaceKeyToPlayOrPause={false}
-            playbackRate={1}
-            volume={volume}
-            showVolumeControls={false}
-            playing={isPlaying}
-            onFrameUpdate={(frame) => {
-              lastFrameRef.current = frame;
-              const time = frame / FPS;
-              if (Math.abs(time - currentTime) > 1 / FPS) {
-                setCurrentTime(time);
-              }
-            }}
-            onPlay={() => play()}
-            onPause={() => pause()}
-            onEnded={() => {
-              pause();
-              setCurrentTime(effectiveDuration);
-            }}
-          />
+          <div className="text-white text-center">
+            <p className="text-lg mb-2">Video Preview</p>
+            <p className="text-sm text-zinc-400">Remotion integration coming soon</p>
+          </div>
         </div>
       </div>
 
@@ -154,8 +116,9 @@ const PreviewPanel = ({ clips, audioTracks }: PreviewPanelProps) => {
             className="text-white hover:bg-[#1D2130] p-2 h-9 w-9"
             onClick={() => {
               setCurrentTime(0);
-              lastFrameRef.current = 0;
-              playerRef.current?.seekTo(0);
+              if (videoRef.current) {
+                videoRef.current.currentTime = 0;
+              }
             }}
           >
             <SkipBack className="h-5 w-5" />
@@ -181,9 +144,9 @@ const PreviewPanel = ({ clips, audioTracks }: PreviewPanelProps) => {
             onClick={() => {
               const nextTime = Math.min(project.duration, playback.currentTime + 10);
               setCurrentTime(nextTime);
-              const frame = Math.round(nextTime * FPS);
-              lastFrameRef.current = frame;
-              playerRef.current?.seekTo(frame);
+              if (videoRef.current) {
+                videoRef.current.currentTime = nextTime;
+              }
             }}
           >
             <SkipForward className="h-5 w-5" />

@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { AbsoluteFill, Audio, Img, Sequence, Video, useVideoConfig } from 'remotion';
+// import { AbsoluteFill, Audio, Img, Sequence, Video, useVideoConfig } from 'remotion';
 import type { MediaItem } from '@/store/videoEditorStore';
 
 export interface VideoCompositionProps {
