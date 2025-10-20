@@ -6,6 +6,9 @@ verify_jwt = false
 [functions.studio-load-state]
 verify_jwt = false
 
+[functions.run-graph]
+verify_jwt = false
+
 [functions.gemini-text-generation]
 verify_jwt = false
 
