@@ -10,6 +10,11 @@ export interface MediaItem {
   duration?: number;
   startTime?: number;
   endTime?: number;
+  storagePath?: string;
+  storageBucket?: string;
+  thumbnailPath?: string;
+  thumbnailBucket?: string;
+  thumbnailUrl?: string;
 }
 
 export interface ClipConnection {

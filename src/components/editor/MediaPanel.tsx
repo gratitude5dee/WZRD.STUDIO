@@ -62,38 +62,34 @@ const MediaPanel = () => {
         const fileExt = file.name.split('.').pop();
         const fileName = `${uuidv4()}.${fileExt}`;
         const filePath = `${projectId}/${fileName}`;
-        
-        const { data: uploadData, error: uploadError } = await supabase
+        const bucket = mediaType === 'audio' ? 'audio' : 'videos';
+
+        const { error: uploadError } = await supabase
           .storage
-          .from('media')
+          .from(bucket)
           .upload(filePath, file);
-          
+
         if (uploadError) throw uploadError;
-        
-        // Get public URL for the uploaded file
-        const { data: { publicUrl } } = supabase
-          .storage
-          .from('media')
-          .getPublicUrl(filePath);
-          
-        // Create media item in database
-        const mediaItemId = await supabaseService.media.create(projectId, {
+
+        const metadata = {
+          mimeType: file.type,
+          size: file.size,
+          originalName: file.name
+        };
+
+        // Create media item in database and map to UI shape
+        const createdItem = await supabaseService.media.create(projectId, {
           type: mediaType,
           name: file.name,
-          url: publicUrl,
-          duration: mediaType === 'image' ? 5 : undefined,  // Default duration for images
-          startTime: 0
+          bucket,
+          storagePath: filePath,
+          durationMs: mediaType === 'image' ? 5000 : undefined,
+          startTimeMs: 0,
+          metadata
         });
-          
+
         // Add to local state
-        addMediaItem({
-          id: mediaItemId,
-          type: mediaType,
-          url: publicUrl,
-          name: file.name,
-          duration: mediaType === 'image' ? 5 : undefined,
-          startTime: 0
-        });
+        addMediaItem(createdItem);
         
         toast.success(`${file.name} uploaded successfully`);
       } catch (error) {
@@ -144,7 +140,13 @@ const MediaPanel = () => {
   const handleDeleteMedia = async (id: string) => {
     try {
       // Remove from database
-      await supabaseService.media.delete(id);
+      const mediaItem = mediaItems.find(item => item.id === id);
+      if (!mediaItem) {
+        toast.error('Media item not found');
+        return;
+      }
+
+      await supabaseService.media.delete(id, mediaItem.type);
       
       // Remove from local state
       removeMediaItem(id);

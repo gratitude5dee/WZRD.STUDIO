@@ -46,17 +46,33 @@ Deno.serve(async (req) => {
     // For now, we'll just return a mock thumbnail URL
     const thumbnailUrl = `${videoUrl.split('.')[0]}_thumbnail.jpg`;
 
-    // Update the media item with the thumbnail URL
+    // Merge the thumbnail URL into clip metadata
+    const { data: clipData, error: clipError } = await supabaseClient
+      .from('video_clips')
+      .select('metadata')
+      .eq('id', mediaItemId)
+      .maybeSingle();
+
+    if (clipError) {
+      console.error('Error fetching clip metadata:', clipError);
+      return errorResponse('Failed to locate media clip', 404, clipError.message);
+    }
+
+    const metadata = {
+      ...(clipData?.metadata as Record<string, unknown> | null ?? {}),
+      thumbnailUrl,
+    };
+
     const { error: updateError } = await supabaseClient
-      .from('media_items')
+      .from('video_clips')
       .update({
-        metadata: { thumbnailUrl }
+        metadata
       })
       .eq('id', mediaItemId);
 
     if (updateError) {
-      console.error('Error updating media item:', updateError);
-      return errorResponse('Failed to update media item with thumbnail', 500, updateError.message);
+      console.error('Error updating media clip:', updateError);
+      return errorResponse('Failed to update media clip with thumbnail', 500, updateError.message);
     }
 
     // Return the thumbnail URL
