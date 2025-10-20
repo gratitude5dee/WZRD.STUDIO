@@ -1,5 +1,5 @@
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useVideoEditor } from '@/providers/VideoEditorProvider';
 import TimelinePanel from './TimelinePanel';
 import MediaPanel from './MediaPanel';
@@ -16,39 +16,50 @@ import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 
 const VideoEditor = () => {
-  const { 
+  const {
     projectId,
-    projectName, 
-    isPlaying, 
-    currentTime, 
+    projectName,
     duration,
-    togglePlayPause, 
-    setCurrentTime, 
     setDuration,
     dialogs,
     openDialog,
     closeDialog,
     setProjectId,
-    setProjectName
+    setProjectName,
+    mediaItems
   } = useVideoEditor();
   
   const navigate = useNavigate();
   const [isCreatingProject, setIsCreatingProject] = useState(false);
   const [userAuthenticated, setUserAuthenticated] = useState<boolean | null>(null);
 
-  // Reference to the video element for playback control
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const videoClips = useMemo(
+    () => mediaItems.filter((item) => item.type === 'video' || item.type === 'image'),
+    [mediaItems]
+  );
+
+  const audioTracks = useMemo(
+    () => mediaItems.filter((item) => item.type === 'audio'),
+    [mediaItems]
+  );
+
+  const computedDuration = useMemo(() => {
+    const maxTimelinePoint = mediaItems.reduce((max, item) => {
+      const start = item.startTime ?? 0;
+      const segmentDuration = item.endTime
+        ? item.endTime - start
+        : item.duration ?? 0;
+      return Math.max(max, start + segmentDuration);
+    }, 0);
+
+    return maxTimelinePoint;
+  }, [mediaItems]);
 
   useEffect(() => {
-    // Handle playback state changes
-    if (videoRef.current) {
-      if (isPlaying) {
-        videoRef.current.play().catch(err => console.error('Error playing video:', err));
-      } else {
-        videoRef.current.pause();
-      }
+    if (Math.abs(computedDuration - duration) > 0.001) {
+      setDuration(computedDuration);
     }
-  }, [isPlaying]);
+  }, [computedDuration, duration, setDuration]);
   
   // Check if user is authenticated
   useEffect(() => {
@@ -168,7 +179,7 @@ const VideoEditor = () => {
         <ResizablePanel defaultSize={60} className="bg-[#0F1117]">
           <ResizablePanelGroup direction="vertical">
             <ResizablePanel defaultSize={70} className="flex items-center justify-center">
-              <PreviewPanel videoRef={videoRef} />
+              <PreviewPanel clips={videoClips} audioTracks={audioTracks} />
             </ResizablePanel>
             
             <ResizableHandle withHandle />

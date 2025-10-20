@@ -1,56 +1,85 @@
 
-import React, { RefObject, useEffect } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { useVideoEditor } from '@/providers/VideoEditorProvider';
 import { Play, Pause, SkipBack, SkipForward } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
+import { Player, PlayerRef } from '@remotion/player';
+import VideoComposition from './VideoComposition';
+import type { MediaItem } from '@/store/videoEditorStore';
 
 interface PreviewPanelProps {
-  videoRef: RefObject<HTMLVideoElement>;
+  clips: MediaItem[];
+  audioTracks: MediaItem[];
 }
 
-const PreviewPanel = ({ videoRef }: PreviewPanelProps) => {
-  const { 
-    isPlaying, 
-    currentTime, 
-    duration, 
+const FPS = 30;
+const CANVAS_WIDTH = 1280;
+const CANVAS_HEIGHT = 720;
+
+const PreviewPanel = ({ clips, audioTracks }: PreviewPanelProps) => {
+  const {
+    isPlaying,
+    currentTime,
+    duration,
     volume,
-    togglePlayPause, 
-    setCurrentTime, 
-    setDuration,
-    setVolume
+    togglePlayPause,
+    setCurrentTime,
+    play,
+    pause
   } = useVideoEditor();
 
-  // Update duration when video metadata is loaded
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
+  const playerRef = useRef<PlayerRef>(null);
+  const lastFrameRef = useRef(0);
 
-    const handleLoadedMetadata = () => {
-      setDuration(video.duration);
-    };
+  const fallbackDuration = useMemo(() => {
+    const clipMax = clips.reduce((max, clip) => {
+      const start = clip.startTime ?? 0;
+      const clipDuration = clip.endTime
+        ? clip.endTime - start
+        : clip.duration ?? 0;
+      return Math.max(max, start + clipDuration);
+    }, 0);
 
-    const handleTimeUpdate = () => {
-      setCurrentTime(video.currentTime);
-    };
+    const audioMax = audioTracks.reduce((max, track) => {
+      const start = track.startTime ?? 0;
+      const trackDuration = track.endTime
+        ? track.endTime - start
+        : track.duration ?? 0;
+      return Math.max(max, start + trackDuration);
+    }, 0);
 
-    video.addEventListener('loadedmetadata', handleLoadedMetadata);
-    video.addEventListener('timeupdate', handleTimeUpdate);
+    return Math.max(clipMax, audioMax, 0);
+  }, [clips, audioTracks]);
 
-    return () => {
-      video.removeEventListener('loadedmetadata', handleLoadedMetadata);
-      video.removeEventListener('timeupdate', handleTimeUpdate);
-    };
-  }, [videoRef, setDuration, setCurrentTime]);
+  const effectiveDuration = duration > 0 ? duration : fallbackDuration;
+  const durationInFrames = Math.max(Math.round((effectiveDuration || 0) * FPS), 1);
 
-  // Handle seeking
   const handleSeek = (newValue: number[]) => {
-    if (videoRef.current) {
-      const newTime = newValue[0];
-      videoRef.current.currentTime = newTime;
-      setCurrentTime(newTime);
-    }
+    const newTime = newValue[0];
+    setCurrentTime(newTime);
+    const frame = Math.round(newTime * FPS);
+    lastFrameRef.current = frame;
+    playerRef.current?.seekTo(frame);
   };
+
+  useEffect(() => {
+    if (!playerRef.current) return;
+    const targetFrame = Math.round(currentTime * FPS);
+    if (Math.abs(targetFrame - lastFrameRef.current) > 1) {
+      lastFrameRef.current = targetFrame;
+      playerRef.current.seekTo(targetFrame);
+    }
+  }, [currentTime]);
+
+  useEffect(() => {
+    if (!playerRef.current) return;
+    if (isPlaying) {
+      playerRef.current.play();
+    } else {
+      playerRef.current.pause();
+    }
+  }, [isPlaying]);
 
   // Format time as MM:SS
   const formatTime = (time: number) => {
@@ -63,14 +92,44 @@ const PreviewPanel = ({ videoRef }: PreviewPanelProps) => {
     <div className="w-full h-full flex flex-col">
       {/* Video preview */}
       <div className="flex-1 bg-black flex items-center justify-center">
-        <video
-          ref={videoRef}
-          className="max-h-full max-w-full"
-          src=""
-          poster="/placeholder.svg"
-        />
+        <div className="w-full h-full flex items-center justify-center">
+          <Player
+            ref={playerRef}
+            component={VideoComposition}
+            compositionWidth={CANVAS_WIDTH}
+            compositionHeight={CANVAS_HEIGHT}
+            fps={FPS}
+            durationInFrames={durationInFrames}
+            inputProps={{ clips, audioTracks }}
+            style={{ width: '100%', height: '100%' }}
+            className="max-h-full max-w-full"
+            controls={false}
+            loop={false}
+            autoPlay={false}
+            clickToPlay={false}
+            doubleClickToFullscreen
+            spaceKeyToPlayOrPause={false}
+            playbackRate={1}
+            volume={volume}
+            showVolumeControls={false}
+            playing={isPlaying}
+            onFrameUpdate={(frame) => {
+              lastFrameRef.current = frame;
+              const time = frame / FPS;
+              if (Math.abs(time - currentTime) > 1 / FPS) {
+                setCurrentTime(time);
+              }
+            }}
+            onPlay={() => play()}
+            onPause={() => pause()}
+            onEnded={() => {
+              pause();
+              setCurrentTime(effectiveDuration);
+            }}
+          />
+        </div>
       </div>
-      
+
       {/* Playback controls */}
       <div className="bg-[#0A0D16] border-t border-[#1D2130] p-3">
         {/* Timeline slider */}
@@ -78,28 +137,32 @@ const PreviewPanel = ({ videoRef }: PreviewPanelProps) => {
           <Slider
             value={[currentTime]}
             min={0}
-            max={duration || 100}
+            max={effectiveDuration || 1}
             step={0.01}
             onValueChange={handleSeek}
             className="cursor-pointer"
           />
           <div className="flex justify-between text-xs text-zinc-400 mt-1">
             <span>{formatTime(currentTime)}</span>
-            <span>{formatTime(duration)}</span>
+            <span>{formatTime(effectiveDuration)}</span>
           </div>
         </div>
-        
+
         {/* Playback buttons */}
         <div className="flex items-center justify-center space-x-4">
           <Button
             variant="ghost"
             size="sm"
             className="text-white hover:bg-[#1D2130] p-2 h-9 w-9"
-            onClick={() => setCurrentTime(0)}
+            onClick={() => {
+              setCurrentTime(0);
+              lastFrameRef.current = 0;
+              playerRef.current?.seekTo(0);
+            }}
           >
             <SkipBack className="h-5 w-5" />
           </Button>
-          
+
           <Button
             variant="ghost"
             size="sm"
@@ -118,10 +181,11 @@ const PreviewPanel = ({ videoRef }: PreviewPanelProps) => {
             size="sm"
             className="text-white hover:bg-[#1D2130] p-2 h-9 w-9"
             onClick={() => {
-              if (videoRef.current) {
-                setCurrentTime(Math.min(duration, currentTime + 10));
-                videoRef.current.currentTime = Math.min(duration, currentTime + 10);
-              }
+              const newTime = Math.min(effectiveDuration, currentTime + 10);
+              setCurrentTime(newTime);
+              const frame = Math.round(newTime * FPS);
+              lastFrameRef.current = frame;
+              playerRef.current?.seekTo(frame);
             }}
           >
             <SkipForward className="h-5 w-5" />
