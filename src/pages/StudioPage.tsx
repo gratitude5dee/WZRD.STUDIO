@@ -196,15 +196,17 @@ const StudioPage = () => {
   const selectedModel = selectedBlockId ? blockModels[selectedBlockId] : '';
   
   return (
-    <div className="h-screen flex flex-col bg-[#0F0F10]">
+    <div className="h-screen flex flex-col bg-black text-white">
       <AppHeader />
       
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 flex overflow-hidden">
+        <StudioSidebar onAddBlock={handleAddBlock} />
+        
         {isLoading ? (
-          <div className="flex-1 flex items-center justify-center bg-[#0F0F10]">
+          <div className="flex-1 flex items-center justify-center bg-black">
             <div className="flex flex-col items-center gap-3">
-              <Loader2 className="w-8 h-8 animate-spin text-[#6366F1]" />
-              <p className="text-sm text-[#A1A1AA]">Loading project...</p>
+              <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
+              <p className="text-sm text-zinc-400">Loading project...</p>
             </div>
           </div>
         ) : (
@@ -221,6 +223,19 @@ const StudioPage = () => {
           />
         )}
       </div>
+
+      {/* Block Settings Modal */}
+      <BlockSettingsModal
+        isOpen={isSettingsModalOpen}
+        onClose={handleCloseModal}
+        blockType={selectedBlockType}
+        selectedModel={selectedModel}
+        onModelChange={(modelId) => {
+          if (selectedBlockId) {
+            handleModelChange(selectedBlockId, modelId);
+          }
+        }}
+      />
     </div>
   );
 };
