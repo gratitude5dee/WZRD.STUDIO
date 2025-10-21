@@ -102,29 +102,11 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
   } = useConnectionMode();
   
   // Handler for spawning multiple blocks
-  const handleSpawnBlocks = useCallback((spawnedBlocks: Array<{ type: 'text' | 'image' | 'video'; initialData?: any }>, sourcePosition: { x: number; y: number }) => {
-    const BLOCKS_PER_ROW = 3;
-    const HORIZONTAL_SPACING = 400;
-    const VERTICAL_SPACING = 400;
-
-    spawnedBlocks.forEach((spawnedBlock, index) => {
-      const row = Math.floor(index / BLOCKS_PER_ROW);
-      const col = index % BLOCKS_PER_ROW;
-      
-      const newBlock: Block = {
-        id: uuidv4(),
-        type: spawnedBlock.type,
-        position: {
-          x: sourcePosition.x + (col * HORIZONTAL_SPACING),
-          y: sourcePosition.y + VERTICAL_SPACING + (row * VERTICAL_SPACING),
-        },
-        initialData: {
-          ...spawnedBlock.initialData,
-          mode: 'display', // Spawned blocks should be in display mode
-        },
-      };
-
-      onAddBlock(newBlock);
+  const handleSpawnBlocks = useCallback((spawnedBlocks: Array<Block>) => {
+    console.log('📦 StudioCanvas: Spawning blocks', spawnedBlocks);
+    spawnedBlocks.forEach((block) => {
+      console.log('➕ Adding block:', block.id, block.position);
+      onAddBlock(block);
     });
   }, [onAddBlock]);
 

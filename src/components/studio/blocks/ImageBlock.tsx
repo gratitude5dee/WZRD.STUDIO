@@ -140,14 +140,16 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
               prompt: prompt,
               imageUrl: img.url,
               generationTime: img.generationTime,
-              aspectRatio: aspectRatio
+              aspectRatio: aspectRatio,
+              mode: 'display' // Display spawned images immediately
             }
           };
           
           console.log(`📦 Created block ${index + 1}:`, {
             id: newBlock.id,
             position: newBlock.position,
-            hasImage: !!newBlock.initialData?.imageUrl
+            hasImage: !!newBlock.initialData?.imageUrl,
+            mode: newBlock.initialData.mode
           });
           
           return newBlock;
