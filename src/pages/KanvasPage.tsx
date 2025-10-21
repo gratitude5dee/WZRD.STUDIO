@@ -146,11 +146,18 @@ export default function KanvasPage() {
     <div className="h-screen flex flex-col bg-[#0A0A0A]">
       {/* Header */}
       <header className="h-14 border-b border-border/30 flex items-center justify-between px-4 bg-[#0A0A0A]">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate('/home')}>
-            <ArrowLeft className="w-4 h-4" />
+        <div className="flex items-center gap-4 animate-pulse">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => navigate('/home')}
+            className="text-purple-400 hover:text-purple-300 hover:shadow-[0_0_20px_rgba(168,85,247,0.5)] transition-all duration-300"
+          >
+            <ArrowLeft className="w-4 h-4 drop-shadow-[0_0_8px_rgba(168,85,247,0.8)]" />
           </Button>
-          <h1 className="text-lg font-semibold">Kanvas Project</h1>
+          <h1 className="text-lg font-semibold text-purple-400 drop-shadow-[0_0_15px_rgba(168,85,247,0.8)] animate-pulse">
+            Kanvas Project
+          </h1>
         </div>
 
         <div className="flex items-center gap-2">
