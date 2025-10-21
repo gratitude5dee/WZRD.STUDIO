@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save, Share2, Download, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Logo } from '@/components/ui/logo';
 import InfiniteCanvas from '@/components/canvas/InfiniteCanvas';
 import { LayersPanel } from '@/components/canvas/LayersPanel';
 import { LeftSidebar } from '@/components/canvas/LeftSidebar';
@@ -144,7 +145,12 @@ export default function KanvasPage() {
 
   return (
     <div className="h-screen flex flex-col bg-[#0A0A0A]">
-      {/* Header */}
+      {/* Top Header with Logo */}
+      <header className="h-16 border-b border-border/30 flex items-center px-6 bg-[#0A0A0A]">
+        <Logo className="h-8 w-auto" />
+      </header>
+
+      {/* Secondary Header with Navigation */}
       <header className="h-14 border-b border-border/30 flex items-center justify-between px-4 bg-[#0A0A0A]">
         <div className="flex items-center gap-4 animate-pulse">
           <Button 
