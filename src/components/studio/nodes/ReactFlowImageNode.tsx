@@ -8,6 +8,9 @@ export const ReactFlowImageNode = memo(({ id, data, selected }: NodeProps) => {
   const status = (data as any)?.status || 'idle';
   const progress = (data as any)?.progress || 0;
   const error = (data as any)?.error;
+  const onSpawnBlocks = (data as any)?.onSpawnBlocks;
+  const blockPosition = (data as any)?.blockPosition || { x: 0, y: 0 };
+  
   const handles = [
     {
       id: 'text-input',
@@ -42,6 +45,8 @@ export const ReactFlowImageNode = memo(({ id, data, selected }: NodeProps) => {
           selectedModel={(data as any)?.selectedModel}
           initialData={(data as any)?.initialData}
           displayMode="input"
+          blockPosition={blockPosition}
+          onSpawnBlocks={onSpawnBlocks}
         />
       </div>
     </BaseNode>
