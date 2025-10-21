@@ -116,8 +116,35 @@ export default function Home() {
 
       {/* Main Content */}
       <div className="flex-1 ml-64">
-        {/* Top Bar */}
-        <header className="h-16 border-b border-white/[0.08] flex items-center justify-between px-6">
+        {/* New Top Header with Logo */}
+        <header className="h-16 border-b border-white/[0.08] flex items-center justify-center px-6">
+          <div className="flex items-center gap-3">
+            <img 
+              src="/lovable-uploads/f8be561d-d5b5-49a8-adaa-dbf01721ef9f.png" 
+              alt="WZRD.STUDIO Logo" 
+              className="h-8 object-contain"
+            />
+            <span className="text-xl font-semibold text-white">Studio</span>
+            <span className="text-xs text-white/50 bg-[#292F46] px-2 py-0.5 rounded">ALPHA</span>
+          </div>
+        </header>
+
+        {/* Toolbar */}
+        <div className="h-14 border-b border-white/[0.08] flex items-center justify-between px-6">
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-white/60">
+              {filteredProjects.length} {filteredProjects.length === 1 ? 'project' : 'projects'}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <SortDropdown value={sortBy} onChange={setSortBy} />
+            <ProjectViewModeSelector viewMode={viewMode} setViewMode={setViewMode} />
+          </div>
+        </div>
+
+        {/* Tabs and Actions Bar */}
+        <div className="h-16 border-b border-white/[0.08] flex items-center justify-between px-6">
           {/* Left: Tabs */}
           <div className="flex items-center gap-1">
             {tabs.map((tab) => (
@@ -154,20 +181,6 @@ export default function Home() {
               <Plus className="w-4 h-4" />
               <span>New Project</span>
             </button>
-          </div>
-        </header>
-
-        {/* Toolbar */}
-        <div className="h-14 border-b border-white/[0.08] flex items-center justify-between px-6">
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-white/60">
-              {filteredProjects.length} {filteredProjects.length === 1 ? 'project' : 'projects'}
-            </span>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <SortDropdown value={sortBy} onChange={setSortBy} />
-            <ProjectViewModeSelector viewMode={viewMode} setViewMode={setViewMode} />
           </div>
         </div>
 
