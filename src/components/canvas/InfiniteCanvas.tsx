@@ -10,7 +10,7 @@ interface InfiniteCanvasProps {
   projectId: string;
   width: number;
   height: number;
-  onObjectSelect?: (objectId: string) => void;
+  onObjectSelect?: (objectIds: string[]) => void;
 }
 
 export default function InfiniteCanvas({ projectId, width, height, onObjectSelect }: InfiniteCanvasProps) {
@@ -120,7 +120,7 @@ export default function InfiniteCanvas({ projectId, width, height, onObjectSelec
           .filter(Boolean);
         if (ids.length > 0) {
           setSelectedIds(ids);
-          onObjectSelect?.(ids[0]);
+          onObjectSelect?.(ids);
         }
       }
     });
@@ -133,7 +133,7 @@ export default function InfiniteCanvas({ projectId, width, height, onObjectSelec
           .filter(Boolean);
         if (ids.length > 0) {
           setSelectedIds(ids);
-          onObjectSelect?.(ids[0]);
+          onObjectSelect?.(ids);
         }
       }
     });
@@ -257,13 +257,11 @@ export default function InfiniteCanvas({ projectId, width, height, onObjectSelec
   }, []);
 
   return (
-    <div className="relative w-full h-full bg-background-dark dark:bg-background-light">
+    <div className="relative w-full h-full bg-[#0A0A0A]">
+      <canvas ref={canvasRef} className="absolute inset-0" />
+      {/* Grid and MiniMap rendered on top */}
       <CanvasGrid width={width} height={height} showGrid={true} />
-      <canvas ref={canvasRef} />
-      <MiniMap />
-      <div className="absolute bottom-4 right-4 bg-background/80 backdrop-blur-sm px-3 py-1 rounded-md text-sm text-muted-foreground border border-border">
-        Zoom: {Math.round(zoomLevel * 100)}%
-      </div>
+      <MiniMap width={200} height={150} />
     </div>
   );
 }

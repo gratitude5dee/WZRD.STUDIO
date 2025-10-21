@@ -36,9 +36,10 @@ export const CanvasGrid = ({
     const offsetX = (x % scaledGridSize + scaledGridSize) % scaledGridSize;
     const offsetY = (y % scaledGridSize + scaledGridSize) % scaledGridSize;
 
-    ctx.strokeStyle = 'hsl(var(--border))';
+    // More visible grid for dark background
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
     ctx.lineWidth = 1;
-    ctx.globalAlpha = 0.3;
+    ctx.globalAlpha = 1;
 
     // Draw vertical lines
     for (let i = offsetX; i < width; i += scaledGridSize) {

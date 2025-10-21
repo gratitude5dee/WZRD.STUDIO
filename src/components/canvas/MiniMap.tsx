@@ -81,16 +81,13 @@ export const MiniMap = ({ width = 200, height = 150 }: MiniMapProps) => {
   }, [objects, viewport, width, height]);
 
   return (
-    <div className="absolute top-4 right-4 z-50 bg-background/95 backdrop-blur-sm border border-border rounded-lg p-2 shadow-lg">
+    <div className="absolute top-4 right-4 z-40">
       <canvas
         ref={canvasRef}
         width={width}
         height={height}
-        className="rounded"
+        className="border border-border/30 rounded-lg bg-[#0A0A0A]/80 backdrop-blur-xl shadow-lg"
       />
-      <div className="text-xs text-muted-foreground text-center mt-1">
-        Mini Map
-      </div>
     </div>
   );
 };

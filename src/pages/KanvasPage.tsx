@@ -1,40 +1,23 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, Share2, Download, Sparkles, Upload } from 'lucide-react';
+import { ArrowLeft, Save, Share2, Download, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import InfiniteCanvas from '@/components/canvas/InfiniteCanvas';
-import { CanvasToolbar } from '@/components/canvas/CanvasToolbar';
 import { LayersPanel } from '@/components/canvas/LayersPanel';
-import { TimelineFlow } from '@/components/canvas/TimelineFlow';
+import { LeftSidebar } from '@/components/canvas/LeftSidebar';
 import { AIChat } from '@/components/canvas/AIChat';
 import { useCanvasStore } from '@/lib/stores/canvas-store';
 import { useAuth } from '@/providers/AuthProvider';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import type { CanvasObject, ImageData } from '@/types/canvas';
-import {
-  ResizableHandle,
-  ResizablePanel,
-  ResizablePanelGroup,
-} from '@/components/ui/resizable';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { applyAITransformation } from '@/lib/fal/transformations';
 
 export default function KanvasPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [canvasSize, setCanvasSize] = useState({ width: 1920, height: 1080 });
-  const [showTimeline, setShowTimeline] = useState(true);
   const [projectId, setProjectId] = useState<string>('temp-project');
-  const [selectedObjectId, setSelectedObjectId] = useState<string | null>(null);
-  const [showAIDialog, setShowAIDialog] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const canvasContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -158,226 +141,75 @@ export default function KanvasPage() {
     }
   };
 
-  const handleApplyAI = async (transformation: string) => {
-    if (!selectedObjectId) {
-      toast.error('Please select an image first');
-      return;
-    }
-
-    const selectedObject = objects.find((obj) => obj.id === selectedObjectId);
-    if (!selectedObject || selectedObject.type !== 'image') {
-      toast.error('Please select an image layer');
-      return;
-    }
-
-    try {
-      setIsProcessing(true);
-      toast.loading('Applying AI transformation...', { id: 'ai-transform' });
-
-      const imageData = selectedObject.data as ImageData;
-      const result = await applyAITransformation(transformation as any, {
-        imageUrl: imageData.url,
-      });
-
-      // Create new object with transformed image
-      const newObject: CanvasObject = {
-        ...selectedObject,
-        id: crypto.randomUUID(),
-        data: {
-          ...imageData,
-          url: result.imageUrl,
-        },
-        transform: {
-          ...selectedObject.transform,
-          x: selectedObject.transform.x + 20,
-          y: selectedObject.transform.y + 20,
-        },
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-
-      addObject(newObject);
-      toast.success('AI transformation applied', { id: 'ai-transform' });
-      setShowAIDialog(false);
-    } catch (error) {
-      console.error('AI transformation error:', error);
-      toast.error('Failed to apply transformation', { id: 'ai-transform' });
-    } finally {
-      setIsProcessing(false);
-    }
-  };
 
   return (
-    <div className="flex flex-col h-screen bg-[#0A0A0A]">
+    <div className="h-screen flex flex-col bg-[#0A0A0A]">
       {/* Header */}
-      <header className="h-14 border-b border-white/[0.08] flex items-center justify-between px-4">
-        <div className="flex items-center gap-3">
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => navigate('/home')}
-            className="text-white/60 hover:text-white hover:bg-white/[0.08]"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Home
+      <header className="h-14 border-b border-border/30 flex items-center justify-between px-4 bg-[#0A0A0A]">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" onClick={() => navigate('/home')}>
+            <ArrowLeft className="w-4 h-4" />
           </Button>
-
-          <div className="h-6 w-px bg-white/[0.08]" />
-
-          <h1 className="text-lg font-semibold text-white">Infinite Kanvas</h1>
-          <span className="text-xs text-white/40">Untitled Project</span>
+          <h1 className="text-lg font-semibold">Kanvas Project</h1>
         </div>
 
         <div className="flex items-center gap-2">
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            accept="image/*"
+            className="hidden"
+          />
           <Button
+            variant="outline"
             size="sm"
-            variant="ghost"
-            onClick={() => setShowAIDialog(true)}
-            className="text-white/60 hover:text-white hover:bg-white/[0.08]"
-          >
-            <Sparkles className="w-4 h-4 mr-2" />
-            AI Tools
-          </Button>
-
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={handleImageUpload}
-            className="text-white/60 hover:text-white hover:bg-white/[0.08]"
+            onClick={() => fileInputRef.current?.click()}
           >
             <Upload className="w-4 h-4 mr-2" />
             Upload
           </Button>
 
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={handleSaveProject}
-            className="text-white/60 hover:text-white hover:bg-white/[0.08]"
-          >
+          <Button variant="outline" size="sm" onClick={handleSaveProject}>
             <Save className="w-4 h-4 mr-2" />
             Save
           </Button>
 
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={handleExportImage}
-            className="text-white/60 hover:text-white hover:bg-white/[0.08]"
-          >
+          <Button variant="outline" size="sm" onClick={handleExportImage}>
             <Download className="w-4 h-4 mr-2" />
             Export
           </Button>
 
-          <Button
-            size="sm"
-            className="bg-gradient-to-br from-purple-500 to-purple-700 text-white hover:shadow-lg hover:shadow-purple-500/25"
-          >
+          <Button variant="default" size="sm">
             <Share2 className="w-4 h-4 mr-2" />
             Share
           </Button>
         </div>
       </header>
 
-      {/* Main Content */}
+      {/* Main Content Area */}
       <div className="flex-1 flex overflow-hidden">
-        <ResizablePanelGroup direction="horizontal">
-          {/* Canvas Area */}
-          <ResizablePanel defaultSize={75} minSize={50}>
-            <div className="relative h-full flex flex-col">
-              {/* Canvas */}
-              <div ref={canvasContainerRef} className="flex-1 relative overflow-hidden">
-                <InfiniteCanvas
-                  projectId={projectId}
-                  width={canvasSize.width}
-                  height={canvasSize.height}
-                  onObjectSelect={setSelectedObjectId}
-                />
-                <CanvasToolbar onAddImage={handleImageUpload} />
-              </div>
+        {/* Left Sidebar */}
+        <LeftSidebar />
 
-              {/* Timeline */}
-              {showTimeline && (
-                <>
-                  <ResizableHandle withHandle />
-                  <div className="h-64 border-t border-white/[0.08]">
-                    <TimelineFlow projectId={projectId} />
-                  </div>
-                </>
-              )}
-            </div>
-          </ResizablePanel>
+        {/* Canvas Area */}
+        <div ref={canvasContainerRef} className="flex-1 relative">
+          <InfiniteCanvas
+            projectId={projectId}
+            width={canvasSize.width}
+            height={canvasSize.height}
+            onObjectSelect={(ids) => setSelectedIds(ids)}
+          />
+          
+          {/* AI Chat Interface */}
+          <AIChat />
+        </div>
 
-          <ResizableHandle withHandle />
-
-          {/* Right Panel - Layers */}
-          <ResizablePanel defaultSize={25} minSize={20} maxSize={40}>
-            <LayersPanel />
-          </ResizablePanel>
-        </ResizablePanelGroup>
+        {/* Right Panel - Layers */}
+        <div className="w-80 border-l border-border/30">
+          <LayersPanel />
+        </div>
       </div>
-
-      {/* Hidden file input */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        onChange={handleFileChange}
-        className="hidden"
-      />
-
-      {/* AI Tools Dialog */}
-      <Dialog open={showAIDialog} onOpenChange={setShowAIDialog}>
-        <DialogContent className="bg-zinc-950 border-white/[0.08]">
-          <DialogHeader>
-            <DialogTitle className="text-white">AI Transformations</DialogTitle>
-            <DialogDescription className="text-white/60">
-              Apply AI-powered transformations to your selected image
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="grid grid-cols-2 gap-3 py-4">
-            <Button
-              variant="outline"
-              onClick={() => handleApplyAI('upscale')}
-              disabled={isProcessing}
-              className="h-20 flex flex-col gap-2 border-white/[0.08] bg-white/[0.02] text-white hover:bg-white/[0.08]"
-            >
-              <Sparkles className="w-5 h-5" />
-              <span className="text-sm">Upscale 2x</span>
-            </Button>
-
-            <Button
-              variant="outline"
-              onClick={() => handleApplyAI('remove-bg')}
-              disabled={isProcessing}
-              className="h-20 flex flex-col gap-2 border-white/[0.08] bg-white/[0.02] text-white hover:bg-white/[0.08]"
-            >
-              <Sparkles className="w-5 h-5" />
-              <span className="text-sm">Remove BG</span>
-            </Button>
-
-            <Button
-              variant="outline"
-              onClick={() => handleApplyAI('img2img')}
-              disabled={isProcessing}
-              className="h-20 flex flex-col gap-2 border-white/[0.08] bg-white/[0.02] text-white hover:bg-white/[0.08]"
-            >
-              <Sparkles className="w-5 h-5" />
-              <span className="text-sm">Enhance</span>
-            </Button>
-
-            <Button
-              variant="outline"
-              disabled
-              className="h-20 flex flex-col gap-2 border-white/[0.08] bg-white/[0.02] text-white/40"
-            >
-              <Sparkles className="w-5 h-5" />
-              <span className="text-sm">More Soon</span>
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
