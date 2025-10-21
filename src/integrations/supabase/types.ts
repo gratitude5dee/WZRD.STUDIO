@@ -607,6 +607,136 @@ export type Database = {
         }
         Relationships: []
       }
+      canvas_assets: {
+        Row: {
+          asset_type: string
+          created_at: string
+          file_name: string
+          file_path: string
+          file_size: number
+          id: string
+          metadata: Json | null
+          mime_type: string
+          project_id: string
+          user_id: string
+        }
+        Insert: {
+          asset_type: string
+          created_at?: string
+          file_name: string
+          file_path: string
+          file_size: number
+          id?: string
+          metadata?: Json | null
+          mime_type: string
+          project_id: string
+          user_id: string
+        }
+        Update: {
+          asset_type?: string
+          created_at?: string
+          file_name?: string
+          file_path?: string
+          file_size?: number
+          id?: string
+          metadata?: Json | null
+          mime_type?: string
+          project_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "canvas_assets_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "canvas_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      canvas_objects: {
+        Row: {
+          created_at: string
+          data: Json
+          id: string
+          layer_index: number
+          locked: boolean
+          object_type: string
+          project_id: string
+          transform: Json
+          updated_at: string
+          visibility: boolean
+        }
+        Insert: {
+          created_at?: string
+          data: Json
+          id?: string
+          layer_index: number
+          locked?: boolean
+          object_type: string
+          project_id: string
+          transform?: Json
+          updated_at?: string
+          visibility?: boolean
+        }
+        Update: {
+          created_at?: string
+          data?: Json
+          id?: string
+          layer_index?: number
+          locked?: boolean
+          object_type?: string
+          project_id?: string
+          transform?: Json
+          updated_at?: string
+          visibility?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "canvas_objects_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "canvas_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      canvas_projects: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          settings: Json
+          thumbnail_url: string | null
+          updated_at: string
+          user_id: string
+          viewport: Json
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          settings?: Json
+          thumbnail_url?: string | null
+          updated_at?: string
+          user_id: string
+          viewport?: Json
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          settings?: Json
+          thumbnail_url?: string | null
+          updated_at?: string
+          user_id?: string
+          viewport?: Json
+        }
+        Relationships: []
+      }
       canvas_state: {
         Row: {
           canvas_settings: Json | null
@@ -638,6 +768,90 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: true
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      canvas_timeline_edges: {
+        Row: {
+          created_at: string
+          edge_data: Json | null
+          id: string
+          project_id: string
+          source_id: string
+          target_id: string
+        }
+        Insert: {
+          created_at?: string
+          edge_data?: Json | null
+          id?: string
+          project_id: string
+          source_id: string
+          target_id: string
+        }
+        Update: {
+          created_at?: string
+          edge_data?: Json | null
+          id?: string
+          project_id?: string
+          source_id?: string
+          target_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "canvas_timeline_edges_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "canvas_projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "canvas_timeline_edges_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "canvas_timeline_nodes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "canvas_timeline_edges_target_id_fkey"
+            columns: ["target_id"]
+            isOneToOne: false
+            referencedRelation: "canvas_timeline_nodes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      canvas_timeline_nodes: {
+        Row: {
+          created_at: string
+          data: Json
+          id: string
+          node_type: string
+          position: Json
+          project_id: string
+        }
+        Insert: {
+          created_at?: string
+          data: Json
+          id?: string
+          node_type: string
+          position?: Json
+          project_id: string
+        }
+        Update: {
+          created_at?: string
+          data?: Json
+          id?: string
+          node_type?: string
+          position?: Json
+          project_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "canvas_timeline_nodes_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "canvas_projects"
             referencedColumns: ["id"]
           },
         ]

@@ -1,7 +1,10 @@
-import { useEffect, useRef, useCallback } from 'react';
-import { Canvas as FabricCanvas, FabricImage, Rect, IText, Circle } from 'fabric';
 import { useCanvasStore } from '@/lib/stores/canvas-store';
+import { Canvas as FabricCanvas, FabricImage, Rect, IText, Circle } from 'fabric';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import type { CanvasObject } from '@/types/canvas';
+import { cullObjects } from '@/lib/canvas/viewport-culling';
+import { CanvasGrid } from './CanvasGrid';
+import { MiniMap } from './MiniMap';
 
 interface InfiniteCanvasProps {
   projectId: string;
@@ -10,11 +13,10 @@ interface InfiniteCanvasProps {
   onObjectSelect?: (objectId: string) => void;
 }
 
-// Main InfiniteCanvas Component
-export function InfiniteCanvas({ projectId, width, height, onObjectSelect }: InfiniteCanvasProps) {
+export default function InfiniteCanvas({ projectId, width, height, onObjectSelect }: InfiniteCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const fabricCanvasRef = useRef<FabricCanvas | null>(null);
-  const objectMapRef = useRef<Map<string, any>>(new Map());
+  const [canvas, setCanvas] = useState<FabricCanvas | null>(null);
+  const [zoomLevel, setZoomLevel] = useState(1);
   const dragStateRef = useRef({ isDragging: false, lastX: 0, lastY: 0 });
   
   const {
@@ -36,7 +38,7 @@ export function InfiniteCanvas({ projectId, width, height, onObjectSelect }: Inf
   useEffect(() => {
     if (!canvasRef.current) return;
 
-    const canvas = new FabricCanvas(canvasRef.current, {
+    const fabricCanvas = new FabricCanvas(canvasRef.current, {
       width,
       height,
       backgroundColor: '#0A0A0A',
@@ -44,24 +46,24 @@ export function InfiniteCanvas({ projectId, width, height, onObjectSelect }: Inf
       preserveObjectStacking: true,
     });
 
-    fabricCanvasRef.current = canvas;
+    setCanvas(fabricCanvas);
 
     // Mouse wheel zoom
-    canvas.on('mouse:wheel', (opt) => {
+    fabricCanvas.on('mouse:wheel', (opt) => {
       const evt = opt.e;
       evt.preventDefault();
       evt.stopPropagation();
 
       const delta = evt.deltaY;
-      let zoom = canvas.getZoom();
+      let zoom = fabricCanvas.getZoom();
       zoom *= 0.999 ** delta;
       zoom = Math.max(0.1, Math.min(10, zoom));
 
-      const point = canvas.getScenePoint(evt);
-      canvas.zoomToPoint(point, zoom);
+      const point = fabricCanvas.getScenePoint(evt);
+      fabricCanvas.zoomToPoint(point, zoom);
+      setZoomLevel(zoom);
 
-      // Update viewport in store
-      const vpt = canvas.viewportTransform;
+      const vpt = fabricCanvas.viewportTransform;
       if (vpt) {
         setViewport({
           x: vpt[4],
@@ -71,46 +73,46 @@ export function InfiniteCanvas({ projectId, width, height, onObjectSelect }: Inf
       }
     });
 
-    // Pan with mouse drag (when no object is selected)
-    canvas.on('mouse:down', (opt) => {
+    // Pan with Alt/Ctrl + drag
+    fabricCanvas.on('mouse:down', (opt) => {
       const evt = opt.e as MouseEvent;
       if (evt.altKey || evt.ctrlKey) {
-        canvas.selection = false;
+        fabricCanvas.selection = false;
         dragStateRef.current.isDragging = true;
         dragStateRef.current.lastX = evt.clientX;
         dragStateRef.current.lastY = evt.clientY;
-        canvas.defaultCursor = 'grabbing';
+        fabricCanvas.defaultCursor = 'grabbing';
       }
     });
 
-    canvas.on('mouse:move', (opt) => {
+    fabricCanvas.on('mouse:move', (opt) => {
       if (dragStateRef.current.isDragging) {
         const evt = opt.e as MouseEvent;
-        const vpt = canvas.viewportTransform;
+        const vpt = fabricCanvas.viewportTransform;
         if (vpt) {
           vpt[4] += evt.clientX - dragStateRef.current.lastX;
           vpt[5] += evt.clientY - dragStateRef.current.lastY;
           dragStateRef.current.lastX = evt.clientX;
           dragStateRef.current.lastY = evt.clientY;
-          canvas.requestRenderAll();
+          fabricCanvas.requestRenderAll();
 
           setViewport({
             x: vpt[4],
             y: vpt[5],
-            scale: canvas.getZoom(),
+            scale: fabricCanvas.getZoom(),
           });
         }
       }
     });
 
-    canvas.on('mouse:up', () => {
+    fabricCanvas.on('mouse:up', () => {
       dragStateRef.current.isDragging = false;
-      canvas.selection = true;
-      canvas.defaultCursor = 'default';
+      fabricCanvas.selection = true;
+      fabricCanvas.defaultCursor = 'default';
     });
 
     // Selection events
-    canvas.on('selection:created', (e) => {
+    fabricCanvas.on('selection:created', (e) => {
       const selected = e.selected;
       if (selected && selected.length > 0) {
         const ids = selected
@@ -123,7 +125,7 @@ export function InfiniteCanvas({ projectId, width, height, onObjectSelect }: Inf
       }
     });
 
-    canvas.on('selection:updated', (e) => {
+    fabricCanvas.on('selection:updated', (e) => {
       const selected = e.selected;
       if (selected && selected.length > 0) {
         const ids = selected
@@ -136,12 +138,12 @@ export function InfiniteCanvas({ projectId, width, height, onObjectSelect }: Inf
       }
     });
 
-    canvas.on('selection:cleared', () => {
+    fabricCanvas.on('selection:cleared', () => {
       clearSelection();
     });
 
     // Object modification events
-    canvas.on('object:modified', (e) => {
+    fabricCanvas.on('object:modified', (e) => {
       const obj = e.target as any;
       if (obj && obj.canvasObjectId) {
         updateTransform(obj.canvasObjectId, {
@@ -155,121 +157,97 @@ export function InfiniteCanvas({ projectId, width, height, onObjectSelect }: Inf
     });
 
     return () => {
-      canvas.dispose();
-      fabricCanvasRef.current = null;
+      fabricCanvas.dispose();
+      setCanvas(null);
     };
-  }, [width, height, setProjectId, setViewport, setSelectedIds, clearSelection, updateTransform, onObjectSelect]);
+  }, [width, height]);
 
-  // Sync canvas objects with store
+  // Sync objects from store to canvas with viewport culling
   useEffect(() => {
-    const canvas = fabricCanvasRef.current;
     if (!canvas) return;
 
-    // Remove objects that no longer exist
-    const currentObjects = canvas.getObjects();
-    currentObjects.forEach((fabricObj: any) => {
-      const id = fabricObj.canvasObjectId;
-      if (id && !objects.find((obj) => obj.id === id)) {
+    // Apply viewport culling for performance
+    const culledObjects = cullObjects(objects, viewport, width, height);
+
+    const canvasObjects = canvas.getObjects();
+
+    // Remove objects not in culled list
+    canvasObjects.forEach((fabricObj: any) => {
+      if (!culledObjects.find(obj => obj.id === fabricObj.canvasObjectId)) {
         canvas.remove(fabricObj);
-        objectMapRef.current.delete(id);
       }
     });
 
-    // Add or update objects
-    objects.forEach((obj) => {
-      let fabricObj = objectMapRef.current.get(obj.id);
-
-      if (!fabricObj) {
-        // Create new fabric object
-        const result = createFabricObject(obj);
-        if (result instanceof Promise) {
-          result.then((newObj) => {
-            if (newObj) {
-              (newObj as any).canvasObjectId = obj.id;
-              canvas.add(newObj);
-              objectMapRef.current.set(obj.id, newObj);
-              canvas.requestRenderAll();
-            }
-          });
-        } else if (result) {
-          (result as any).canvasObjectId = obj.id;
-          canvas.add(result);
-          objectMapRef.current.set(obj.id, result);
+    // Add or update culled objects
+    culledObjects.forEach(async (storeObj) => {
+      const existingObj = canvasObjects.find((fObj: any) => fObj.canvasObjectId === storeObj.id);
+      
+      if (!existingObj) {
+        const newObj = await createFabricObject(storeObj);
+        if (newObj) {
+          canvas.add(newObj);
         }
       } else {
-        // Update existing object
-        updateFabricObject(fabricObj, obj);
+        updateFabricObject(existingObj, storeObj);
       }
     });
 
-    canvas.requestRenderAll();
-  }, [objects]);
+    canvas.renderAll();
+  }, [canvas, objects, viewport, width, height]);
 
   // Update selection
   useEffect(() => {
-    const canvas = fabricCanvasRef.current;
     if (!canvas) return;
 
+    const canvasObjects = canvas.getObjects();
     const selectedObjects = selectedIds
-      .map((id) => objectMapRef.current.get(id))
+      .map((id) => canvasObjects.find((obj: any) => obj.canvasObjectId === id))
       .filter(Boolean);
 
     if (selectedObjects.length === 1) {
       canvas.setActiveObject(selectedObjects[0]);
     } else if (selectedObjects.length > 1) {
-      const selection = new (canvas as any).ActiveSelection(selectedObjects, {
-        canvas,
-      });
+      const selection = new (canvas as any).ActiveSelection(selectedObjects, { canvas });
       canvas.setActiveObject(selection);
     } else {
       canvas.discardActiveObject();
     }
 
-    canvas.requestRenderAll();
-  }, [selectedIds]);
+    canvas.renderAll();
+  }, [canvas, selectedIds]);
 
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Delete selected objects
       if (e.key === 'Delete' || e.key === 'Backspace') {
         const deleteSelected = useCanvasStore.getState().deleteSelected;
         deleteSelected();
       }
 
-      // Undo/Redo
       if (e.ctrlKey || e.metaKey) {
         if (e.key === 'z' && !e.shiftKey) {
           e.preventDefault();
-          const undo = useCanvasStore.getState().undo;
-          undo();
+          useCanvasStore.getState().undo();
         }
         if (e.key === 'z' && e.shiftKey) {
           e.preventDefault();
-          const redo = useCanvasStore.getState().redo;
-          redo();
+          useCanvasStore.getState().redo();
         }
-        // Copy/Paste/Duplicate
         if (e.key === 'c') {
           e.preventDefault();
-          const copy = useCanvasStore.getState().copy;
-          copy();
+          useCanvasStore.getState().copy();
         }
         if (e.key === 'v') {
           e.preventDefault();
-          const paste = useCanvasStore.getState().paste;
-          paste();
+          useCanvasStore.getState().paste();
         }
         if (e.key === 'd') {
           e.preventDefault();
-          const duplicate = useCanvasStore.getState().duplicate;
-          duplicate();
+          useCanvasStore.getState().duplicate();
         }
-        // Select all
         if (e.key === 'a') {
           e.preventDefault();
-          const selectAll = useCanvasStore.getState().selectAll;
-          selectAll();
+          useCanvasStore.getState().selectAll();
         }
       }
     };
@@ -279,19 +257,19 @@ export function InfiniteCanvas({ projectId, width, height, onObjectSelect }: Inf
   }, []);
 
   return (
-    <div className="relative w-full h-full bg-zinc-900">
+    <div className="relative w-full h-full bg-background-dark dark:bg-background-light">
+      <CanvasGrid width={width} height={height} showGrid={true} />
       <canvas ref={canvasRef} />
-
-      {/* Viewport indicator */}
-      <div className="absolute bottom-4 right-4 px-3 py-1.5 bg-black/50 backdrop-blur-sm rounded-lg text-xs text-white/60 font-mono">
-        Zoom: {Math.round(viewport.scale * 100)}%
+      <MiniMap />
+      <div className="absolute bottom-4 right-4 bg-background/80 backdrop-blur-sm px-3 py-1 rounded-md text-sm text-muted-foreground border border-border">
+        Zoom: {Math.round(zoomLevel * 100)}%
       </div>
     </div>
   );
 }
 
-// Helper function to create Fabric object from CanvasObject
-function createFabricObject(obj: CanvasObject) {
+// Helper to create Fabric object from CanvasObject
+async function createFabricObject(obj: CanvasObject) {
   const commonProps = {
     left: obj.transform.x,
     top: obj.transform.y,
@@ -302,58 +280,59 @@ function createFabricObject(obj: CanvasObject) {
     visible: obj.visibility,
   };
 
-  switch (obj.type) {
-    case 'image': {
-      const imageData = obj.data as any;
-      return FabricImage.fromURL(imageData.url, {
-        crossOrigin: 'anonymous',
-      }).then((img) => {
-        Object.assign(img, commonProps);
-        img.scaleToWidth(imageData.width);
-        return img;
-      });
-    }
-
-    case 'shape': {
-      const shapeData = obj.data as any;
-      if (shapeData.shapeType === 'rectangle') {
-        return new Rect({
-          ...commonProps,
-          width: shapeData.width || 100,
-          height: shapeData.height || 100,
-          fill: shapeData.fill,
-          stroke: shapeData.stroke,
-          strokeWidth: shapeData.strokeWidth,
-        });
-      } else if (shapeData.shapeType === 'circle') {
-        return new Circle({
-          ...commonProps,
-          radius: shapeData.radius || 50,
-          fill: shapeData.fill,
-          stroke: shapeData.stroke,
-          strokeWidth: shapeData.strokeWidth,
-        });
-      }
-      return null;
-    }
-
-    case 'text': {
-      const textData = obj.data as any;
-      return new IText(textData.text, {
-        ...commonProps,
-        fontSize: textData.fontSize,
-        fontFamily: textData.fontFamily,
-        fill: textData.color,
-        textAlign: textData.align,
-      });
-    }
-
-    default:
-      return null;
+  if (obj.type === 'image') {
+    const imageData = obj.data as any;
+    const img = await FabricImage.fromURL(imageData.url, { crossOrigin: 'anonymous' });
+    Object.assign(img, commonProps);
+    img.scaleToWidth(imageData.width);
+    (img as any).canvasObjectId = obj.id;
+    return img;
   }
+
+  if (obj.type === 'shape') {
+    const shapeData = obj.data as any;
+    let shape: any;
+    if (shapeData.shapeType === 'rectangle') {
+      shape = new Rect({
+        ...commonProps,
+        width: shapeData.width || 100,
+        height: shapeData.height || 100,
+        fill: shapeData.fill,
+        stroke: shapeData.stroke,
+        strokeWidth: shapeData.strokeWidth,
+      });
+    } else if (shapeData.shapeType === 'circle') {
+      shape = new Circle({
+        ...commonProps,
+        radius: shapeData.radius || 50,
+        fill: shapeData.fill,
+        stroke: shapeData.stroke,
+        strokeWidth: shapeData.strokeWidth,
+      });
+    }
+    if (shape) {
+      shape.canvasObjectId = obj.id;
+      return shape;
+    }
+  }
+
+  if (obj.type === 'text') {
+    const textData = obj.data as any;
+    const text = new IText(textData.text, {
+      ...commonProps,
+      fontSize: textData.fontSize,
+      fontFamily: textData.fontFamily,
+      fill: textData.color,
+      textAlign: textData.align,
+    });
+    (text as any).canvasObjectId = obj.id;
+    return text;
+  }
+
+  return null;
 }
 
-// Helper function to update Fabric object
+// Helper to update Fabric object
 function updateFabricObject(fabricObj: any, obj: CanvasObject) {
   fabricObj.set({
     left: obj.transform.x,
@@ -365,7 +344,6 @@ function updateFabricObject(fabricObj: any, obj: CanvasObject) {
     visible: obj.visibility,
   });
 
-  // Update type-specific properties
   if (obj.type === 'text') {
     const textData = obj.data as any;
     fabricObj.set({

@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 import type { CanvasObject, Transform, ViewportState } from '@/types/canvas';
+import { canvasService } from '@/services/canvasService';
+import { debounce } from '@/lib/utils';
 
 interface CanvasState {
   // State
@@ -11,6 +13,8 @@ interface CanvasState {
   historyIndex: number;
   viewport: ViewportState;
   currentProjectId: string | null;
+  isSyncing: boolean;
+  lastSyncTime: number | null;
 
   // Actions
   setProjectId: (id: string) => void;
@@ -32,6 +36,8 @@ interface CanvasState {
   deleteSelected: () => void;
   reset: () => void;
   setObjects: (objects: CanvasObject[]) => void;
+  loadProject: (projectId: string) => Promise<void>;
+  saveProject: () => Promise<void>;
 }
 
 const initialState = {
@@ -42,7 +48,18 @@ const initialState = {
   historyIndex: 0,
   viewport: { x: 0, y: 0, scale: 1 },
   currentProjectId: null,
+  isSyncing: false,
+  lastSyncTime: null,
 };
+
+// Debounced auto-save function
+const debouncedSave = debounce(async (projectId: string, objects: CanvasObject[]) => {
+  try {
+    await canvasService.syncObjects(projectId, objects);
+  } catch (error) {
+    console.error('Auto-save failed:', error);
+  }
+}, 3000);
 
 export const useCanvasStore = create<CanvasState>()(
   devtools(
@@ -188,6 +205,48 @@ export const useCanvasStore = create<CanvasState>()(
         reset: () => set(initialState),
 
         setObjects: (objects) => set({ objects }),
+
+        loadProject: async (projectId: string) => {
+          set({ isSyncing: true });
+          try {
+            const project = await canvasService.getProject(projectId);
+            if (project) {
+              set({
+                currentProjectId: projectId,
+                objects: project.canvasState.objects,
+                viewport: project.canvasState.viewport,
+                history: [project.canvasState.objects],
+                historyIndex: 0,
+                lastSyncTime: Date.now(),
+              });
+            }
+          } catch (error) {
+            console.error('Failed to load project:', error);
+          } finally {
+            set({ isSyncing: false });
+          }
+        },
+
+        saveProject: async () => {
+          const state = get();
+          if (!state.currentProjectId) return;
+
+          set({ isSyncing: true });
+          try {
+            await canvasService.syncObjects(state.currentProjectId, state.objects);
+            await canvasService.updateProject(state.currentProjectId, {
+              canvasState: {
+                viewport: state.viewport,
+                objects: state.objects,
+              },
+            } as any);
+            set({ lastSyncTime: Date.now() });
+          } catch (error) {
+            console.error('Failed to save project:', error);
+          } finally {
+            set({ isSyncing: false });
+          }
+        },
       }),
       {
         name: 'wzrd-canvas-storage',
@@ -199,3 +258,12 @@ export const useCanvasStore = create<CanvasState>()(
     )
   )
 );
+
+// Auto-save middleware
+if (typeof window !== 'undefined') {
+  useCanvasStore.subscribe((state) => {
+    if (state.currentProjectId && state.objects.length > 0) {
+      debouncedSave(state.currentProjectId, state.objects);
+    }
+  });
+}
