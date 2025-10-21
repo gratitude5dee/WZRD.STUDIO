@@ -419,8 +419,10 @@ export const FAL_MODELS_BY_CATEGORY = {
   ],
 };
 
-// Flatten all models for easy access
-export const ALL_FAL_MODELS = Object.values(FAL_MODELS_BY_CATEGORY).flat();
+// Flatten all models for easy access (excluding 3D generation from general list)
+export const ALL_FAL_MODELS = Object.entries(FAL_MODELS_BY_CATEGORY)
+  .filter(([category]) => category !== '3d-generation')
+  .flatMap(([_, models]) => models);
 
 // Legacy COMMON_MODELS for backward compatibility
 export const COMMON_MODELS: ModelInfo[] = [

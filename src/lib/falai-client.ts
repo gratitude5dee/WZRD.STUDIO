@@ -56,6 +56,18 @@ export class FalAIClient {
     } & FalAIClientOptions & FalAIExecuteOptions
   ) {
     const modelId = options?.modelId || 'fal-ai/flux/dev'
+    
+    // Validate model supports text-to-image generation
+    const incompatibleModels = ['fal-ai/trellis/multi', 'fal-ai/trellis']
+    if (incompatibleModels.some(id => modelId.includes(id))) {
+      const error = new Error(`Model ${modelId} is a 3D generation model and cannot be used for image generation. Please select an image generation model like FLUX or Ideogram.`)
+      options?.onError?.(error)
+      return {
+        success: false,
+        error: error.message
+      }
+    }
+    
     const inputs = {
       prompt,
       image_size: options?.image_size || '1024x1024',
