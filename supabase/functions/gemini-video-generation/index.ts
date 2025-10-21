@@ -42,11 +42,13 @@ serve(async (req) => {
       return errorResponse('Prompt is required', 400);
     }
 
-    console.log('Generating video with Veo 3 Fast via Luma');
+    console.log('Generating video with Luma Ray 2');
 
     const body: any = {
       prompt,
       aspect_ratio: "16:9",
+      modality: "video",
+      model: imageUrl ? "ray-2-flash" : "ray-2",
     };
 
     if (imageUrl) {
