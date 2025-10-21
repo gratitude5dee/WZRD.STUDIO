@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/ui/logo';
@@ -8,6 +8,8 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import CreditsDisplay from '@/components/CreditsDisplay';
 import { supabaseService } from '@/services/supabaseService';
+import { Input } from '@/components/ui/input';
+import { z } from 'zod';
 
 type ViewMode = 'studio' | 'timeline' | 'editor';
 
@@ -27,6 +29,17 @@ export const AppHeader = ({
   const projectIdFromURL = params.projectId;
   
   const { activeProjectId, activeProjectName, setActiveProject, fetchMostRecentProject } = useAppStore();
+  
+  // Inline editing state
+  const [isEditing, setIsEditing] = useState(false);
+  const [editValue, setEditValue] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Validation schema
+  const titleSchema = z.string()
+    .trim()
+    .min(1, 'Title cannot be empty')
+    .max(100, 'Title must be less than 100 characters');
 
   // Determine current view from the URL path
   const getCurrentView = (): ViewMode => {
@@ -103,6 +116,53 @@ export const AppHeader = ({
     navigate('/home');
   };
 
+  const startEditing = () => {
+    setEditValue(activeProjectName || 'Untitled');
+    setIsEditing(true);
+    setTimeout(() => inputRef.current?.select(), 0);
+  };
+
+  const cancelEditing = () => {
+    setIsEditing(false);
+    setEditValue('');
+  };
+
+  const saveTitle = async () => {
+    const projectId = projectIdFromURL || activeProjectId;
+    if (!projectId) {
+      toast.error('No project selected');
+      cancelEditing();
+      return;
+    }
+
+    try {
+      const validatedTitle = titleSchema.parse(editValue);
+      
+      await supabaseService.projects.update(projectId, {
+        title: validatedTitle,
+      });
+
+      setActiveProject(projectId, validatedTitle);
+      toast.success('Project title updated');
+      setIsEditing(false);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        toast.error(error.errors[0].message);
+      } else {
+        console.error('Error updating project title:', error);
+        toast.error('Failed to update project title');
+      }
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      saveTitle();
+    } else if (e.key === 'Escape') {
+      cancelEditing();
+    }
+  };
+
   return (
     <header className={cn(
       "w-full bg-black border-b border-zinc-800/50 px-6 py-3 flex items-center justify-between",
@@ -112,9 +172,24 @@ export const AppHeader = ({
         <div onClick={handleLogoClick} className="cursor-pointer">
           <Logo size="sm" showVersion={false} />
         </div>
-        <h1 className="text-lg font-medium text-white">
-          {activeProjectName || 'Untitled'}
-        </h1>
+        {isEditing ? (
+          <Input
+            ref={inputRef}
+            value={editValue}
+            onChange={(e) => setEditValue(e.target.value)}
+            onBlur={saveTitle}
+            onKeyDown={handleKeyDown}
+            className="h-8 text-lg font-medium bg-zinc-900 border-zinc-700 text-white max-w-xs"
+          />
+        ) : (
+          <h1 
+            className="text-lg font-medium text-white cursor-text hover:text-purple-400 transition-colors"
+            onClick={startEditing}
+            title="Click to edit project name"
+          >
+            {activeProjectName || 'Untitled'}
+          </h1>
+        )}
         <Button variant="ghost" size="icon" className="text-zinc-400 hover:text-white">
           <MoreVertical className="h-5 w-5" />
         </Button>
