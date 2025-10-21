@@ -1,6 +1,7 @@
 import { Grid, Users, Globe, Star, Settings, HelpCircle, ChevronDown, LogOut, Layers } from 'lucide-react';
 import { WorkspaceSwitcher } from './WorkspaceSwitcher';
 import CreditsDisplay from '../CreditsDisplay';
+import { Badge } from '@/components/ui/badge';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -27,9 +28,9 @@ export const Sidebar = ({ activeView, onViewChange }: SidebarProps) => {
 
   const navItems = [
     { id: 'all', label: 'All', icon: Grid },
+    { id: 'kanvas', label: 'Kanvas', icon: Layers, isRoute: true, showBadge: true },
     { id: 'shared', label: 'Shared with me', icon: Users },
     { id: 'community', label: 'Community', icon: Globe },
-    { id: 'kanvas', label: 'Kanvas', icon: Layers, isRoute: true },
   ];
 
   return (
@@ -63,6 +64,11 @@ export const Sidebar = ({ activeView, onViewChange }: SidebarProps) => {
             >
               <Icon className="w-4 h-4" />
               <span>{item.label}</span>
+              {item.showBadge && (
+                <Badge variant="secondary" className="ml-auto text-xs bg-purple-500/20 text-purple-400 border-purple-500/30">
+                  Coming Soon
+                </Badge>
+              )}
             </button>
           );
         })}
