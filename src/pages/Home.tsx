@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Loader2, UserPlus, Plus } from 'lucide-react';
 import { ProjectList } from '@/components/home/ProjectList';
+import { ProjectListView } from '@/components/home/ProjectListView';
 import { Sidebar } from '@/components/home/Sidebar';
 import { SearchBar } from '@/components/home/SearchBar';
 import { SortDropdown, SortOption } from '@/components/home/SortDropdown';
@@ -27,31 +28,31 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchProjects = async () => {
-      if (!user) return;
-      
-      setIsLoading(true);
-      setError(null);
-      
-      try {
-        const data = await supabaseService.projects.list();
-        setProjects(data as Project[]);
-      } catch (err) {
-        console.error('Error fetching projects:', err);
-        setError('Failed to load projects');
-        toast({
-          title: 'Error',
-          description: 'Failed to load projects. Please try again.',
-          variant: 'destructive',
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchProjects();
+  const fetchProjects = useCallback(async () => {
+    if (!user) return;
+    
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const data = await supabaseService.projects.list();
+      setProjects(data as Project[]);
+    } catch (err) {
+      console.error('Error fetching projects:', err);
+      setError('Failed to load projects');
+      toast({
+        title: 'Error',
+        description: 'Failed to load projects. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
   }, [user, toast]);
+
+  useEffect(() => {
+    fetchProjects();
+  }, [fetchProjects]);
 
   const handleCreateProject = () => {
     navigate('/project-setup');
@@ -217,6 +218,12 @@ export default function Home() {
                 </button>
               </div>
             </div>
+          ) : viewMode === 'list' ? (
+            <ProjectListView
+              projects={filteredProjects}
+              onOpenProject={handleOpenProject}
+              onRefresh={fetchProjects}
+            />
           ) : (
             <ProjectList
               projects={filteredProjects}
