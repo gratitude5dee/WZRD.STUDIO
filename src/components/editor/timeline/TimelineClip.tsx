@@ -1,5 +1,5 @@
 import { MouseEvent, PointerEvent as ReactPointerEvent, useCallback, useMemo, useRef, useState } from 'react';
-import { useDrag } from 'react-dnd';
+import { useDrag } from '@/lib/react-dnd';
 import { v4 as uuidv4 } from 'uuid';
 import { useVideoEditorStore, Clip, AudioTrack } from '@/store/videoEditorStore';
 import {
