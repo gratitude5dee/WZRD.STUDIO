@@ -280,23 +280,45 @@ export function MatrixIntroAnimation({ onComplete }: MatrixIntroAnimationProps) 
 
       animationFrameRef.current = requestAnimationFrame(draw);
 
-      // Simplified phase transitions (7 second total)
+      // Phase transitions with ASCII art
+      const asciiTimer1 = setTimeout(() => {
+        setPhase('ascii-art-1');
+        phaseRef.current = 'ascii-art-1';
+        phaseStartTimeRef.current = Date.now();
+        setStatusText('◆ INITIALIZING NEURAL NETWORK ◆');
+      }, 2000);
+
+      const asciiTimer2 = setTimeout(() => {
+        setPhase('ascii-art-2');
+        phaseRef.current = 'ascii-art-2';
+        phaseStartTimeRef.current = Date.now();
+        setStatusText('◆ LOADING QUANTUM PROCESSORS ◆');
+      }, 5000);
+
+      const fadeTimer = setTimeout(() => {
+        setPhase('fade-to-logo');
+        phaseRef.current = 'fade-to-logo';
+        phaseStartTimeRef.current = Date.now();
+        setStatusText('◆ ESTABLISHING CONNECTION ◆');
+      }, 8500);
+
       const logoTimer = setTimeout(() => {
         setPhase('logo-reveal');
+        phaseRef.current = 'logo-reveal';
         phaseStartTimeRef.current = Date.now();
         setStatusText('◆ SYSTEM ONLINE ◆');
-      }, 3000);
+      }, 10000);
 
       const completeTimer = setTimeout(() => {
         setPhase('complete');
         onComplete();
-      }, 7000);
+      }, 14000);
 
       // Failsafe timeout
       const maxDurationTimer = setTimeout(() => {
         console.warn('Animation exceeded max duration, forcing completion');
         handleSkip();
-      }, 10000);
+      }, 15000);
 
       const handleResize = () => {
         if (canvas) {
@@ -307,6 +329,9 @@ export function MatrixIntroAnimation({ onComplete }: MatrixIntroAnimationProps) 
       window.addEventListener('resize', handleResize);
 
       return () => {
+        clearTimeout(asciiTimer1);
+        clearTimeout(asciiTimer2);
+        clearTimeout(fadeTimer);
         clearTimeout(logoTimer);
         clearTimeout(completeTimer);
         clearTimeout(maxDurationTimer);
