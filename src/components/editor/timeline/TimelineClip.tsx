@@ -186,7 +186,9 @@ export function TimelineClip({ clip, zoom, onSelect, isSelected }: TimelineClipP
           ref={dragRef}
           className={`absolute rounded overflow-hidden cursor-grab active:cursor-grabbing transition-all duration-150 group border-2 ${
             isDragging || isTrimming ? 'opacity-70 scale-95' : 'opacity-100'
-          } ${clip.type === 'audio' ? 'bg-accent/80 h-12' : 'bg-[#2a2a2a] h-14'}`}
+          } ${clip.type === 'audio' ? 'bg-accent/80 h-12' : 'bg-[#2a2a2a] h-14'} ${
+            isSelected ? 'shadow-[0_0_20px_rgba(80,255,18,0.6)]' : ''
+          }`}
           style={{
             left: `${leftPx}px`,
             width: `${Math.max(60, widthPx)}px`,
@@ -195,7 +197,20 @@ export function TimelineClip({ clip, zoom, onSelect, isSelected }: TimelineClipP
           onClick={handleSelect}
         >
           {/* Thumbnail strip for video clips */}
-          {clip.type !== 'audio' && (
+          {clip.type !== 'audio' && 'url' in clip && clip.url && (
+            <div 
+              className="absolute inset-0 opacity-40"
+              style={{
+                backgroundImage: `url(${clip.url})`,
+                backgroundSize: 'auto 100%',
+                backgroundRepeat: 'repeat-x',
+                backgroundPosition: 'left center',
+              }}
+            />
+          )}
+          
+          {/* Fallback thumbnail pattern for video clips without URL */}
+          {clip.type !== 'audio' && !('url' in clip && clip.url) && (
             <div className="absolute inset-0 flex">
               {[...Array(Math.ceil(widthPx / 40))].map((_, i) => (
                 <div
@@ -206,29 +221,33 @@ export function TimelineClip({ clip, zoom, onSelect, isSelected }: TimelineClipP
             </div>
           )}
 
-          {/* Text label overlay */}
-          <div className="absolute inset-0 flex items-start justify-start p-1.5">
-            <div className="bg-[#1a1a1a]/90 backdrop-blur-sm px-2 py-0.5 rounded text-xs text-white flex items-center gap-1.5 z-10">
+          {/* Icon badge with label overlay */}
+          <div className="absolute top-1 left-1.5 z-10">
+            <div className="bg-[#1a1a1a]/95 backdrop-blur-sm px-1.5 py-0.5 rounded-md text-[10px] font-medium text-white/90 flex items-center gap-1 shadow-lg">
               {clip.type === 'audio' ? (
-                <Music className="w-3 h-3" />
+                <Music className="w-3 h-3 text-blue-400" />
               ) : (
-                <Film className="w-3 h-3" />
+                <Film className="w-3 h-3 text-purple-400" />
               )}
-              <span className="truncate max-w-[80px]">{clip.name || 'Unnamed'}</span>
+              <span className="truncate max-w-[100px]">{clip.name || 'Unnamed'}</span>
             </div>
           </div>
 
           {/* Trim handle - start */}
           <div
-            className="absolute left-0 top-0 w-1 h-full cursor-ew-resize hover:bg-[#10b981]/50 opacity-0 group-hover:opacity-100 transition-opacity z-20 bg-white/20"
+            className="absolute left-0 top-0 w-2 h-full cursor-ew-resize opacity-0 group-hover:opacity-100 transition-all z-20 bg-white/20 hover:bg-[#50FF12]/60 hover:w-3"
             onPointerDown={handleTrimPointerDown('start')}
-          />
+          >
+            <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-[1px] bg-white/50" />
+          </div>
 
           {/* Trim handle - end */}
           <div
-            className="absolute right-0 top-0 w-1 h-full cursor-ew-resize hover:bg-[#10b981]/50 opacity-0 group-hover:opacity-100 transition-opacity z-20 bg-white/20"
+            className="absolute right-0 top-0 w-2 h-full cursor-ew-resize opacity-0 group-hover:opacity-100 transition-all z-20 bg-white/20 hover:bg-[#50FF12]/60 hover:w-3"
             onPointerDown={handleTrimPointerDown('end')}
-          />
+          >
+            <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-[1px] bg-white/50" />
+          </div>
         </div>
       </ContextMenuTrigger>
       <ContextMenuContent className="bg-card text-foreground border-border">
