@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="./wzrdtechlogo.png" alt="WZRD.Studio Logo" width="400">
+  <img src="wzrdtechlogo.png" alt="WZRD.Studio Logo" width="400">
   
   <h1>WZRD.Studio</h1>
   <h3>by UniversalAI</h3>
