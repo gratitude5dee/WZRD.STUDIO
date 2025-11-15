@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import { useVideoEditorStore, Clip } from '@/store/videoEditorStore';
 import { TimelineTrack } from './TimelineTrack';
 import { TimelineRuler } from './TimelineRuler';
+import TimelinePlayhead from '../TimelinePlayhead';
 
 export default function TimelinePanel() {
   const clips = useVideoEditorStore((state) => state.clips);
@@ -16,6 +17,7 @@ export default function TimelinePanel() {
   const clearAudioSelection = useVideoEditorStore((state) => state.clearAudioTrackSelection);
   const selectedClipIds = useVideoEditorStore((state) => state.selectedClipIds);
   const selectedAudioTrackIds = useVideoEditorStore((state) => state.selectedAudioTrackIds);
+  const playback = useVideoEditorStore((state) => state.playback);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const videoTracks = useMemo(() => groupByTrack(clips), [clips]);
@@ -57,13 +59,20 @@ export default function TimelinePanel() {
       <TimelineRuler zoom={zoom} scrollOffset={scrollOffset} durationMs={durationMs} />
       <div
         ref={scrollRef}
-        className="flex-1 overflow-auto bg-muted/20"
+        className="flex-1 overflow-auto bg-muted/20 relative"
         onScroll={handleScroll}
         onClick={handleEmptyClick}
         style={{
           backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 19px, hsl(var(--border) / 0.3) 19px, hsl(var(--border) / 0.3) 20px)',
         }}
       >
+        {/* Playhead */}
+        <TimelinePlayhead
+          currentTime={playback.currentTime / 1000}
+          duration={durationMs / 1000}
+          pixelsPerSecond={zoom}
+          scrollOffset={scrollOffset}
+        />
         {videoTracks.length === 0 && audioTracks.length === 0 && (
           <div className="flex items-center justify-center h-32 text-muted-foreground text-sm">
             Drop media files here to create timeline clips
