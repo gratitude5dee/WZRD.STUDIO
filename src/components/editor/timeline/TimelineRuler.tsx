@@ -21,23 +21,24 @@ export function TimelineRuler({ zoom, scrollOffset, durationMs }: TimelineRulerP
   }
 
   return (
-    <div className="relative h-12 bg-card border-b border-border text-xs text-muted-foreground select-none">
-      <div className="absolute inset-0 flex items-end pb-1">
+    <div className="relative h-8 bg-[#0a0a0a] border-b border-[#2a2a2a] text-xs text-white/50 select-none">
+      <div className="absolute inset-0 flex items-center px-4">
         {marks.map((mark, idx) => {
-          const isMajor = mark.label.split(':')[0] !== '0' || idx % 5 === 0;
+          const seconds = parseInt(mark.label.split(':')[1]);
+          const isMajor = idx % 5 === 0;
           return (
             <div 
               key={mark.label} 
-              className="absolute bottom-0 flex flex-col items-center"
-              style={{ left: `${mark.left}px`, transform: 'translateX(-50%)' }}
+              className="absolute flex flex-col items-center"
+              style={{ left: `${mark.left}px` }}
             >
-              <div 
-                className={`w-px ${isMajor ? 'h-6 bg-border' : 'h-3 bg-border/40'}`} 
-              />
-              {isMajor && (
-                <div className="mt-1 text-[10px] font-medium tabular-nums">
-                  {mark.label}
-                </div>
+              {isMajor ? (
+                <>
+                  <span className="text-xs text-white/50 tabular-nums">{seconds}s</span>
+                  <div className="w-px h-2 bg-white/10 mt-0.5" />
+                </>
+              ) : (
+                <div className="w-px h-2 bg-white/5" />
               )}
             </div>
           );

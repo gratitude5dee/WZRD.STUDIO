@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Play, Pause, SkipForward, SkipBack, Download } from 'lucide-react';
+import { Play, Pause, SkipForward, SkipBack, Download, ZoomOut, ZoomIn, Maximize2, MoreHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { useVideoEditorStore } from '@/store/videoEditorStore';
@@ -61,39 +61,74 @@ export default function PlaybackToolbar() {
   const durationTimecode = useMemo(() => formatTime(composition.duration), [composition.duration]);
 
   return (
-    <div className="h-14 bg-card border-b border-border flex items-center px-4 justify-between shadow-sm">
+    <div className="h-14 bg-[#1a1a1a] border-b border-[#2a2a2a] flex items-center px-4 justify-center shadow-sm">
       <div className="flex items-center gap-3">
-        <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            className="text-foreground hover:bg-accent hover:text-accent-foreground"
-            size="icon"
-            onClick={() => skip('backward')}
-          >
-            <SkipBack className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            className="text-foreground hover:bg-accent hover:text-accent-foreground"
-            size="icon"
-            onClick={togglePlayback}
-          >
-            {playback.isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-          </Button>
-          <Button
-            variant="ghost"
-            className="text-foreground hover:bg-accent hover:text-accent-foreground"
-            size="icon"
-            onClick={() => skip('forward')}
-          >
-            <SkipForward className="h-4 w-4" />
-          </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => skip('backward')}
+          className="text-white/70 hover:text-white hover:bg-white/5 w-8 h-8"
+        >
+          <SkipBack className="w-4 h-4" />
+        </Button>
+
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={togglePlayback}
+          className="text-white hover:bg-white/10 w-10 h-10 rounded-full bg-[#2a2a2a]"
+        >
+          {playback.isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+        </Button>
+
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => skip('forward')}
+          className="text-white/70 hover:text-white hover:bg-white/5 w-8 h-8"
+        >
+          <SkipForward className="w-4 h-4" />
+        </Button>
+
+        <span className="text-sm text-white/70 tabular-nums min-w-[120px] text-center mx-2">
+          {currentTimecode} | {durationTimecode}
+        </span>
+
+        <Button
+          variant="ghost"
+          size="icon"
+          className="text-white/70 hover:text-white hover:bg-white/5 w-8 h-8"
+        >
+          <ZoomOut className="w-4 h-4" />
+        </Button>
+
+        <div className="w-24 h-1 bg-[#2a2a2a] rounded-full relative">
+          <div className="absolute left-0 top-0 h-full w-1/2 bg-[#10b981] rounded-full" />
         </div>
-        <div className="ml-2 font-mono text-sm tabular-nums text-foreground">
-          <span className="text-primary">{currentTimecode}</span>
-          <span className="text-muted-foreground mx-1">/</span>
-          <span className="text-muted-foreground">{durationTimecode}</span>
-        </div>
+
+        <Button
+          variant="ghost"
+          size="icon"
+          className="text-white/70 hover:text-white hover:bg-white/5 w-8 h-8"
+        >
+          <ZoomIn className="w-4 h-4" />
+        </Button>
+
+        <Button
+          variant="ghost"
+          size="icon"
+          className="text-white/70 hover:text-white hover:bg-white/5 w-8 h-8"
+        >
+          <Maximize2 className="w-4 h-4" />
+        </Button>
+
+        <Button
+          variant="ghost"
+          size="icon"
+          className="text-white/70 hover:text-white hover:bg-white/5 w-8 h-8"
+        >
+          <MoreHorizontal className="w-4 h-4" />
+        </Button>
       </div>
 
       <div className="flex items-center gap-4">
