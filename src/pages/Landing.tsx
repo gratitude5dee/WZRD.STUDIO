@@ -138,7 +138,7 @@ const Landing = () => {
             }}
             className="flex items-center justify-center gap-2 flex-shrink-0 z-50 cursor-pointer"
           >
-            <img src={wzrdLogo} alt="WZRD.tech" className="h-16 sm:h-20 w-auto" />
+            <img src={wzrdLogo} alt="WZRD.tech" className="h-12 sm:h-15 w-auto" />
           </Link>
 
           {/* Navigation Links */}
