@@ -2,8 +2,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { useVideoEditorStore, LibraryMediaItem } from '@/store/videoEditorStore';
 import { v4 as uuidv4 } from 'uuid';
+import { Search, Image, Video, Music, Plus } from 'lucide-react';
 
 interface MediaLibraryProps {
   projectId?: string;
@@ -11,6 +13,7 @@ interface MediaLibraryProps {
 
 export default function MediaLibrary({ projectId }: MediaLibraryProps) {
   const [activeTab, setActiveTab] = useState<'ai' | 'uploaded' | 'audio'>('ai');
+  const [searchQuery, setSearchQuery] = useState('');
   const addClip = useVideoEditorStore((state) => state.addClip);
   const addAudioTrack = useVideoEditorStore((state) => state.addAudioTrack);
   const audioTracks = useVideoEditorStore((state) => state.audioTracks);
@@ -28,14 +31,27 @@ export default function MediaLibrary({ projectId }: MediaLibraryProps) {
   }, [projectId, clearMediaLibrary, loadMediaLibrary]);
 
   const filteredItems = useMemo(() => {
+    let items = mediaItems;
+    
+    // Filter by tab
     if (activeTab === 'audio') {
-      return mediaItems.filter((item) => item.mediaType === 'audio');
+      items = items.filter((item) => item.mediaType === 'audio');
+    } else if (activeTab === 'uploaded') {
+      items = items.filter((item) => item.sourceType === 'uploaded');
+    } else {
+      items = items.filter((item) => item.sourceType !== 'uploaded');
     }
-    if (activeTab === 'uploaded') {
-      return mediaItems.filter((item) => item.sourceType === 'uploaded');
+    
+    // Filter by search
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      items = items.filter((item) => 
+        item.name.toLowerCase().includes(query)
+      );
     }
-    return mediaItems.filter((item) => item.sourceType !== 'uploaded');
-  }, [activeTab, mediaItems]);
+    
+    return items;
+  }, [activeTab, mediaItems, searchQuery]);
 
   const handleAddToTimeline = (item: LibraryMediaItem) => {
     if (!item.url) return;
@@ -93,34 +109,44 @@ export default function MediaLibrary({ projectId }: MediaLibraryProps) {
     }
 
     return (
-      <div className="space-y-2 p-3">
+      <div className="grid grid-cols-2 gap-3 p-3">
         {filteredItems.map((item) => (
-          <div 
-            key={item.id} 
-            className="group relative bg-card/50 border border-border rounded-lg p-3 hover:border-primary/50 hover:bg-card transition-all cursor-pointer"
+          <div
+            key={item.id}
+            className="group relative bg-card border border-border rounded-lg overflow-hidden hover:border-primary/50 hover:shadow-lg transition-all cursor-pointer"
+            onClick={() => handleAddToTimeline(item)}
           >
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-foreground truncate">{item.name}</p>
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="text-[10px] text-muted-foreground uppercase font-medium px-2 py-0.5 bg-muted/50 rounded">
-                    {item.mediaType}
-                  </span>
-                  {item.durationSeconds && (
-                    <span className="text-[10px] text-muted-foreground tabular-nums">
-                      {Math.floor(item.durationSeconds)}s
-                    </span>
-                  )}
+            <div className="aspect-video bg-muted/20 flex items-center justify-center relative">
+              {item.thumbnailUrl ? (
+                <img 
+                  src={item.thumbnailUrl} 
+                  alt={item.name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="flex flex-col items-center gap-2">
+                  {item.mediaType === 'image' && <Image className="w-8 h-8 text-muted-foreground" />}
+                  {item.mediaType === 'video' && <Video className="w-8 h-8 text-muted-foreground" />}
+                  {item.mediaType === 'audio' && <Music className="w-8 h-8 text-muted-foreground" />}
                 </div>
+              )}
+              
+              {item.durationSeconds && (
+                <div className="absolute bottom-2 right-2 bg-black/80 px-2 py-0.5 rounded text-[10px] text-white">
+                  {formatDuration(item.durationSeconds)}
+                </div>
+              )}
+              
+              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                <Plus className="w-8 h-8 text-white" />
               </div>
-              <Button 
-                size="sm" 
-                variant="outline" 
-                className="border-primary/50 text-primary hover:bg-primary hover:text-primary-foreground shrink-0 text-xs h-7 px-3" 
-                onClick={() => handleAddToTimeline(item)}
-              >
-                Add
-              </Button>
+            </div>
+            
+            <div className="p-2">
+              <p className="text-xs font-medium text-foreground truncate">{item.name}</p>
+              <span className="text-[10px] text-muted-foreground uppercase">
+                {item.mediaType}
+              </span>
             </div>
           </div>
         ))}
@@ -129,32 +155,35 @@ export default function MediaLibrary({ projectId }: MediaLibraryProps) {
   };
 
   return (
-    <div className="h-full bg-card border-r border-border flex flex-col overflow-hidden">
-      <div className="p-4 border-b border-border">
-        <h2 className="text-sm font-semibold text-foreground mb-3">Media Library</h2>
+    <div className="h-full bg-card border-r border-border flex flex-col">
+      <div className="p-3 space-y-3 border-b border-border">
+        <h2 className="text-sm font-semibold text-foreground">Media</h2>
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="Search media..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9 h-9 bg-muted/20 border-border text-sm"
+          />
+        </div>
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
+          <TabsList className="grid w-full grid-cols-3 bg-muted/50 h-8">
+            <TabsTrigger value="ai" className="text-xs data-[state=active]:bg-background data-[state=active]:text-primary">All</TabsTrigger>
+            <TabsTrigger value="uploaded" className="text-xs data-[state=active]:bg-background data-[state=active]:text-primary">Photos</TabsTrigger>
+            <TabsTrigger value="audio" className="text-xs data-[state=active]:bg-background data-[state=active]:text-primary">Audio</TabsTrigger>
+          </TabsList>
+        </Tabs>
       </div>
-      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as typeof activeTab)} className="flex-1 flex flex-col">
-        <TabsList className="bg-muted/50 mx-4 grid grid-cols-3">
-          <TabsTrigger value="ai" className="text-xs data-[state=active]:bg-background data-[state=active]:text-primary">
-            AI Generated
-          </TabsTrigger>
-          <TabsTrigger value="uploaded" className="text-xs data-[state=active]:bg-background data-[state=active]:text-primary">
-            Uploaded
-          </TabsTrigger>
-          <TabsTrigger value="audio" className="text-xs data-[state=active]:bg-background data-[state=active]:text-primary">
-            Audio
-          </TabsTrigger>
-        </TabsList>
-        <TabsContent value="ai" className="flex-1 overflow-hidden mt-0">
-          <ScrollArea className="h-full">{renderItems()}</ScrollArea>
-        </TabsContent>
-        <TabsContent value="uploaded" className="flex-1 overflow-hidden mt-0">
-          <ScrollArea className="h-full">{renderItems()}</ScrollArea>
-        </TabsContent>
-        <TabsContent value="audio" className="flex-1 overflow-hidden mt-0">
-          <ScrollArea className="h-full">{renderItems()}</ScrollArea>
-        </TabsContent>
-      </Tabs>
+      <ScrollArea className="flex-1">
+        {renderItems()}
+      </ScrollArea>
     </div>
   );
+}
+
+function formatDuration(seconds: number): string {
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
