@@ -13,7 +13,7 @@
   <p>
     <a href="#-quick-start"><strong>Get Started</strong></a> •
     <a href="#-features"><strong>Features</strong></a> •
-    <a href="#-demo"><strong>Live Demo</strong></a> •
+    <a href="#-visual-showcase"><strong>Live Demo</strong></a> •
     <a href="#-documentation"><strong>Docs</strong></a> •
     <a href="#-community"><strong>Community</strong></a>
   </p>
@@ -101,8 +101,8 @@
 WZRD.Studio is a **unified AI workflow platform** that automates the tedious parts while keeping you in creative control. Build once, reuse everywhere.
 
 <div align="center">
-  <img src="https://img.shields.io/badge/Setup-<30s-00D9FF?style=flat-square" alt="Setup Time">
-  <img src="https://img.shields.io/badge/Storyboard-<2min-00D9FF?style=flat-square" alt="Storyboard Time">
+  <img src="https://img.shields.io/badge/Setup-%3C30s-00D9FF?style=flat-square" alt="Setup Time">
+  <img src="https://img.shields.io/badge/Storyboard-%3C2min-00D9FF?style=flat-square" alt="Storyboard Time">
   <img src="https://img.shields.io/badge/Export-4K_Ready-00D9FF?style=flat-square" alt="Export Quality">
 </div>
 
