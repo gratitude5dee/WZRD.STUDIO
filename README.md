@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="/public/wzrdtechlogo.png" alt="WZRD.Studio Logo" width="400">
+  <img src="/lovable-uploads/wzrdtechlogo.png" alt="WZRD.Studio Logo" width="400">
   
   <h1>WZRD.Studio</h1>
   <h3>by UniversalAI</h3>
@@ -27,15 +27,61 @@
 
   <br/>
 
-  <!-- Demo Video -->
-  <video width="100%" max-width="800px" autoplay loop muted playsinline>
-    <source src="/public/wzrdstudiointro1.mov" type="video/mov">
-    <source src="/lovable-uploads/wzrd-demo.webm" type="video/webm">
-    Your browser does not support the video tag.
-  </video>
+  <!-- Hero Demo Video with Enhanced Styling -->
+  <div style="position: relative; max-width: 900px; margin: 2rem auto; padding: 0 1rem;">
+    <!-- Gradient glow effect behind video -->
+    <div style="position: absolute; inset: -20px; background: linear-gradient(135deg, rgba(231, 138, 83, 0.3), rgba(139, 92, 246, 0.3), rgba(59, 130, 246, 0.3)); filter: blur(40px); opacity: 0.6; border-radius: 24px;"></div>
+    
+    <!-- Video container with border and shadow -->
+    <div style="position: relative; border-radius: 16px; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, rgba(17, 24, 39, 0.8), rgba(0, 0, 0, 0.9));">
+      <!-- Video element -->
+      <video 
+        width="100%" 
+        autoplay 
+        loop 
+        muted 
+        playsinline
+        style="display: block; width: 100%; height: auto; object-fit: cover;"
+      >
+        <source src="/public/wzrdstudiointro1.mp4" type="video/mp4">
+        <source src="/public/wzrdstudiointro1.webm" type="video/webm">
+        <!-- Fallback for browsers that don't support video -->
+        <img src="/lovable-uploads/075616c6-e4fc-4662-a4b8-68b746782b65.png" alt="WZRD.Studio Demo" style="width: 100%; height: auto;">
+      </video>
+      
+      <!-- Subtle overlay gradient for depth -->
+      <div style="position: absolute; inset: 0; background: linear-gradient(to bottom, transparent 0%, transparent 70%, rgba(0, 0, 0, 0.3) 100%); pointer-events: none;"></div>
+      
+      <!-- Play indicator badge -->
+      <div style="position: absolute; top: 20px; left: 20px; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(10px); padding: 8px 16px; border-radius: 20px; font-size: 12px; color: rgba(255, 255, 255, 0.9); font-weight: 600; border: 1px solid rgba(255, 255, 255, 0.1);">
+        ▶ LIVE DEMO
+      </div>
+    </div>
+  </div>
 
-  <p align="center">
-    <em>See WZRD.Studio in action - from concept to final video in minutes</em>
+  <p align="center" style="margin-top: 1.5rem; font-size: 15px; color: rgba(156, 163, 175, 0.9); font-style: italic; max-width: 600px; margin-left: auto; margin-right: auto;">
+    ✨ Watch WZRD.Studio transform ideas into professional videos in minutes — from concept to final export
+  </p>
+
+  <p align="center" style="margin-top: 1rem; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+    <span style="display: inline-flex; align-items: center; gap: 6px; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); padding: 6px 14px; border-radius: 20px; font-size: 13px; color: rgba(96, 165, 250, 1); font-weight: 500;">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M6 1L7.545 4.13L11 4.635L8.5 7.07L9.09 10.51L6 8.885L2.91 10.51L3.5 7.07L1 4.635L4.455 4.13L6 1Z" fill="currentColor"/>
+      </svg>
+      AI-Powered Workflows
+    </span>
+    <span style="display: inline-flex; align-items: center; gap: 6px; background: rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.3); padding: 6px 14px; border-radius: 20px; font-size: 13px; color: rgba(167, 139, 250, 1); font-weight: 500;">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M6 1L7.545 4.13L11 4.635L8.5 7.07L9.09 10.51L6 8.885L2.91 10.51L3.5 7.07L1 4.635L4.455 4.13L6 1Z" fill="currentColor"/>
+      </svg>
+      Real-Time Collaboration
+    </span>
+    <span style="display: inline-flex; align-items: center; gap: 6px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); padding: 6px 14px; border-radius: 20px; font-size: 13px; color: rgba(52, 211, 153, 1); font-weight: 500;">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M6 1L7.545 4.13L11 4.635L8.5 7.07L9.09 10.51L6 8.885L2.91 10.51L3.5 7.07L1 4.635L4.455 4.13L6 1Z" fill="currentColor"/>
+      </svg>
+      4K Export Ready
+    </span>
   </p>
 </div>
 
@@ -157,29 +203,113 @@ Find these in your [Supabase Dashboard](https://supabase.com/dashboard) → Proj
 ## 🎬 Visual Showcase
 
 <div align="center">
+  <p style="font-size: 18px; color: rgba(156, 163, 175, 1); max-width: 700px; margin: 0 auto 3rem;">
+    Experience the complete production workflow — from initial concept to final export, all powered by AI
+  </p>
+</div>
 
-### Project Setup
-<img src="/lovable-uploads/075616c6-e4fc-4662-a4b8-68b746782b65.png" alt="Project Setup" width="800">
-<p><em>AI-powered project initialization - define your vision in natural language</em></p>
+<!-- Project Setup -->
+<div align="center" style="margin-bottom: 4rem;">
+  <h3 style="font-size: 24px; font-weight: 700; margin-bottom: 1.5rem; background: linear-gradient(135deg, #3b82f6, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+    🚀 Project Setup
+  </h3>
+  
+  <div style="position: relative; max-width: 850px; margin: 0 auto; padding: 0 1rem;">
+    <!-- Glow effect -->
+    <div style="position: absolute; inset: -15px; background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(139, 92, 246, 0.15)); filter: blur(30px); border-radius: 20px;"></div>
+    
+    <!-- Image container -->
+    <div style="position: relative; border-radius: 12px; overflow: hidden; box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.08);">
+      <img src="/lovable-uploads/075616c6-e4fc-4662-a4b8-68b746782b65.png" alt="Project Setup" style="width: 100%; height: auto; display: block;">
+      
+      <!-- Metric badge -->
+      <div style="position: absolute; top: 20px; right: 20px; background: rgba(59, 130, 246, 0.9); backdrop-filter: blur(10px); padding: 8px 16px; border-radius: 20px; font-size: 13px; color: white; font-weight: 600; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);">
+        ⚡ Setup in &lt;30s
+      </div>
+    </div>
+  </div>
+  
+  <p style="margin-top: 1rem; font-size: 15px; color: rgba(156, 163, 175, 0.9); max-width: 600px; margin-left: auto; margin-right: auto;">
+    AI-powered project initialization — define your vision in natural language and get instant production blueprints
+  </p>
+</div>
 
-<br/>
+<!-- Intelligent Storyboarding -->
+<div align="center" style="margin-bottom: 4rem;">
+  <h3 style="font-size: 24px; font-weight: 700; margin-bottom: 1.5rem; background: linear-gradient(135deg, #8b5cf6, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+    🎨 Intelligent Storyboarding
+  </h3>
+  
+  <div style="position: relative; max-width: 850px; margin: 0 auto; padding: 0 1rem;">
+    <!-- Glow effect -->
+    <div style="position: absolute; inset: -15px; background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(236, 72, 153, 0.15)); filter: blur(30px); border-radius: 20px;"></div>
+    
+    <!-- Image container -->
+    <div style="position: relative; border-radius: 12px; overflow: hidden; box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.08);">
+      <img src="/lovable-uploads/96cbbf8f-bdb1-4d37-9c62-da1306d5fb96.png" alt="Storyboard View" style="width: 100%; height: auto; display: block;">
+      
+      <!-- Metric badge -->
+      <div style="position: absolute; top: 20px; right: 20px; background: rgba(139, 92, 246, 0.9); backdrop-filter: blur(10px); padding: 8px 16px; border-radius: 20px; font-size: 13px; color: white; font-weight: 600; box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);">
+        ✨ Generated in &lt;2min
+      </div>
+    </div>
+  </div>
+  
+  <p style="margin-top: 1rem; font-size: 15px; color: rgba(156, 163, 175, 0.9); max-width: 600px; margin-left: auto; margin-right: auto;">
+    Transform scripts into visual narratives with automated shot generation and consistent style
+  </p>
+</div>
 
-### Intelligent Storyboarding
-<img src="/lovable-uploads/96cbbf8f-bdb1-4d37-9c62-da1306d5fb96.png" alt="Storyboard View" width="800">
-<p><em>Transform scripts into visual narratives with automated shot generation</em></p>
+<!-- Professional Timeline Editor -->
+<div align="center" style="margin-bottom: 4rem;">
+  <h3 style="font-size: 24px; font-weight: 700; margin-bottom: 1.5rem; background: linear-gradient(135deg, #10b981, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+    🎞️ Professional Timeline Editor
+  </h3>
+  
+  <div style="position: relative; max-width: 850px; margin: 0 auto; padding: 0 1rem;">
+    <!-- Glow effect -->
+    <div style="position: absolute; inset: -15px; background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(59, 130, 246, 0.15)); filter: blur(30px); border-radius: 20px;"></div>
+    
+    <!-- Image container -->
+    <div style="position: relative; border-radius: 12px; overflow: hidden; box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.08);">
+      <img src="/lovable-uploads/4e20f36a-2bff-48d8-b07b-257334e35506.png" alt="Timeline Editor" style="width: 100%; height: auto; display: block;">
+      
+      <!-- Metric badge -->
+      <div style="position: absolute; top: 20px; right: 20px; background: rgba(16, 185, 129, 0.9); backdrop-filter: blur(10px); padding: 8px 16px; border-radius: 20px; font-size: 13px; color: white; font-weight: 600; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);">
+        🚀 INP &lt;200ms
+      </div>
+    </div>
+  </div>
+  
+  <p style="margin-top: 1rem; font-size: 15px; color: rgba(156, 163, 175, 0.9); max-width: 600px; margin-left: auto; margin-right: auto;">
+    Industry-standard editing tools with AI assistance and real-time collaboration
+  </p>
+</div>
 
-<br/>
-
-### Professional Timeline Editor
-<img src="/lovable-uploads/4e20f36a-2bff-48d8-b07b-257334e35506.png" alt="Timeline Editor" width="800">
-<p><em>Industry-standard editing tools with AI assistance and real-time collaboration</em></p>
-
-<br/>
-
-### Export & Publish
-<img src="/lovable-uploads/f8be561d-d5b5-49a8-adaa-dbf01721ef9f.png" alt="Export Pipeline" width="800">
-<p><em>Broadcast-quality output with one-click publishing to all major platforms</em></p>
-
+<!-- Export & Publish -->
+<div align="center" style="margin-bottom: 2rem;">
+  <h3 style="font-size: 24px; font-weight: 700; margin-bottom: 1.5rem; background: linear-gradient(135deg, #f59e0b, #ef4444); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+    📤 Export & Publish
+  </h3>
+  
+  <div style="position: relative; max-width: 850px; margin: 0 auto; padding: 0 1rem;">
+    <!-- Glow effect -->
+    <div style="position: absolute; inset: -15px; background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(239, 68, 68, 0.15)); filter: blur(30px); border-radius: 20px;"></div>
+    
+    <!-- Image container -->
+    <div style="position: relative; border-radius: 12px; overflow: hidden; box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.08);">
+      <img src="/lovable-uploads/f8be561d-d5b5-49a8-adaa-dbf01721ef9f.png" alt="Export Pipeline" style="width: 100%; height: auto; display: block;">
+      
+      <!-- Metric badge -->
+      <div style="position: absolute; top: 20px; right: 20px; background: rgba(245, 158, 11, 0.9); backdrop-filter: blur(10px); padding: 8px 16px; border-radius: 20px; font-size: 13px; color: white; font-weight: 600; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);">
+        🎬 4K Ready
+      </div>
+    </div>
+  </div>
+  
+  <p style="margin-top: 1rem; font-size: 15px; color: rgba(156, 163, 175, 0.9); max-width: 600px; margin-left: auto; margin-right: auto;">
+    Broadcast-quality output with one-click publishing to all major platforms
+  </p>
 </div>
 
 ---
