@@ -17,6 +17,7 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      "react-dnd": path.resolve(__dirname, "./src/lib/react-dnd"),
     },
   },
 }));
