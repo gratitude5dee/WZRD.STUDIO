@@ -175,8 +175,8 @@ export function AnimatedLogo({
         }
       >
         <motion.img
-          src="/lovable-uploads/f8be561d-d5b5-49a8-adaa-dbf01721ef9f.png"
-          alt="WZRD.STUDIO Logo"
+          src="/lovable-uploads/wzrdtechlogo.png"
+          alt="WZRD.TECH Logo"
           className={cn("object-contain", sizeClasses[size])}
           initial={{ opacity: 0 }}
           animate={logoControls}

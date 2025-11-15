@@ -339,8 +339,8 @@ export function MatrixIntroAnimation({ onComplete }: MatrixIntroAnimationProps) 
             {(phase === 'logo-reveal' || phase === 'fade-to-logo') && (
               <div className="flex flex-col items-center gap-8 z-10">
                 <motion.img
-                  src="/lovable-uploads/f8be561d-d5b5-49a8-adaa-dbf01721ef9f.png"
-                  alt="WZRD.STUDIO Logo"
+                  src="/lovable-uploads/wzrdtechlogo.png"
+                  alt="WZRD.TECH Logo"
                   onError={() => setImageError(true)}
                   className="max-w-[600px] w-[90vw] h-auto"
                   style={{
@@ -353,7 +353,7 @@ export function MatrixIntroAnimation({ onComplete }: MatrixIntroAnimationProps) 
                 />
                 {imageError && (
                   <div className="text-6xl font-bold text-green-500" style={{ textShadow: '0 0 20px #0f0' }}>
-                    WZRD.STUDIO
+                    WZRD.TECH
                   </div>
                 )}
 
