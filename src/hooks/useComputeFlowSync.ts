@@ -11,6 +11,7 @@ const mapRecordToLibraryItem = (record: Record<string, any>): LibraryMediaItem |
 
 export function useComputeFlowSync(projectId?: string | null) {
   const addMediaItem = useVideoEditorStore((state) => state.addMediaLibraryItem);
+  const updateMediaItem = useVideoEditorStore((state) => state.updateMediaLibraryItem);
 
   useEffect(() => {
     if (!projectId) return;
@@ -35,10 +36,30 @@ export function useComputeFlowSync(projectId?: string | null) {
           }
         }
       )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'media_items',
+          filter: `project_id=eq.${projectId}`,
+        },
+        (payload) => {
+          const mapped = mapRecordToLibraryItem(payload.new as Record<string, any>);
+          if (mapped) {
+            updateMediaItem(mapped.id, mapped);
+            if (mapped.status === 'completed') {
+              toast.success(`${mapped.name} is ready!`);
+            } else if (mapped.status === 'failed') {
+              toast.error(`${mapped.name} generation failed`);
+            }
+          }
+        }
+      )
       .subscribe();
 
     return () => {
       channel.unsubscribe();
     };
-  }, [addMediaItem, projectId]);
+  }, [addMediaItem, updateMediaItem, projectId]);
 }

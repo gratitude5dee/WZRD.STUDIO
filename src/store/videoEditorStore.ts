@@ -239,6 +239,7 @@ export interface VideoEditorState {
   loadMediaLibrary: (projectId: string) => Promise<void>;
   setMediaLibraryItems: (items: LibraryMediaItem[]) => void;
   addMediaLibraryItem: (item: LibraryMediaItem) => void;
+  updateMediaLibraryItem: (id: string, updates: Partial<LibraryMediaItem>) => void;
   clearMediaLibrary: () => void;
   setMediaLibraryLoading: (isLoading: boolean) => void;
 
@@ -804,6 +805,15 @@ export const useVideoEditorStore = create<VideoEditorState>((set, get) => ({
   addMediaLibraryItem: (item) =>
     set((state) => ({
       mediaLibrary: { ...state.mediaLibrary, items: [item, ...state.mediaLibrary.items] },
+    })),
+  updateMediaLibraryItem: (id, updates) =>
+    set((state) => ({
+      mediaLibrary: {
+        ...state.mediaLibrary,
+        items: state.mediaLibrary.items.map((item) =>
+          item.id === id ? { ...item, ...updates } : item
+        ),
+      },
     })),
   clearMediaLibrary: () =>
     set((state) => ({
