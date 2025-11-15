@@ -24,16 +24,11 @@ const TimelinePlayhead: React.FC<TimelinePlayheadProps> = ({ currentTime, durati
         style={{ backgroundColor: '#10b981' }}
       />
       
-      {/* Playhead handle - diamond shape */}
+      {/* Playhead handle - diamond shape at top */}
       <div 
-        className="absolute -top-2 left-1/2 -translate-x-1/2 w-3 h-3 rotate-45 border-2 border-white shadow-lg pointer-events-auto cursor-grab active:cursor-grabbing"
+        className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 rotate-45 pointer-events-auto cursor-grab active:cursor-grabbing"
         style={{ backgroundColor: '#10b981' }}
       />
-      
-      {/* Time indicator */}
-      <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-[#1a1a1a]/95 backdrop-blur-md border border-[#2a2a2a] rounded px-2 py-1 text-[10px] text-white font-medium shadow-lg whitespace-nowrap">
-        {formatTime(currentTime)}
-      </div>
     </motion.div>
   );
 };

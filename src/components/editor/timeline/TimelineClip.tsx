@@ -1,6 +1,7 @@
 import { MouseEvent, PointerEvent as ReactPointerEvent, useCallback, useMemo, useRef, useState } from 'react';
 import { useDrag } from '@/lib/react-dnd';
 import { v4 as uuidv4 } from 'uuid';
+import { Film, Music } from 'lucide-react';
 import { useVideoEditorStore, Clip, AudioTrack } from '@/store/videoEditorStore';
 import {
   ContextMenu,
@@ -183,38 +184,49 @@ export function TimelineClip({ clip, zoom, onSelect, isSelected }: TimelineClipP
       <ContextMenuTrigger asChild>
         <div
           ref={dragRef}
-          className={`absolute h-14 rounded overflow-hidden cursor-grab active:cursor-grabbing transition-all duration-150 group ${
+          className={`absolute rounded overflow-hidden cursor-grab active:cursor-grabbing transition-all duration-150 group border-2 ${
             isDragging || isTrimming ? 'opacity-70 scale-95' : 'opacity-100'
-          } ${clip.type === 'audio' ? 'bg-accent/80 border border-accent' : 'bg-[#2a2a2a] border-2'}`}
+          } ${clip.type === 'audio' ? 'bg-accent/80 h-12' : 'bg-[#2a2a2a] h-14'}`}
           style={{
             left: `${leftPx}px`,
             width: `${Math.max(60, widthPx)}px`,
-            borderColor: isSelected ? '#50FF12' : '#2a2a2a',
+            borderColor: isSelected ? '#50FF12' : 'transparent',
           }}
           onClick={handleSelect}
         >
-          {/* Trim handle - start */}
-          <div
-            className="absolute left-0 top-0 w-1 h-full cursor-ew-resize hover:w-2 transition-all z-10"
-            style={{ backgroundColor: '#50FF12' }}
-            onPointerDown={handleTrimPointerDown('start')}
-          />
+          {/* Thumbnail strip for video clips */}
+          {clip.type !== 'audio' && (
+            <div className="absolute inset-0 flex">
+              {[...Array(Math.ceil(widthPx / 40))].map((_, i) => (
+                <div
+                  key={i}
+                  className="w-10 h-full bg-gradient-to-br from-gray-700 to-gray-800 border-r border-gray-900/50 flex-shrink-0"
+                />
+              ))}
+            </div>
+          )}
 
-          {/* Clip content with text overlay */}
-          <div className="relative h-full">
-            {/* Text overlay at bottom */}
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent px-2 py-1 pointer-events-none">
-              <p className="text-xs text-white truncate">{clip.name || 'Untitled'}</p>
-              {clip.type === 'audio' && clip.isMuted && (
-                <p className="text-[10px] text-red-400">MUTED</p>
+          {/* Text label overlay */}
+          <div className="absolute inset-0 flex items-start justify-start p-1.5">
+            <div className="bg-[#1a1a1a]/90 backdrop-blur-sm px-2 py-0.5 rounded text-xs text-white flex items-center gap-1.5 z-10">
+              {clip.type === 'audio' ? (
+                <Music className="w-3 h-3" />
+              ) : (
+                <Film className="w-3 h-3" />
               )}
+              <span className="truncate max-w-[80px]">{clip.name || 'Unnamed'}</span>
             </div>
           </div>
 
+          {/* Trim handle - start */}
+          <div
+            className="absolute left-0 top-0 w-1 h-full cursor-ew-resize hover:bg-[#10b981]/50 opacity-0 group-hover:opacity-100 transition-opacity z-20 bg-white/20"
+            onPointerDown={handleTrimPointerDown('start')}
+          />
+
           {/* Trim handle - end */}
           <div
-            className="absolute right-0 top-0 w-1 h-full cursor-ew-resize hover:w-2 transition-all z-10"
-            style={{ backgroundColor: '#50FF12' }}
+            className="absolute right-0 top-0 w-1 h-full cursor-ew-resize hover:bg-[#10b981]/50 opacity-0 group-hover:opacity-100 transition-opacity z-20 bg-white/20"
             onPointerDown={handleTrimPointerDown('end')}
           />
         </div>
