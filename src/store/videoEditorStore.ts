@@ -190,12 +190,14 @@ export interface VideoEditorState {
   removeClip: (id: string) => void;
   removeClipLocal: (id: string) => void;
   syncClipFromRemote: (clip: Clip) => void;
+  setClips: (clips: Clip[]) => void;
 
   addAudioTrack: (track: AudioTrack) => void;
   updateAudioTrack: (id: string, updates: Partial<AudioTrack>, options?: { skipHistory?: boolean }) => void;
   removeAudioTrack: (id: string) => void;
   removeAudioTrackLocal: (id: string) => void;
   syncAudioTrackFromRemote: (track: AudioTrack) => void;
+  setAudioTracks: (audioTracks: AudioTrack[]) => void;
 
   selectClip: (id: string, addToSelection?: boolean) => void;
   deselectClip: (id: string) => void;
@@ -235,6 +237,7 @@ export interface VideoEditorState {
   nudgeSelectedClips: (deltaMs: number) => void;
 
   setCompositionSettings: (settings: Partial<CompositionSettings>) => void;
+  setComposition: (composition: CompositionSettings) => void;
   loadProject: (projectId: string) => Promise<void>;
   loadMediaLibrary: (projectId: string) => Promise<void>;
   setMediaLibraryItems: (items: LibraryMediaItem[]) => void;
@@ -756,6 +759,11 @@ export const useVideoEditorStore = create<VideoEditorState>((set, get) => ({
       videoEditorService.updateComposition(projectId, settings);
     }
   },
+
+  // NEW: Direct setters for bulk updates (used by real-time sync)
+  setClips: (clips) => set({ clips }),
+  setAudioTracks: (audioTracks) => set({ audioTracks }),
+  setComposition: (composition) => set({ composition }),
 
   loadProject: async (projectId) => {
     try {
