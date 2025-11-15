@@ -28,9 +28,14 @@ export default function VideoEditorMain() {
 
   useEffect(() => {
     if (projectId && projectId !== storeProjectId) {
-      loadProject(projectId);
-    } else if (!projectId && clips.length === 0) {
-      // Load demo content if no project loaded
+      loadProject(projectId).then(() => {
+        // Load demo content if project has no clips
+        if (clips.length === 0) {
+          loadDemoContent(addClip, addAudioTrack);
+        }
+      });
+    } else if (clips.length === 0) {
+      // Load demo content if no clips
       loadDemoContent(addClip, addAudioTrack);
     }
   }, [loadProject, projectId, storeProjectId, clips.length, addClip, addAudioTrack]);
