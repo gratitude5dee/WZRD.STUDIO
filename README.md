@@ -27,40 +27,17 @@
 
   <br/>
 
-  <!-- Hero Demo Video with Enhanced Styling -->
-  <div style="position: relative; max-width: 900px; margin: 2rem auto; padding: 0 1rem;">
-    <!-- Gradient glow effect behind video -->
-    <div style="position: absolute; inset: -20px; background: linear-gradient(135deg, rgba(231, 138, 83, 0.3), rgba(139, 92, 246, 0.3), rgba(59, 130, 246, 0.3)); filter: blur(40px); opacity: 0.6; border-radius: 24px;"></div>
-    
-    <!-- Video container with border and shadow -->
-    <div style="position: relative; border-radius: 16px; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1); background: linear-gradient(to bottom, rgba(17, 24, 39, 0.8), rgba(0, 0, 0, 0.9));">
-      <!-- Video element -->
-      <video 
-        width="100%" 
-        autoplay 
-        loop 
-        muted 
-        playsinline
-        style="display: block; width: 100%; height: auto; object-fit: cover;"
-      >
-        <source src="/public/wzrdstudiointro1.mp4" type="video/mp4">
-        <source src="/public/wzrdstudiointro1.webm" type="video/webm">
-        <!-- Fallback for browsers that don't support video -->
-        <img src="/lovable-uploads/075616c6-e4fc-4662-a4b8-68b746782b65.png" alt="WZRD.Studio Demo" style="width: 100%; height: auto;">
-      </video>
-      
-      <!-- Subtle overlay gradient for depth -->
-      <div style="position: absolute; inset: 0; background: linear-gradient(to bottom, transparent 0%, transparent 70%, rgba(0, 0, 0, 0.3) 100%); pointer-events: none;"></div>
-      
-      <!-- Play indicator badge -->
-      <div style="position: absolute; top: 20px; left: 20px; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(10px); padding: 8px 16px; border-radius: 20px; font-size: 12px; color: rgba(255, 255, 255, 0.9); font-weight: 600; border: 1px solid rgba(255, 255, 255, 0.1);">
-        ▶ LIVE DEMO
-      </div>
-    </div>
-  </div>
+  <!-- Hero Demo (GitHub-safe: thumbnail that opens the video) -->
+  <a href="public/wzrdstudiointro1.mp4">
+    <img
+      src="/lovable-uploads/075616c6-e4fc-4662-a4b8-68b746782b65.png"
+      alt="WZRD.Studio Demo"
+      width="900"
+    />
+  </a>
 
-  <p align="center" style="margin-top: 1.5rem; font-size: 15px; color: rgba(156, 163, 175, 0.9); font-style: italic; max-width: 600px; margin-left: auto; margin-right: auto;">
-    ✨ Watch WZRD.Studio transform ideas into professional videos in minutes — from concept to final export
+  <p align="center">
+    <em>✨ Watch WZRD.Studio transform ideas into professional videos in minutes — from concept to final export</em>
   </p>
 
   <p align="center" style="margin-top: 1rem; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
