@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
-import { Clip, AudioTrack } from '@/store/videoEditorStore';
+import { Clip, AudioTrack, useVideoEditorStore, LibraryMediaItem } from '@/store/videoEditorStore';
 import { TimelineClip } from './TimelineClip';
 import { WaveformRenderer } from './WaveformRenderer';
 
