@@ -28,7 +28,7 @@
   <br/>
 
   <!-- Hero Demo (GitHub-safe: thumbnail that opens the video) -->
-  <a href="/public/wzrdstudiointro1.mp4">
+  <a href="/public/wzrdstudiointro1.gif">
     <img
       src="/lovable-uploads/075616c6-e4fc-4662-a4b8-68b746782b65.png"
       alt="WZRD.Studio Demo"
