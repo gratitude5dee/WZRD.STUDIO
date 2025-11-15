@@ -437,11 +437,9 @@ const Landing = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.3 }}
-              className="mb-8"
+              className="mb-8 flex justify-center"
             >
-              <h1 className="text-4xl font-bold tracking-tight text-white sm:text-6xl lg:text-7xl">
-                <strong>WZRDFLOW</strong>
-              </h1>
+              <img src={wzrdLogo} alt="WZRD.tech" className="h-20 sm:h-28 lg:h-32 w-auto" />
             </motion.div>
 
             {/* Description */}
