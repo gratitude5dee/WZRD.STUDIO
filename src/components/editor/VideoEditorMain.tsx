@@ -11,6 +11,7 @@ import PropertiesPanel from './properties/PropertiesPanel';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 import { Button } from '@/components/ui/button';
 import { Undo2, Redo2, Users, Share2, Download } from 'lucide-react';
+import { loadDemoContent } from '@/lib/demoContent';
 
 export default function VideoEditorMain() {
   const { projectId } = useParams();
@@ -19,12 +20,20 @@ export default function VideoEditorMain() {
   const selectedClipIds = useVideoEditorStore((state) => state.selectedClipIds);
   const selectedAudioTrackIds = useVideoEditorStore((state) => state.selectedAudioTrackIds);
   const projectName = useVideoEditorStore((state) => state.project.name);
+  const clips = useVideoEditorStore((state) => state.clips);
+  const addClip = useVideoEditorStore((state) => state.addClip);
+  const addAudioTrack = useVideoEditorStore((state) => state.addAudioTrack);
+  const undo = useVideoEditorStore((state) => state.undo);
+  const redo = useVideoEditorStore((state) => state.redo);
 
   useEffect(() => {
     if (projectId && projectId !== storeProjectId) {
       loadProject(projectId);
+    } else if (!projectId && clips.length === 0) {
+      // Load demo content if no project loaded
+      loadDemoContent(addClip, addAudioTrack);
     }
-  }, [loadProject, projectId, storeProjectId]);
+  }, [loadProject, projectId, storeProjectId, clips.length, addClip, addAudioTrack]);
 
   useComputeFlowSync(projectId ?? storeProjectId);
   useRealtimeTimelineSync(projectId ?? storeProjectId);
@@ -38,6 +47,7 @@ export default function VideoEditorMain() {
           <Button
             variant="ghost"
             size="icon"
+            onClick={undo}
             className="w-8 h-8 rounded-full bg-[#2a2a2a] hover:bg-[#3a3a3a] text-white"
           >
             <Undo2 className="w-4 h-4" />
@@ -45,6 +55,7 @@ export default function VideoEditorMain() {
           <Button
             variant="ghost"
             size="icon"
+            onClick={redo}
             className="w-8 h-8 rounded-full bg-[#2a2a2a] hover:bg-[#3a3a3a] text-white"
           >
             <Redo2 className="w-4 h-4" />

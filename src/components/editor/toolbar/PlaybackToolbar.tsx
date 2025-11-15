@@ -23,7 +23,22 @@ export default function PlaybackToolbar() {
   const play = useVideoEditorStore((state) => state.play);
   const pause = useVideoEditorStore((state) => state.pause);
   const seek = useVideoEditorStore((state) => state.seek);
-  const setTimelineZoom = useVideoEditorStore((state) => state.setTimelineZoom);
+  const zoomTimelineIn = useVideoEditorStore((state) => state.zoomTimelineIn);
+  const zoomTimelineOut = useVideoEditorStore((state) => state.zoomTimelineOut);
+  const clips = useVideoEditorStore((state) => state.clips);
+  const audioTracks = useVideoEditorStore((state) => state.audioTracks);
+
+  const totalDurationMs = useMemo(() => {
+    const clipDuration = clips.reduce((max, clip) => {
+      const end = (clip.startTime ?? 0) + (clip.duration ?? 0);
+      return Math.max(max, end);
+    }, 0);
+    const audioDuration = audioTracks.reduce((max, track) => {
+      const end = (track.startTime ?? 0) + (track.duration ?? 0);
+      return Math.max(max, end);
+    }, 0);
+    return Math.max(composition.duration, clipDuration, audioDuration, 8000);
+  }, [clips, audioTracks, composition.duration]);
 
   const togglePlayback = useCallback(() => {
     if (playback.isPlaying) {
@@ -35,19 +50,16 @@ export default function PlaybackToolbar() {
 
   const skip = useCallback(
     (direction: 'forward' | 'backward') => {
-      const delta = direction === 'forward' ? 1000 : -1000;
-      const newTime = Math.max(
-        0,
-        Math.min(playback.currentTime + delta, composition.duration || playback.currentTime + delta)
-      );
+      const delta = direction === 'forward' ? 33 : -33; // ~1 frame at 30fps
+      const newTime = Math.max(0, Math.min(playback.currentTime + delta, totalDurationMs));
       seek(newTime);
     },
-    [composition.duration, playback.currentTime, seek]
+    [totalDurationMs, playback.currentTime, seek]
   );
 
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
-      if (event.code === 'Space') {
+      if (event.code === 'Space' && !event.repeat) {
         event.preventDefault();
         togglePlayback();
       }
@@ -58,7 +70,7 @@ export default function PlaybackToolbar() {
   }, [togglePlayback]);
 
   const currentTimecode = useMemo(() => formatTime(playback.currentTime), [playback.currentTime]);
-  const durationTimecode = useMemo(() => formatTime(composition.duration), [composition.duration]);
+  const durationTimecode = useMemo(() => formatTime(totalDurationMs), [totalDurationMs]);
 
   return (
     <div className="h-14 bg-[#1a1a1a] border-b border-[#2a2a2a] flex items-center px-4 justify-center shadow-sm">
@@ -97,18 +109,23 @@ export default function PlaybackToolbar() {
         <Button
           variant="ghost"
           size="icon"
+          onClick={() => zoomTimelineOut()}
           className="text-white/70 hover:text-white hover:bg-white/5 w-8 h-8"
         >
           <ZoomOut className="w-4 h-4" />
         </Button>
 
         <div className="w-24 h-1 bg-[#2a2a2a] rounded-full relative">
-          <div className="absolute left-0 top-0 h-full w-1/2 bg-[#10b981] rounded-full" />
+          <div 
+            className="absolute left-0 top-0 h-full bg-[#10b981] rounded-full transition-all" 
+            style={{ width: `${Math.min(100, (timeline.zoom / 200) * 100)}%` }}
+          />
         </div>
 
         <Button
           variant="ghost"
           size="icon"
+          onClick={() => zoomTimelineIn()}
           className="text-white/70 hover:text-white hover:bg-white/5 w-8 h-8"
         >
           <ZoomIn className="w-4 h-4" />
@@ -131,27 +148,6 @@ export default function PlaybackToolbar() {
         </Button>
       </div>
 
-      <div className="flex items-center gap-4">
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <span className="font-medium">Zoom</span>
-          <Slider
-            className="w-32"
-            min={10}
-            max={400}
-            step={5}
-            value={[timeline.zoom]}
-            onValueChange={(value) => setTimelineZoom(value[0])}
-          />
-          <span className="tabular-nums text-[10px]">{timeline.zoom}px/s</span>
-        </div>
-        <Button 
-          className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm font-medium" 
-          onClick={() => setExportDialogOpen(true)}
-        >
-          <Download className="h-4 w-4 mr-2" />
-          Export
-        </Button>
-      </div>
       <ExportDialog open={isExportDialogOpen} onOpenChange={setExportDialogOpen} />
     </div>
   );
