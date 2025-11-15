@@ -12,6 +12,7 @@ import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/componen
 import { Button } from '@/components/ui/button';
 import { Undo2, Redo2, Users, Share2, Download } from 'lucide-react';
 import { loadDemoContent } from '@/lib/demoContent';
+import PlaybackToolbar from './toolbar/PlaybackToolbar';
 
 export default function VideoEditorMain() {
   const { projectId } = useParams();
@@ -109,7 +110,12 @@ export default function VideoEditorMain() {
         <ResizablePanel defaultSize={56} minSize={40}>
           <ResizablePanelGroup direction="vertical">
             <ResizablePanel defaultSize={65} minSize={30}>
-              <PreviewCanvas selectedClipIds={selectedClipIds} />
+              <div className="h-full flex flex-col">
+                <div className="flex-1">
+                  <PreviewCanvas selectedClipIds={selectedClipIds} />
+                </div>
+                <PlaybackToolbar />
+              </div>
             </ResizablePanel>
             
             <ResizableHandle className="h-[1px] bg-[#2a2a2a]" />
