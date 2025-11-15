@@ -43,6 +43,7 @@ export default function PreviewCanvas({ selectedClipIds }: PreviewCanvasProps) {
     if (!player) return;
     const handler = ({ detail }: { detail: { frame: number } }) => {
       const currentTime = (detail.frame / composition.fps) * 1000;
+      console.log('🎬 Player timeupdate:', { frame: detail.frame, currentTime });
       seek(currentTime);
     };
 
