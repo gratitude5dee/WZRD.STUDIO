@@ -183,35 +183,38 @@ export function TimelineClip({ clip, zoom, onSelect, isSelected }: TimelineClipP
       <ContextMenuTrigger asChild>
         <div
           ref={dragRef}
-          className={`absolute h-14 rounded-lg border-2 transition-all duration-150 shadow-lg backdrop-blur-sm ${clipColors} ${
-            isSelected ? 'border-primary ring-2 ring-primary/50 shadow-primary/30' : 'hover:border-primary/60'
-          } ${isDragging || isTrimming ? 'opacity-70 scale-95' : 'opacity-100'} cursor-move overflow-hidden group`}
+          className={`absolute h-14 rounded overflow-hidden cursor-grab active:cursor-grabbing transition-all duration-150 group ${
+            isDragging || isTrimming ? 'opacity-70 scale-95' : 'opacity-100'
+          } ${clip.type === 'audio' ? 'bg-accent/80 border border-accent' : 'bg-[#2a2a2a] border-2'}`}
           style={{
             left: `${leftPx}px`,
             width: `${Math.max(60, widthPx)}px`,
+            borderColor: isSelected ? '#50FF12' : '#2a2a2a',
           }}
           onClick={handleSelect}
         >
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-foreground/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-          <div className="relative h-full flex flex-col justify-between p-2">
-            <div className="text-xs font-medium truncate text-foreground">
-              {clip.name || 'Untitled Clip'}
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="text-[10px] text-muted-foreground font-mono tabular-nums">
-                {formatTime(duration)}
-              </div>
+          {/* Trim handle - start */}
+          <div
+            className="absolute left-0 top-0 w-1 h-full cursor-ew-resize hover:w-2 transition-all z-10"
+            style={{ backgroundColor: '#50FF12' }}
+            onPointerDown={handleTrimPointerDown('start')}
+          />
+
+          {/* Clip content with text overlay */}
+          <div className="relative h-full">
+            {/* Text overlay at bottom */}
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent px-2 py-1 pointer-events-none">
+              <p className="text-xs text-white truncate">{clip.name || 'Untitled'}</p>
               {clip.type === 'audio' && clip.isMuted && (
-                <div className="text-[10px] text-destructive font-medium">MUTED</div>
+                <p className="text-[10px] text-red-400">MUTED</p>
               )}
             </div>
           </div>
+
+          {/* Trim handle - end */}
           <div
-            className="absolute left-0 top-0 w-1 h-full bg-primary opacity-0 group-hover:opacity-70 cursor-ew-resize transition-opacity"
-            onPointerDown={handleTrimPointerDown('start')}
-          />
-          <div
-            className="absolute right-0 top-0 w-1 h-full bg-primary opacity-0 group-hover:opacity-70 cursor-ew-resize transition-opacity"
+            className="absolute right-0 top-0 w-1 h-full cursor-ew-resize hover:w-2 transition-all z-10"
+            style={{ backgroundColor: '#50FF12' }}
             onPointerDown={handleTrimPointerDown('end')}
           />
         </div>
