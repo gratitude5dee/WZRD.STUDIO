@@ -80,50 +80,48 @@ export default function PropertiesPanel({ selectedClipIds, selectedAudioTrackIds
   }
 
   return (
-    <div className="w-[320px] h-full bg-card border-l border-border flex flex-col">
-      <div className="p-4 border-b border-border">
-        <h2 className="text-sm font-semibold text-foreground">
-          {clip ? clip.name : audioTrack?.name}
-        </h2>
-        <p className="text-xs text-muted-foreground">
-          {clip ? 'Video/Image Clip' : 'Audio Track'}
-        </p>
-      </div>
+    <div className="h-full overflow-auto bg-[#0a0a0a]">
+      <ScrollArea className="h-full">
+        <div className="p-4 space-y-4">
+          {/* Header */}
+          <div className="pb-3 border-b border-[#2a2a2a]">
+            <h2 className="text-sm font-semibold text-white">
+              {clip ? clip.name || 'Clip Properties' : audioTrack?.name || 'Audio Properties'}
+            </h2>
+          </div>
 
-      <ScrollArea className="flex-1">
-        <div className="p-4">
           {clip && (
-            <Accordion type="multiple" defaultValue={['basic', 'transform']} className="space-y-2">
-              <AccordionItem value="basic" className="border border-border rounded-lg bg-muted/20">
-                <AccordionTrigger className="px-4 py-3 hover:no-underline">
+            <Accordion type="multiple" defaultValue={['basic', 'transform']} className="space-y-3">
+              <AccordionItem value="basic" className="border border-[#2a2a2a] rounded-md bg-[#0a0a0a]">
+                <AccordionTrigger className="px-3 py-2 hover:no-underline hover:bg-[#1a1a1a] text-white">
                   <span className="text-sm font-medium">Basic</span>
                 </AccordionTrigger>
-                <AccordionContent className="px-4 pb-4 space-y-3">
+                <AccordionContent className="px-3 pb-3 space-y-3">
                   <div>
-                    <Label className="text-xs text-muted-foreground">Name</Label>
+                    <label className="text-xs text-gray-400 mb-1 block">Name</label>
                     <Input
-                      className="mt-1.5 h-9 bg-background border-border"
                       value={clip.name}
-                      onChange={(event) => updateClip(clip.id, { name: event.target.value })}
+                      onChange={(e) => updateClip(clip.id, { name: e.target.value })}
+                      className="h-8 text-sm bg-[#1a1a1a] border-[#2a2a2a] text-white"
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <Label className="text-xs text-muted-foreground">Start (ms)</Label>
+                      <label className="text-xs text-gray-400 mb-1 block">Start (ms)</label>
                       <Input
                         type="number"
-                        className="mt-1.5 h-9 bg-background border-border"
                         value={clip.startTime}
-                        onChange={(event) => updateClip(clip.id, { startTime: Number(event.target.value) })}
+                        onChange={(e) => updateClip(clip.id, { startTime: Number(e.target.value) })}
+                        className="h-8 text-sm bg-[#1a1a1a] border-[#2a2a2a] text-white"
                       />
                     </div>
                     <div>
-                      <Label className="text-xs text-muted-foreground">Duration (ms)</Label>
+                      <label className="text-xs text-gray-400 mb-1 block">Duration (ms)</label>
                       <Input
                         type="number"
-                        className="mt-1.5 h-9 bg-background border-border"
                         value={clip.duration}
-                        onChange={(event) => updateClip(clip.id, { duration: Number(event.target.value) })}
+                        onChange={(e) => updateClip(clip.id, { duration: Number(e.target.value) })}
+                        className="h-8 text-sm bg-[#1a1a1a] border-[#2a2a2a] text-white"
                       />
                     </div>
                   </div>
@@ -131,8 +129,8 @@ export default function PropertiesPanel({ selectedClipIds, selectedAudioTrackIds
               </AccordionItem>
 
               {transformValues && (
-                <AccordionItem value="transform" className="border border-border rounded-lg bg-muted/20">
-                  <AccordionTrigger className="px-4 py-3 hover:no-underline">
+                <AccordionItem value="transform" className="border border-[#2a2a2a] rounded-md bg-[#0a0a0a]">
+                  <AccordionTrigger className="px-3 py-2 hover:no-underline hover:bg-[#1a1a1a] text-white">
                     <span className="text-sm font-medium">Transform</span>
                   </AccordionTrigger>
                   <AccordionContent className="px-4 pb-4 space-y-3">
