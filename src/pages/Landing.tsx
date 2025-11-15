@@ -439,7 +439,7 @@ const Landing = () => {
               transition={{ duration: 0.5, delay: 0.3 }}
               className="mb-8 flex justify-center"
             >
-              <img src={wzrdLogo} alt="WZRD.tech" className="h-20 sm:h-28 lg:h-32 w-auto" />
+              <img src={wzrdLogo} alt="WZRD.tech" className="h-60 sm:h-[21rem] lg:h-96 w-auto" />
             </motion.div>
 
             {/* Description */}
