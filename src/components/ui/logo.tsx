@@ -12,9 +12,9 @@ export function Logo({ className, showVersion = true, size = "md" }: LogoProps) 
   const navigate = useNavigate();
   
   const sizeClasses = {
-    sm: "h-6",
-    md: "h-8",
-    lg: "h-12",
+    sm: "h-12",
+    md: "h-16",
+    lg: "h-24",
   };
   
   return (
