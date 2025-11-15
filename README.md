@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="wzrdtechlogo.png" alt="WZRD.Studio Logo" width="400">
+  <img src="/lovable-uploads/wzrdtechlogo.png" alt="WZRD.Studio Logo" width="400">
   
   <h1>WZRD.Studio</h1>
   <h3>by UniversalAI</h3>
@@ -23,6 +23,19 @@
     <img src="https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript">
     <img src="https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white" alt="Supabase">
     <img src="https://img.shields.io/badge/AI_Powered-FF6B6B?style=for-the-badge&logo=openai&logoColor=white" alt="AI Powered">
+  </p>
+
+  <br/>
+
+  <!-- Demo Video -->
+  <video width="100%" max-width="800px" autoplay loop muted playsinline>
+    <source src="/lovable-uploads/wzrd-demo.mp4" type="video/mp4">
+    <source src="/lovable-uploads/wzrd-demo.webm" type="video/webm">
+    Your browser does not support the video tag.
+  </video>
+
+  <p align="center">
+    <em>See WZRD.Studio in action - from concept to final video in minutes</em>
   </p>
 </div>
 
@@ -138,6 +151,36 @@ VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
 Find these in your [Supabase Dashboard](https://supabase.com/dashboard) → Project Settings → API.
+
+---
+
+## 🎬 Visual Showcase
+
+<div align="center">
+
+### Project Setup
+<img src="/lovable-uploads/075616c6-e4fc-4662-a4b8-68b746782b65.png" alt="Project Setup" width="800">
+<p><em>AI-powered project initialization - define your vision in natural language</em></p>
+
+<br/>
+
+### Intelligent Storyboarding
+<img src="/lovable-uploads/96cbbf8f-bdb1-4d37-9c62-da1306d5fb96.png" alt="Storyboard View" width="800">
+<p><em>Transform scripts into visual narratives with automated shot generation</em></p>
+
+<br/>
+
+### Professional Timeline Editor
+<img src="/lovable-uploads/4e20f36a-2bff-48d8-b07b-257334e35506.png" alt="Timeline Editor" width="800">
+<p><em>Industry-standard editing tools with AI assistance and real-time collaboration</em></p>
+
+<br/>
+
+### Export & Publish
+<img src="/lovable-uploads/f8be561d-d5b5-49a8-adaa-dbf01721ef9f.png" alt="Export Pipeline" width="800">
+<p><em>Broadcast-quality output with one-click publishing to all major platforms</em></p>
+
+</div>
 
 ---
 
