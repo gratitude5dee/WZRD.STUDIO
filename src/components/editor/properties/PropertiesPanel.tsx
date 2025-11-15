@@ -16,17 +16,26 @@ interface PropertiesPanelProps {
 export default function PropertiesPanel({ selectedClipIds, selectedAudioTrackIds }: PropertiesPanelProps) {
   const primaryClipId = selectedClipIds[0] ?? null;
   const primaryAudioId = selectedAudioTrackIds[0] ?? null;
-  const clip = useVideoEditorStore((state) => state.clips.find((item) => item.id === primaryClipId) ?? null);
-  const audioTrack = useVideoEditorStore((state) => state.audioTracks.find((item) => item.id === primaryAudioId) ?? null);
+  
+  // Get full arrays once and filter in useMemo to avoid infinite loops
+  const clips = useVideoEditorStore((state) => state.clips);
+  const audioTracks = useVideoEditorStore((state) => state.audioTracks);
+  const allKeyframes = useVideoEditorStore((state) => state.keyframes);
   const updateClip = useVideoEditorStore((state) => state.updateClip);
   const updateAudioTrack = useVideoEditorStore((state) => state.updateAudioTrack);
   const playback = useVideoEditorStore((state) => state.playback);
   const addKeyframe = useVideoEditorStore((state) => state.addKeyframe);
   const removeKeyframe = useVideoEditorStore((state) => state.removeKeyframe);
-  const clipKeyframes = useVideoEditorStore((state) =>
-    primaryClipId ? state.keyframes.filter((keyframe) => keyframe.targetId === primaryClipId) : []
-  );
-  const sortedKeyframes = useMemo(() => [...clipKeyframes].sort((a, b) => a.time - b.time), [clipKeyframes]);
+  
+  // Use useMemo to cache filtered results
+  const clip = useMemo(() => clips.find((item) => item.id === primaryClipId) ?? null, [clips, primaryClipId]);
+  const audioTrack = useMemo(() => audioTracks.find((item) => item.id === primaryAudioId) ?? null, [audioTracks, primaryAudioId]);
+  const sortedKeyframes = useMemo(() => {
+    if (!primaryClipId) return [];
+    return allKeyframes
+      .filter((keyframe) => keyframe.targetId === primaryClipId)
+      .sort((a, b) => a.time - b.time);
+  }, [allKeyframes, primaryClipId]);
 
   const transformValues = useMemo(() => {
     if (!clip) return null;
