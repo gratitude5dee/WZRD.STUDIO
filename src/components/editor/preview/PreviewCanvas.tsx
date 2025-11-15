@@ -79,7 +79,7 @@ export default function PreviewCanvas({ selectedClipIds }: PreviewCanvasProps) {
       <div className="w-full max-w-[1280px]" style={{ aspectRatio: aspectRatioValue }}>
         <Player
           ref={playerRef}
-          component={EditorComposition}
+          component={EditorComposition as any}
           durationInFrames={durationInFrames}
           fps={composition.fps}
           compositionWidth={composition.width}

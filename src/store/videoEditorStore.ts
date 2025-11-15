@@ -130,6 +130,7 @@ export interface PlaybackState {
 export interface TimelineState {
   zoom: number;
   scrollOffset: number;
+  scroll: number;
   snapToGrid: boolean;
   gridSize: number;
 }
@@ -352,6 +353,7 @@ const initialState: Pick<
   timeline: {
     zoom: 50,
     scrollOffset: 0,
+    scroll: 0,
     snapToGrid: true,
     gridSize: 100,
   },
