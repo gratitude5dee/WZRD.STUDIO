@@ -81,30 +81,47 @@ export default function MediaLibrary({ projectId }: MediaLibraryProps) {
 
   const renderItems = () => {
     if (!projectId) {
-      return <p className="text-xs text-[#8E94A8] p-4">Select or create a project to load media.</p>;
+      return <p className="text-xs text-muted-foreground p-4">Select or create a project to load media.</p>;
     }
 
     if (isLoading) {
-      return <p className="text-xs text-[#8E94A8] p-4">Loading media...</p>;
+      return <p className="text-xs text-muted-foreground p-4">Loading media...</p>;
     }
 
     if (filteredItems.length === 0) {
-      return <p className="text-xs text-[#8E94A8] p-4">No media available yet.</p>;
+      return <p className="text-xs text-muted-foreground p-4">No media available yet.</p>;
     }
 
     return (
-      <div className="space-y-3 p-4">
+      <div className="space-y-2 p-3">
         {filteredItems.map((item) => (
-          <div key={item.id} className="flex items-center justify-between bg-[#141826] border border-[#1D2130] rounded p-3">
-            <div>
-              <p className="text-sm font-semibold">{item.name}</p>
-              <p className="text-xs text-[#8E94A8] uppercase">
-                {item.mediaType} • {item.sourceType || 'unknown'}
-              </p>
+          <div 
+            key={item.id} 
+            className="group relative bg-card/50 border border-border rounded-lg p-3 hover:border-primary/50 hover:bg-card transition-all cursor-pointer"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-foreground truncate">{item.name}</p>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-[10px] text-muted-foreground uppercase font-medium px-2 py-0.5 bg-muted/50 rounded">
+                    {item.mediaType}
+                  </span>
+                  {item.durationSeconds && (
+                    <span className="text-[10px] text-muted-foreground tabular-nums">
+                      {Math.floor(item.durationSeconds)}s
+                    </span>
+                  )}
+                </div>
+              </div>
+              <Button 
+                size="sm" 
+                variant="outline" 
+                className="border-primary/50 text-primary hover:bg-primary hover:text-primary-foreground shrink-0 text-xs h-7 px-3" 
+                onClick={() => handleAddToTimeline(item)}
+              >
+                Add
+              </Button>
             </div>
-            <Button size="sm" variant="outline" className="border-[#9b87f5] text-[#9b87f5]" onClick={() => handleAddToTimeline(item)}>
-              Add
-            </Button>
           </div>
         ))}
       </div>
@@ -112,20 +129,29 @@ export default function MediaLibrary({ projectId }: MediaLibraryProps) {
   };
 
   return (
-    <div className="w-[280px] bg-[#0F1117] border-r border-[#1D2130] flex flex-col">
+    <div className="h-full bg-card border-r border-border flex flex-col overflow-hidden">
+      <div className="p-4 border-b border-border">
+        <h2 className="text-sm font-semibold text-foreground mb-3">Media Library</h2>
+      </div>
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as typeof activeTab)} className="flex-1 flex flex-col">
-        <TabsList className="bg-transparent border-b border-[#1D2130]">
-          <TabsTrigger value="ai" className="flex-1">AI</TabsTrigger>
-          <TabsTrigger value="uploaded" className="flex-1">Uploads</TabsTrigger>
-          <TabsTrigger value="audio" className="flex-1">Audio</TabsTrigger>
+        <TabsList className="bg-muted/50 mx-4 grid grid-cols-3">
+          <TabsTrigger value="ai" className="text-xs data-[state=active]:bg-background data-[state=active]:text-primary">
+            AI Generated
+          </TabsTrigger>
+          <TabsTrigger value="uploaded" className="text-xs data-[state=active]:bg-background data-[state=active]:text-primary">
+            Uploaded
+          </TabsTrigger>
+          <TabsTrigger value="audio" className="text-xs data-[state=active]:bg-background data-[state=active]:text-primary">
+            Audio
+          </TabsTrigger>
         </TabsList>
-        <TabsContent value="ai" className="flex-1 overflow-hidden">
+        <TabsContent value="ai" className="flex-1 overflow-hidden mt-0">
           <ScrollArea className="h-full">{renderItems()}</ScrollArea>
         </TabsContent>
-        <TabsContent value="uploaded" className="flex-1 overflow-hidden">
+        <TabsContent value="uploaded" className="flex-1 overflow-hidden mt-0">
           <ScrollArea className="h-full">{renderItems()}</ScrollArea>
         </TabsContent>
-        <TabsContent value="audio" className="flex-1 overflow-hidden">
+        <TabsContent value="audio" className="flex-1 overflow-hidden mt-0">
           <ScrollArea className="h-full">{renderItems()}</ScrollArea>
         </TabsContent>
       </Tabs>

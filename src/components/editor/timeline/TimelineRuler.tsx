@@ -21,13 +21,28 @@ export function TimelineRuler({ zoom, scrollOffset, durationMs }: TimelineRulerP
   }
 
   return (
-    <div className="relative h-10 bg-[#0A0D16] border-b border-[#1D2130] text-xs text-[#8E94A8]">
-      {marks.map((mark) => (
-        <div key={mark.label} className="absolute" style={{ left: `${mark.left}px` }}>
-          <div className="h-4 w-px bg-[#1D2130]" />
-          <div className="mt-1">{mark.label}</div>
-        </div>
-      ))}
+    <div className="relative h-12 bg-card border-b border-border text-xs text-muted-foreground select-none">
+      <div className="absolute inset-0 flex items-end pb-1">
+        {marks.map((mark, idx) => {
+          const isMajor = mark.label.split(':')[0] !== '0' || idx % 5 === 0;
+          return (
+            <div 
+              key={mark.label} 
+              className="absolute bottom-0 flex flex-col items-center"
+              style={{ left: `${mark.left}px`, transform: 'translateX(-50%)' }}
+            >
+              <div 
+                className={`w-px ${isMajor ? 'h-6 bg-border' : 'h-3 bg-border/40'}`} 
+              />
+              {isMajor && (
+                <div className="mt-1 text-[10px] font-medium tabular-nums">
+                  {mark.label}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

@@ -175,67 +175,85 @@ export function TimelineClip({ clip, zoom, onSelect, isSelected }: TimelineClipP
   };
 
   const clipColors = clip.type === 'audio'
-    ? 'bg-[#1A1D2E] text-[#8E94A8]'
-    : 'bg-[#2D3142] text-white';
+    ? 'bg-accent/20 border-accent/40'
+    : 'bg-primary/20 border-primary/40';
 
   return (
     <ContextMenu>
       <ContextMenuTrigger asChild>
         <div
           ref={dragRef}
-          className={`absolute h-12 rounded border-2 transition-colors duration-150 ${clipColors} ${
-            isSelected ? 'border-[#9b87f5]' : 'border-transparent'
-          } ${isDragging || isTrimming ? 'opacity-70' : 'opacity-100'} cursor-move`}
+          className={`absolute h-14 rounded-lg border-2 transition-all duration-150 shadow-lg backdrop-blur-sm ${clipColors} ${
+            isSelected ? 'border-primary ring-2 ring-primary/50 shadow-primary/30' : 'hover:border-primary/60'
+          } ${isDragging || isTrimming ? 'opacity-70 scale-95' : 'opacity-100'} cursor-move overflow-hidden group`}
           style={{
             left: `${leftPx}px`,
-            width: `${Math.max(40, widthPx)}px`,
+            width: `${Math.max(60, widthPx)}px`,
           }}
           onClick={handleSelect}
         >
-          <div className="p-2 text-xs truncate">
-            {clip.name || 'Untitled Clip'}
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-foreground/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="relative h-full flex flex-col justify-between p-2">
+            <div className="text-xs font-medium truncate text-foreground">
+              {clip.name || 'Untitled Clip'}
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="text-[10px] text-muted-foreground font-mono tabular-nums">
+                {formatTime(duration)}
+              </div>
+              {clip.type === 'audio' && clip.isMuted && (
+                <div className="text-[10px] text-destructive font-medium">MUTED</div>
+              )}
+            </div>
           </div>
           <div
-            className="absolute left-0 top-0 w-2 h-full bg-[#9b87f5] opacity-60 cursor-ew-resize"
+            className="absolute left-0 top-0 w-1 h-full bg-primary opacity-0 group-hover:opacity-70 cursor-ew-resize transition-opacity"
             onPointerDown={handleTrimPointerDown('start')}
           />
           <div
-            className="absolute right-0 top-0 w-2 h-full bg-[#9b87f5] opacity-60 cursor-ew-resize"
+            className="absolute right-0 top-0 w-1 h-full bg-primary opacity-0 group-hover:opacity-70 cursor-ew-resize transition-opacity"
             onPointerDown={handleTrimPointerDown('end')}
           />
         </div>
       </ContextMenuTrigger>
-        <ContextMenuContent className="bg-[#0F1117] text-white border border-[#1D2130]">
-          <ContextMenuItem
-            onSelect={(event) => {
-              event.preventDefault();
-              duplicateItem();
-            }}
-          >
-            Duplicate
-          </ContextMenuItem>
-          <ContextMenuItem
-            onSelect={(event) => {
-              event.preventDefault();
-              handleDelete();
-            }}
-          >
-            Delete
-          </ContextMenuItem>
-          {clip.type === 'audio' && (
-            <>
-              <ContextMenuSeparator />
-              <ContextMenuItem
-                onSelect={(event) => {
-                  event.preventDefault();
-                  toggleMute();
-                }}
-              >
-                {clip.isMuted ? 'Unmute' : 'Mute'}
-              </ContextMenuItem>
-            </>
+      <ContextMenuContent className="bg-card text-foreground border-border">
+        <ContextMenuItem
+          onSelect={(event) => {
+            event.preventDefault();
+            duplicateItem();
+          }}
+        >
+          Duplicate
+        </ContextMenuItem>
+        <ContextMenuItem
+          onSelect={(event) => {
+            event.preventDefault();
+            handleDelete();
+          }}
+        >
+          Delete
+        </ContextMenuItem>
+        {clip.type === 'audio' && (
+          <>
+            <ContextMenuSeparator />
+            <ContextMenuItem
+              onSelect={(event) => {
+                event.preventDefault();
+                toggleMute();
+              }}
+            >
+              {clip.isMuted ? 'Unmute' : 'Mute'}
+            </ContextMenuItem>
+          </>
         )}
       </ContextMenuContent>
     </ContextMenu>
   );
 }
+
+const formatTime = (ms: number) => {
+  const seconds = Math.floor(ms / 1000);
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+};
