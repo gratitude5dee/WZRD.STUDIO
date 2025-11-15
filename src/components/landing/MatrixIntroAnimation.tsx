@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import wzrdLogoIntro from '@/assets/wzrd-logo-intro.png';
 
 interface MatrixIntroAnimationProps {
   onComplete: () => void;
@@ -339,8 +340,8 @@ export function MatrixIntroAnimation({ onComplete }: MatrixIntroAnimationProps) 
             {(phase === 'logo-reveal' || phase === 'fade-to-logo') && (
               <div className="flex flex-col items-center gap-8 z-10">
                 <motion.img
-                  src="/lovable-uploads/wzrdtechlogo.png"
-                  alt="WZRD.TECH Logo"
+                  src={wzrdLogoIntro}
+                  alt="WZRD.tech Logo"
                   onError={() => setImageError(true)}
                   className="max-w-[600px] w-[90vw] h-auto"
                   style={{
@@ -353,7 +354,7 @@ export function MatrixIntroAnimation({ onComplete }: MatrixIntroAnimationProps) 
                 />
                 {imageError && (
                   <div className="text-6xl font-bold text-green-500" style={{ textShadow: '0 0 20px #0f0' }}>
-                    WZRD.TECH
+                    WZRD.tech
                   </div>
                 )}
 
