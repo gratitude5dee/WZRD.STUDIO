@@ -1,14 +1,10 @@
-import { useMemo } from 'react';
-import { v4 as uuidv4 } from 'uuid';
+import { useVideoEditorStore } from '@/store/videoEditorStore';
+import { PropertySection } from './PropertySection';
+import { ColorPicker } from './ColorPicker';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Slider } from '@/components/ui/slider';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Button } from '@/components/ui/button';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Trash2 } from 'lucide-react';
-import { useVideoEditorStore, Clip } from '@/store/videoEditorStore';
 
 interface PropertiesPanelProps {
   selectedClipIds: string[];
@@ -16,352 +12,245 @@ interface PropertiesPanelProps {
 }
 
 export default function PropertiesPanel({ selectedClipIds, selectedAudioTrackIds }: PropertiesPanelProps) {
-  const primaryClipId = selectedClipIds[0] ?? null;
-  const primaryAudioId = selectedAudioTrackIds[0] ?? null;
-  
-  const clips = useVideoEditorStore((state) => state.clips);
-  const audioTracks = useVideoEditorStore((state) => state.audioTracks);
-  const allKeyframes = useVideoEditorStore((state) => state.keyframes);
-  const updateClip = useVideoEditorStore((state) => state.updateClip);
-  const updateAudioTrack = useVideoEditorStore((state) => state.updateAudioTrack);
-  const playback = useVideoEditorStore((state) => state.playback);
-  const addKeyframe = useVideoEditorStore((state) => state.addKeyframe);
-  const removeKeyframe = useVideoEditorStore((state) => state.removeKeyframe);
-  
-  const clip = useMemo(() => clips.find((item) => item.id === primaryClipId) ?? null, [clips, primaryClipId]);
-  const audioTrack = useMemo(() => audioTracks.find((item) => item.id === primaryAudioId) ?? null, [audioTracks, primaryAudioId]);
-  const sortedKeyframes = useMemo(() => {
-    if (!primaryClipId) return [];
-    return allKeyframes
-      .filter((keyframe) => keyframe.targetId === primaryClipId)
-      .sort((a, b) => a.time - b.time);
-  }, [allKeyframes, primaryClipId]);
+  const clips = useVideoEditorStore((s) => s.clips);
+  const audioTracks = useVideoEditorStore((s) => s.audioTracks);
 
-  const transformValues = useMemo(() => {
-    if (!clip) return null;
-    return {
-      position: clip.transforms.position,
-      scale: clip.transforms.scale,
-      rotation: clip.transforms.rotation,
-      opacity: clip.transforms.opacity,
-    };
-  }, [clip]);
+  const selectedClip = selectedClipIds.length === 1 ? clips.find(c => c.id === selectedClipIds[0]) : null;
+  const selectedAudioTrack = selectedAudioTrackIds.length === 1 ? audioTracks.find(t => t.id === selectedAudioTrackIds[0]) : null;
 
-  const handleTransformChange = <T extends keyof Clip['transforms']>(
-    key: T,
-    value: Clip['transforms'][T]
-  ) => {
-    if (!clip) return;
-    updateClip(clip.id, {
-      transforms: {
-        ...clip.transforms,
-        [key]: value,
-      },
-    });
-  };
-
-  const handleAddKeyframe = (clipId: string) => {
-    addKeyframe({
-      id: uuidv4(),
-      targetId: clipId,
-      time: playback.currentTime,
-      properties: clip?.transforms || {},
-    });
-  };
-
-  if (!clip && !audioTrack) {
+  if (!selectedClip && !selectedAudioTrack) {
     return (
-      <div className="w-[320px] h-full bg-card border-l border-border flex items-center justify-center p-6">
-        <p className="text-sm text-muted-foreground text-center">
-          Select a clip or audio track to edit its properties
-        </p>
+      <div className="w-80 bg-[#0a0a0a] border-l border-[#2a2a2a] flex items-center justify-center">
+        <p className="text-white/50 text-sm">Select a clip to edit properties</p>
       </div>
     );
   }
 
   return (
-    <div className="h-full overflow-auto bg-[#0a0a0a]">
-      <ScrollArea className="h-full">
-        <div className="p-4 space-y-4">
-          {/* Header */}
-          <div className="pb-3 border-b border-[#2a2a2a]">
-            <h2 className="text-sm font-semibold text-white">
-              {clip ? clip.name || 'Clip Properties' : audioTrack?.name || 'Audio Properties'}
-            </h2>
+    <div className="w-80 bg-[#0a0a0a] border-l border-[#2a2a2a] flex flex-col overflow-y-auto">
+      {/* Header */}
+      <div className="p-4 border-b border-[#2a2a2a]">
+        <h2 className="text-white font-semibold text-lg">
+          {selectedClip ? 'CaptionXX' : 'Audio Properties'}
+        </h2>
+      </div>
+
+      {/* Caption Properties */}
+      {selectedClip && (
+        <>
+          {/* Preset */}
+          <div className="px-4 py-3 border-b border-[#2a2a2a]">
+            <Label className="text-sm text-white/70 mb-2 block">Preset</Label>
+            <Select defaultValue="none">
+              <SelectTrigger className="bg-[#1a1a1a] border-[#2a2a2a] text-white">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-[#1a1a1a] border-[#2a2a2a]">
+                <SelectItem value="none">None</SelectItem>
+                <SelectItem value="preset1">Preset 1</SelectItem>
+                <SelectItem value="preset2">Preset 2</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
-          {clip && (
-            <Accordion type="multiple" defaultValue={['basic', 'transform']} className="space-y-3">
-              <AccordionItem value="basic" className="border border-[#2a2a2a] rounded-md bg-[#0a0a0a]">
-                <AccordionTrigger className="px-3 py-2 hover:no-underline hover:bg-[#1a1a1a] text-white">
-                  <span className="text-sm font-medium">Basic</span>
-                </AccordionTrigger>
-                <AccordionContent className="px-3 pb-3 space-y-3">
-                  <div>
-                    <label className="text-xs text-gray-400 mb-1 block">Name</label>
-                    <Input
-                      value={clip.name}
-                      onChange={(e) => updateClip(clip.id, { name: e.target.value })}
-                      className="h-8 text-sm bg-[#1a1a1a] border-[#2a2a2a] text-white"
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className="text-xs text-gray-400 mb-1 block">Start (ms)</label>
-                      <Input
-                        type="number"
-                        value={clip.startTime}
-                        onChange={(e) => updateClip(clip.id, { startTime: Number(e.target.value) })}
-                        className="h-8 text-sm bg-[#1a1a1a] border-[#2a2a2a] text-white"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs text-gray-400 mb-1 block">Duration (ms)</label>
-                      <Input
-                        type="number"
-                        value={clip.duration}
-                        onChange={(e) => updateClip(clip.id, { duration: Number(e.target.value) })}
-                        className="h-8 text-sm bg-[#1a1a1a] border-[#2a2a2a] text-white"
-                      />
-                    </div>
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
+          {/* Words Section */}
+          <PropertySection title="Words">
+            <div className="space-y-3">
+              <div>
+                <Label className="text-sm text-white/70 mb-2 block">Lines per Page</Label>
+                <Select defaultValue="one">
+                  <SelectTrigger className="bg-[#1a1a1a] border-[#2a2a2a] text-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#1a1a1a] border-[#2a2a2a]">
+                    <SelectItem value="one">One</SelectItem>
+                    <SelectItem value="two">Two</SelectItem>
+                    <SelectItem value="three">Three</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-              {transformValues && (
-                <AccordionItem value="transform" className="border border-[#2a2a2a] rounded-md bg-[#0a0a0a]">
-                  <AccordionTrigger className="px-3 py-2 hover:no-underline hover:bg-[#1a1a1a] text-white">
-                    <span className="text-sm font-medium">Transform</span>
-                  </AccordionTrigger>
-                  <AccordionContent className="px-4 pb-4 space-y-3">
-                    <div>
-                      <Label className="text-xs text-muted-foreground mb-2 block">Position</Label>
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <Label className="text-[10px] text-muted-foreground">X</Label>
-                          <Input
-                            type="number"
-                            className="mt-1 h-9 bg-background border-border"
-                            value={transformValues.position.x}
-                            onChange={(event) =>
-                              handleTransformChange('position', {
-                                ...transformValues.position,
-                                x: Number(event.target.value),
-                              })
-                            }
-                          />
-                        </div>
-                        <div>
-                          <Label className="text-[10px] text-muted-foreground">Y</Label>
-                          <Input
-                            type="number"
-                            className="mt-1 h-9 bg-background border-border"
-                            value={transformValues.position.y}
-                            onChange={(event) =>
-                              handleTransformChange('position', {
-                                ...transformValues.position,
-                                y: Number(event.target.value),
-                              })
-                            }
-                          />
-                        </div>
-                      </div>
-                    </div>
+              <div>
+                <Label className="text-sm text-white/70 mb-2 block">Words per line</Label>
+                <Select defaultValue="punctuation">
+                  <SelectTrigger className="bg-[#1a1a1a] border-[#2a2a2a] text-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#1a1a1a] border-[#2a2a2a]">
+                    <SelectItem value="punctuation">Punctuation</SelectItem>
+                    <SelectItem value="auto">Auto</SelectItem>
+                    <SelectItem value="manual">Manual</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-                    <div>
-                      <Label className="text-xs text-muted-foreground mb-2 block">Scale</Label>
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <Label className="text-[10px] text-muted-foreground">X</Label>
-                          <Input
-                            type="number"
-                            step="0.1"
-                            className="mt-1 h-9 bg-background border-border"
-                            value={transformValues.scale.x}
-                            onChange={(event) =>
-                              handleTransformChange('scale', {
-                                ...transformValues.scale,
-                                x: Number(event.target.value),
-                              })
-                            }
-                          />
-                        </div>
-                        <div>
-                          <Label className="text-[10px] text-muted-foreground">Y</Label>
-                          <Input
-                            type="number"
-                            step="0.1"
-                            className="mt-1 h-9 bg-background border-border"
-                            value={transformValues.scale.y}
-                            onChange={(event) =>
-                              handleTransformChange('scale', {
-                                ...transformValues.scale,
-                                y: Number(event.target.value),
-                              })
-                            }
-                          />
-                        </div>
-                      </div>
-                    </div>
+              <div>
+                <Label className="text-sm text-white/70 mb-2 block">Words in line</Label>
+                <Select defaultValue="page">
+                  <SelectTrigger className="bg-[#1a1a1a] border-[#2a2a2a] text-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#1a1a1a] border-[#2a2a2a]">
+                    <SelectItem value="page">Page</SelectItem>
+                    <SelectItem value="line">Line</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-                    <div>
-                      <Label className="text-xs text-muted-foreground">Rotation (degrees)</Label>
-                      <Input
-                        type="number"
-                        className="mt-1.5 h-9 bg-background border-border"
-                        value={transformValues.rotation}
-                        onChange={(event) => handleTransformChange('rotation', Number(event.target.value))}
-                      />
-                    </div>
+              <div>
+                <Label className="text-sm text-white/70 mb-2 block">Position</Label>
+                <Select defaultValue="auto">
+                  <SelectTrigger className="bg-[#1a1a1a] border-[#2a2a2a] text-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#1a1a1a] border-[#2a2a2a]">
+                    <SelectItem value="auto">Auto</SelectItem>
+                    <SelectItem value="top">Top</SelectItem>
+                    <SelectItem value="center">Center</SelectItem>
+                    <SelectItem value="bottom">Bottom</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <Label className="text-xs text-muted-foreground">Opacity</Label>
-                        <span className="text-xs text-foreground">{(transformValues.opacity * 100).toFixed(0)}%</span>
-                      </div>
-                      <Slider
-                        min={0}
-                        max={1}
-                        step={0.01}
-                        value={[transformValues.opacity]}
-                        onValueChange={(value) => handleTransformChange('opacity', value[0])}
-                        className="mt-1.5"
-                      />
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-              )}
+              <div>
+                <Label className="text-sm text-white/70 mb-2 block">Transition</Label>
+                <Select defaultValue="none">
+                  <SelectTrigger className="bg-[#1a1a1a] border-[#2a2a2a] text-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#1a1a1a] border-[#2a2a2a]">
+                    <SelectItem value="none">None</SelectItem>
+                    <SelectItem value="fade">Fade</SelectItem>
+                    <SelectItem value="slide">Slide</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </PropertySection>
 
-              <AccordionItem value="keyframes" className="border border-border rounded-lg bg-muted/20">
-                <AccordionTrigger className="px-4 py-3 hover:no-underline">
-                  <span className="text-sm font-medium">Keyframes</span>
-                </AccordionTrigger>
-                <AccordionContent className="px-4 pb-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <p className="text-xs text-muted-foreground">Current: {formatTime(playback.currentTime)}</p>
-                    <Button size="sm" variant="outline" onClick={() => handleAddKeyframe(clip.id)} className="h-8">
-                      Add
-                    </Button>
-                  </div>
-                  <div className="space-y-2">
-                    {sortedKeyframes.length === 0 && (
-                      <p className="text-xs text-muted-foreground">No keyframes yet.</p>
-                    )}
-                    {sortedKeyframes.map((keyframe) => (
-                      <div
-                        key={keyframe.id}
-                        className="flex items-center justify-between bg-background border border-border rounded-lg px-3 py-2"
-                      >
-                        <span className="text-xs text-foreground">{formatTime(keyframe.time)}</span>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-7 w-7"
-                          onClick={() => removeKeyframe(keyframe.id)}
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
-          )}
+          {/* Animations Section */}
+          <PropertySection title="Animations">
+            <div>
+              <Label className="text-sm text-white/70 mb-2 block">Animation</Label>
+              <Select defaultValue="none">
+                <SelectTrigger className="bg-[#1a1a1a] border-[#2a2a2a] text-white">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-[#1a1a1a] border-[#2a2a2a]">
+                  <SelectItem value="none">None</SelectItem>
+                  <SelectItem value="bounce">Bounce</SelectItem>
+                  <SelectItem value="scale">Scale</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </PropertySection>
 
-          {audioTrack && (
-            <Accordion type="multiple" defaultValue={['audio']} className="space-y-2">
-              <AccordionItem value="audio" className="border border-border rounded-lg bg-muted/20">
-                <AccordionTrigger className="px-4 py-3 hover:no-underline">
-                  <span className="text-sm font-medium">Audio</span>
-                </AccordionTrigger>
-                <AccordionContent className="px-4 pb-4 space-y-3">
-                  <div>
-                    <Label className="text-xs text-muted-foreground">Name</Label>
-                    <Input
-                      className="mt-1.5 h-9 bg-background border-border"
-                      value={audioTrack.name}
-                      onChange={(event) => updateAudioTrack(audioTrack.id, { name: event.target.value })}
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <Label className="text-xs text-muted-foreground">Start (ms)</Label>
-                      <Input
-                        type="number"
-                        className="mt-1.5 h-9 bg-background border-border"
-                        value={audioTrack.startTime}
-                        onChange={(event) => updateAudioTrack(audioTrack.id, { startTime: Number(event.target.value) })}
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-xs text-muted-foreground">Duration (ms)</Label>
-                      <Input
-                        type="number"
-                        className="mt-1.5 h-9 bg-background border-border"
-                        value={audioTrack.duration}
-                        onChange={(event) => updateAudioTrack(audioTrack.id, { duration: Number(event.target.value) })}
-                      />
-                    </div>
-                  </div>
+          {/* Colors Section */}
+          <PropertySection title="Colors">
+            <div className="space-y-3">
+              <ColorPicker
+                label="Appeared"
+                value="#FFFFFF"
+                onChange={() => {}}
+              />
 
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <Label className="text-xs text-muted-foreground">Volume</Label>
-                      <span className="text-xs text-foreground">{(audioTrack.volume * 100).toFixed(0)}%</span>
-                    </div>
-                    <Slider
-                      min={0}
-                      max={1}
-                      step={0.01}
-                      value={[audioTrack.volume]}
-                      onValueChange={(value) => updateAudioTrack(audioTrack.id, { volume: value[0] })}
-                      className="mt-1.5"
-                    />
-                  </div>
+              <ColorPicker
+                label="Active"
+                value="#50FF12"
+                onChange={() => {}}
+              />
 
-                  <div className="flex items-center justify-between">
-                    <Label className="text-xs text-muted-foreground">Muted</Label>
-                    <Switch
-                      checked={audioTrack.isMuted}
-                      onCheckedChange={(checked) => updateAudioTrack(audioTrack.id, { isMuted: checked })}
-                    />
-                  </div>
+              <ColorPicker
+                label="Active Fill"
+                value="#7E12FF"
+                onChange={() => {}}
+              />
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <Label className="text-xs text-muted-foreground">Fade In (ms)</Label>
-                      <Input
-                        type="number"
-                        className="mt-1.5 h-9 bg-background border-border"
-                        value={audioTrack.fadeInDuration}
-                        onChange={(event) => updateAudioTrack(audioTrack.id, { fadeInDuration: Number(event.target.value) })}
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-xs text-muted-foreground">Fade Out (ms)</Label>
-                      <Input
-                        type="number"
-                        className="mt-1.5 h-9 bg-background border-border"
-                        value={audioTrack.fadeOutDuration}
-                        onChange={(event) => updateAudioTrack(audioTrack.id, { fadeOutDuration: Number(event.target.value) })}
-                      />
-                    </div>
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
-          )}
-        </div>
-      </ScrollArea>
+              <ColorPicker
+                label="Emphasize"
+                value="transparent"
+                onChange={() => {}}
+              />
+
+              <div className="flex items-center justify-between">
+                <Label className="text-sm text-white/70">Preserved Color</Label>
+                <Switch />
+              </div>
+            </div>
+          </PropertySection>
+
+          {/* Styles Section */}
+          <PropertySection title="Styles">
+            <div className="space-y-3">
+              <div>
+                <Label className="text-sm text-white/70 mb-2 block">Font</Label>
+                <Select defaultValue="opensans">
+                  <SelectTrigger className="bg-[#1a1a1a] border-[#2a2a2a] text-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#1a1a1a] border-[#2a2a2a]">
+                    <SelectItem value="opensans">Open Sans</SelectItem>
+                    <SelectItem value="roboto">Roboto</SelectItem>
+                    <SelectItem value="montserrat">Montserrat</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label className="text-sm text-white/70 mb-2 block">Weight</Label>
+                <Select defaultValue="regular">
+                  <SelectTrigger className="bg-[#1a1a1a] border-[#2a2a2a] text-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#1a1a1a] border-[#2a2a2a]">
+                    <SelectItem value="regular">Regular</SelectItem>
+                    <SelectItem value="medium">Medium</SelectItem>
+                    <SelectItem value="bold">Bold</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label className="text-sm text-white/70 mb-2 block">Size</Label>
+                <Input
+                  type="number"
+                  defaultValue={64}
+                  className="bg-[#1a1a1a] border-[#2a2a2a] text-white"
+                />
+              </div>
+
+              <ColorPicker
+                label="Color"
+                value="#D3D3D3"
+                onChange={() => {}}
+              />
+            </div>
+          </PropertySection>
+        </>
+      )}
+
+      {/* Audio Track Properties */}
+      {selectedAudioTrack && (
+        <PropertySection title="Audio">
+          <div className="space-y-3">
+            <div>
+              <Label className="text-sm text-white/70 mb-2 block">Volume</Label>
+              <Input
+                type="number"
+                min={0}
+                max={100}
+                defaultValue={Math.round(selectedAudioTrack.volume * 100)}
+                className="bg-[#1a1a1a] border-[#2a2a2a] text-white"
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <Label className="text-sm text-white/70">Muted</Label>
+              <Switch checked={selectedAudioTrack.isMuted} />
+            </div>
+          </div>
+        </PropertySection>
+      )}
     </div>
   );
-}
-
-function formatTime(ms: number): string {
-  const totalSeconds = Math.floor(ms / 1000);
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  const milliseconds = ms % 1000;
-  return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}.${milliseconds.toString().padStart(3, '0')}`;
 }

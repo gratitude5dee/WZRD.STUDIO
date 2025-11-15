@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import { Player, PlayerRef } from '@remotion/player';
 import { useVideoEditorStore } from '@/store/videoEditorStore';
 import { EditorComposition } from '../remotion/EditorComposition';
+import { CanvasControls } from './CanvasControls';
 
 interface PreviewCanvasProps {
   selectedClipIds: string[];
@@ -75,32 +76,38 @@ export default function PreviewCanvas({ selectedClipIds }: PreviewCanvasProps) {
   }, [composition.aspectRatio]);
 
   return (
-    <div className="h-full flex items-center justify-center bg-muted/20 relative overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-br from-muted/10 via-transparent to-muted/10" />
-      <div 
-        className="relative w-full max-w-[1280px] mx-auto shadow-2xl rounded-lg overflow-hidden border border-border/50"
-        style={{ aspectRatio: aspectRatioValue }}
-      >
-        <Player
-          ref={playerRef}
-          component={EditorComposition as any}
-          durationInFrames={durationInFrames}
-          fps={composition.fps}
-          compositionWidth={composition.width}
-          compositionHeight={composition.height}
-          inputProps={{
-            clips,
-            audioTracks,
-            composition,
-            selectedClipIds,
-            keyframes,
-          }}
-          controls={false}
-          spaceKeyToPlayOrPause={false}
-          clickToPlay={false}
-          style={{ width: '100%', height: '100%' }}
-        />
+    <div className="h-full flex flex-col bg-[#1a1a1a]">
+      {/* Video Preview */}
+      <div className="flex-1 flex items-center justify-center relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-muted/10 via-transparent to-muted/10" />
+        <div 
+          className="relative w-full max-w-[1280px] mx-auto shadow-2xl rounded-lg overflow-hidden border border-border/50"
+          style={{ aspectRatio: aspectRatioValue }}
+        >
+          <Player
+            ref={playerRef}
+            component={EditorComposition as any}
+            durationInFrames={durationInFrames}
+            fps={composition.fps}
+            compositionWidth={composition.width}
+            compositionHeight={composition.height}
+            inputProps={{
+              clips,
+              audioTracks,
+              composition,
+              selectedClipIds,
+              keyframes,
+            }}
+            controls={false}
+            spaceKeyToPlayOrPause={false}
+            clickToPlay={false}
+            style={{ width: '100%', height: '100%' }}
+          />
+        </div>
       </div>
+
+      {/* Canvas Controls */}
+      <CanvasControls />
     </div>
   );
 }
