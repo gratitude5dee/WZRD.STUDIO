@@ -29,7 +29,7 @@
 
   <!-- Demo Video -->
   <video width="100%" max-width="800px" autoplay loop muted playsinline>
-    <source src="/lovable-uploads/wzrd-demo.mp4" type="video/mp4">
+    <source src="/public/wzrdstudiointro1.mov" type="video/mov">
     <source src="/lovable-uploads/wzrd-demo.webm" type="video/webm">
     Your browser does not support the video tag.
   </video>
