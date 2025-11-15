@@ -75,8 +75,12 @@ export default function PreviewCanvas({ selectedClipIds }: PreviewCanvasProps) {
   }, [composition.aspectRatio]);
 
   return (
-    <div className="flex-1 flex items-center justify-center bg-black">
-      <div className="w-full max-w-[1280px]" style={{ aspectRatio: aspectRatioValue }}>
+    <div className="h-full flex items-center justify-center bg-muted/20 relative overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-br from-muted/10 via-transparent to-muted/10" />
+      <div 
+        className="relative w-full max-w-[1280px] mx-auto shadow-2xl rounded-lg overflow-hidden border border-border/50"
+        style={{ aspectRatio: aspectRatioValue }}
+      >
         <Player
           ref={playerRef}
           component={EditorComposition as any}
@@ -94,7 +98,7 @@ export default function PreviewCanvas({ selectedClipIds }: PreviewCanvasProps) {
           controls={false}
           spaceKeyToPlayOrPause={false}
           clickToPlay={false}
-          style={{ width: '100%', height: '100%', backgroundColor: 'black' }}
+          style={{ width: '100%', height: '100%' }}
         />
       </div>
     </div>

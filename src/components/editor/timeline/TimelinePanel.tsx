@@ -53,14 +53,22 @@ export default function TimelinePanel() {
   };
 
   return (
-    <div className="h-[300px] bg-[#0F1117] border-t border-[#1D2130] flex flex-col">
+    <div className="h-full bg-muted/30 flex flex-col border-t border-border">
       <TimelineRuler zoom={zoom} scrollOffset={scrollOffset} durationMs={durationMs} />
       <div
         ref={scrollRef}
-        className="flex-1 overflow-auto"
+        className="flex-1 overflow-auto bg-muted/20"
         onScroll={handleScroll}
         onClick={handleEmptyClick}
+        style={{
+          backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 19px, hsl(var(--border) / 0.3) 19px, hsl(var(--border) / 0.3) 20px)',
+        }}
       >
+        {videoTracks.length === 0 && audioTracks.length === 0 && (
+          <div className="flex items-center justify-center h-32 text-muted-foreground text-sm">
+            Drop media files here to create timeline clips
+          </div>
+        )}
         {videoTracks.map((trackClips, index) => (
           <TimelineTrack
             key={`video-${index}`}

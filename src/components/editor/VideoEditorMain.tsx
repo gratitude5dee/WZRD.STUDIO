@@ -9,6 +9,7 @@ import PreviewCanvas from './preview/PreviewCanvas';
 import TimelinePanel from './timeline/TimelinePanel';
 import MediaLibrary from './media/MediaLibrary';
 import PropertiesPanel from './properties/PropertiesPanel';
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 
 export default function VideoEditorMain() {
   const { projectId } = useParams();
@@ -28,22 +29,39 @@ export default function VideoEditorMain() {
   useEditorShortcuts();
 
   return (
-    <div className="flex flex-col h-screen bg-[#0A0D16] text-white">
+    <div className="flex flex-col h-screen bg-background text-foreground">
       <PlaybackToolbar />
 
-      <div className="flex flex-1 overflow-hidden border-t border-[#1D2130]">
-        <MediaLibrary projectId={projectId} />
+      <ResizablePanelGroup direction="horizontal" className="flex-1 border-t border-border">
+        <ResizablePanel defaultSize={18} minSize={12} maxSize={25} className="bg-card">
+          <MediaLibrary projectId={projectId} />
+        </ResizablePanel>
 
-        <div className="flex-1 flex flex-col border-x border-[#1D2130]">
-          <PreviewCanvas selectedClipIds={selectedClipIds} />
-          <TimelinePanel />
-        </div>
+        <ResizableHandle className="w-1 bg-border hover:bg-primary/50 transition-colors" />
 
-        <PropertiesPanel
-          selectedClipIds={selectedClipIds}
-          selectedAudioTrackIds={selectedAudioTrackIds}
-        />
-      </div>
+        <ResizablePanel defaultSize={62} minSize={40}>
+          <ResizablePanelGroup direction="vertical">
+            <ResizablePanel defaultSize={65} minSize={30}>
+              <PreviewCanvas selectedClipIds={selectedClipIds} />
+            </ResizablePanel>
+            
+            <ResizableHandle className="h-1 bg-border hover:bg-primary/50 transition-colors" />
+            
+            <ResizablePanel defaultSize={35} minSize={20}>
+              <TimelinePanel />
+            </ResizablePanel>
+          </ResizablePanelGroup>
+        </ResizablePanel>
+
+        <ResizableHandle className="w-1 bg-border hover:bg-primary/50 transition-colors" />
+
+        <ResizablePanel defaultSize={20} minSize={15} maxSize={30} className="bg-card">
+          <PropertiesPanel
+            selectedClipIds={selectedClipIds}
+            selectedAudioTrackIds={selectedAudioTrackIds}
+          />
+        </ResizablePanel>
+      </ResizablePanelGroup>
     </div>
   );
 }

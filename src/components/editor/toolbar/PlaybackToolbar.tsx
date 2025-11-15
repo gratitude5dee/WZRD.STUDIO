@@ -61,40 +61,44 @@ export default function PlaybackToolbar() {
   const durationTimecode = useMemo(() => formatTime(composition.duration), [composition.duration]);
 
   return (
-    <div className="h-12 bg-[#0F1117] border-b border-[#1D2130] flex items-center px-4 justify-between text-white text-sm">
-      <div className="flex items-center gap-2">
-        <Button
-          variant="ghost"
-          className="text-white hover:bg-[#1D2130]"
-          size="icon"
-          onClick={() => skip('backward')}
-        >
-          <SkipBack className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="ghost"
-          className="text-white hover:bg-[#1D2130]"
-          size="icon"
-          onClick={togglePlayback}
-        >
-          {playback.isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-        </Button>
-        <Button
-          variant="ghost"
-          className="text-white hover:bg-[#1D2130]"
-          size="icon"
-          onClick={() => skip('forward')}
-        >
-          <SkipForward className="h-4 w-4" />
-        </Button>
-        <div className="ml-4 font-mono">
-          {currentTimecode} / {durationTimecode}
+    <div className="h-14 bg-card border-b border-border flex items-center px-4 justify-between shadow-sm">
+      <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            className="text-foreground hover:bg-accent hover:text-accent-foreground"
+            size="icon"
+            onClick={() => skip('backward')}
+          >
+            <SkipBack className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            className="text-foreground hover:bg-accent hover:text-accent-foreground"
+            size="icon"
+            onClick={togglePlayback}
+          >
+            {playback.isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+          </Button>
+          <Button
+            variant="ghost"
+            className="text-foreground hover:bg-accent hover:text-accent-foreground"
+            size="icon"
+            onClick={() => skip('forward')}
+          >
+            <SkipForward className="h-4 w-4" />
+          </Button>
+        </div>
+        <div className="ml-2 font-mono text-sm tabular-nums text-foreground">
+          <span className="text-primary">{currentTimecode}</span>
+          <span className="text-muted-foreground mx-1">/</span>
+          <span className="text-muted-foreground">{durationTimecode}</span>
         </div>
       </div>
 
-      <div className="flex items-center gap-3">
-        <div className="flex items-center gap-2 text-xs text-[#8E94A8]">
-          <span>Zoom</span>
+      <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <span className="font-medium">Zoom</span>
           <Slider
             className="w-32"
             min={10}
@@ -103,8 +107,12 @@ export default function PlaybackToolbar() {
             value={[timeline.zoom]}
             onValueChange={(value) => setTimelineZoom(value[0])}
           />
+          <span className="tabular-nums text-[10px]">{timeline.zoom}px/s</span>
         </div>
-        <Button className="bg-[#9b87f5] hover:bg-[#b5a3f9] text-white" onClick={() => setExportDialogOpen(true)}>
+        <Button 
+          className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm font-medium" 
+          onClick={() => setExportDialogOpen(true)}
+        >
           <Download className="h-4 w-4 mr-2" />
           Export
         </Button>
