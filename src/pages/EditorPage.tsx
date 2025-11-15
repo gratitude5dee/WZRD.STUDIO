@@ -3,10 +3,9 @@ import React, { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAppStore } from '@/store/appStore';
 import { VideoEditorProvider } from '@/providers/VideoEditorProvider';
-import VideoEditor from '@/components/editor/VideoEditor';
+import { UnifiedEditor } from '@/components/editor/UnifiedEditor';
 import { toast } from 'sonner';
 import AppHeader from '@/components/AppHeader';
-import { supabase } from '@/integrations/supabase/client';
 import { supabaseService } from '@/services/supabaseService';
 
 const EditorPage = () => {
@@ -51,7 +50,7 @@ const EditorPage = () => {
       <AppHeader />
       <div className="flex-1 bg-[#0F1117] overflow-hidden">
         <VideoEditorProvider>
-          <VideoEditor />
+          <UnifiedEditor />
         </VideoEditorProvider>
       </div>
     </div>
