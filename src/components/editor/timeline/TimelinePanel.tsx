@@ -44,6 +44,23 @@ export default function TimelinePanel() {
     }
   }, [scrollOffset]);
 
+  // Auto-scroll timeline during playback
+  useEffect(() => {
+    if (playback.isPlaying && scrollRef.current) {
+      const playheadPosition = (playback.currentTime / 1000) * zoom;
+      const viewportWidth = scrollRef.current.clientWidth;
+      const scrollLeft = scrollRef.current.scrollLeft;
+      
+      // Auto-scroll if playhead is near right edge (within 100px) or past it
+      if (playheadPosition > scrollLeft + viewportWidth - 100) {
+        scrollRef.current.scrollTo({
+          left: playheadPosition - 200,
+          behavior: 'smooth'
+        });
+      }
+    }
+  }, [playback.currentTime, playback.isPlaying, zoom]);
+
   const handleScroll = () => {
     if (!scrollRef.current) return;
     setTimelineScroll(scrollRef.current.scrollLeft);
