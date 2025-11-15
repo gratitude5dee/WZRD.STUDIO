@@ -8,6 +8,7 @@ import { FAQSection } from '@/components/landing/FAQSection';
 import { PricingSection } from '@/components/landing/PricingSection';
 import { StickyFooter } from '@/components/landing/StickyFooter';
 import { useAuth } from '@/providers/AuthProvider';
+import wzrdLogo from '@/assets/wzrd-logo.png';
 
 const Landing = () => {
   const navigate = useNavigate();
@@ -137,9 +138,7 @@ const Landing = () => {
             }}
             className="flex items-center justify-center gap-2 flex-shrink-0 z-50 cursor-pointer"
           >
-            <span className="text-white font-bold text-lg sm:text-xl tracking-tight bg-gradient-to-r from-[#e78a53] to-[#e78a53]/80 bg-clip-text text-transparent whitespace-nowrap">
-              WZRD.STUDIO
-            </span>
+            <img src={wzrdLogo} alt="WZRD.tech" className="h-8 sm:h-10 w-auto" />
           </Link>
 
           {/* Navigation Links */}
@@ -274,9 +273,7 @@ const Landing = () => {
           }}
           className="flex items-center justify-center gap-2 cursor-pointer"
         >
-          <span className="text-white font-bold text-lg tracking-tight bg-gradient-to-r from-[#e78a53] to-[#e78a53]/80 bg-clip-text text-transparent">
-            WZRD.STUDIO
-          </span>
+          <img src={wzrdLogo} alt="WZRD.tech" className="h-7 w-auto" />
         </Link>
 
         <button
