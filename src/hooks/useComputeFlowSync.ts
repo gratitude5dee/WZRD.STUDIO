@@ -11,18 +11,7 @@ export function useComputeFlowSync(projectId?: string | null) {
   // Initial load of media library
   useEffect(() => {
     if (!projectId) return;
-
-    const loadInitialMedia = async () => {
-      try {
-        const items = await videoEditorService.getMediaLibrary(projectId);
-        loadMediaLibrary(items);
-      } catch (error) {
-        console.error('Failed to load initial media:', error);
-        toast.error('Failed to load media library');
-      }
-    };
-
-    loadInitialMedia();
+    loadMediaLibrary(projectId);
   }, [projectId, loadMediaLibrary]);
 
   // Real-time subscription for new media

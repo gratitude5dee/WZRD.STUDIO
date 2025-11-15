@@ -9,28 +9,13 @@ export function useRealtimeTimelineSync(projectId?: string | null) {
   const syncAudioTrackFromRemote = useVideoEditorStore((state) => state.syncAudioTrackFromRemote);
   const removeClipLocal = useVideoEditorStore((state) => state.removeClipLocal);
   const removeAudioTrackLocal = useVideoEditorStore((state) => state.removeAudioTrackLocal);
-  const setClips = useVideoEditorStore((state) => state.setClips);
-  const setAudioTracks = useVideoEditorStore((state) => state.setAudioTracks);
-  const setComposition = useVideoEditorStore((state) => state.setComposition);
+  const loadProject = useVideoEditorStore((state) => state.loadProject);
 
   // Initial load of timeline state
   useEffect(() => {
     if (!projectId) return;
-
-    const loadInitialState = async () => {
-      try {
-        const { clips, audioTracks, composition } = await videoEditorService.loadProject(projectId);
-        setClips(clips);
-        setAudioTracks(audioTracks);
-        setComposition(composition);
-      } catch (error) {
-        console.error('Failed to load timeline state:', error);
-        toast.error('Failed to load project timeline');
-      }
-    };
-
-    loadInitialState();
-  }, [projectId, setClips, setAudioTracks, setComposition]);
+    loadProject(projectId);
+  }, [projectId, loadProject]);
 
   // Real-time subscriptions
   useEffect(() => {
