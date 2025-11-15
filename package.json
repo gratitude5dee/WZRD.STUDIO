@@ -8,6 +8,7 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
+    "test": "bun test src",
     "preview": "vite preview",
     "test:e2e": "playwright test",
     "remotion:preview": "remotion preview",

@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { videoEditorService } from '@/services/videoEditorService';
 
 export interface ProjectMetadata {
   id: string | null;
@@ -18,6 +19,7 @@ export interface ProjectMetadata {
 
 export interface Clip {
   id: string;
+  mediaItemId?: string;
   type: 'video' | 'image';
   name: string;
   url: string;
@@ -25,7 +27,10 @@ export interface Clip {
   startTime: number;
   duration: number;
   endTime?: number;
+  trackIndex?: number;
   layer: number;
+  trimStart?: number;
+  trimEnd?: number;
   transforms: {
     position: { x: number; y: number };
     scale: { x: number; y: number };
@@ -36,6 +41,7 @@ export interface Clip {
 
 export interface AudioTrack {
   id: string;
+  mediaItemId?: string;
   type: 'audio';
   name: string;
   url: string;
@@ -45,6 +51,30 @@ export interface AudioTrack {
   endTime?: number;
   volume: number;
   isMuted: boolean;
+  trackIndex?: number;
+  fadeInDuration?: number;
+  fadeOutDuration?: number;
+}
+
+export interface CompositionSettings {
+  width: number;
+  height: number;
+  fps: number;
+  aspectRatio: '16:9' | '9:16' | '1:1' | '4:3';
+  duration: number;
+  backgroundColor: string;
+}
+
+export interface LibraryMediaItem {
+  id: string;
+  projectId: string;
+  mediaType: 'video' | 'image' | 'audio';
+  name: string;
+  url: string | null;
+  durationSeconds?: number;
+  sourceType?: 'ai-generated' | 'uploaded' | 'stock';
+  status?: 'processing' | 'completed' | 'failed';
+  thumbnailUrl?: string | null;
 }
 
 // Union type for all media items
@@ -86,17 +116,22 @@ export interface DialogState {
   mediaLibrary: boolean;
 }
 
+
 export interface PlaybackState {
   isPlaying: boolean;
   currentTime: number;
   playbackRate: number;
   volume: number;
   isLooping: boolean;
+  inPoint: number;
+  outPoint: number;
 }
 
 export interface TimelineState {
   zoom: number;
-  scroll: number;
+  scrollOffset: number;
+  snapToGrid: boolean;
+  gridSize: number;
 }
 
 export interface AIGenerationState {
@@ -111,6 +146,7 @@ export interface VideoEditorState {
   playback: PlaybackState;
   clips: Clip[];
   audioTracks: AudioTrack[];
+  composition: CompositionSettings;
   selectedClipIds: string[];
   selectedAudioTrackIds: string[];
   clipConnections: ClipConnection[];
@@ -121,6 +157,16 @@ export interface VideoEditorState {
   generationParams: GenerationParams;
   aiGeneration: AIGenerationState;
   timeline: TimelineState;
+  mediaLibrary: {
+    items: LibraryMediaItem[];
+    isLoading: boolean;
+  };
+  clipboard: Clip[];
+  history: {
+    past: HistoryEntry[];
+    future: HistoryEntry[];
+    maxSize: number;
+  };
 
   setProjectId: (id: string | null) => void;
   setProjectName: (name: string) => void;
@@ -134,14 +180,21 @@ export interface VideoEditorState {
   setDuration: (duration: number) => void;
   setVolume: (volume: number) => void;
   setIsLooping: (isLooping: boolean) => void;
+  seek: (time: number) => void;
+  setInPoint: (time: number) => void;
+  setOutPoint: (time: number) => void;
 
   addClip: (clip: Clip) => void;
-  updateClip: (id: string, updates: Partial<Clip>) => void;
+  updateClip: (id: string, updates: Partial<Clip>, options?: { skipHistory?: boolean }) => void;
   removeClip: (id: string) => void;
+  removeClipLocal: (id: string) => void;
+  syncClipFromRemote: (clip: Clip) => void;
 
   addAudioTrack: (track: AudioTrack) => void;
-  updateAudioTrack: (id: string, updates: Partial<AudioTrack>) => void;
+  updateAudioTrack: (id: string, updates: Partial<AudioTrack>, options?: { skipHistory?: boolean }) => void;
   removeAudioTrack: (id: string) => void;
+  removeAudioTrackLocal: (id: string) => void;
+  syncAudioTrackFromRemote: (track: AudioTrack) => void;
 
   selectClip: (id: string, addToSelection?: boolean) => void;
   deselectClip: (id: string) => void;
@@ -177,9 +230,48 @@ export interface VideoEditorState {
   zoomTimelineOut: (step?: number) => void;
   setTimelineScroll: (scroll: number) => void;
   scrollTimelineBy: (delta: number) => void;
+  setSnapToGrid: (enabled: boolean) => void;
+  nudgeSelectedClips: (deltaMs: number) => void;
+
+  setCompositionSettings: (settings: Partial<CompositionSettings>) => void;
+  loadProject: (projectId: string) => Promise<void>;
+  loadMediaLibrary: (projectId: string) => Promise<void>;
+  setMediaLibraryItems: (items: LibraryMediaItem[]) => void;
+  addMediaLibraryItem: (item: LibraryMediaItem) => void;
+  clearMediaLibrary: () => void;
+  setMediaLibraryLoading: (isLoading: boolean) => void;
+
+  pushHistory: () => void;
+  undo: () => void;
+  redo: () => void;
+  copySelectedClips: () => void;
+  pasteClipboard: () => void;
 
   reset: () => void;
 }
+
+type HistoryEntry = {
+  clips: Clip[];
+  audioTracks: AudioTrack[];
+  playback: PlaybackState;
+  timeline: TimelineState;
+  composition: CompositionSettings;
+};
+
+const cloneSlice = <T>(value: T): T => JSON.parse(JSON.stringify(value));
+
+const createHistoryEntry = (state: VideoEditorState): HistoryEntry => ({
+  clips: cloneSlice(state.clips),
+  audioTracks: cloneSlice(state.audioTracks),
+  playback: cloneSlice(state.playback),
+  timeline: cloneSlice(state.timeline),
+  composition: cloneSlice(state.composition),
+});
+
+const createId = () =>
+  typeof crypto !== 'undefined' && 'randomUUID' in crypto
+    ? crypto.randomUUID()
+    : Math.random().toString(36).slice(2);
 
 const initialState: Pick<
   VideoEditorState,
@@ -187,6 +279,7 @@ const initialState: Pick<
   | 'playback'
   | 'clips'
   | 'audioTracks'
+  | 'composition'
   | 'selectedClipIds'
   | 'selectedAudioTrackIds'
   | 'clipConnections'
@@ -197,6 +290,9 @@ const initialState: Pick<
   | 'generationParams'
   | 'aiGeneration'
   | 'timeline'
+  | 'mediaLibrary'
+  | 'clipboard'
+  | 'history'
 > = {
   project: {
     id: null,
@@ -216,9 +312,19 @@ const initialState: Pick<
     playbackRate: 1,
     volume: 1,
     isLooping: false,
+    inPoint: 0,
+    outPoint: 0,
   },
   clips: [],
   audioTracks: [],
+  composition: {
+    width: 1920,
+    height: 1080,
+    fps: 30,
+    aspectRatio: '16:9',
+    duration: 0,
+    backgroundColor: '#000000',
+  },
   selectedClipIds: [],
   selectedAudioTrackIds: [],
   clipConnections: [],
@@ -244,12 +350,24 @@ const initialState: Pick<
     lastGeneratedId: undefined,
   },
   timeline: {
-    zoom: 1,
-    scroll: 0,
+    zoom: 50,
+    scrollOffset: 0,
+    snapToGrid: true,
+    gridSize: 100,
+  },
+  mediaLibrary: {
+    items: [],
+    isLoading: false,
+  },
+  clipboard: [],
+  history: {
+    past: [],
+    future: [],
+    maxSize: 50,
   },
 };
 
-export const useVideoEditorStore = create<VideoEditorState>((set) => ({
+export const useVideoEditorStore = create<VideoEditorState>((set, get) => ({
   ...initialState,
 
   setProjectId: (id) =>
@@ -306,6 +424,18 @@ export const useVideoEditorStore = create<VideoEditorState>((set) => ({
     set((state) => ({
       playback: { ...state.playback, currentTime: Math.max(0, time) },
     })),
+  seek: (time) =>
+    set((state) => ({
+      playback: { ...state.playback, currentTime: Math.max(0, time) },
+    })),
+  setInPoint: (time) =>
+    set((state) => ({
+      playback: { ...state.playback, inPoint: Math.max(0, time) },
+    })),
+  setOutPoint: (time) =>
+    set((state) => ({
+      playback: { ...state.playback, outPoint: Math.max(0, time) },
+    })),
   setPlaybackRate: (rate) =>
     set((state) => ({
       playback: { ...state.playback, playbackRate: Math.max(0.1, rate) },
@@ -313,6 +443,7 @@ export const useVideoEditorStore = create<VideoEditorState>((set) => ({
   setDuration: (duration) =>
     set((state) => ({
       project: { ...state.project, duration: Math.max(0, duration) },
+      composition: { ...state.composition, duration: Math.max(0, duration) },
       playback: {
         ...state.playback,
         currentTime: Math.min(state.playback.currentTime, Math.max(0, duration)),
@@ -330,23 +461,43 @@ export const useVideoEditorStore = create<VideoEditorState>((set) => ({
       playback: { ...state.playback, isLooping },
     })),
 
-  addClip: (clip) =>
+  addClip: (clip) => {
+    get().pushHistory();
     set((state) => ({
       clips: [...state.clips, clip],
-    })),
-  updateClip: (id, updates) =>
+    }));
+    const projectId = get().project.id;
+    if (projectId) {
+      videoEditorService.saveTimelineClip(projectId, clip);
+    }
+  },
+  updateClip: (id, updates, options) => {
+    let updatedClip: Clip | undefined;
+    if (!options?.skipHistory) {
+      get().pushHistory();
+    }
     set((state) => ({
-      clips: state.clips.map((clip) =>
-        clip.id === id
-          ? {
-              ...clip,
-              ...updates,
-              transforms: updates.transforms ?? clip.transforms,
-            }
-          : clip
-      ),
-    })),
-  removeClip: (id) =>
+      clips: state.clips.map((clip) => {
+        if (clip.id !== id) {
+          return clip;
+        }
+        updatedClip = {
+          ...clip,
+          ...updates,
+          transforms: updates.transforms
+            ? { ...clip.transforms, ...updates.transforms }
+            : clip.transforms,
+        };
+        return updatedClip;
+      }),
+    }));
+    const projectId = get().project.id;
+    if (projectId && updatedClip) {
+      videoEditorService.saveTimelineClip(projectId, updatedClip);
+    }
+  },
+  removeClip: (id) => {
+    get().pushHistory();
     set((state) => ({
       clips: state.clips.filter((clip) => clip.id !== id),
       selectedClipIds: state.selectedClipIds.filter((clipId) => clipId !== id),
@@ -355,28 +506,75 @@ export const useVideoEditorStore = create<VideoEditorState>((set) => ({
       ),
       keyframes: state.keyframes.filter((keyframe) => keyframe.targetId !== id),
       selectedKeyframeIds: state.selectedKeyframeIds.filter((keyframeId) => keyframeId !== id),
+    }));
+    videoEditorService.deleteTimelineClip(id);
+  },
+  removeClipLocal: (id) =>
+    set((state) => ({
+      clips: state.clips.filter((clip) => clip.id !== id),
+      selectedClipIds: state.selectedClipIds.filter((clipId) => clipId !== id),
     })),
+  syncClipFromRemote: (clip) =>
+    set((state) => {
+      const exists = state.clips.some((item) => item.id === clip.id);
+      return {
+        clips: exists
+          ? state.clips.map((item) => (item.id === clip.id ? clip : item))
+          : [...state.clips, clip],
+      };
+    }),
 
-  addAudioTrack: (track) =>
+  addAudioTrack: (track) => {
+    get().pushHistory();
     set((state) => ({
       audioTracks: [...state.audioTracks, track],
-    })),
-  updateAudioTrack: (id, updates) =>
+    }));
+    const projectId = get().project.id;
+    if (projectId) {
+      videoEditorService.saveAudioTrack(projectId, track);
+    }
+  },
+  updateAudioTrack: (id, updates, options) => {
+    let updatedTrack: AudioTrack | undefined;
+    if (!options?.skipHistory) {
+      get().pushHistory();
+    }
     set((state) => ({
-      audioTracks: state.audioTracks.map((track) =>
-        track.id === id
-          ? {
-              ...track,
-              ...updates,
-            }
-          : track
-      ),
-    })),
-  removeAudioTrack: (id) =>
+      audioTracks: state.audioTracks.map((track) => {
+        if (track.id !== id) {
+          return track;
+        }
+        updatedTrack = { ...track, ...updates };
+        return updatedTrack;
+      }),
+    }));
+    const projectId = get().project.id;
+    if (projectId && updatedTrack) {
+      videoEditorService.saveAudioTrack(projectId, updatedTrack);
+    }
+  },
+  removeAudioTrack: (id) => {
+    get().pushHistory();
+    set((state) => ({
+      audioTracks: state.audioTracks.filter((track) => track.id !== id),
+      selectedAudioTrackIds: state.selectedAudioTrackIds.filter((trackId) => trackId !== id),
+    }));
+    videoEditorService.deleteAudioTrack(id);
+  },
+  removeAudioTrackLocal: (id) =>
     set((state) => ({
       audioTracks: state.audioTracks.filter((track) => track.id !== id),
       selectedAudioTrackIds: state.selectedAudioTrackIds.filter((trackId) => trackId !== id),
     })),
+  syncAudioTrackFromRemote: (track) =>
+    set((state) => {
+      const exists = state.audioTracks.some((item) => item.id === track.id);
+      return {
+        audioTracks: exists
+          ? state.audioTracks.map((item) => (item.id === track.id ? track : item))
+          : [...state.audioTracks, track],
+      };
+    }),
 
   selectClip: (id, addToSelection = false) =>
     set((state) => ({
@@ -486,33 +684,218 @@ export const useVideoEditorStore = create<VideoEditorState>((set) => ({
 
   setTimelineZoom: (zoom) =>
     set((state) => ({
-      timeline: { ...state.timeline, zoom: Math.max(0.1, Math.min(zoom, 10)) },
+      timeline: { ...state.timeline, zoom: Math.max(10, Math.min(zoom, 400)) },
     })),
-  zoomTimelineIn: (step = 0.1) =>
+  zoomTimelineIn: (step = 5) =>
     set((state) => ({
       timeline: {
         ...state.timeline,
-        zoom: Math.max(0.1, Math.min(state.timeline.zoom + step, 10)),
+        zoom: Math.max(10, Math.min(state.timeline.zoom + step, 400)),
       },
     })),
-  zoomTimelineOut: (step = 0.1) =>
+  zoomTimelineOut: (step = 5) =>
     set((state) => ({
       timeline: {
         ...state.timeline,
-        zoom: Math.max(0.1, Math.min(state.timeline.zoom - step, 10)),
+        zoom: Math.max(10, Math.min(state.timeline.zoom - step, 400)),
       },
     })),
   setTimelineScroll: (scroll) =>
     set((state) => ({
-      timeline: { ...state.timeline, scroll: Math.max(0, scroll) },
+      timeline: { ...state.timeline, scrollOffset: Math.max(0, scroll) },
     })),
   scrollTimelineBy: (delta) =>
     set((state) => ({
       timeline: {
         ...state.timeline,
-        scroll: Math.max(0, state.timeline.scroll + delta),
+        scrollOffset: Math.max(0, state.timeline.scrollOffset + delta),
       },
     })),
+  setSnapToGrid: (enabled) =>
+    set((state) => ({
+      timeline: { ...state.timeline, snapToGrid: enabled },
+    })),
+  nudgeSelectedClips: (deltaMs) => {
+    if (!deltaMs) return;
+    const state = get();
+    if (state.selectedClipIds.length === 0 && state.selectedAudioTrackIds.length === 0) {
+      return;
+    }
+    state.pushHistory();
+    set((current) => ({
+      clips: current.clips.map((clip) =>
+        current.selectedClipIds.includes(clip.id)
+          ? {
+              ...clip,
+              startTime: Math.max(0, (clip.startTime ?? 0) + deltaMs),
+              endTime: Math.max(0, (clip.endTime ?? (clip.startTime ?? 0) + (clip.duration ?? 0)) + deltaMs),
+            }
+          : clip
+      ),
+      audioTracks: current.audioTracks.map((track) =>
+        current.selectedAudioTrackIds.includes(track.id)
+          ? {
+              ...track,
+              startTime: Math.max(0, (track.startTime ?? 0) + deltaMs),
+              endTime: Math.max(0, (track.endTime ?? (track.startTime ?? 0) + (track.duration ?? 0)) + deltaMs),
+            }
+          : track
+      ),
+    }));
+  },
 
-  reset: () => ({ ...initialState }),
+  setCompositionSettings: (settings) => {
+    get().pushHistory();
+    set((state) => ({
+      composition: { ...state.composition, ...settings },
+    }));
+    const projectId = get().project.id;
+    if (projectId) {
+      videoEditorService.updateComposition(projectId, settings);
+    }
+  },
+
+  loadProject: async (projectId) => {
+    try {
+      const [clips, audioTracks, composition] = await Promise.all([
+        videoEditorService.getTimelineClips(projectId),
+        videoEditorService.getAudioTracks(projectId),
+        videoEditorService.getComposition(projectId),
+      ]);
+
+      set((state) => ({
+        project: { ...state.project, id: projectId },
+        clips,
+        audioTracks,
+        composition,
+        selectedClipIds: [],
+        selectedAudioTrackIds: [],
+        history: { ...state.history, past: [], future: [] },
+        clipboard: [],
+      }));
+    } catch (error) {
+      console.error('Failed to load project state', error);
+    }
+  },
+
+  loadMediaLibrary: async (projectId) => {
+    set((state) => ({
+      mediaLibrary: { ...state.mediaLibrary, isLoading: true },
+    }));
+    try {
+      const items = await videoEditorService.getMediaItems(projectId);
+      set((state) => ({
+        mediaLibrary: { ...state.mediaLibrary, items, isLoading: false },
+      }));
+    } catch (error) {
+      console.error('Failed to load media library', error);
+      set((state) => ({
+        mediaLibrary: { ...state.mediaLibrary, isLoading: false },
+      }));
+    }
+  },
+
+  setMediaLibraryItems: (items) =>
+    set((state) => ({
+      mediaLibrary: { ...state.mediaLibrary, items },
+    })),
+  addMediaLibraryItem: (item) =>
+    set((state) => ({
+      mediaLibrary: { ...state.mediaLibrary, items: [item, ...state.mediaLibrary.items] },
+    })),
+  clearMediaLibrary: () =>
+    set((state) => ({
+      mediaLibrary: { ...state.mediaLibrary, items: [] },
+    })),
+  setMediaLibraryLoading: (isLoading) =>
+    set((state) => ({
+      mediaLibrary: { ...state.mediaLibrary, isLoading },
+    })),
+
+  pushHistory: () => {
+    const snapshot = createHistoryEntry(get());
+    set((state) => ({
+      history: {
+        ...state.history,
+        past: [...state.history.past, snapshot].slice(-state.history.maxSize),
+        future: [],
+      },
+    }));
+  },
+  undo: () => {
+    const state = get();
+    if (state.history.past.length === 0) {
+      return;
+    }
+    const previous = state.history.past[state.history.past.length - 1];
+    set((current) => ({
+      clips: previous.clips,
+      audioTracks: previous.audioTracks,
+      playback: previous.playback,
+      timeline: previous.timeline,
+      composition: previous.composition,
+      history: {
+        ...current.history,
+        past: current.history.past.slice(0, -1),
+        future: [createHistoryEntry(current), ...current.history.future].slice(
+          0,
+          current.history.maxSize
+        ),
+      },
+    }));
+  },
+  redo: () => {
+    const state = get();
+    if (state.history.future.length === 0) {
+      return;
+    }
+    const next = state.history.future[0];
+    set((current) => ({
+      clips: next.clips,
+      audioTracks: next.audioTracks,
+      playback: next.playback,
+      timeline: next.timeline,
+      composition: next.composition,
+      history: {
+        ...current.history,
+        past: [...current.history.past, createHistoryEntry(current)].slice(
+          -current.history.maxSize
+        ),
+        future: current.history.future.slice(1),
+      },
+    }));
+  },
+  copySelectedClips: () => {
+    const state = get();
+    const selected = state.clips.filter((clip) => state.selectedClipIds.includes(clip.id));
+    set({ clipboard: cloneSlice(selected) });
+  },
+  pasteClipboard: () => {
+    const state = get();
+    if (!state.clipboard.length) {
+      return;
+    }
+    state.pushHistory();
+    const offset = state.timeline.gridSize || 100;
+    const duplicates = state.clipboard.map((clip, index) => {
+      const startTime = (clip.startTime ?? 0) + offset * (index + 1);
+      const duration = clip.duration ?? 0;
+      return {
+        ...cloneSlice(clip),
+        id: createId(),
+        startTime,
+        endTime: startTime + duration,
+      };
+    });
+    set((current) => ({
+      clips: [...current.clips, ...duplicates],
+      selectedClipIds: duplicates.map((clip) => clip.id),
+    }));
+    const projectId = state.project.id;
+    if (projectId) {
+      duplicates.forEach((clip) => videoEditorService.saveTimelineClip(projectId, clip));
+    }
+  },
+
+  reset: () => set(() => ({ ...initialState })),
 }));
