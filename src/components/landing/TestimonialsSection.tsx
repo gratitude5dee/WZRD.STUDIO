@@ -3,29 +3,50 @@ import { TestimonialCard } from './TestimonialCard';
 
 const testimonials = [
   {
-    quote: "WZRDFLOW has completely transformed how we create content. The AI-powered workflows save us hours every day.",
-    author: "Sarah Chen",
-    title: "Creative Director at PixelPerfect",
+    quote: "The Creator Dashboard in WZRD.STUDIO is incredible. Built for creators and designers connecting our AI models has never been this smooth.",
+    author: "Sara Lin",
+    handle: "@sara.codes",
+    featured: true,
   },
   {
-    quote: "The visual workflow builder is intuitive and powerful. We've been able to automate our entire content pipeline.",
-    author: "Marcus Rodriguez",
-    title: "Lead Designer at BrandCraft",
+    quote: "WZRD.STUDIO's storyboard view is a game-changer. Planning narratives shot-by-shot has never been easier.",
+    author: "Chloe Winters",
+    handle: "@chloewinters",
+    featured: true,
   },
   {
-    quote: "Best investment we've made this year. The quality of AI-generated content is consistently impressive.",
-    author: "Emily Watson",
-    title: "Founder of CreativeHub",
+    quote: "WZRD.STUDIO is a lifesaver when deadlines are tight. Build, connect, and run AI workflows instantly.",
+    author: "James Roy",
+    handle: "@jamesrdev",
+    featured: true,
+  },
+  {
+    quote: "The node-based workflow is exactly what we needed. Creating complex AI pipelines has never been easier.",
+    author: "Arjun Mehta",
+    handle: "@arjdev",
+    featured: false,
+  },
+  {
+    quote: "Powerful AI tools that actually work. The timeline editor is smooth and the generation quality is top-tier.",
+    author: "Leo Martin",
+    handle: "@leobuilds",
+    featured: false,
+  },
+  {
+    quote: "Finally, a tool that makes AI content creation accessible without sacrificing quality or control.",
+    author: "Monica Reeves",
+    handle: "@monicareeves",
+    featured: false,
   },
 ];
 
 export function TestimonialsSection() {
   return (
-    <section className="py-24 px-4 bg-black relative overflow-hidden">
+    <section id="testimonials" className="py-24 px-4 bg-black relative overflow-hidden">
       {/* Background gradient */}
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#e78a53]/5 to-transparent pointer-events-none" />
       
-      <div className="container mx-auto max-w-6xl relative z-10">
+      <div className="container mx-auto max-w-7xl relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -33,15 +54,21 @@ export function TestimonialsSection() {
           transition={{ duration: 0.5 }}
           className="text-center mb-16"
         >
+          {/* Badge */}
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm mb-4">
+            <span className="text-sm text-white/90">Testimonials</span>
+          </div>
+          
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
-            Loved by Creators
+            What our users say
           </h2>
           <p className="text-lg text-white/60 max-w-2xl mx-auto">
-            Join thousands of creators who trust WZRDFLOW for their creative workflows
+            From intuitive design to powerful features, our app has become an essential tool for users around the world.
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        {/* Masonry-style grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-auto">
           {testimonials.map((testimonial, index) => (
             <TestimonialCard
               key={testimonial.author}
