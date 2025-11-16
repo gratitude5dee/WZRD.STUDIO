@@ -230,38 +230,4 @@ export const canvasService = {
 
       if (error) throw error;
     }
-  },
-
-  // Assets
-  async uploadAsset(projectId: string, file: File): Promise<string> {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('Not authenticated');
-
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${user.id}/${projectId}/${crypto.randomUUID()}.${fileExt}`;
-
-    const { error: uploadError } = await supabase.storage
-      .from('canvas')
-      .upload(fileName, file);
-
-    if (uploadError) throw uploadError;
-
-    const { data: { publicUrl } } = supabase.storage
-      .from('canvas')
-      .getPublicUrl(fileName);
-
-    // Record asset in database
-    await supabase.from('canvas_assets').insert({
-      project_id: projectId,
-      user_id: user.id,
-      asset_type: file.type.startsWith('image') ? 'image' : file.type.startsWith('video') ? 'video' : 'audio',
-      file_path: fileName,
-      file_name: file.name,
-      file_size: file.size,
-      mime_type: file.type,
-      metadata: {},
-    });
-
-    return publicUrl;
-  },
 };
