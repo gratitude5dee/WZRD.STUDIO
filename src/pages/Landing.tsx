@@ -104,11 +104,6 @@ const Landing = () => {
   };
 
   return (
-    <>
-      {showIntro && (
-        <MatrixIntroAnimation onComplete={() => setShowIntro(false)} />
-      )}
-      
     <div className="min-h-screen w-full relative bg-black">
       {/* Pearl Mist Background with Top Glow */}
       <div
@@ -142,7 +137,9 @@ const Landing = () => {
             }}
             className="flex items-center justify-center gap-2 flex-shrink-0 z-50 cursor-pointer"
           >
-            <img src={wzrdLogo} alt="WZRD.tech" className="h-12 sm:h-15 w-auto" />
+            <span className="text-white font-bold text-lg sm:text-xl tracking-tight bg-gradient-to-r from-[#8b5cf6] to-[#7c3aed] bg-clip-text text-transparent whitespace-nowrap">
+              WZRD.STUDIO
+            </span>
           </Link>
 
           {/* Navigation Links */}
@@ -277,7 +274,9 @@ const Landing = () => {
           }}
           className="flex items-center justify-center gap-2 cursor-pointer"
         >
-          <img src={wzrdLogo} alt="WZRD.tech" className="h-7 w-auto" />
+          <span className="text-white font-bold text-lg tracking-tight bg-gradient-to-r from-[#8b5cf6] to-[#7c3aed] bg-clip-text text-transparent">
+            WZRD.STUDIO
+          </span>
         </Link>
 
         <button
@@ -441,9 +440,11 @@ const Landing = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.3 }}
-              className="mb-8 flex justify-center"
+              className="mb-8"
             >
-              <img src={wzrdLogo} alt="WZRD.tech" className="h-60 sm:h-[21rem] lg:h-96 w-auto" />
+              <h1 className="text-4xl font-bold tracking-tight text-white sm:text-6xl lg:text-7xl">
+                <strong>WZRDFLOW</strong>
+              </h1>
             </motion.div>
 
             {/* Description */}
@@ -609,7 +610,6 @@ const Landing = () => {
         </div>
       </div>
     </div>
-    </>
   );
 };
 
