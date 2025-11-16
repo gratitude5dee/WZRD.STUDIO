@@ -1,15 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import Features from '@/components/landing/Features';
-import { TestimonialsSection } from '@/components/landing/TestimonialsSection';
-import { NewReleasePromo } from '@/components/landing/NewReleasePromo';
-import { FAQSection } from '@/components/landing/FAQSection';
-import { PricingSection } from '@/components/landing/PricingSection';
-import { StickyFooter } from '@/components/landing/StickyFooter';
 import { MatrixIntroAnimation } from '@/components/landing/MatrixIntroAnimation';
-import { HeroSection } from '@/components/home/HeroSection';
-import { FeaturesShowcase } from '@/components/landing/FeaturesShowcase';
+import { CyberpunkHero } from '@/components/landing/CyberpunkHero';
+import { CyberpunkFeatures } from '@/components/landing/CyberpunkFeatures';
+import { TestimonialStream } from '@/components/landing/TestimonialStream';
+import { PricingSection } from '@/components/landing/PricingSection';
+import { FAQSection } from '@/components/landing/FAQSection';
+import { StickyFooter } from '@/components/landing/StickyFooter';
 import { useAuth } from '@/providers/AuthProvider';
 import wzrdLogo from '@/assets/wzrd-logo.png';
 
@@ -583,30 +581,20 @@ const Landing = () => {
           zIndex: 1,
         }}
       >
-        {/* Hero Section */}
-        <HeroSection />
+        {/* Cyberpunk Hero Section */}
+        <CyberpunkHero />
 
-        {/* Features Showcase */}
-        <FeaturesShowcase />
+        {/* Cyberpunk Features Showcase */}
+        <CyberpunkFeatures />
 
-        {/* Features Section */}
-        <div id="features">
-          <Features />
+        {/* Testimonials Stream */}
+        <div id="testimonials">
+          <TestimonialStream />
         </div>
 
         {/* Pricing Section */}
-        <div id="pricing" className="-mt-16">
+        <div id="pricing">
           <PricingSection />
-        </div>
-            
-        {/* Testimonials Section */}
-        <div id="testimonials">
-          <TestimonialsSection />
-        </div>
-            
-        {/* New Release Promo */}
-        <div>
-          <NewReleasePromo />
         </div>
 
         {/* FAQ Section */}
