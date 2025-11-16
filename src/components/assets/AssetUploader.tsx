@@ -4,7 +4,6 @@
 // ============================================================================
 
 import React, { useCallback, useState } from "react";
-import { useDropzone } from "react-dnd";
 import { Upload, FileIcon, X, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -24,6 +23,8 @@ interface AssetUploaderProps {
   maxSize?: number; // in bytes
   acceptedFileTypes?: string[];
   onUploadComplete?: (assetIds: string[]) => void;
+  label?: string;
+  getAssetTypeForFile?: (file: File) => AssetType;
   className?: string;
 }
 
@@ -65,12 +66,25 @@ export const AssetUploader: React.FC<AssetUploaderProps> = ({
   maxSize = 50 * 1024 * 1024, // 50MB default
   acceptedFileTypes,
   onUploadComplete,
+  label,
+  getAssetTypeForFile,
   className,
 }) => {
   const [files, setFiles] = useState<FileWithPreview[]>([]);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({});
   const uploadMutation = useAssetUpload();
+  const displayLabel = label ?? assetType.toUpperCase();
+
+  const determineAssetType = useCallback(
+    (file: File): AssetType => {
+      if (getAssetTypeForFile) {
+        return getAssetTypeForFile(file);
+      }
+      return assetType;
+    },
+    [assetType, getAssetTypeForFile]
+  );
 
   const onDrop = useCallback(
     (acceptedFiles: File[]) => {
@@ -116,7 +130,7 @@ export const AssetUploader: React.FC<AssetUploaderProps> = ({
         // Upload
         const response = await uploadMutation.mutateAsync({
           projectId,
-          assetType,
+          assetType: determineAssetType(file),
           assetCategory,
           visibility,
           file: {
@@ -184,7 +198,7 @@ export const AssetUploader: React.FC<AssetUploaderProps> = ({
               Click to upload or drag and drop
             </p>
             <p className="text-xs text-muted-foreground">
-              {assetType.toUpperCase()} files up to {Math.round(maxSize / 1024 / 1024)}MB
+              {displayLabel} files up to {Math.round(maxSize / 1024 / 1024)}MB
             </p>
             <p className="text-xs text-muted-foreground mt-1">
               Max {maxFiles} files
