@@ -6,7 +6,7 @@ import { Logo } from '@/components/ui/logo';
 import InfiniteCanvas from '@/components/canvas/InfiniteCanvas';
 import { LayersPanel } from '@/components/canvas/LayersPanel';
 import { LeftSidebar } from '@/components/canvas/LeftSidebar';
-import { AIChat } from '@/components/canvas/AIChat';
+import { GenerationPanel } from '@/components/canvas/GenerationPanel';
 import { useCanvasStore } from '@/lib/stores/canvas-store';
 import { useAuth } from '@/providers/AuthProvider';
 import { toast } from 'sonner';
@@ -214,8 +214,8 @@ export default function KanvasPage() {
             onObjectSelect={(ids) => setSelectedIds(ids)}
           />
           
-          {/* AI Chat Interface */}
-          <AIChat />
+      {/* AI Generation Panel */}
+      <GenerationPanel />
         </div>
 
         {/* Right Panel - Layers */}

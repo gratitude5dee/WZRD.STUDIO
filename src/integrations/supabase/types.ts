@@ -2095,73 +2095,63 @@ export type Database = {
       }
       generations: {
         Row: {
-          api_provider: string
-          callback_received_at: string | null
-          created_at: string
-          external_request_id: string | null
-          failure_reason: string | null
+          canvas_id: string | null
+          cost_credits: number | null
+          created_at: string | null
+          error: string | null
+          generation_time_ms: number | null
           id: string
-          project_id: string | null
-          request_payload: Json
-          result_media_asset_id: string | null
-          shot_id: string | null
-          status: string
-          updated_at: string
+          input_image_url: string | null
+          lora_url: string | null
+          model: string
+          negative_prompt: string | null
+          object_id: string | null
+          output_image_url: string | null
+          prompt: string
+          settings: Json | null
+          status: string | null
+          updated_at: string | null
           user_id: string
         }
         Insert: {
-          api_provider: string
-          callback_received_at?: string | null
-          created_at?: string
-          external_request_id?: string | null
-          failure_reason?: string | null
+          canvas_id?: string | null
+          cost_credits?: number | null
+          created_at?: string | null
+          error?: string | null
+          generation_time_ms?: number | null
           id?: string
-          project_id?: string | null
-          request_payload: Json
-          result_media_asset_id?: string | null
-          shot_id?: string | null
-          status?: string
-          updated_at?: string
+          input_image_url?: string | null
+          lora_url?: string | null
+          model: string
+          negative_prompt?: string | null
+          object_id?: string | null
+          output_image_url?: string | null
+          prompt: string
+          settings?: Json | null
+          status?: string | null
+          updated_at?: string | null
           user_id: string
         }
         Update: {
-          api_provider?: string
-          callback_received_at?: string | null
-          created_at?: string
-          external_request_id?: string | null
-          failure_reason?: string | null
+          canvas_id?: string | null
+          cost_credits?: number | null
+          created_at?: string | null
+          error?: string | null
+          generation_time_ms?: number | null
           id?: string
-          project_id?: string | null
-          request_payload?: Json
-          result_media_asset_id?: string | null
-          shot_id?: string | null
-          status?: string
-          updated_at?: string
+          input_image_url?: string | null
+          lora_url?: string | null
+          model?: string
+          negative_prompt?: string | null
+          object_id?: string | null
+          output_image_url?: string | null
+          prompt?: string
+          settings?: Json | null
+          status?: string | null
+          updated_at?: string | null
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "generations_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "generations_result_media_asset_id_fkey"
-            columns: ["result_media_asset_id"]
-            isOneToOne: false
-            referencedRelation: "media_assets"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "generations_shot_id_fkey"
-            columns: ["shot_id"]
-            isOneToOne: false
-            referencedRelation: "shots"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       gigs: {
         Row: {
