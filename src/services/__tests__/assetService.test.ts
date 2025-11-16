@@ -188,10 +188,10 @@ describe("assetService", () => {
 
       const filters = {
         projectId: "project-123",
-        assetType: ["image", "video"],
-        assetCategory: ["upload"],
-        visibility: ["project"],
-        processingStatus: ["completed"],
+        assetType: ["image", "video"] as ("image" | "video")[],
+        assetCategory: ["upload"] as ("upload")[],
+        visibility: ["project"] as ("project")[],
+        processingStatus: ["completed"] as ("completed")[],
         searchQuery: "hero",
         dateFrom: "2024-01-01",
         dateTo: "2024-12-31",
