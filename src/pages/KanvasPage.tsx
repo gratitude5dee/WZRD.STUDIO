@@ -7,8 +7,14 @@ import InfiniteCanvas from '@/components/canvas/InfiniteCanvas';
 import { LayersPanel } from '@/components/canvas/LayersPanel';
 import { LeftSidebar } from '@/components/canvas/LeftSidebar';
 import { GenerationPanel } from '@/components/canvas/GenerationPanel';
+import { CollaboratorsPanel } from '@/components/canvas/CollaboratorsPanel';
+import { CanvasContextMenu } from '@/components/canvas/CanvasContextMenu';
+import { Cursors } from '@/components/canvas/Cursors';
 import { useCanvasStore } from '@/lib/stores/canvas-store';
 import { useAuth } from '@/providers/AuthProvider';
+import { useRealtimeSync } from '@/hooks/useRealtimeSync';
+import { usePresence } from '@/hooks/usePresence';
+import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import type { CanvasObject, ImageData } from '@/types/canvas';
@@ -19,10 +25,17 @@ export default function KanvasPage() {
   const [canvasSize, setCanvasSize] = useState({ width: 1920, height: 1080 });
   const [projectId, setProjectId] = useState<string>('temp-project');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
   const canvasContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { objects, addObject, setProjectId: setStoreProjectId } = useCanvasStore();
+  
+  // Real-time sync
+  useRealtimeSync(projectId);
+  
+  // Presence tracking
+  const { onlineUsers, updateCursor } = usePresence(projectId);
 
   // Initialize project
   useEffect(() => {
@@ -142,6 +155,8 @@ export default function KanvasPage() {
     }
   };
 
+  // Keyboard shortcuts (after functions are defined)
+  useKeyboardShortcuts(handleExportImage, handleSaveProject);
 
   return (
     <div className="h-screen flex flex-col bg-[#0A0A0A]">
@@ -214,8 +229,28 @@ export default function KanvasPage() {
             onObjectSelect={(ids) => setSelectedIds(ids)}
           />
           
-      {/* AI Generation Panel */}
-      <GenerationPanel />
+          {/* Collaborators Panel */}
+          <CollaboratorsPanel projectId={projectId} onlineUsers={onlineUsers} />
+          
+          {/* Other users' cursors */}
+          <Cursors users={onlineUsers} currentUserId={user?.id} />
+          
+          {/* Context Menu */}
+          {contextMenu && (
+            <CanvasContextMenu
+              x={contextMenu.x}
+              y={contextMenu.y}
+              onClose={() => setContextMenu(null)}
+              onAiTransform={() => {
+                setContextMenu(null);
+                // Focus on generation panel
+                document.querySelector('.generation-panel')?.scrollIntoView({ behavior: 'smooth' });
+              }}
+            />
+          )}
+          
+          {/* AI Generation Panel */}
+          <GenerationPanel />
         </div>
 
         {/* Right Panel - Layers */}
