@@ -101,6 +101,9 @@ export default {
 				}
 			},
 			fontFamily: {
+				display: ['Orbitron', 'sans-serif'],
+				body: ['JetBrains Mono', 'monospace'],
+				tech: ['Rajdhani', 'sans-serif'],
 				serif: ['Cinzel', 'serif'],
 				cyber: ['Orbitron', 'monospace'],
 				inter: ['Inter', 'sans-serif'],

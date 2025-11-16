@@ -36,6 +36,28 @@
  
 @layer base {
   :root {
+    /* Cyberpunk Primary Palette */
+    --cyber-void: 0 0% 4%;
+    --cyber-neon-cyan: 180 100% 50%;
+    --cyber-neon-magenta: 320 100% 50%;
+    --cyber-neon-green: 140 100% 50%;
+    --cyber-neon-yellow: 60 100% 50%;
+    --cyber-neon-purple: 280 100% 60%;
+    
+    /* Surface Colors */
+    --cyber-surface: 240 10% 8%;
+    --cyber-surface-elevated: 240 10% 12%;
+    --cyber-grid: 180 100% 50% / 0.1;
+    
+    /* Text Colors */
+    --text-cyber-primary: 180 100% 80%;
+    --text-cyber-secondary: 180 50% 60%;
+    --text-cyber-muted: 180 20% 40%;
+    
+    /* Glitch Colors */
+    --glitch-red: 0 100% 50%;
+    --glitch-blue: 200 100% 50%;
+
     /* Odyssey Light Mode - Cosmic Foundation */
     --background: 240 10% 96%;
     --foreground: 220 15% 15%;
