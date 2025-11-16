@@ -158,6 +158,24 @@ function VideoEditor() {
 }
 ```
 
+### Asset Playground Page
+
+Navigate to `/assets` inside the app to exercise the uploader and library components together. The page wires the two components to the same project so you can iterate on the full lifecycle in one place.
+
+## 🧪 Testing Asset Flows
+
+- `npm test src/components/assets` &mdash; Runs the Vitest suites that cover the uploader, library filtering, and service deletion logic.
+- `npm run test:e2e` &mdash; Launches Playwright against the `/assets` page to sign in, upload multiple file formats, verify processing updates, and archive/restore/delete assets end-to-end.
+
+### Test-Friendly Environment Flags
+
+| Variable | Purpose |
+| --- | --- |
+| `VITE_USE_MOCK_ASSETS` | Routes `assetService` and hooks to an in-memory store so tests never touch Supabase. |
+| `VITE_BYPASS_AUTH_FOR_TESTS` | Provides a mock user session and bypasses Supabase auth to keep Playwright fast and deterministic. |
+
+Both flags are set automatically for the `npm run test:e2e` script, but you can also export them locally while iterating on the `/assets` experience.
+
 ## 🗂️ File Structure
 
 ```

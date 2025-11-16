@@ -11,6 +11,10 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType>({ user: null, loading: true });
 
+const bypassAuthForTests =
+  (typeof import.meta !== 'undefined' && import.meta.env?.VITE_BYPASS_AUTH_FOR_TESTS === 'true') ||
+  (typeof process !== 'undefined' && process.env?.VITE_BYPASS_AUTH_FOR_TESTS === 'true');
+
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -18,6 +22,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
 
   useEffect(() => {
+    if (bypassAuthForTests) {
+      setUser({
+        id: 'test-user',
+        aud: 'authenticated',
+        email: 'asset-tests@local.dev',
+        phone: '',
+        app_metadata: {},
+        user_metadata: {},
+        created_at: new Date().toISOString(),
+        role: 'authenticated',
+        last_sign_in_at: new Date().toISOString(),
+        factors: [],
+      } as unknown as User);
+      setLoading(false);
+      return;
+    }
+
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
@@ -39,7 +60,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return () => {
       subscription.unsubscribe();
     };
-  }, [navigate, location.pathname]);
+  }, [navigate, location.pathname, bypassAuthForTests]);
 
   return (
     <AuthContext.Provider value={{ user, loading }}>

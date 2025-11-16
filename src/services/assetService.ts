@@ -4,6 +4,7 @@
 // ============================================================================
 
 import { supabase } from "@/integrations/supabase/client";
+import { mockAssetApi } from "./mockAssetApi";
 import type {
   ProjectAsset,
   AssetUploadRequest,
@@ -14,11 +15,18 @@ import type {
   AssetStats,
 } from "@/types/assets";
 
+const useMockAssets =
+  (typeof import.meta !== "undefined" && import.meta.env?.VITE_USE_MOCK_ASSETS === "true") ||
+  (typeof process !== "undefined" && process.env?.VITE_USE_MOCK_ASSETS === "true");
+
 export const assetService = {
   /**
    * Upload a new asset
    */
   async upload(request: AssetUploadRequest): Promise<AssetUploadResponse> {
+    if (useMockAssets) {
+      return mockAssetApi.upload(request);
+    }
     try {
       const { data, error } = await supabase.functions.invoke("asset-upload", {
         body: request,
@@ -36,11 +44,19 @@ export const assetService = {
    * List assets with filters
    */
   async list(filters: AssetFilters = {}): Promise<ProjectAsset[]> {
+    if (useMockAssets) {
+      return mockAssetApi.list(filters);
+    }
     try {
       let query = supabase
         .from("project_assets")
-        .select("*")
-        .eq("is_archived", false);
+        .select("*");
+
+      if (filters.onlyArchived) {
+        query = query.eq("is_archived", true);
+      } else if (!filters.includeArchived) {
+        query = query.eq("is_archived", false);
+      }
 
       // Apply filters
       if (filters.projectId) {
@@ -108,6 +124,9 @@ export const assetService = {
    * Get single asset by ID
    */
   async getById(assetId: string): Promise<ProjectAsset | null> {
+    if (useMockAssets) {
+      return mockAssetApi.getById(assetId);
+    }
     try {
       const { data, error } = await supabase
         .from("project_assets")
@@ -137,6 +156,9 @@ export const assetService = {
     assetId: string,
     updates: Partial<ProjectAsset>
   ): Promise<ProjectAsset> {
+    if (useMockAssets) {
+      return mockAssetApi.update(assetId, updates);
+    }
     try {
       const { data, error } = await supabase
         .from("project_assets")
@@ -157,6 +179,10 @@ export const assetService = {
    * Delete asset (hard delete from storage and database)
    */
   async delete(assetId: string): Promise<void> {
+    if (useMockAssets) {
+      await mockAssetApi.delete(assetId);
+      return;
+    }
     try {
       // Get asset details
       const asset = await this.getById(assetId);
@@ -202,6 +228,9 @@ export const assetService = {
    * Archive asset (soft delete)
    */
   async archive(assetId: string): Promise<ProjectAsset> {
+    if (useMockAssets) {
+      return mockAssetApi.archive(assetId);
+    }
     return this.update(assetId, { is_archived: true });
   },
 
@@ -209,6 +238,9 @@ export const assetService = {
    * Restore archived asset
    */
   async restore(assetId: string): Promise<ProjectAsset> {
+    if (useMockAssets) {
+      return mockAssetApi.restore(assetId);
+    }
     return this.update(assetId, { is_archived: false });
   },
 
@@ -222,6 +254,9 @@ export const assetService = {
     usedInField?: string,
     metadata?: Record<string, any>
   ): Promise<AssetUsage> {
+    if (useMockAssets) {
+      return mockAssetApi.trackUsage();
+    }
     try {
       const { data, error } = await supabase
         .from("asset_usage")
@@ -252,6 +287,10 @@ export const assetService = {
     usedInRecordId: string,
     usedInField?: string
   ): Promise<void> {
+    if (useMockAssets) {
+      await mockAssetApi.removeUsage();
+      return;
+    }
     try {
       let query = supabase
         .from("asset_usage")
@@ -276,6 +315,9 @@ export const assetService = {
    * Get asset usage records
    */
   async getUsage(assetId: string): Promise<AssetUsage[]> {
+    if (useMockAssets) {
+      return mockAssetApi.getUsage();
+    }
     try {
       const { data, error } = await supabase
         .from("asset_usage")
@@ -294,6 +336,9 @@ export const assetService = {
    * Get storage stats for user
    */
   async getStorageStats(userId?: string): Promise<AssetStats> {
+    if (useMockAssets) {
+      return mockAssetApi.getStorageStats();
+    }
     try {
       let query = supabase
         .from("project_assets")
@@ -350,6 +395,9 @@ export const assetService = {
    * Get download URL for asset
    */
   async getDownloadUrl(assetId: string): Promise<string | null> {
+    if (useMockAssets) {
+      return mockAssetApi.getDownloadUrl(assetId);
+    }
     try {
       const asset = await this.getById(assetId);
       if (!asset) return null;
@@ -373,6 +421,9 @@ export const assetService = {
         "id" | "created_at" | "updated_at"
       >
     ): Promise<AssetCollection> {
+      if (useMockAssets) {
+        return mockAssetApi.collections.create(collection);
+      }
       const { data, error } = await supabase
         .from("asset_collections")
         .insert(collection)
@@ -384,6 +435,9 @@ export const assetService = {
     },
 
     async list(projectId?: string): Promise<AssetCollection[]> {
+      if (useMockAssets) {
+        return mockAssetApi.collections.list(projectId);
+      }
       let query = supabase.from("asset_collections").select("*");
 
       if (projectId) {
@@ -399,6 +453,9 @@ export const assetService = {
       collectionId: string,
       updates: Partial<AssetCollection>
     ): Promise<AssetCollection> {
+      if (useMockAssets) {
+        return mockAssetApi.collections.update(collectionId, updates);
+      }
       const { data, error } = await supabase
         .from("asset_collections")
         .update(updates)
@@ -411,6 +468,10 @@ export const assetService = {
     },
 
     async delete(collectionId: string): Promise<void> {
+      if (useMockAssets) {
+        await mockAssetApi.collections.delete(collectionId);
+        return;
+      }
       const { error } = await supabase
         .from("asset_collections")
         .delete()
@@ -420,6 +481,10 @@ export const assetService = {
     },
 
     async addAsset(collectionId: string, assetId: string): Promise<void> {
+      if (useMockAssets) {
+        await mockAssetApi.collections.addAsset(collectionId, assetId);
+        return;
+      }
       const { error } = await supabase
         .from("asset_collection_items")
         .insert({ collection_id: collectionId, asset_id: assetId });
@@ -428,6 +493,10 @@ export const assetService = {
     },
 
     async removeAsset(collectionId: string, assetId: string): Promise<void> {
+      if (useMockAssets) {
+        await mockAssetApi.collections.removeAsset(collectionId, assetId);
+        return;
+      }
       const { error } = await supabase
         .from("asset_collection_items")
         .delete()
@@ -438,6 +507,9 @@ export const assetService = {
     },
 
     async getAssets(collectionId: string): Promise<ProjectAsset[]> {
+      if (useMockAssets) {
+        return mockAssetApi.collections.getAssets(collectionId);
+      }
       const { data, error } = await supabase
         .from("asset_collection_items")
         .select("asset_id, project_assets(*)")
