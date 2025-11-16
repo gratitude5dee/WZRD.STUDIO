@@ -56,12 +56,48 @@ export default function KanvasPage() {
 
   // Initialize project
   useEffect(() => {
-    if (user) {
-      // Generate or load project ID
-      const tempId = `kanvas-${user.id}-${Date.now()}`;
-      setProjectId(tempId);
-      setStoreProjectId(tempId);
-    }
+    const initializeProject = async () => {
+      if (!user) return;
+
+      try {
+        // Try to load existing project or create new one
+        const { data: existingProjects } = await supabase
+          .from('canvas_projects')
+          .select('id')
+          .eq('user_id', user.id)
+          .order('updated_at', { ascending: false })
+          .limit(1);
+
+        let projectId: string;
+
+        if (existingProjects && existingProjects.length > 0) {
+          projectId = existingProjects[0].id;
+        } else {
+          // Create new project
+          const { data: newProject, error } = await supabase
+            .from('canvas_projects')
+            .insert({
+              user_id: user.id,
+              name: 'Untitled Canvas',
+              settings: {},
+              viewport: { x: 0, y: 0, scale: 1 }
+            })
+            .select('id')
+            .single();
+
+          if (error) throw error;
+          projectId = newProject.id;
+        }
+
+        setProjectId(projectId);
+        setStoreProjectId(projectId);
+      } catch (error) {
+        console.error('Failed to initialize project:', error);
+        toast.error('Failed to initialize canvas project');
+      }
+    };
+
+    initializeProject();
   }, [user, setStoreProjectId]);
 
   // Update canvas size based on container
