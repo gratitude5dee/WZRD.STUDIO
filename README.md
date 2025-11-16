@@ -27,10 +27,10 @@
 
   <br/>
 
-  <!-- Hero Demo (GitHub-safe: animated GIF) -->
+  <!-- Hero Demo (GitHub-safe: thumbnail that opens the video) -->
   <a href="/public/wzrdstudiointro1.gif">
     <img
-      src="/public/wzrdstudiointro1.gif"
+      src="/lovable-uploads/075616c6-e4fc-4662-a4b8-68b746782b65.png"
       alt="WZRD.Studio Demo"
       width="900"
     />
@@ -223,7 +223,7 @@ Find these in your [Supabase Dashboard](https://supabase.com/dashboard) → Proj
     
     <!-- Image container -->
     <div style="position: relative; border-radius: 12px; overflow: hidden; box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.08);">
-      <img src="/lovable-uploads/96cbbf8f-bdb1-4d37-9c62-da1306d5fb96.png" alt="Storyboard View" style="width: 100%; height: auto; display: block%;">
+      <img src="/lovable-uploads/96cbbf8f-bdb1-4d37-9c62-da1306d5fb96.png" alt="Storyboard View" style="width: 100%; height: auto; display: block;">
       
       <!-- Metric badge -->
       <div style="position: absolute; top: 20px; right: 20px; background: rgba(139, 92, 246, 0.9); backdrop-filter: blur(10px); padding: 8px 16px; border-radius: 20px; font-size: 13px; color: white; font-weight: 600; box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);">

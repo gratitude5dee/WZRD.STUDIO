@@ -175,13 +175,6 @@ export function TimelineClip({ clip, zoom, onSelect, isSelected }: TimelineClipP
     }
   };
 
-  // Drag to canvas support
-  const handleDragStart = (e: React.DragEvent) => {
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('application/reactflow-type', 'videoClip');
-    e.dataTransfer.setData('application/reactflow-clipid', clip.id);
-  };
-
   const clipColors = clip.type === 'audio'
     ? 'bg-accent/20 border-accent/40'
     : 'bg-primary/20 border-primary/40';
@@ -191,8 +184,6 @@ export function TimelineClip({ clip, zoom, onSelect, isSelected }: TimelineClipP
       <ContextMenuTrigger asChild>
         <div
           ref={dragRef}
-          draggable
-          onDragStart={handleDragStart}
           className={`absolute rounded overflow-hidden cursor-grab active:cursor-grabbing transition-all duration-150 group border-2 ${
             isDragging || isTrimming ? 'opacity-70 scale-95' : 'opacity-100'
           } ${clip.type === 'audio' ? 'bg-accent/80 h-12' : 'bg-[#2a2a2a] h-14'} ${
