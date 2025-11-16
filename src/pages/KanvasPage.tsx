@@ -10,11 +10,14 @@ import { GenerationPanel } from '@/components/canvas/GenerationPanel';
 import { CollaboratorsPanel } from '@/components/canvas/CollaboratorsPanel';
 import { CanvasContextMenu } from '@/components/canvas/CanvasContextMenu';
 import { Cursors } from '@/components/canvas/Cursors';
+import { ExportDialog } from '@/components/canvas/ExportDialog';
+import { ShareDialog } from '@/components/canvas/ShareDialog';
 import { useCanvasStore } from '@/lib/stores/canvas-store';
 import { useAuth } from '@/providers/AuthProvider';
 import { useRealtimeSync } from '@/hooks/useRealtimeSync';
 import { usePresence } from '@/hooks/usePresence';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
+import { useAutoSave } from '@/hooks/useAutoSave';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import type { CanvasObject, ImageData } from '@/types/canvas';
@@ -26,6 +29,9 @@ export default function KanvasPage() {
   const [projectId, setProjectId] = useState<string>('temp-project');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'error'>('saved');
   const canvasContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -36,6 +42,17 @@ export default function KanvasPage() {
   
   // Presence tracking
   const { onlineUsers, updateCursor } = usePresence(projectId);
+  
+  // Auto-save
+  const { forceSave } = useAutoSave({
+    projectId,
+    data: { objects },
+    enabled: true,
+    debounceMs: 2000,
+    onSaveStart: () => setSaveStatus('saving'),
+    onSaveSuccess: () => setSaveStatus('saved'),
+    onSaveError: () => setSaveStatus('error'),
+  });
 
   // Initialize project
   useEffect(() => {
@@ -81,13 +98,7 @@ export default function KanvasPage() {
   };
 
   const handleExportImage = async () => {
-    try {
-      toast.info('Export functionality coming soon!');
-      // Here you would export the canvas to an image
-    } catch (error) {
-      console.error('Export error:', error);
-      toast.error('Failed to export image');
-    }
+    setExportDialogOpen(true);
   };
 
   const handleImageUpload = () => {
@@ -198,8 +209,11 @@ export default function KanvasPage() {
             Upload
           </Button>
 
-          <Button variant="outline" size="sm" onClick={handleSaveProject}>
-            <Save className="w-4 h-4 mr-2" />
+          <Button variant="outline" size="sm" onClick={handleSaveProject} className="relative">
+            <Save className={`w-4 h-4 mr-2 ${saveStatus === 'saving' ? 'animate-pulse' : ''}`} />
+            {saveStatus === 'error' && (
+              <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-destructive" />
+            )}
             Save
           </Button>
 
@@ -208,7 +222,7 @@ export default function KanvasPage() {
             Export
           </Button>
 
-          <Button variant="default" size="sm">
+          <Button variant="default" size="sm" onClick={() => setShareDialogOpen(true)}>
             <Share2 className="w-4 h-4 mr-2" />
             Share
           </Button>
@@ -258,6 +272,21 @@ export default function KanvasPage() {
           <LayersPanel />
         </div>
       </div>
+      
+      {/* Dialogs */}
+      <ExportDialog
+        open={exportDialogOpen}
+        onOpenChange={setExportDialogOpen}
+        objects={objects}
+        viewport={{ x: 0, y: 0, scale: 1 }}
+        selectedIds={selectedIds}
+      />
+      
+      <ShareDialog
+        open={shareDialogOpen}
+        onOpenChange={setShareDialogOpen}
+        canvasId={projectId}
+      />
     </div>
   );
 }
