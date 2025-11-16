@@ -7,16 +7,13 @@ import { NewReleasePromo } from '@/components/landing/NewReleasePromo';
 import { FAQSection } from '@/components/landing/FAQSection';
 import { PricingSection } from '@/components/landing/PricingSection';
 import { StickyFooter } from '@/components/landing/StickyFooter';
-import { MatrixIntroAnimation } from '@/components/landing/MatrixIntroAnimation';
 import { useAuth } from '@/providers/AuthProvider';
-import wzrdLogo from '@/assets/wzrd-logo.png';
 
 const Landing = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [showIntro, setShowIntro] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
