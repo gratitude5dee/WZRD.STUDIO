@@ -148,6 +148,7 @@ export interface VideoEditorState {
   clips: Clip[];
   audioTracks: AudioTrack[];
   composition: CompositionSettings;
+  addMediaItem: (item: LibraryMediaItem) => void;
   selectedClipIds: string[];
   selectedAudioTrackIds: string[];
   clipConnections: ClipConnection[];
@@ -803,6 +804,10 @@ export const useVideoEditorStore = create<VideoEditorState>((set, get) => ({
       mediaLibrary: { ...state.mediaLibrary, items },
     })),
   addMediaLibraryItem: (item) =>
+    set((state) => ({
+      mediaLibrary: { ...state.mediaLibrary, items: [item, ...state.mediaLibrary.items] },
+    })),
+  addMediaItem: (item) =>
     set((state) => ({
       mediaLibrary: { ...state.mediaLibrary, items: [item, ...state.mediaLibrary.items] },
     })),
