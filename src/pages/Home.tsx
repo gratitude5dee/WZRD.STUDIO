@@ -7,9 +7,11 @@ import { Sidebar } from '@/components/home/Sidebar';
 import { SearchBar } from '@/components/home/SearchBar';
 import { SortDropdown, SortOption } from '@/components/home/SortDropdown';
 import { ProjectViewModeSelector } from '@/components/home/ProjectViewModeSelector';
+import { DemoBanner } from '@/components/demo/DemoBanner';
 import { useAuth } from '@/providers/AuthProvider';
 import { supabaseService } from '@/services/supabaseService';
 import { useToast } from '@/hooks/use-toast';
+import { isDemoModeEnabled, getDemoProjects } from '@/utils/demoMode';
 import type { Project } from '@/components/home/ProjectCard';
 
 type ViewMode = 'grid' | 'list';
@@ -18,6 +20,7 @@ export default function Home() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
+  const isDemo = isDemoModeEnabled();
 
   const [activeView, setActiveView] = useState('all');
   const [activeTab, setActiveTab] = useState<'all' | 'private' | 'public'>('all');
@@ -29,14 +32,21 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
 
   const fetchProjects = useCallback(async () => {
-    if (!user) return;
+    if (!user && !isDemo) return;
     
     setIsLoading(true);
     setError(null);
     
     try {
-      const data = await supabaseService.projects.list();
-      setProjects(data as Project[]);
+      if (isDemo) {
+        // Use demo projects from localStorage
+        const demoProjects = getDemoProjects();
+        setProjects(demoProjects as Project[]);
+      } else {
+        // Fetch real projects from Supabase
+        const data = await supabaseService.projects.list();
+        setProjects(data as Project[]);
+      }
     } catch (err) {
       console.error('Error fetching projects:', err);
       setError('Failed to load projects');
@@ -48,7 +58,7 @@ export default function Home() {
     } finally {
       setIsLoading(false);
     }
-  }, [user, toast]);
+  }, [user, isDemo, toast]);
 
   useEffect(() => {
     fetchProjects();
@@ -110,12 +120,14 @@ export default function Home() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] flex w-full">
-      {/* Sidebar */}
-      <Sidebar activeView={activeView} onViewChange={setActiveView} />
+    <>
+      {isDemo && <DemoBanner />}
+      <div className="min-h-screen bg-[#0A0A0A] flex w-full">
+        {/* Sidebar */}
+        <Sidebar activeView={activeView} onViewChange={setActiveView} />
 
-      {/* Main Content */}
-      <div className="flex-1 ml-64">
+        {/* Main Content */}
+        <div className="flex-1 ml-64">
         {/* New Top Header with Logo */}
         <header className="h-16 border-b border-white/[0.08] flex items-center justify-center px-6">
           <div className="flex items-center gap-3">
@@ -247,5 +259,6 @@ export default function Home() {
         </main>
       </div>
     </div>
+    </>
   );
 }

@@ -8,6 +8,8 @@ import { FAQSection } from '@/components/landing/FAQSection';
 import { PricingSection } from '@/components/landing/PricingSection';
 import { StickyFooter } from '@/components/landing/StickyFooter';
 import { MatrixIntroAnimation } from '@/components/landing/MatrixIntroAnimation';
+import { HeroSection } from '@/components/home/HeroSection';
+import { FeaturesShowcase } from '@/components/landing/FeaturesShowcase';
 import { useAuth } from '@/providers/AuthProvider';
 import wzrdLogo from '@/assets/wzrd-logo.png';
 
@@ -581,6 +583,12 @@ const Landing = () => {
           zIndex: 1,
         }}
       >
+        {/* Hero Section */}
+        <HeroSection />
+
+        {/* Features Showcase */}
+        <FeaturesShowcase />
+
         {/* Features Section */}
         <div id="features">
           <Features />
