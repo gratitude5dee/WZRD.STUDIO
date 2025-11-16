@@ -230,4 +230,5 @@ export const canvasService = {
 
       if (error) throw error;
     }
+  }
 };
