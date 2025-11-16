@@ -29,6 +29,8 @@ interface AssetUploaderProps {
   maxSize?: number; // in bytes
   acceptedFileTypes?: string[];
   onUploadComplete?: (assetIds: string[]) => void;
+  label?: string;
+  getAssetTypeForFile?: (file: File) => AssetType;
   className?: string;
 }
 
@@ -113,6 +115,8 @@ export const AssetUploader: React.FC<AssetUploaderProps> = ({
   maxSize = 50 * 1024 * 1024, // 50MB default
   acceptedFileTypes,
   onUploadComplete,
+  label,
+  getAssetTypeForFile,
   className,
 }) => {
   const [files, setFiles] = useState<FileWithPreview[]>([]);
@@ -122,6 +126,17 @@ export const AssetUploader: React.FC<AssetUploaderProps> = ({
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const dragCounter = useRef(0);
   const uploadMutation = useAssetUpload();
+  const displayLabel = label ?? assetType.toUpperCase();
+
+  const determineAssetType = useCallback(
+    (file: File): AssetType => {
+      if (getAssetTypeForFile) {
+        return getAssetTypeForFile(file);
+      }
+      return assetType;
+    },
+    [assetType, getAssetTypeForFile]
+  );
 
   const onDrop = useCallback(
     (incomingFiles: File[]) => {

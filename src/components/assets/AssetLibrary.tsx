@@ -3,7 +3,7 @@
 // PURPOSE: Display and manage asset library with filtering and search
 // ============================================================================
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Image as ImageIcon,
   Video,
@@ -73,6 +73,10 @@ export const AssetLibrary: React.FC<AssetLibraryProps> = ({
   const { data: assets, isLoading } = useAssets(filters);
   const deleteMutation = useAssetDelete();
   const archiveMutation = useAssetArchive();
+
+  useEffect(() => {
+    setFilters((prev) => ({ ...prev, projectId }));
+  }, [projectId]);
 
   const handleSearch = (query: string) => {
     setFilters((prev) => ({ ...prev, searchQuery: query }));

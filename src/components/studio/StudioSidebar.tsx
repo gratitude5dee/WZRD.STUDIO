@@ -1,16 +1,42 @@
 import { useState, useRef, useEffect } from 'react';
-import { 
-  Plus, History, Layers, Inbox, MessageCircle, Settings, HelpCircle, 
-  Type, Image as ImageIcon, Video, Box, X
+import {
+  Plus, History, Layers, Inbox, MessageCircle, Settings, HelpCircle,
+  Type, Image as ImageIcon, Video, Box
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import FlowSelector, { Flow } from './FlowSelector';
-import UpgradeModal from './UpgradeModal';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { AssetLibrary, AssetUploader } from '@/components/assets';
+import type { ProjectAsset, AssetType } from '@/types/assets';
 
 interface StudioSidebarProps {
   onAddBlock: (blockType: 'text' | 'image' | 'video') => void;
+  projectId?: string;
+  onAssetSelect?: (asset: ProjectAsset) => void;
 }
+
+const ACCEPTED_STUDIO_FILE_TYPES = [
+  '.png',
+  '.jpg',
+  '.jpeg',
+  '.gif',
+  '.webp',
+  '.mp4',
+  '.mov',
+  '.webm',
+  '.mp3',
+  '.wav',
+  '.ogg'
+];
+
+const detectAssetTypeFromFile = (file: File): AssetType => {
+  if (file.type.startsWith('image/')) return 'image';
+  if (file.type.startsWith('video/')) return 'video';
+  if (file.type.startsWith('audio/')) return 'audio';
+  if (file.type === 'application/pdf') return 'document';
+  return 'other';
+};
 
 // Mock flows
 const MOCK_FLOWS: Flow[] = [
@@ -22,7 +48,7 @@ const MOCK_FLOWS: Flow[] = [
   { id: 'love-me', name: 'LOVE ME, LOVE ME NOT', blocks: 3 },
 ];
 
-const StudioSidebar = ({ onAddBlock }: StudioSidebarProps) => {
+const StudioSidebar = ({ onAddBlock, projectId, onAssetSelect }: StudioSidebarProps) => {
   const [showAddMenu, setShowAddMenu] = useState(false);
   const [showFlowSelector, setShowFlowSelector] = useState(false);
   const [showAssetsModal, setShowAssetsModal] = useState(false);
@@ -71,6 +97,15 @@ const StudioSidebar = ({ onAddBlock }: StudioSidebarProps) => {
     console.log(`Selected flow: ${flowId}`);
     setShowFlowSelector(false);
   };
+
+  const handleAssetsSelected = (assets: ProjectAsset[]) => {
+    if (!onAssetSelect || assets.length === 0) return;
+    const selected = assets[assets.length - 1];
+    onAssetSelect(selected);
+    setShowAssetsModal(false);
+  };
+
+  const hasProject = Boolean(projectId);
 
   return (
     <div className="h-full w-16 bg-black border-r border-zinc-800/50 flex flex-col">
@@ -263,14 +298,47 @@ const StudioSidebar = ({ onAddBlock }: StudioSidebarProps) => {
         </div>
       </div>
       
-      {/* Assets Modal */}
-      <UpgradeModal 
-        isOpen={showAssetsModal}
-        onClose={() => setShowAssetsModal(false)}
-        title="Assets"
-        description="Upgrade to upload and store your own media"
-        icon={<Box className="h-12 w-12 text-zinc-400" />}
-      />
+      <Dialog open={showAssetsModal} onOpenChange={setShowAssetsModal}>
+        <DialogContent className="max-w-5xl bg-black border border-zinc-800 text-white">
+          <DialogHeader>
+            <DialogTitle>Project assets</DialogTitle>
+            <DialogDescription className="text-zinc-400">
+              Upload media and reuse it across Studio, Editor, and Kanvas.
+            </DialogDescription>
+          </DialogHeader>
+
+          {hasProject ? (
+            <div className="grid gap-6 lg:grid-cols-[320px,1fr]">
+              <div className="space-y-4">
+                <AssetUploader
+                  projectId={projectId}
+                  assetType="image"
+                  label="Media"
+                  visibility="project"
+                  assetCategory="upload"
+                  maxFiles={20}
+                  maxSize={500 * 1024 * 1024}
+                  acceptedFileTypes={ACCEPTED_STUDIO_FILE_TYPES}
+                  getAssetTypeForFile={detectAssetTypeFromFile}
+                />
+                <p className="text-xs text-zinc-500">
+                  Uploaded assets will instantly appear in the library on the right.
+                </p>
+              </div>
+              <AssetLibrary
+                projectId={projectId}
+                selectable
+                onSelect={handleAssetsSelected}
+                className="max-h-[70vh] overflow-y-auto"
+              />
+            </div>
+          ) : (
+            <div className="py-10 text-center text-sm text-zinc-400">
+              Select a project to start managing assets.
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
