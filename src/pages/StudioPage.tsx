@@ -10,6 +10,7 @@ import StudioCanvas from '@/components/studio/StudioCanvas';
 import BlockSettingsModal from '@/components/studio/BlockSettingsModal';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import type { AssetType, ProjectAsset } from '@/types/assets';
 
 export interface Block {
   id: string;
@@ -23,6 +24,9 @@ export interface Block {
     mode?: string;
     connectedImageUrl?: string;
     connectedImagePrompt?: string;
+    assetId?: string;
+    assetType?: AssetType;
+    assetUrl?: string;
   };
 }
 
@@ -147,9 +151,9 @@ const StudioPage = () => {
   }, []);
   
   const handleAddBlock = useCallback((blockOrType: Block | 'text' | 'image' | 'video') => {
-    const newBlock = typeof blockOrType === 'string' 
-      ? { 
-          id: uuidv4(), 
+    const newBlock = typeof blockOrType === 'string'
+      ? {
+          id: uuidv4(),
           type: blockOrType,
           position: { x: 400 + Math.random() * 200, y: 300 + Math.random() * 200 }
         }
@@ -157,6 +161,35 @@ const StudioPage = () => {
     setBlocks(prev => [...prev, newBlock]);
     setSelectedBlockId(newBlock.id);
   }, []);
+
+  const handleAssetInsert = useCallback((asset: ProjectAsset) => {
+    if (asset.asset_type !== 'image') {
+      toast.info('Asset insertion for this block type is coming soon.');
+      return;
+    }
+
+    const assetUrl = asset.cdn_url || asset.preview_url || asset.thumbnail_url;
+    if (!assetUrl) {
+      toast.error('Asset is still processing. Try again in a moment.');
+      return;
+    }
+
+    const newBlock: Block = {
+      id: uuidv4(),
+      type: 'image',
+      position: { x: 400 + Math.random() * 200, y: 300 + Math.random() * 200 },
+      initialData: {
+        imageUrl: assetUrl,
+        prompt: asset.original_file_name,
+        assetId: asset.id,
+        assetType: asset.asset_type,
+        assetUrl,
+      },
+    };
+
+    handleAddBlock(newBlock);
+    toast.success('Asset added to the canvas.');
+  }, [handleAddBlock]);
 
   const handleDeleteBlock = useCallback((blockId: string) => {
     setBlocks(prev => prev.filter(b => b.id !== blockId));
@@ -200,7 +233,11 @@ const StudioPage = () => {
       <AppHeader />
       
       <div className="flex-1 flex overflow-hidden">
-        <StudioSidebar onAddBlock={handleAddBlock} />
+        <StudioSidebar
+          onAddBlock={handleAddBlock}
+          projectId={projectId}
+          onAssetSelect={handleAssetInsert}
+        />
         
         {isLoading ? (
           <div className="flex-1 flex items-center justify-center bg-black">

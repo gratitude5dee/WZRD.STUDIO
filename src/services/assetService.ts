@@ -260,18 +260,37 @@ export const assetService = {
     try {
       const { data, error } = await supabase
         .from("asset_usage")
-        .upsert({
-          asset_id: assetId,
-          used_in_table: usedInTable,
-          used_in_record_id: usedInRecordId,
-          used_in_field: usedInField || null,
-          usage_metadata: metadata || {},
-        })
+        .upsert(
+          {
+            asset_id: assetId,
+            used_in_table: usedInTable,
+            used_in_record_id: usedInRecordId,
+            used_in_field: usedInField || null,
+            usage_metadata: metadata || {},
+          },
+          {
+            onConflict:
+              "asset_id,used_in_table,used_in_record_id,used_in_field",
+            ignoreDuplicates: false,
+          }
+        )
         .select()
         .single();
 
       if (error) throw error;
-      return data;
+
+      const { data: assetData, error: assetError } = await supabase
+        .from("project_assets")
+        .select("usage_count")
+        .eq("id", assetId)
+        .single();
+
+      if (assetError) throw assetError;
+
+      return {
+        ...data,
+        usage_count: assetData?.usage_count,
+      };
     } catch (error) {
       console.error("Failed to track usage:", error);
       throw error;

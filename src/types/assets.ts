@@ -128,6 +128,7 @@ export interface AssetUsage {
   used_in_record_id: string;
   used_in_field: string | null;
   usage_metadata: Record<string, any>;
+  usage_count?: number;
   created_at: string;
 }
 
