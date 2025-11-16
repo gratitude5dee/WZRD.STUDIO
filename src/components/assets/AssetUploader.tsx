@@ -297,25 +297,11 @@ export const AssetUploader: React.FC<AssetUploaderProps> = ({
     .join(",");
 
   return (
-    <div className={cn("space-y-4", className)}>
+    <div className={cn("space-y-4", className)} data-testid="asset-uploader">
       {/* Drop Zone */}
       <Card
-        role="button"
-        tabIndex={0}
-        aria-disabled={uploading || files.length >= maxFiles}
-        className={cn(
-          "border-2 border-dashed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
-          isDragActive && "border-primary bg-primary/5",
-          uploading || files.length >= maxFiles
-            ? "opacity-50 cursor-not-allowed"
-            : "cursor-pointer hover:border-primary/50"
-        )}
-        onClick={handleDropzoneClick}
-        onKeyDown={handleDropzoneKeyDown}
-        onDragEnter={handleDragEnter}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
+        className="border-2 border-dashed hover:border-primary/50 transition-colors"
+        data-testid="asset-uploader-dropzone"
       >
         <div className="p-8 text-center">
           <input
@@ -326,6 +312,7 @@ export const AssetUploader: React.FC<AssetUploaderProps> = ({
             accept={acceptAttribute}
             onChange={handleFileInput}
             disabled={uploading || files.length >= maxFiles}
+            data-testid="asset-uploader-input"
           />
           <Upload className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
           <p className="text-sm font-medium mb-1">
@@ -340,13 +327,13 @@ export const AssetUploader: React.FC<AssetUploaderProps> = ({
 
       {/* File List */}
       {files.length > 0 && (
-        <div className="space-y-2">
+        <div className="space-y-2" data-testid="asset-uploader-file-list">
           <div className="flex items-center justify-between">
             <p className="text-sm font-medium">
               {files.length} file{files.length !== 1 ? "s" : ""} selected
             </p>
             {!uploading && (
-              <Button size="sm" onClick={handleUpload}>
+              <Button size="sm" onClick={handleUpload} data-testid="asset-upload-button">
                 Upload All
               </Button>
             )}
@@ -354,7 +341,11 @@ export const AssetUploader: React.FC<AssetUploaderProps> = ({
 
           <div className="space-y-2">
             {files.map((file, index) => (
-              <Card key={`${file.name}-${index}`} className="p-3">
+              <Card
+                key={`${file.name}-${index}`}
+                className="p-3"
+                data-testid="asset-uploader-file-row"
+              >
                 <div className="flex items-center gap-3">
                   {/* Preview */}
                   {file.preview ? (
@@ -365,7 +356,7 @@ export const AssetUploader: React.FC<AssetUploaderProps> = ({
                     />
                   ) : (
                     <div className="w-12 h-12 bg-muted rounded flex items-center justify-center">
-                      <FileIcon className="w-6 h-6 text-muted-foreground" />
+                      <FileIcon className="w-6 h-6 text-muted-foreground" data-testid="asset-file-icon" />
                     </div>
                   )}
 
@@ -377,7 +368,10 @@ export const AssetUploader: React.FC<AssetUploaderProps> = ({
                         {(file.size / 1024).toFixed(0)} KB
                       </Badge>
                       {uploadProgress[file.name] !== undefined && (
-                        <span className="text-xs text-muted-foreground">
+                        <span
+                          className="text-xs text-muted-foreground"
+                          data-testid="asset-upload-progress"
+                        >
                           {uploadProgress[file.name]}%
                         </span>
                       )}
@@ -388,6 +382,7 @@ export const AssetUploader: React.FC<AssetUploaderProps> = ({
                       <Progress
                         value={uploadProgress[file.name]}
                         className="h-1 mt-2"
+                        data-testid="asset-upload-progress-bar"
                       />
                     )}
                   </div>
@@ -398,13 +393,17 @@ export const AssetUploader: React.FC<AssetUploaderProps> = ({
                       variant="ghost"
                       size="icon"
                       onClick={() => removeFile(index)}
+                      data-testid="asset-remove-file"
                     >
                       <X className="w-4 h-4" />
                     </Button>
                   )}
 
                   {uploading && uploadProgress[file.name] !== 100 && (
-                    <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                    <Loader2
+                      className="w-4 h-4 animate-spin text-muted-foreground"
+                      data-testid="asset-upload-spinner"
+                    />
                   )}
                 </div>
               </Card>

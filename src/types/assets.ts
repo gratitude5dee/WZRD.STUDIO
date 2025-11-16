@@ -158,6 +158,8 @@ export interface AssetFilters {
   sortOrder?: "asc" | "desc";
   limit?: number;
   offset?: number;
+  includeArchived?: boolean;
+  onlyArchived?: boolean;
 }
 
 export interface AssetStats {

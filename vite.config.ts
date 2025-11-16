@@ -20,4 +20,10 @@ export default defineConfig(({ mode }) => ({
       "react-dnd": path.resolve(__dirname, "./src/lib/react-dnd.tsx"),
     },
   },
+  test: {
+    globals: true,
+    environment: "jsdom",
+    setupFiles: "./vitest.setup.ts",
+    css: false,
+  },
 }));

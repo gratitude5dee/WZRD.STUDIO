@@ -8,9 +8,9 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
-    "test": "bun test src",
+    "test": "vitest run",
     "preview": "vite preview",
-    "test:e2e": "playwright test",
+    "test:e2e": "VITE_USE_MOCK_ASSETS=true VITE_BYPASS_AUTH_FOR_TESTS=true playwright test tests/e2e tests/performance.spec.ts",
     "remotion:preview": "remotion preview",
     "remotion:render": "remotion render"
   },
@@ -85,6 +85,10 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.9.0",
+    "@playwright/test": "^1.48.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.0.0",
+    "@testing-library/user-event": "^14.5.2",
     "@remotion/cli": "^4.0.168",
     "@tailwindcss/typography": "^0.5.15",
     "@types/node": "^22.5.5",
@@ -101,6 +105,7 @@
     "tailwindcss": "^3.4.11",
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.0.1",
-    "vite": "^5.4.1"
+    "vite": "^5.4.1",
+    "vitest": "^2.1.1"
   }
 }

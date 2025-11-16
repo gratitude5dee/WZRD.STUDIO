@@ -4,9 +4,11 @@
 // ============================================================================
 
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { assetService } from "@/services/assetService";
 import type { AssetFilters, AssetUploadRequest } from "@/types/assets";
 import { toast } from "sonner";
+import { MOCK_ASSET_EVENT_NAME } from "@/services/mockAssetApi";
 
 export const ASSET_QUERY_KEYS = {
   all: ["assets"] as const,
@@ -21,10 +23,27 @@ export const ASSET_QUERY_KEYS = {
     [...ASSET_QUERY_KEYS.collections(), "assets", id] as const,
 };
 
+const useMockAssets =
+  (typeof import.meta !== "undefined" && import.meta.env?.VITE_USE_MOCK_ASSETS === "true") ||
+  (typeof process !== "undefined" && process.env?.VITE_USE_MOCK_ASSETS === "true");
+
 /**
  * Hook to list assets with filters
  */
 export function useAssets(filters: AssetFilters = {}) {
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (!useMockAssets || typeof window === "undefined") return;
+    const handler = () => {
+      queryClient.invalidateQueries({ queryKey: ASSET_QUERY_KEYS.list(filters) });
+    };
+    window.addEventListener(MOCK_ASSET_EVENT_NAME, handler);
+    return () => {
+      window.removeEventListener(MOCK_ASSET_EVENT_NAME, handler);
+    };
+  }, [queryClient, filters]);
+
   return useQuery({
     queryKey: ASSET_QUERY_KEYS.list(filters),
     queryFn: () => assetService.list(filters),
