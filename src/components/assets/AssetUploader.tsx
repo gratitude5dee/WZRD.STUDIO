@@ -3,7 +3,7 @@
 // PURPOSE: Drag-and-drop file uploader with preview and validation
 // ============================================================================
 
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import { Upload, FileIcon, X, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -11,7 +11,13 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { useAssetUpload } from "@/hooks/useAssets";
 import { assetService } from "@/services/assetService";
-import type { AssetType, AssetCategory, AssetVisibility } from "@/types/assets";
+import type {
+  AssetType,
+  AssetCategory,
+  AssetVisibility,
+  AssetUploadRequest,
+  AssetUploadResponse,
+} from "@/types/assets";
 import { cn } from "@/lib/utils";
 
 interface AssetUploaderProps {
@@ -57,6 +63,49 @@ const ASSET_TYPE_ACCEPTS: Record<AssetType, { [key: string]: string[] }> = {
   },
 };
 
+interface UploadExecutionContext {
+  projectId?: string;
+  assetType: AssetType;
+  assetCategory: AssetCategory;
+  visibility: AssetVisibility;
+  uploadFn: (request: AssetUploadRequest) => Promise<AssetUploadResponse>;
+  onProgress?: (fileName: string, progress: number) => void;
+}
+
+export async function uploadDroppedFiles(
+  files: File[],
+  context: UploadExecutionContext
+): Promise<string[]> {
+  const uploadedAssetIds: string[] = [];
+
+  for (const file of files) {
+    context.onProgress?.(file.name, 0);
+    const base64 = await assetService.fileToBase64(file);
+    context.onProgress?.(file.name, 50);
+
+    const response = await context.uploadFn({
+      projectId: context.projectId,
+      assetType: context.assetType,
+      assetCategory: context.assetCategory,
+      visibility: context.visibility,
+      file: {
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        base64,
+      },
+    });
+
+    context.onProgress?.(file.name, 100);
+
+    if (response?.success && response.assetId) {
+      uploadedAssetIds.push(response.assetId);
+    }
+  }
+
+  return uploadedAssetIds;
+}
+
 export const AssetUploader: React.FC<AssetUploaderProps> = ({
   projectId,
   assetType = "image",
@@ -73,6 +122,9 @@ export const AssetUploader: React.FC<AssetUploaderProps> = ({
   const [files, setFiles] = useState<FileWithPreview[]>([]);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({});
+  const [isDragActive, setIsDragActive] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const dragCounter = useRef(0);
   const uploadMutation = useAssetUpload();
   const displayLabel = label ?? assetType.toUpperCase();
 
@@ -87,17 +139,38 @@ export const AssetUploader: React.FC<AssetUploaderProps> = ({
   );
 
   const onDrop = useCallback(
-    (acceptedFiles: File[]) => {
-      const newFiles = acceptedFiles.slice(0, maxFiles - files.length).map((file) =>
-        Object.assign(file, {
-          preview: file.type.startsWith("image/")
-            ? URL.createObjectURL(file)
-            : undefined,
-        })
-      );
-      setFiles((prev) => [...prev, ...newFiles]);
+    (incomingFiles: File[]) => {
+      setFiles((prev) => {
+        const availableSlots = Math.max(maxFiles - prev.length, 0);
+        if (availableSlots === 0) {
+          return prev;
+        }
+
+        const sanitized = incomingFiles
+          .filter((file) => {
+            const withinSize = file.size <= maxSize;
+            if (!withinSize) {
+              console.warn(
+                `File ${file.name} exceeds the maximum size of ${Math.round(
+                  maxSize / 1024 / 1024
+                )}MB and was skipped.`
+              );
+            }
+            return withinSize;
+          })
+          .slice(0, availableSlots)
+          .map((file) =>
+            Object.assign(file, {
+              preview: file.type.startsWith("image/")
+                ? URL.createObjectURL(file)
+                : undefined,
+            })
+          );
+
+        return sanitized.length > 0 ? [...prev, ...sanitized] : prev;
+      });
     },
-    [files.length, maxFiles]
+    [maxFiles, maxSize]
   );
 
   const removeFile = (index: number) => {
@@ -111,44 +184,25 @@ export const AssetUploader: React.FC<AssetUploaderProps> = ({
     });
   };
 
+  const updateProgress = useCallback((fileName: string, progress: number) => {
+    setUploadProgress((prev) => ({ ...prev, [fileName]: progress }));
+  }, []);
+
   const handleUpload = async () => {
     if (files.length === 0) return;
 
     setUploading(true);
-    const uploadedAssetIds: string[] = [];
 
     try {
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        setUploadProgress((prev) => ({ ...prev, [file.name]: 0 }));
+      const uploadedAssetIds = await uploadDroppedFiles(files, {
+        projectId,
+        assetType,
+        assetCategory,
+        visibility,
+        uploadFn: uploadMutation.mutateAsync,
+        onProgress: updateProgress,
+      });
 
-        // Convert file to base64
-        const base64 = await assetService.fileToBase64(file);
-
-        setUploadProgress((prev) => ({ ...prev, [file.name]: 50 }));
-
-        // Upload
-        const response = await uploadMutation.mutateAsync({
-          projectId,
-          assetType: determineAssetType(file),
-          assetCategory,
-          visibility,
-          file: {
-            name: file.name,
-            type: file.type,
-            size: file.size,
-            base64,
-          },
-        });
-
-        setUploadProgress((prev) => ({ ...prev, [file.name]: 100 }));
-
-        if (response.success && response.assetId) {
-          uploadedAssetIds.push(response.assetId);
-        }
-      }
-
-      // Clear files after successful upload
       files.forEach((file) => {
         if (file.preview) {
           URL.revokeObjectURL(file.preview);
@@ -167,43 +221,120 @@ export const AssetUploader: React.FC<AssetUploaderProps> = ({
     }
   };
 
-  // Create a simple file input since react-dnd may not work as expected
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       onDrop(Array.from(e.target.files));
+      e.target.value = "";
     }
   };
+
+  const handleDropzoneClick = useCallback(() => {
+    if (uploading || files.length >= maxFiles) return;
+    fileInputRef.current?.click();
+  }, [files.length, maxFiles, uploading]);
+
+  const handleDropzoneKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLDivElement>) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        handleDropzoneClick();
+      }
+    },
+    [handleDropzoneClick]
+  );
+
+  const handleDragEnter = useCallback((event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    dragCounter.current += 1;
+    if (!uploading && files.length < maxFiles) {
+      setIsDragActive(true);
+    }
+  }, [files.length, maxFiles, uploading]);
+
+  const handleDragOver = useCallback((event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!uploading && files.length < maxFiles) {
+      setIsDragActive(true);
+    }
+  }, [files.length, maxFiles, uploading]);
+
+  const handleDragLeave = useCallback((event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    dragCounter.current = Math.max(0, dragCounter.current - 1);
+    if (dragCounter.current === 0) {
+      setIsDragActive(false);
+    }
+  }, []);
+
+  const handleDrop = useCallback(
+    (event: React.DragEvent<HTMLDivElement>) => {
+      event.preventDefault();
+      event.stopPropagation();
+      dragCounter.current = 0;
+      setIsDragActive(false);
+
+      if (uploading || files.length >= maxFiles) {
+        return;
+      }
+
+      const droppedFiles = event.dataTransfer?.files;
+      if (droppedFiles && droppedFiles.length > 0) {
+        onDrop(Array.from(droppedFiles));
+      }
+    },
+    [files.length, maxFiles, onDrop, uploading]
+  );
 
   const accept = acceptedFileTypes
     ? { "application/octet-stream": acceptedFileTypes }
     : ASSET_TYPE_ACCEPTS[assetType];
 
+  const acceptAttribute = Object.entries(accept)
+    .flatMap(([mime, extensions]) => [mime, ...extensions])
+    .join(",");
+
   return (
     <div className={cn("space-y-4", className)}>
       {/* Drop Zone */}
-      <Card className="border-2 border-dashed hover:border-primary/50 transition-colors">
+      <Card
+        role="button"
+        tabIndex={0}
+        aria-disabled={uploading || files.length >= maxFiles}
+        className={cn(
+          "border-2 border-dashed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+          isDragActive && "border-primary bg-primary/5",
+          uploading || files.length >= maxFiles
+            ? "opacity-50 cursor-not-allowed"
+            : "cursor-pointer hover:border-primary/50"
+        )}
+        onClick={handleDropzoneClick}
+        onKeyDown={handleDropzoneKeyDown}
+        onDragEnter={handleDragEnter}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
         <div className="p-8 text-center">
           <input
+            ref={fileInputRef}
             type="file"
-            id="file-upload"
             className="hidden"
             multiple={maxFiles > 1}
-            accept={Object.values(accept).flat().join(",")}
+            accept={acceptAttribute}
             onChange={handleFileInput}
             disabled={uploading || files.length >= maxFiles}
           />
-          <label htmlFor="file-upload" className="cursor-pointer">
-            <Upload className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-            <p className="text-sm font-medium mb-1">
-              Click to upload or drag and drop
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {displayLabel} files up to {Math.round(maxSize / 1024 / 1024)}MB
-            </p>
-            <p className="text-xs text-muted-foreground mt-1">
-              Max {maxFiles} files
-            </p>
-          </label>
+          <Upload className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+          <p className="text-sm font-medium mb-1">
+            {isDragActive ? "Drop files to upload" : "Click to upload or drag and drop"}
+          </p>
+          <p className="text-xs text-muted-foreground">
+            {assetType.toUpperCase()} files up to {Math.round(maxSize / 1024 / 1024)}MB
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">Max {maxFiles} files</p>
         </div>
       </Card>
 
