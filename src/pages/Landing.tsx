@@ -404,7 +404,7 @@ const Landing = () => {
             playsInline
             preload="auto"
           >
-            <source src="/homepage.mp4" type="video/mp4" />
+            <source src="/wzrdstudiointro1.mp4" type="video/mp4" />
             Your browser does not support the video tag.
           </video>
           
