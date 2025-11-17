@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 interface LogoProps {
   className?: string;
   showVersion?: boolean;
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg" | "xl";
 }
 
 export function Logo({ className, showVersion = true, size = "md" }: LogoProps) {
@@ -15,6 +15,7 @@ export function Logo({ className, showVersion = true, size = "md" }: LogoProps) 
     sm: "h-12",
     md: "h-16",
     lg: "h-24",
+    xl: "h-72",
   };
   
   return (
