@@ -53,7 +53,13 @@ export default function PreviewCanvas({ selectedClipIds }: PreviewCanvasProps) {
 
   useEffect(() => {
     const player = playerRef.current;
-    if (!player) return;
+    if (!player) {
+      console.warn('⚠️ Player ref not ready');
+      return;
+    }
+    
+    console.log('🎬 Playback state changed:', playback.isPlaying);
+    
     if (playback.isPlaying) {
       player.play();
     } else {
