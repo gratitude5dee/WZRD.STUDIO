@@ -15,7 +15,6 @@ const Landing = () => {
   const { user } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [showIntro, setShowIntro] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -106,11 +105,6 @@ const Landing = () => {
   };
 
   return (
-    <>
-      {showIntro && (
-        <MatrixIntroAnimation onComplete={() => setShowIntro(false)} />
-      )}
-      
     <div className="min-h-screen w-full relative bg-black">
       {/* Pearl Mist Background with Top Glow */}
       <div
@@ -430,7 +424,7 @@ const Landing = () => {
                   strokeWidth="2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  className="text-[#e78a53]"
+                  className="text-[#8b5cf6]"
                 >
                   <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"></path>
                 </svg>
@@ -443,9 +437,11 @@ const Landing = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.3 }}
-              className="mb-8 flex justify-center"
+              className="mb-8"
             >
-              <img src={wzrdLogo} alt="WZRD.tech" className="h-60 sm:h-[21rem] lg:h-96 w-auto" />
+              <h1 className="text-4xl font-bold tracking-tight text-white sm:text-6xl lg:text-7xl">
+                <strong>WZRDFLOW</strong>
+              </h1>
             </motion.div>
 
             {/* Description */}
@@ -580,20 +576,24 @@ const Landing = () => {
           zIndex: 1,
         }}
       >
-        {/* Cyberpunk Hero Section */}
-        <CyberpunkHero />
-
-        {/* Cyberpunk Features Showcase */}
-        <CyberpunkFeatures />
-
-        {/* Testimonials Stream */}
-        <div id="testimonials">
-          <TestimonialStream />
+        {/* Features Section */}
+        <div id="features">
+          <Features />
         </div>
 
         {/* Pricing Section */}
-        <div id="pricing">
+        <div id="pricing" className="-mt-16">
           <PricingSection />
+        </div>
+            
+        {/* Testimonials Section */}
+        <div id="testimonials">
+          <TestimonialsSection />
+        </div>
+            
+        {/* New Release Promo */}
+        <div>
+          <NewReleasePromo />
         </div>
 
         {/* FAQ Section */}
@@ -607,7 +607,6 @@ const Landing = () => {
         </div>
       </div>
     </div>
-    </>
   );
 };
 
