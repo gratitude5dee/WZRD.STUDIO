@@ -25,6 +25,7 @@ import { ReactFlowTextNode } from './nodes/ReactFlowTextNode';
 import { ReactFlowImageNode } from './nodes/ReactFlowImageNode';
 import { ReactFlowVideoNode } from './nodes/ReactFlowVideoNode';
 import { EnhancedStudioEdge } from './edges/EnhancedStudioEdge';
+import { BezierConnection } from './connections/BezierConnection';
 import { CustomConnectionLine } from './ConnectionLine';
 import { ConnectionNodeSelector } from './ConnectionNodeSelector';
 import { CanvasToolbar } from './canvas/CanvasToolbar';
@@ -70,14 +71,19 @@ const nodeTypes: NodeTypes = {
 
 // Edge types configuration
 const edgeTypes: EdgeTypes = {
+  bezier: BezierConnection,
   studio: EnhancedStudioEdge,
-  default: EnhancedStudioEdge,
+  default: BezierConnection, // Use Bezier as default
 };
 
 // Default edge options
 const defaultEdgeOptions = {
-  type: 'studio',
+  type: 'bezier', // Use Bezier connections
   animated: false,
+  data: {
+    status: 'idle',
+    dataType: 'data',
+  },
 };
 
 const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
