@@ -1,18 +1,17 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useVideoEditorStore } from '@/store/videoEditorStore';
 import { useComputeFlowSync } from '@/hooks/useComputeFlowSync';
 import { useRealtimeTimelineSync } from '@/hooks/useRealtimeTimelineSync';
 import { useEditorShortcuts } from '@/hooks/useEditorShortcuts';
-import PreviewCanvas from './preview/PreviewCanvas';
-import TimelinePanel from './timeline/TimelinePanel';
-import MediaLibrary from './media/MediaLibrary';
-import PropertiesPanel from './properties/PropertiesPanel';
-import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
-import { Button } from '@/components/ui/button';
-import { Undo2, Redo2, Users, Share2, Download } from 'lucide-react';
 import { loadDemoContent } from '@/lib/demoContent';
-import PlaybackToolbar from './toolbar/PlaybackToolbar';
+import { EditorHeader } from './EditorHeader';
+import { EditorIconBar, EditorTab } from './EditorIconBar';
+import { EditorMediaPanel } from './EditorMediaPanel';
+import { EditorCanvas } from './EditorCanvas';
+import TimelinePanel from './timeline/TimelinePanel';
+import PropertiesPanel from './properties/PropertiesPanel';
+import { editorTheme } from '@/lib/editor/theme';
 
 export default function VideoEditorMain() {
   const { projectId } = useParams();
@@ -24,19 +23,24 @@ export default function VideoEditorMain() {
   const clips = useVideoEditorStore((state) => state.clips);
   const addClip = useVideoEditorStore((state) => state.addClip);
   const addAudioTrack = useVideoEditorStore((state) => state.addAudioTrack);
+  const playback = useVideoEditorStore((state) => state.playback);
+  const composition = useVideoEditorStore((state) => state.composition);
+  const play = useVideoEditorStore((state) => state.play);
+  const pause = useVideoEditorStore((state) => state.pause);
+  const seek = useVideoEditorStore((state) => state.seek);
   const undo = useVideoEditorStore((state) => state.undo);
   const redo = useVideoEditorStore((state) => state.redo);
+
+  const [activeMediaTab, setActiveMediaTab] = useState<EditorTab>('photos');
 
   useEffect(() => {
     if (projectId && projectId !== storeProjectId) {
       loadProject(projectId).then(() => {
-        // Load demo content if project has no clips
         if (clips.length === 0) {
           loadDemoContent(addClip, addAudioTrack);
         }
       });
     } else if (clips.length === 0) {
-      // Load demo content if no clips
       loadDemoContent(addClip, addAudioTrack);
     }
   }, [loadProject, projectId, storeProjectId, clips.length, addClip, addAudioTrack]);
@@ -45,96 +49,69 @@ export default function VideoEditorMain() {
   useRealtimeTimelineSync(projectId ?? storeProjectId);
   useEditorShortcuts();
 
+  const handleTitleChange = (title: string) => {
+    // Project name update logic here
+    console.log('Update title:', title);
+  };
+
+  const handleExport = () => {
+    console.log('Export clicked');
+  };
+
+  const handleShare = () => {
+    console.log('Share clicked');
+  };
+
   return (
-    <div className="flex flex-col h-screen bg-[#0a0a0a] text-white">
-      {/* Top Navbar */}
-      <div className="h-14 bg-[#1a1a1a] border-b border-[#2a2a2a] flex items-center px-4 justify-between">
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={undo}
-            className="w-8 h-8 rounded-full bg-[#2a2a2a] hover:bg-[#3a3a3a] text-white"
-          >
-            <Undo2 className="w-4 h-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={redo}
-            className="w-8 h-8 rounded-full bg-[#2a2a2a] hover:bg-[#3a3a3a] text-white"
-          >
-            <Redo2 className="w-4 h-4" />
-          </Button>
-        </div>
+    <div
+      className="flex flex-col h-full"
+      style={{ background: editorTheme.bg.primary }}
+    >
+      {/* Header */}
+      <EditorHeader
+        projectTitle={projectName || 'Untitled video'}
+        onTitleChange={handleTitleChange}
+        canUndo={false}
+        canRedo={false}
+        onUndo={undo}
+        onRedo={redo}
+        onShare={handleShare}
+        onExport={handleExport}
+      />
 
-        <h1 className="text-sm font-medium text-white">
-          {projectName || 'Untitled video'}
-        </h1>
-
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-white hover:bg-[#2a2a2a] gap-2"
-          >
-            <Users className="w-4 h-4" />
-            Join Us
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-white hover:bg-[#2a2a2a] gap-2"
-          >
-            <Share2 className="w-4 h-4" />
-            Share
-          </Button>
-          <Button
-            size="sm"
-            className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2"
-          >
-            <Download className="w-4 h-4" />
-            Export
-          </Button>
-        </div>
-      </div>
-
-      {/* Main Layout */}
-      <ResizablePanelGroup direction="horizontal" className="flex-1">
-        <ResizablePanel defaultSize={22} minSize={18} maxSize={30} className="bg-[#0a0a0a]">
-          <MediaLibrary projectId={projectId} />
-        </ResizablePanel>
-
-        <ResizableHandle className="w-[1px] bg-[#2a2a2a]" />
-
-        <ResizablePanel defaultSize={56} minSize={40}>
-          <ResizablePanelGroup direction="vertical">
-            <ResizablePanel defaultSize={65} minSize={30}>
-              <div className="h-full flex flex-col">
-                <div className="flex-1">
-                  <PreviewCanvas selectedClipIds={selectedClipIds} />
-                </div>
-                <PlaybackToolbar />
-              </div>
-            </ResizablePanel>
-            
-            <ResizableHandle className="h-[1px] bg-[#2a2a2a]" />
-            
-            <ResizablePanel defaultSize={35} minSize={20}>
-              <TimelinePanel />
-            </ResizablePanel>
-          </ResizablePanelGroup>
-        </ResizablePanel>
-
-        <ResizableHandle className="w-[1px] bg-[#2a2a2a]" />
-
-        <ResizablePanel defaultSize={22} minSize={18} maxSize={30} className="bg-[#0a0a0a]">
-          <PropertiesPanel
-            selectedClipIds={selectedClipIds}
-            selectedAudioTrackIds={selectedAudioTrackIds}
+      {/* Main Content */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Left Sidebar */}
+        <div className="flex">
+          <EditorIconBar
+            activeTab={activeMediaTab}
+            onTabChange={setActiveMediaTab}
           />
-        </ResizablePanel>
-      </ResizablePanelGroup>
+          <EditorMediaPanel
+            activeTab={activeMediaTab}
+          />
+        </div>
+
+        {/* Center - Canvas + Timeline */}
+        <div className="flex-1 flex flex-col min-w-0">
+          <EditorCanvas
+            currentTime={playback.currentTime / 1000}
+            duration={composition.duration / 1000}
+            isPlaying={playback.isPlaying}
+            onPlay={play}
+            onPause={pause}
+            onSeek={(time) => seek(time * 1000)}
+          />
+
+          <TimelinePanel />
+        </div>
+
+        {/* Right Sidebar - Properties */}
+        <PropertiesPanel
+          selectedClipIds={selectedClipIds}
+          selectedAudioTrackIds={selectedAudioTrackIds}
+        />
+      </div>
     </div>
   );
 }
