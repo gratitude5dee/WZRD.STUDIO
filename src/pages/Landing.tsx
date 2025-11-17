@@ -8,6 +8,7 @@ import { FAQSection } from '@/components/landing/FAQSection';
 import { PricingSection } from '@/components/landing/PricingSection';
 import { StickyFooter } from '@/components/landing/StickyFooter';
 import { useAuth } from '@/providers/AuthProvider';
+import { Logo } from '@/components/ui/logo';
 import wzrdLogo from '@/assets/wzrd-logo.png';
 
 const Landing = () => {
@@ -439,9 +440,9 @@ const Landing = () => {
               transition={{ duration: 0.5, delay: 0.3 }}
               className="mb-8"
             >
-              <h1 className="text-4xl font-bold tracking-tight text-white sm:text-6xl lg:text-7xl">
-                <strong>WZRDFLOW</strong>
-              </h1>
+              <div className="flex justify-center">
+                <Logo size="lg" showVersion={false} />
+              </div>
             </motion.div>
 
             {/* Description */}
