@@ -191,6 +191,11 @@
     --connector-default: 0 0% 27%;  /* #444444 - Subtle grey */
     --connector-active: 217 91% 60%; /* #3B82F6 - Active connector */
     
+    /* Purple Scale for UI Components */
+    --purple-400: 258 90% 66%;      /* #A78BFA - Light purple */
+    --purple-500: 258 90% 60%;      /* #8B5CF6 - Medium purple */
+    --purple-600: 258 90% 50%;      /* #7C3AED - Dark purple */
+    
     --radius: 1rem;
   }
 
@@ -243,6 +248,11 @@
     --accent-purple: 258 90% 66%;   /* #8B5CF6 - Purple alternative */
     --connector-default: 0 0% 27%;  /* #444444 - Subtle grey */
     --connector-active: 217 91% 60%; /* #3B82F6 - Active connector */
+    
+    /* Purple Scale for UI Components */
+    --purple-400: 258 90% 66%;      /* #A78BFA - Light purple */
+    --purple-500: 258 90% 60%;      /* #8B5CF6 - Medium purple */
+    --purple-600: 258 90% 50%;      /* #7C3AED - Dark purple */
   }
 }
 

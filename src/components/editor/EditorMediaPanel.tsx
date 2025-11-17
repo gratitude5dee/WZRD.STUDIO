@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Search } from 'lucide-react';
 import { editorTheme, layoutDimensions, typography, exactMeasurements } from '@/lib/editor/theme';
 import { EditorTab } from './EditorIconBar';
+import { AssetDropZone } from './AssetDropZone';
 
 interface EditorMediaPanelProps {
   activeTab: EditorTab;
@@ -150,7 +151,9 @@ export const EditorMediaPanel: React.FC<EditorMediaPanelProps> = ({
           </div>
         )}
 
-        {activeTab !== 'photos' && (
+        {activeTab === 'upload' && <AssetDropZone />}
+
+        {activeTab !== 'photos' && activeTab !== 'upload' && (
           <div
             className="flex items-center justify-center h-full"
             style={{
