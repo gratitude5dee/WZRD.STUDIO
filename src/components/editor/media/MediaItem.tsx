@@ -3,6 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { LibraryMediaItem, useVideoEditorStore } from '@/store/videoEditorStore';
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from 'sonner';
+import { useDrag } from '@/lib/react-dnd';
 
 interface MediaItemProps {
   item: LibraryMediaItem;
@@ -13,6 +14,15 @@ export function MediaItem({ item, viewMode }: MediaItemProps) {
   const addClip = useVideoEditorStore(s => s.addClip);
   const addAudioTrack = useVideoEditorStore(s => s.addAudioTrack);
   const audioTracks = useVideoEditorStore(s => s.audioTracks);
+  
+  // Enable drag functionality
+  const [{ isDragging }, dragRef] = useDrag({
+    type: 'MEDIA_ITEM',
+    item: { mediaItem: item },
+    collect: (monitor) => ({
+      isDragging: monitor.isDragging(),
+    }),
+  });
   
   const Icon = 
     item.mediaType === 'video' ? Video :
@@ -79,8 +89,11 @@ export function MediaItem({ item, viewMode }: MediaItemProps) {
   if (viewMode === 'grid') {
     return (
       <div
+        ref={dragRef}
         onClick={handleAddToTimeline}
-        className="relative aspect-square rounded-lg overflow-hidden cursor-pointer bg-muted/50 border-2 border-border hover:border-primary transition-all group"
+        className={`relative aspect-square rounded-lg overflow-hidden cursor-grab active:cursor-grabbing bg-muted/50 border-2 border-border hover:border-primary transition-all group ${
+          isDragging ? 'opacity-50' : ''
+        }`}
       >
         {/* Thumbnail */}
         {item.thumbnailUrl ? (
@@ -128,8 +141,11 @@ export function MediaItem({ item, viewMode }: MediaItemProps) {
   // List view
   return (
     <div
+      ref={dragRef}
       onClick={handleAddToTimeline}
-      className="flex items-center gap-3 p-2 rounded-lg bg-muted/30 border border-border hover:border-primary cursor-pointer transition-all group"
+      className={`flex items-center gap-3 p-2 rounded-lg bg-muted/30 border border-border hover:border-primary cursor-grab active:cursor-grabbing transition-all group ${
+        isDragging ? 'opacity-50' : ''
+      }`}
     >
       <div className="w-10 h-10 rounded bg-muted/50 flex items-center justify-center flex-shrink-0">
         <Icon className="w-5 h-5 text-muted-foreground" />

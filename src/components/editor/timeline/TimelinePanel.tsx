@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef } from 'react';
-import { useVideoEditorStore, Clip } from '@/store/videoEditorStore';
+import { useVideoEditorStore, Clip, type LibraryMediaItem } from '@/store/videoEditorStore';
 import { TimelineTrack } from './TimelineTrack';
 import { TimelineRuler } from './TimelineRuler';
 import TimelinePlayhead from '../TimelinePlayhead';
+import { useDrop } from '@/lib/react-dnd';
 
 export default function TimelinePanel() {
   const clips = useVideoEditorStore((state) => state.clips);
@@ -18,6 +19,8 @@ export default function TimelinePanel() {
   const selectedClipIds = useVideoEditorStore((state) => state.selectedClipIds);
   const selectedAudioTrackIds = useVideoEditorStore((state) => state.selectedAudioTrackIds);
   const playback = useVideoEditorStore((state) => state.playback);
+  const addClip = useVideoEditorStore((state) => state.addClip);
+  const addAudioTrack = useVideoEditorStore((state) => state.addAudioTrack);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const videoTracks = useMemo(() => groupByTrack(clips), [clips]);
@@ -71,12 +74,76 @@ export default function TimelinePanel() {
     clearAudioSelection();
   };
 
+  // Drop zone for timeline panel (empty areas)
+  const [{ isOverTimeline }, timelineDropRef] = useDrop({
+    accept: 'MEDIA_ITEM',
+    drop: (item: { mediaItem: LibraryMediaItem }, monitor) => {
+      const offset = monitor.getClientOffset();
+      if (!offset || !scrollRef.current) return;
+      
+      const rect = scrollRef.current.getBoundingClientRect();
+      const relativeX = offset.x - rect.left + scrollOffset;
+      const timeMs = Math.max(0, (relativeX / zoom) * 1000);
+      
+      // Create clip/audio at end of timeline
+      const durationMs = (item.mediaItem.durationSeconds ?? 5) * 1000;
+      
+      if (item.mediaItem.mediaType === 'audio') {
+        const newAudioTrack = {
+          id: crypto.randomUUID(),
+          mediaItemId: item.mediaItem.id,
+          type: 'audio' as const,
+          name: item.mediaItem.name,
+          url: item.mediaItem.url!,
+          startTime: timeMs,
+          duration: durationMs,
+          endTime: timeMs + durationMs,
+          volume: 1,
+          isMuted: false,
+          trackIndex: audioTracks.length,
+        };
+        addAudioTrack(newAudioTrack);
+      } else {
+        const newClip = {
+          id: crypto.randomUUID(),
+          mediaItemId: item.mediaItem.id,
+          type: item.mediaItem.mediaType === 'image' ? 'image' as const : 'video' as const,
+          name: item.mediaItem.name,
+          url: item.mediaItem.url!,
+          startTime: timeMs,
+          duration: durationMs,
+          endTime: timeMs + durationMs,
+          layer: 0,
+          trackIndex: clips.filter(c => c.layer === 0).length,
+          transforms: {
+            position: { x: 0, y: 0 },
+            scale: { x: 1, y: 1 },
+            rotation: 0,
+            opacity: 1,
+          },
+        };
+        addClip(newClip);
+      }
+    },
+    collect: (monitor) => ({
+      isOverTimeline: monitor.isOver(),
+    }),
+  });
+
   return (
     <div className="h-full bg-muted/30 flex flex-col border-t border-border">
       <TimelineRuler zoom={zoom} scrollOffset={scrollOffset} durationMs={durationMs} />
       <div
-        ref={scrollRef}
-        className="flex-1 overflow-auto bg-muted/20 relative"
+        ref={(node) => {
+          // Set both refs
+          if (scrollRef.current !== node) {
+            scrollRef.current = node;
+          }
+          timelineDropRef(node);
+        }}
+        className={`flex-1 overflow-auto bg-muted/20 relative transition-colors ${
+          isOverTimeline ? 'bg-primary/5' : ''
+        }`}
         onScroll={handleScroll}
         onClick={handleEmptyClick}
         style={{
