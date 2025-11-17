@@ -441,7 +441,7 @@ const Landing = () => {
               className="mb-8"
             >
               <div className="flex justify-center">
-                <Logo size="lg" showVersion={false} />
+                <Logo size="xl" showVersion={false} />
               </div>
             </motion.div>
 
