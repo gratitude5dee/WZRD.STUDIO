@@ -212,22 +212,18 @@ export const EditorHeader: React.FC<EditorHeaderProps> = ({
             <TooltipContent>Share project</TooltipContent>
           </Tooltip>
 
-          {/* Export Button - PRIMARY GREEN */}
+          {/* Export Button - PRIMARY PURPLE */}
           <Tooltip>
             <TooltipTrigger asChild>
               <button
                 onClick={onExport}
-                className="flex items-center gap-2 rounded-md transition-all"
+                className="flex items-center gap-2 rounded-md transition-all bg-gradient-to-b from-[#8b5cf6] to-[#7c3aed] hover:from-[#9d71f7] hover:to-[#8b5cf6] text-white shadow-[0px_2px_0px_0px_rgba(255,255,255,0.3)_inset]"
                 style={{
                   height: `${exactMeasurements.header.buttonHeight}px`,
                   padding: exactMeasurements.header.exportButtonPadding,
-                  background: editorTheme.accent.primary,
-                  color: '#000000',
                   fontSize: typography.fontSize.sm,
                   fontWeight: typography.fontWeight.bold,
                 }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = '#5FF521')}
-                onMouseLeave={(e) => (e.currentTarget.style.background = editorTheme.accent.primary)}
               >
                 <Download size={16} />
                 <span>Export</span>

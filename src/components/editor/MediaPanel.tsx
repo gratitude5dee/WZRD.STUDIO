@@ -219,7 +219,7 @@ const MediaPanel = () => {
         <div className="flex items-center space-x-3">
           <div onClick={handleSelect}>
             {item.type === 'video' && <Film className="h-5 w-5 text-blue-400" />}
-            {item.type === 'image' && <Image className="h-5 w-5 text-green-400" />}
+            {item.type === 'image' && <Image className="h-5 w-5 text-purple-400" />}
             {item.type === 'audio' && <Music className="h-5 w-5 text-yellow-400" />}
           </div>
           <div className="flex-1 overflow-hidden" onClick={handleSelect}>
