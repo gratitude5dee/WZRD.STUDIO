@@ -58,7 +58,7 @@ const TimelineClip: React.FC<TimelineClipProps> = ({
       case 'audio':
         return <Volume2 className="w-4 h-4 text-blue-400" />;
       case 'image':
-        return <ImageIcon className="w-4 h-4 text-green-400" />;
+        return <ImageIcon className="w-4 h-4 text-purple-400" />;
     }
   };
 
@@ -69,7 +69,7 @@ const TimelineClip: React.FC<TimelineClipProps> = ({
       case 'audio':
         return 'from-blue-900/90 to-blue-900/70';
       case 'image':
-        return 'from-green-900/90 to-green-900/70';
+        return 'from-purple-900/90 to-purple-900/70';
     }
   };
 
