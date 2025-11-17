@@ -1,128 +1,121 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import React, { useRef, useCallback } from 'react';
+import { editorTheme, exactMeasurements } from '@/lib/editor/theme';
 
 interface TimelinePlayheadProps {
   currentTime: number;
   duration: number;
   pixelsPerSecond: number;
   scrollOffset?: number;
+  onSeek?: (time: number) => void;
 }
 
 const formatTime = (time: number) => {
   const mins = Math.floor(time / 60);
   const secs = Math.floor(time % 60);
-  const ms = Math.floor((time % 1) * 100);
-  return `${mins}:${secs.toString().padStart(2, '0')}.${ms.toString().padStart(2, '0')}`;
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
 };
 
-const TimelinePlayhead: React.FC<TimelinePlayheadProps> = ({ currentTime, duration, pixelsPerSecond, scrollOffset = 0 }) => {
+const TimelinePlayhead: React.FC<TimelinePlayheadProps> = ({
+  currentTime,
+  duration,
+  pixelsPerSecond,
+  scrollOffset = 0,
+  onSeek,
+}) => {
   const position = Math.max(0, currentTime * pixelsPerSecond - scrollOffset);
-  const isVisible = position >= 0;
-  
-  // Visual debugging - log positioning calculations
-  if (process.env.NODE_ENV === 'development') {
-    console.log('🎯 Playhead:', {
-      time: formatTime(currentTime),
-      position: `${position}px`,
-      visible: isVisible,
-      zoom: pixelsPerSecond,
-      scroll: scrollOffset
-    });
-  }
+  const isDraggingRef = useRef(false);
+  const playheadRef = useRef<HTMLDivElement>(null);
+
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      if (!onSeek) return;
+      e.preventDefault();
+      e.stopPropagation();
+      isDraggingRef.current = true;
+
+      const handleMouseMove = (moveEvent: MouseEvent) => {
+        if (!isDraggingRef.current || !playheadRef.current) return;
+
+        const parent = playheadRef.current.parentElement;
+        if (!parent) return;
+
+        const rect = parent.getBoundingClientRect();
+        const x = moveEvent.clientX - rect.left + scrollOffset;
+        const time = Math.max(0, Math.min(duration, x / pixelsPerSecond));
+        onSeek(time);
+      };
+
+      const handleMouseUp = () => {
+        isDraggingRef.current = false;
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+        document.body.style.cursor = '';
+      };
+
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = 'grabbing';
+    },
+    [onSeek, duration, pixelsPerSecond, scrollOffset]
+  );
 
   return (
-    <TooltipProvider>
-      <motion.div
-        className="absolute top-0 bottom-0 z-50 pointer-events-none"
-        style={{ left: `${position}px` }}
-        animate={{ 
-          left: `${position}px`,
-          opacity: isVisible ? 1 : 0
+    <div
+      ref={playheadRef}
+      className="absolute top-0 bottom-0 pointer-events-none"
+      style={{
+        left: `${position}px`,
+        zIndex: 100,
+      }}
+    >
+      {/* Playhead line */}
+      <div
+        className="absolute top-0 bottom-0 pointer-events-none"
+        style={{
+          width: `${exactMeasurements.timeline.playheadWidth}px`,
+          background: exactMeasurements.timeline.playheadColor,
+          boxShadow: `0 2px 4px ${exactMeasurements.timeline.playheadColor}80`,
         }}
-        transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+      />
+
+      {/* Draggable handle at top */}
+      <div
+        className="absolute -top-1 left-1/2 -translate-x-1/2 pointer-events-auto cursor-grab active:cursor-grabbing transition-transform hover:scale-110"
+        style={{
+          width: '16px',
+          height: '16px',
+          borderRadius: '50%',
+          background: exactMeasurements.timeline.playheadColor,
+          border: '2px solid white',
+          boxShadow: '0 2px 4px rgba(255, 68, 68, 0.5)',
+        }}
+        onMouseDown={handleMouseDown}
+        title={formatTime(currentTime)}
       >
-        {/* Pulsing glow effect behind playhead */}
-        <motion.div
-          className="absolute inset-0 w-[8px] -ml-[2.5px]"
+        {/* Inner dot */}
+        <div
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
           style={{
-            background: 'radial-gradient(ellipse at center, rgba(16, 185, 129, 0.4) 0%, transparent 70%)',
-            filter: 'blur(4px)'
-          }}
-          animate={{
-            opacity: [0.4, 0.7, 0.4],
-            scale: [1, 1.1, 1]
-          }}
-          transition={{
-            duration: 2,
-            repeat: Infinity,
-            ease: "easeInOut"
+            width: '6px',
+            height: '6px',
+            borderRadius: '50%',
+            background: 'white',
           }}
         />
-        
-        {/* Time indicator - always visible */}
-        <div className="absolute -top-10 left-1/2 -translate-x-1/2 pointer-events-auto">
-          <motion.div 
-            className="bg-[#10b981] text-white px-3 py-1.5 rounded-md text-xs font-mono whitespace-nowrap shadow-xl border border-[#059669]"
-            initial={{ y: -5, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.2 }}
-          >
-            <div className="flex items-center gap-2">
-              <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
-              <span className="font-semibold">{formatTime(currentTime)}</span>
-            </div>
-          </motion.div>
-          {/* Tooltip connector line */}
-          <div className="absolute top-full left-1/2 -translate-x-1/2 w-0.5 h-2 bg-[#10b981]" />
-        </div>
-        
-        {/* Main playhead line with enhanced visibility */}
-        <div className="relative h-full">
-          {/* Outer glow */}
-          <div 
-            className="absolute inset-0 w-[6px] -ml-[1.5px] h-full"
-            style={{ 
-              backgroundColor: '#10b981',
-              opacity: 0.3,
-              filter: 'blur(3px)'
-            }}
-          />
-          {/* Solid line */}
-          <div 
-            className="relative w-[3px] h-full shadow-[0_0_20px_rgba(16,185,129,1),0_0_40px_rgba(16,185,129,0.5)]"
-            style={{ backgroundColor: '#10b981' }}
-          >
-            {/* Top edge highlight */}
-            <div className="absolute top-0 left-0 right-0 h-20 bg-gradient-to-b from-white/30 to-transparent" />
-          </div>
-        </div>
-        
-        {/* Playhead handle - larger diamond at top */}
-        <motion.div 
-          className="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 rotate-45 pointer-events-auto cursor-grab active:cursor-grabbing shadow-2xl border-2 border-white/20"
-          style={{ backgroundColor: '#10b981' }}
-          whileHover={{ scale: 1.2 }}
-          whileTap={{ scale: 0.9 }}
-        >
-          {/* Inner shine */}
-          <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent" />
-        </motion.div>
-        
-        {/* Visual debugging indicators (dev only) */}
-        {process.env.NODE_ENV === 'development' && (
-          <>
-            <div 
-              className="absolute top-0 left-0 w-2 h-2 bg-red-500 rounded-full animate-ping" 
-              title="Playhead Position Marker" 
-            />
-            <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-black/80 text-yellow-400 text-[10px] font-mono rounded whitespace-nowrap">
-              {position.toFixed(1)}px
-            </div>
-          </>
-        )}
-      </motion.div>
-    </TooltipProvider>
+      </div>
+
+      {/* Time tooltip */}
+      <div
+        className="absolute -top-8 left-1/2 -translate-x-1/2 pointer-events-none whitespace-nowrap px-2 py-1 rounded text-xs font-mono"
+        style={{
+          background: 'rgba(0, 0, 0, 0.9)',
+          color: 'white',
+          fontSize: '11px',
+        }}
+      >
+        {formatTime(currentTime)}
+      </div>
+    </div>
   );
 };
 

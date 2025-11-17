@@ -84,3 +84,63 @@ export const typography = {
     bold: 700,
   },
 } as const;
+
+export const exactMeasurements = {
+  header: {
+    height: 64,
+    paddingX: 20,
+    logoSize: 32,
+    buttonHeight: 36,
+    buttonGap: 12,
+    exportButtonPadding: '10px 20px',
+  },
+  
+  iconBar: {
+    width: 48,
+    iconSize: 24,
+    paddingY: 12,
+    gap: 8,
+    activeBorderWidth: 3,
+  },
+  
+  mediaPanel: {
+    width: 320,
+    padding: 16,
+    searchHeight: 40,
+    gridGap: 8,
+    imageAspectRatio: '1 / 1',
+    imageBorderRadius: 6,
+  },
+  
+  canvas: {
+    controlBarHeight: 56,
+    controlBarPadding: '12px 16px',
+    buttonHeight: 32,
+    buttonGap: 8,
+    playButtonSize: 40,
+    timeDisplayFont: '13px',
+  },
+  
+  timeline: {
+    height: 240,
+    rulerHeight: 32,
+    trackHeight: 64,
+    trackHeaderWidth: 120,
+    clipMinWidth: 40,
+    clipPadding: '4px 8px',
+    handleWidth: 8,
+    playheadWidth: 2,
+    playheadColor: '#FF4444',
+  },
+  
+  propertiesPanel: {
+    width: 320,
+    padding: 16,
+    sectionGap: 24,
+    labelMarginBottom: 8,
+    fieldHeight: 36,
+    fieldGap: 12,
+    colorSwatchSize: 36,
+    colorSwatchBorder: 2,
+  },
+} as const;

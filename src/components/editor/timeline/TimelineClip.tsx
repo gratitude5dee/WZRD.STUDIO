@@ -29,6 +29,7 @@ export function TimelineClip({ clip, zoom, onSelect, isSelected }: TimelineClipP
   const timeline = useVideoEditorStore((state) => state.timeline);
   const clips = useVideoEditorStore((state) => state.clips);
   const audioTracks = useVideoEditorStore((state) => state.audioTracks);
+  const [isHovered, setIsHovered] = useState(false);
   const [isTrimming, setIsTrimming] = useState(false);
   const pendingTrim = useRef<{ startTime: number; duration: number } | null>(null);
 
@@ -184,22 +185,30 @@ export function TimelineClip({ clip, zoom, onSelect, isSelected }: TimelineClipP
       <ContextMenuTrigger asChild>
         <div
           ref={dragRef}
-          className={`absolute rounded overflow-hidden cursor-grab active:cursor-grabbing transition-all duration-150 group border-2 ${
-            isDragging || isTrimming ? 'opacity-70 scale-95' : 'opacity-100'
-          } ${clip.type === 'audio' ? 'bg-accent/80 h-12' : 'bg-[#2a2a2a] h-14'} ${
-            isSelected ? 'shadow-[0_0_20px_rgba(80,255,18,0.6)]' : ''
-          }`}
+          className="absolute cursor-move overflow-hidden transition-all"
           style={{
+            width: `${widthPx}px`,
             left: `${leftPx}px`,
-            width: `${Math.max(60, widthPx)}px`,
-            borderColor: isSelected ? '#50FF12' : 'transparent',
+            top: '4px',
+            height: 'calc(100% - 8px)',
+            background: clip.type === 'audio' 
+              ? `linear-gradient(135deg, #7E12FF 0%, #5209B8 100%)`
+              : `linear-gradient(135deg, #3B82F6 0%, #1E40AF 100%)`,
+            borderRadius: '4px',
+            border: isSelected ? '2px solid #7E12FF' : '1px solid rgba(255, 255, 255, 0.1)',
+            opacity: isDragging || isTrimming ? 0.5 : 1,
+            boxShadow: isSelected 
+              ? '0 0 0 1px rgba(126, 18, 255, 0.5), 0 4px 12px rgba(126, 18, 255, 0.3)'
+              : '0 2px 8px rgba(0, 0, 0, 0.15)',
           }}
           onClick={handleSelect}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
         >
           {/* Thumbnail strip for video clips */}
           {clip.type !== 'audio' && 'url' in clip && clip.url && (
             <div 
-              className="absolute inset-0 opacity-40"
+              className="absolute inset-0 opacity-30"
               style={{
                 backgroundImage: `url(${clip.url})`,
                 backgroundSize: 'auto 100%',
@@ -208,46 +217,59 @@ export function TimelineClip({ clip, zoom, onSelect, isSelected }: TimelineClipP
               }}
             />
           )}
-          
-          {/* Fallback thumbnail pattern for video clips without URL */}
-          {clip.type !== 'audio' && !('url' in clip && clip.url) && (
-            <div className="absolute inset-0 flex">
-              {[...Array(Math.ceil(widthPx / 40))].map((_, i) => (
-                <div
-                  key={i}
-                  className="w-10 h-full bg-gradient-to-br from-gray-700 to-gray-800 border-r border-gray-900/50 flex-shrink-0"
-                />
-              ))}
-            </div>
-          )}
 
-          {/* Icon badge with label overlay */}
-          <div className="absolute top-1 left-1.5 z-10">
-            <div className="bg-[#1a1a1a]/95 backdrop-blur-sm px-1.5 py-0.5 rounded-md text-[10px] font-medium text-white/90 flex items-center gap-1 shadow-lg">
-              {clip.type === 'audio' ? (
-                <Music className="w-3 h-3 text-blue-400" />
-              ) : (
-                <Film className="w-3 h-3 text-purple-400" />
-              )}
-              <span className="truncate max-w-[100px]">{clip.name || 'Unnamed'}</span>
-            </div>
+          {/* Gradient overlay */}
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background: 'linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.3) 100%)',
+            }}
+          />
+
+          {/* Clip name label */}
+          <div
+            className="absolute top-0 left-0 flex items-center gap-1 px-2 py-1 pointer-events-none truncate"
+            style={{
+              background: 'rgba(0, 0, 0, 0.5)',
+              borderBottomRightRadius: '4px',
+              fontSize: '11px',
+              color: 'white',
+              maxWidth: 'calc(100% - 32px)',
+            }}
+          >
+            {clip.type === 'audio' ? (
+              <Music className="w-3 h-3 flex-shrink-0" />
+            ) : (
+              <Film className="w-3 h-3 flex-shrink-0" />
+            )}
+            <span className="truncate">{clip.name || 'Unnamed'}</span>
           </div>
 
-          {/* Trim handle - start */}
+          {/* Left resize handle */}
           <div
-            className="absolute left-0 top-0 w-2 h-full cursor-ew-resize opacity-0 group-hover:opacity-100 transition-all z-20 bg-white/20 hover:bg-[#50FF12]/60 hover:w-3"
+            className="absolute left-0 top-0 bottom-0 transition-all"
+            style={{
+              width: isHovered ? '8px' : '2px',
+              cursor: 'ew-resize',
+              background: isHovered ? 'rgba(255, 255, 255, 0.3)' : 'transparent',
+              borderLeft: isHovered ? '2px solid rgba(255, 255, 255, 0.8)' : 'none',
+            }}
             onPointerDown={handleTrimPointerDown('start')}
-          >
-            <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-[1px] bg-white/50" />
-          </div>
-
-          {/* Trim handle - end */}
+            onClick={(e) => e.stopPropagation()}
+          />
+          
+          {/* Right resize handle */}
           <div
-            className="absolute right-0 top-0 w-2 h-full cursor-ew-resize opacity-0 group-hover:opacity-100 transition-all z-20 bg-white/20 hover:bg-[#50FF12]/60 hover:w-3"
+            className="absolute right-0 top-0 bottom-0 transition-all"
+            style={{
+              width: isHovered ? '8px' : '2px',
+              cursor: 'ew-resize',
+              background: isHovered ? 'rgba(255, 255, 255, 0.3)' : 'transparent',
+              borderRight: isHovered ? '2px solid rgba(255, 255, 255, 0.8)' : 'none',
+            }}
             onPointerDown={handleTrimPointerDown('end')}
-          >
-            <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-[1px] bg-white/50" />
-          </div>
+            onClick={(e) => e.stopPropagation()}
+          />
         </div>
       </ContextMenuTrigger>
       <ContextMenuContent className="bg-card text-foreground border-border">
