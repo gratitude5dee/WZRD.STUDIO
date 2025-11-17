@@ -1,4 +1,5 @@
-import { ConnectionLineComponentProps, getStraightPath } from '@xyflow/react';
+import { ConnectionLineComponentProps, getBezierPath } from '@xyflow/react';
+import { studioLayout } from '@/lib/studio/theme';
 
 export const CustomConnectionLine = ({
   fromX,
@@ -7,11 +8,13 @@ export const CustomConnectionLine = ({
   toY,
   fromHandle,
 }: ConnectionLineComponentProps) => {
-  const [edgePath] = getStraightPath({
+  // Use Bezier path instead of straight path
+  const [edgePath] = getBezierPath({
     sourceX: fromX,
     sourceY: fromY,
     targetX: toX,
     targetY: toY,
+    curvature: studioLayout.connection.curveStrength,
   });
 
   const getHandleColor = () => {
