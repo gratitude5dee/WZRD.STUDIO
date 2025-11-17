@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Loader2, UserPlus, Plus } from 'lucide-react';
+import wzrdLogo from '@/assets/wzrd-logo.png';
 import { ProjectList } from '@/components/home/ProjectList';
 import { ProjectListView } from '@/components/home/ProjectListView';
 import { Sidebar } from '@/components/home/Sidebar';
@@ -132,7 +133,7 @@ export default function Home() {
         <header className="h-16 border-b border-white/[0.08] flex items-center justify-center px-6">
           <div className="flex items-center gap-3">
             <img 
-              src="/lovable-uploads/f8be561d-d5b5-49a8-adaa-dbf01721ef9f.png" 
+              src={wzrdLogo} 
               alt="WZRD.STUDIO Logo" 
               className="h-8 object-contain"
             />
