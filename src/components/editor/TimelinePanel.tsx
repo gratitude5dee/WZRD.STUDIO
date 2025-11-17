@@ -2,6 +2,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useVideoEditor } from '@/providers/VideoEditorProvider';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useTimelineScrub } from '@/hooks/editor/useTimelineScrub';
+import { useTimelineVirtualization } from '@/hooks/editor/useTimelineVirtualization';
 import TimelineClip from './TimelineClip';
 import TimelineConnectionLines from './TimelineConnectionLines';
 import TimelinePlayhead from './TimelinePlayhead';
@@ -31,6 +33,20 @@ const TimelinePanel = () => {
   const timelineRef = useRef<HTMLDivElement>(null);
   const pixelsPerSecond = 100 * timeline.zoom;
   const scrollOffset = timeline.scroll * pixelsPerSecond;
+
+  // Enhanced timeline interactions
+  const scrubManager = useTimelineScrub({
+    snapToFrames: true,
+    snapToClips: true,
+    snapThreshold: 0.1
+  });
+  
+  const virtualization = useTimelineVirtualization(clips, {
+    scrollOffset,
+    viewportWidth: timelineRef.current?.clientWidth || 1920,
+    pixelsPerSecond,
+    bufferSize: 5000
+  });
 
   const handleConnectionPointClick = (clipId: string, point: 'left' | 'right', e: React.MouseEvent) => {
     const rect = timelineRef.current?.getBoundingClientRect();

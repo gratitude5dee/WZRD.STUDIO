@@ -3,6 +3,8 @@ import { motion } from 'framer-motion';
 import { GripVertical, Video, Volume2, Image as ImageIcon, Check, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { AudioTrack, Clip } from '@/store/videoEditorStore';
+import { useClipDrag } from '@/hooks/editor/useClipDrag';
+import { useClipResize } from '@/hooks/editor/useClipResize';
 
 interface TimelineClipProps {
   clip: Clip | AudioTrack;
@@ -25,6 +27,10 @@ const TimelineClip: React.FC<TimelineClipProps> = ({
 }) => {
   const [isHovered, setIsHovered] = useState(false);
   const clipRef = useRef<HTMLDivElement>(null);
+
+  // Integrated drag and resize handlers
+  const { dragState, startDrag, updateDrag, endDrag } = useClipDrag();
+  const { resizeState, startResize, updateResize, endResize } = useClipResize();
 
   const connectionPoints = ['left', 'right'] as const;
 

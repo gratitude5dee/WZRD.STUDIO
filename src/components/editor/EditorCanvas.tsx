@@ -2,6 +2,7 @@ import React from 'react';
 import { Trash2, Scissors, Copy, SkipBack, Play, Pause, SkipForward, Minus, Plus, Maximize2 } from 'lucide-react';
 import { editorTheme, typography, exactMeasurements } from '@/lib/editor/theme';
 import { Slider } from '@/components/ui/slider';
+import { useThrottle } from '@/hooks/editor/useRenderOptimization';
 
 interface EditorCanvasProps {
   currentTime: number;
@@ -30,6 +31,8 @@ export const EditorCanvas: React.FC<EditorCanvasProps> = ({
   zoom = 1,
   onZoomChange,
 }) => {
+  const throttledZoomChange = useThrottle(onZoomChange || (() => {}), 100);
+  
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
