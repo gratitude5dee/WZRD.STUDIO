@@ -298,14 +298,27 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
     [nodeSelectorPosition, activeConnection, onAddBlock]
   );
 
-  const handleCanvasDoubleClick = useCallback(
+  // Double-click detection for pane
+  const lastClickTime = useRef<number>(0);
+  const DOUBLE_CLICK_THRESHOLD = 300; // ms
+
+  const handlePaneDoubleClick = useCallback(
     (event: React.MouseEvent) => {
-      const position = screenToFlowPosition({
-        x: event.clientX,
-        y: event.clientY,
-      });
-      setNodeSelectorPosition(position);
-      setShowNodeSelector(true);
+      const now = Date.now();
+      const timeSinceLastClick = now - lastClickTime.current;
+      
+      if (timeSinceLastClick < DOUBLE_CLICK_THRESHOLD) {
+        // Double click detected
+        const position = screenToFlowPosition({
+          x: event.clientX,
+          y: event.clientY,
+        });
+        setNodeSelectorPosition(position);
+        setShowNodeSelector(true);
+        lastClickTime.current = 0; // Reset to prevent triple-click
+      } else {
+        lastClickTime.current = now;
+      }
     },
     [screenToFlowPosition]
   );
@@ -318,6 +331,9 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
   );
 
   const handlePaneClick = useCallback((event: React.MouseEvent) => {
+    // Check for double-click first
+    handlePaneDoubleClick(event);
+    
     setShowNodeSelector(false);
     onSelectBlock('');
     
@@ -327,7 +343,7 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
       // Cast to the correct type for the hook
       startSelection(event as React.MouseEvent<HTMLDivElement>);
     }
-  }, [onSelectBlock, startSelection]);
+  }, [onSelectBlock, startSelection, handlePaneDoubleClick]);
   
   // Additional keyboard shortcuts (grid, connection mode, etc.)
   useEffect(() => {
@@ -419,7 +435,6 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
         onConnectEnd={onConnectEnd}
         onNodeClick={handleNodeClick}
         onPaneClick={handlePaneClick}
-        onDoubleClick={handleCanvasDoubleClick}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         connectionLineComponent={CustomConnectionLine}
