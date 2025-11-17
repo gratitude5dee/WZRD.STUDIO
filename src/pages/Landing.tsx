@@ -1,12 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { MatrixIntroAnimation } from '@/components/landing/MatrixIntroAnimation';
-import { CyberpunkHero } from '@/components/landing/CyberpunkHero';
-import { CyberpunkFeatures } from '@/components/landing/CyberpunkFeatures';
-import { TestimonialStream } from '@/components/landing/TestimonialStream';
-import { PricingSection } from '@/components/landing/PricingSection';
+import Features from '@/components/landing/Features';
+import { TestimonialsSection } from '@/components/landing/TestimonialsSection';
+import { NewReleasePromo } from '@/components/landing/NewReleasePromo';
 import { FAQSection } from '@/components/landing/FAQSection';
+import { PricingSection } from '@/components/landing/PricingSection';
 import { StickyFooter } from '@/components/landing/StickyFooter';
 import { useAuth } from '@/providers/AuthProvider';
 import wzrdLogo from '@/assets/wzrd-logo.png';
