@@ -4,7 +4,7 @@ import { ColorPicker } from './ColorPicker';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
+import { editorTheme, typography, exactMeasurements } from '@/lib/editor/theme';
 
 interface PropertiesPanelProps {
   selectedClipIds: string[];
@@ -20,49 +20,128 @@ export default function PropertiesPanel({ selectedClipIds, selectedAudioTrackIds
 
   if (!selectedClip && !selectedAudioTrack) {
     return (
-      <div className="w-80 bg-[#0a0a0a] border-l border-[#2a2a2a] flex items-center justify-center">
-        <p className="text-white/50 text-sm">Select a clip to edit properties</p>
+      <div
+        className="flex items-center justify-center"
+        style={{
+          width: `${exactMeasurements.propertiesPanel.width}px`,
+          background: editorTheme.bg.secondary,
+          borderLeft: `1px solid ${editorTheme.border.subtle}`,
+        }}
+      >
+        <p
+          style={{
+            fontSize: typography.fontSize.sm,
+            color: editorTheme.text.tertiary,
+          }}
+        >
+          Select a clip to edit properties
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="w-80 bg-[#0a0a0a] border-l border-[#2a2a2a] flex flex-col overflow-y-auto">
-      {/* Header */}
-      <div className="p-4 border-b border-[#2a2a2a]">
-        <h2 className="text-white font-semibold text-lg">
-          {selectedClip ? 'CaptionXX' : 'Audio Properties'}
+    <div
+      className="flex flex-col overflow-y-auto"
+      style={{
+        width: `${exactMeasurements.propertiesPanel.width}px`,
+        background: editorTheme.bg.secondary,
+        borderLeft: `1px solid ${editorTheme.border.subtle}`,
+      }}
+    >
+      {/* Header - Caption Title */}
+      <div
+        style={{
+          padding: `${exactMeasurements.propertiesPanel.padding}px`,
+          borderBottom: `1px solid ${editorTheme.border.subtle}`,
+        }}
+      >
+        <h2
+          style={{
+            fontSize: typography.fontSize.md,
+            fontWeight: typography.fontWeight.semibold,
+            color: editorTheme.text.primary,
+          }}
+        >
+          {selectedClip ? selectedClip.name || 'Caption Title' : 'Audio Properties'}
         </h2>
       </div>
 
       {/* Caption Properties */}
       {selectedClip && (
         <>
-          {/* Preset */}
-          <div className="px-4 py-3 border-b border-[#2a2a2a]">
-            <Label className="text-sm text-white/70 mb-2 block">Preset</Label>
+          {/* Preset Section */}
+          <div
+            style={{
+              padding: `${exactMeasurements.propertiesPanel.padding}px`,
+              borderBottom: `1px solid ${editorTheme.border.subtle}`,
+            }}
+          >
+            <Label
+              className="block mb-2"
+              style={{
+                fontSize: typography.fontSize.sm,
+                color: editorTheme.text.secondary,
+                marginBottom: '8px',
+              }}
+            >
+              Preset
+            </Label>
             <Select defaultValue="none">
-              <SelectTrigger className="bg-[#1a1a1a] border-[#2a2a2a] text-white">
+              <SelectTrigger
+                style={{
+                  height: `${exactMeasurements.propertiesPanel.fieldHeight}px`,
+                  background: editorTheme.bg.tertiary,
+                  border: `1px solid ${editorTheme.border.default}`,
+                  borderRadius: '4px',
+                  color: editorTheme.text.primary,
+                  fontSize: typography.fontSize.sm,
+                }}
+              >
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-[#1a1a1a] border-[#2a2a2a]">
+              <SelectContent
+                style={{
+                  background: editorTheme.bg.tertiary,
+                  border: `1px solid ${editorTheme.border.default}`,
+                  zIndex: 9999,
+                }}
+              >
                 <SelectItem value="none">None</SelectItem>
-                <SelectItem value="preset1">Preset 1</SelectItem>
-                <SelectItem value="preset2">Preset 2</SelectItem>
+                <SelectItem value="preset1">Style 1</SelectItem>
+                <SelectItem value="preset2">Style 2</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           {/* Words Section */}
           <PropertySection title="Words">
-            <div className="space-y-3">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: `${exactMeasurements.propertiesPanel.fieldGap}px` }}>
               <div>
-                <Label className="text-sm text-white/70 mb-2 block">Lines per Page</Label>
+                <Label
+                  className="block"
+                  style={{
+                    fontSize: typography.fontSize.sm,
+                    color: editorTheme.text.secondary,
+                    marginBottom: '8px',
+                  }}
+                >
+                  Lines per Page
+                </Label>
                 <Select defaultValue="one">
-                  <SelectTrigger className="bg-[#1a1a1a] border-[#2a2a2a] text-white">
+                  <SelectTrigger
+                    style={{
+                      height: `${exactMeasurements.propertiesPanel.fieldHeight}px`,
+                      background: editorTheme.bg.tertiary,
+                      border: `1px solid ${editorTheme.border.default}`,
+                      borderRadius: '4px',
+                      color: editorTheme.text.primary,
+                      fontSize: typography.fontSize.sm,
+                    }}
+                  >
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#1a1a1a] border-[#2a2a2a]">
+                  <SelectContent style={{ background: editorTheme.bg.tertiary, border: `1px solid ${editorTheme.border.default}`, zIndex: 9999 }}>
                     <SelectItem value="one">One</SelectItem>
                     <SelectItem value="two">Two</SelectItem>
                     <SelectItem value="three">Three</SelectItem>
@@ -71,57 +150,66 @@ export default function PropertiesPanel({ selectedClipIds, selectedAudioTrackIds
               </div>
 
               <div>
-                <Label className="text-sm text-white/70 mb-2 block">Words per line</Label>
+                <Label
+                  className="block"
+                  style={{
+                    fontSize: typography.fontSize.sm,
+                    color: editorTheme.text.secondary,
+                    marginBottom: '8px',
+                  }}
+                >
+                  Words per line
+                </Label>
                 <Select defaultValue="punctuation">
-                  <SelectTrigger className="bg-[#1a1a1a] border-[#2a2a2a] text-white">
+                  <SelectTrigger
+                    style={{
+                      height: `${exactMeasurements.propertiesPanel.fieldHeight}px`,
+                      background: editorTheme.bg.tertiary,
+                      border: `1px solid ${editorTheme.border.default}`,
+                      borderRadius: '4px',
+                      color: editorTheme.text.primary,
+                      fontSize: typography.fontSize.sm,
+                    }}
+                  >
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#1a1a1a] border-[#2a2a2a]">
+                  <SelectContent style={{ background: editorTheme.bg.tertiary, border: `1px solid ${editorTheme.border.default}`, zIndex: 9999 }}>
                     <SelectItem value="punctuation">Punctuation</SelectItem>
-                    <SelectItem value="auto">Auto</SelectItem>
-                    <SelectItem value="manual">Manual</SelectItem>
+                    <SelectItem value="word">Word</SelectItem>
+                    <SelectItem value="custom">Custom</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div>
-                <Label className="text-sm text-white/70 mb-2 block">Words in line</Label>
-                <Select defaultValue="page">
-                  <SelectTrigger className="bg-[#1a1a1a] border-[#2a2a2a] text-white">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-[#1a1a1a] border-[#2a2a2a]">
-                    <SelectItem value="page">Page</SelectItem>
-                    <SelectItem value="line">Line</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label className="text-sm text-white/70 mb-2 block">Position</Label>
+                <Label
+                  className="block"
+                  style={{
+                    fontSize: typography.fontSize.sm,
+                    color: editorTheme.text.secondary,
+                    marginBottom: '8px',
+                  }}
+                >
+                  Position
+                </Label>
                 <Select defaultValue="auto">
-                  <SelectTrigger className="bg-[#1a1a1a] border-[#2a2a2a] text-white">
+                  <SelectTrigger
+                    style={{
+                      height: `${exactMeasurements.propertiesPanel.fieldHeight}px`,
+                      background: editorTheme.bg.tertiary,
+                      border: `1px solid ${editorTheme.border.default}`,
+                      borderRadius: '4px',
+                      color: editorTheme.text.primary,
+                      fontSize: typography.fontSize.sm,
+                    }}
+                  >
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#1a1a1a] border-[#2a2a2a]">
+                  <SelectContent style={{ background: editorTheme.bg.tertiary, border: `1px solid ${editorTheme.border.default}`, zIndex: 9999 }}>
                     <SelectItem value="auto">Auto</SelectItem>
                     <SelectItem value="top">Top</SelectItem>
                     <SelectItem value="center">Center</SelectItem>
                     <SelectItem value="bottom">Bottom</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label className="text-sm text-white/70 mb-2 block">Transition</Label>
-                <Select defaultValue="none">
-                  <SelectTrigger className="bg-[#1a1a1a] border-[#2a2a2a] text-white">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-[#1a1a1a] border-[#2a2a2a]">
-                    <SelectItem value="none">None</SelectItem>
-                    <SelectItem value="fade">Fade</SelectItem>
-                    <SelectItem value="slide">Slide</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -131,15 +219,34 @@ export default function PropertiesPanel({ selectedClipIds, selectedAudioTrackIds
           {/* Animations Section */}
           <PropertySection title="Animations">
             <div>
-              <Label className="text-sm text-white/70 mb-2 block">Animation</Label>
+              <Label
+                className="block"
+                style={{
+                  fontSize: typography.fontSize.sm,
+                  color: editorTheme.text.secondary,
+                  marginBottom: '8px',
+                }}
+              >
+                Animation
+              </Label>
               <Select defaultValue="none">
-                <SelectTrigger className="bg-[#1a1a1a] border-[#2a2a2a] text-white">
+                <SelectTrigger
+                  style={{
+                    height: `${exactMeasurements.propertiesPanel.fieldHeight}px`,
+                    background: editorTheme.bg.tertiary,
+                    border: `1px solid ${editorTheme.border.default}`,
+                    borderRadius: '4px',
+                    color: editorTheme.text.primary,
+                    fontSize: typography.fontSize.sm,
+                  }}
+                >
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-[#1a1a1a] border-[#2a2a2a]">
+                <SelectContent style={{ background: editorTheme.bg.tertiary, border: `1px solid ${editorTheme.border.default}`, zIndex: 9999 }}>
                   <SelectItem value="none">None</SelectItem>
-                  <SelectItem value="bounce">Bounce</SelectItem>
-                  <SelectItem value="scale">Scale</SelectItem>
+                  <SelectItem value="fade">Fade In</SelectItem>
+                  <SelectItem value="slide">Slide In</SelectItem>
+                  <SelectItem value="zoom">Zoom In</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -147,62 +254,105 @@ export default function PropertiesPanel({ selectedClipIds, selectedAudioTrackIds
 
           {/* Colors Section */}
           <PropertySection title="Colors">
-            <div className="space-y-3">
-              <ColorPicker
-                label="Appeared"
-                value="#FFFFFF"
-                onChange={() => {}}
-              />
-
-              <ColorPicker
-                label="Active"
-                value="#50FF12"
-                onChange={() => {}}
-              />
-
-              <ColorPicker
-                label="Active Fill"
-                value="#7E12FF"
-                onChange={() => {}}
-              />
-
-              <ColorPicker
-                label="Emphasize"
-                value="transparent"
-                onChange={() => {}}
-              />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: `${exactMeasurements.propertiesPanel.fieldGap}px` }}>
+              <div className="flex items-center justify-between">
+                <Label
+                  style={{
+                    fontSize: typography.fontSize.sm,
+                    color: editorTheme.text.secondary,
+                  }}
+                >
+                  Appeared
+                </Label>
+                <ColorPicker defaultColor="#FFFFFF" />
+              </div>
 
               <div className="flex items-center justify-between">
-                <Label className="text-sm text-white/70">Preserved Color</Label>
-                <Switch />
+                <Label
+                  style={{
+                    fontSize: typography.fontSize.sm,
+                    color: editorTheme.text.secondary,
+                  }}
+                >
+                  Active
+                </Label>
+                <ColorPicker defaultColor="#50EF12" />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <Label
+                  style={{
+                    fontSize: typography.fontSize.sm,
+                    color: editorTheme.text.secondary,
+                  }}
+                >
+                  Active Fill
+                </Label>
+                <ColorPicker defaultColor="#7E12FF" />
               </div>
             </div>
           </PropertySection>
 
           {/* Styles Section */}
           <PropertySection title="Styles">
-            <div className="space-y-3">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: `${exactMeasurements.propertiesPanel.fieldGap}px` }}>
               <div>
-                <Label className="text-sm text-white/70 mb-2 block">Font</Label>
+                <Label
+                  className="block"
+                  style={{
+                    fontSize: typography.fontSize.sm,
+                    color: editorTheme.text.secondary,
+                    marginBottom: '8px',
+                  }}
+                >
+                  Font
+                </Label>
                 <Select defaultValue="opensans">
-                  <SelectTrigger className="bg-[#1a1a1a] border-[#2a2a2a] text-white">
+                  <SelectTrigger
+                    style={{
+                      height: `${exactMeasurements.propertiesPanel.fieldHeight}px`,
+                      background: editorTheme.bg.tertiary,
+                      border: `1px solid ${editorTheme.border.default}`,
+                      borderRadius: '4px',
+                      color: editorTheme.text.primary,
+                      fontSize: typography.fontSize.sm,
+                    }}
+                  >
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#1a1a1a] border-[#2a2a2a]">
+                  <SelectContent style={{ background: editorTheme.bg.tertiary, border: `1px solid ${editorTheme.border.default}`, zIndex: 9999 }}>
                     <SelectItem value="opensans">Open Sans</SelectItem>
+                    <SelectItem value="inter">Inter</SelectItem>
                     <SelectItem value="roboto">Roboto</SelectItem>
-                    <SelectItem value="montserrat">Montserrat</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div>
-                <Label className="text-sm text-white/70 mb-2 block">Weight</Label>
+                <Label
+                  className="block"
+                  style={{
+                    fontSize: typography.fontSize.sm,
+                    color: editorTheme.text.secondary,
+                    marginBottom: '8px',
+                  }}
+                >
+                  Weight
+                </Label>
                 <Select defaultValue="regular">
-                  <SelectTrigger className="bg-[#1a1a1a] border-[#2a2a2a] text-white">
+                  <SelectTrigger
+                    style={{
+                      height: `${exactMeasurements.propertiesPanel.fieldHeight}px`,
+                      background: editorTheme.bg.tertiary,
+                      border: `1px solid ${editorTheme.border.default}`,
+                      borderRadius: '4px',
+                      color: editorTheme.text.primary,
+                      fontSize: typography.fontSize.sm,
+                    }}
+                  >
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#1a1a1a] border-[#2a2a2a]">
+                  <SelectContent style={{ background: editorTheme.bg.tertiary, border: `1px solid ${editorTheme.border.default}`, zIndex: 9999 }}>
                     <SelectItem value="regular">Regular</SelectItem>
                     <SelectItem value="medium">Medium</SelectItem>
                     <SelectItem value="bold">Bold</SelectItem>
@@ -211,19 +361,29 @@ export default function PropertiesPanel({ selectedClipIds, selectedAudioTrackIds
               </div>
 
               <div>
-                <Label className="text-sm text-white/70 mb-2 block">Size</Label>
+                <Label
+                  className="block"
+                  style={{
+                    fontSize: typography.fontSize.sm,
+                    color: editorTheme.text.secondary,
+                    marginBottom: '8px',
+                  }}
+                >
+                  Size
+                </Label>
                 <Input
                   type="number"
                   defaultValue={64}
-                  className="bg-[#1a1a1a] border-[#2a2a2a] text-white"
+                  style={{
+                    height: `${exactMeasurements.propertiesPanel.fieldHeight}px`,
+                    background: editorTheme.bg.tertiary,
+                    border: `1px solid ${editorTheme.border.default}`,
+                    borderRadius: '4px',
+                    color: editorTheme.text.primary,
+                    fontSize: typography.fontSize.base,
+                  }}
                 />
               </div>
-
-              <ColorPicker
-                label="Color"
-                value="#D3D3D3"
-                onChange={() => {}}
-              />
             </div>
           </PropertySection>
         </>
@@ -231,25 +391,31 @@ export default function PropertiesPanel({ selectedClipIds, selectedAudioTrackIds
 
       {/* Audio Track Properties */}
       {selectedAudioTrack && (
-        <PropertySection title="Audio">
-          <div className="space-y-3">
-            <div>
-              <Label className="text-sm text-white/70 mb-2 block">Volume</Label>
-              <Input
-                type="number"
-                min={0}
-                max={100}
-                defaultValue={Math.round(selectedAudioTrack.volume * 100)}
-                className="bg-[#1a1a1a] border-[#2a2a2a] text-white"
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <Label className="text-sm text-white/70">Muted</Label>
-              <Switch checked={selectedAudioTrack.isMuted} />
-            </div>
-          </div>
-        </PropertySection>
+        <div
+          style={{
+            padding: `${exactMeasurements.propertiesPanel.padding}px`,
+          }}
+        >
+          <Label
+            className="block"
+            style={{
+              fontSize: typography.fontSize.sm,
+              color: editorTheme.text.secondary,
+              marginBottom: '12px',
+            }}
+          >
+            Volume
+          </Label>
+          <Input
+            type="range"
+            min="0"
+            max="100"
+            defaultValue={100}
+            style={{
+              width: '100%',
+            }}
+          />
+        </div>
       )}
     </div>
   );

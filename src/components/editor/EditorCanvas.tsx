@@ -1,7 +1,7 @@
 import React from 'react';
-import { Trash2, Scissors, Copy, SkipBack, Play, Pause, SkipForward, ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { editorTheme, typography } from '@/lib/editor/theme';
+import { Trash2, Scissors, Copy, SkipBack, Play, Pause, SkipForward, Minus, Plus, Maximize2 } from 'lucide-react';
+import { editorTheme, typography, exactMeasurements } from '@/lib/editor/theme';
+import { Slider } from '@/components/ui/slider';
 
 interface EditorCanvasProps {
   currentTime: number;
@@ -13,6 +13,8 @@ interface EditorCanvasProps {
   onDelete?: () => void;
   onSplit?: () => void;
   onClone?: () => void;
+  zoom?: number;
+  onZoomChange?: (zoom: number) => void;
 }
 
 export const EditorCanvas: React.FC<EditorCanvasProps> = ({
@@ -25,12 +27,41 @@ export const EditorCanvas: React.FC<EditorCanvasProps> = ({
   onDelete,
   onSplit,
   onClone,
+  zoom = 1,
+  onZoomChange,
 }) => {
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
+
+  const ActionButton: React.FC<{
+    icon: React.ReactNode;
+    label: string;
+    onClick?: () => void;
+  }> = ({ icon, label, onClick }) => (
+    <button
+      onClick={onClick}
+      className="flex items-center gap-2 px-3 transition-colors rounded"
+      style={{
+        height: `${exactMeasurements.canvas.buttonHeight}px`,
+        border: `1px solid ${editorTheme.border.default}`,
+        background: 'transparent',
+        color: editorTheme.text.primary,
+        fontSize: typography.fontSize.sm,
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.background = editorTheme.bg.hover;
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.background = 'transparent';
+      }}
+    >
+      {icon}
+      <span>{label}</span>
+    </button>
+  );
 
   return (
     <div
@@ -40,86 +71,67 @@ export const EditorCanvas: React.FC<EditorCanvasProps> = ({
       {/* Canvas Preview Area */}
       <div className="flex-1 flex items-center justify-center p-8">
         <div
-          className="relative rounded-lg overflow-hidden"
+          className="relative overflow-hidden"
           style={{
             width: '100%',
             maxWidth: '884px',
             aspectRatio: '16 / 9',
             background: editorTheme.bg.secondary,
             border: `1px solid ${editorTheme.border.subtle}`,
+            borderRadius: '8px',
           }}
         >
           {/* Video Preview Placeholder */}
           <div
             className="absolute inset-0 flex items-center justify-center"
-            style={{ background: '#D3D3D3' }}
+            style={{
+              background: '#D3D3D3',
+              color: '#666',
+              fontSize: typography.fontSize.md,
+            }}
           >
-            <span style={{ color: '#666', fontSize: typography.fontSize.md }}>
-              Video Preview
-            </span>
+            <span>Video Preview</span>
           </div>
         </div>
       </div>
 
       {/* Control Bar */}
       <div
-        className="flex items-center justify-between px-4 border-t"
+        className="flex items-center justify-between"
         style={{
-          height: '56px',
+          height: `${exactMeasurements.canvas.controlBarHeight}px`,
           background: editorTheme.bg.tertiary,
-          borderColor: editorTheme.border.subtle,
+          borderTop: `1px solid ${editorTheme.border.subtle}`,
+          padding: exactMeasurements.canvas.controlBarPadding,
         }}
       >
         {/* Left Actions */}
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
+        <div
+          className="flex items-center"
+          style={{
+            gap: `${exactMeasurements.canvas.buttonGap}px`,
+          }}
+        >
+          <ActionButton
+            icon={<Trash2 size={16} />}
+            label="Delete"
             onClick={onDelete}
-            className="gap-2"
-            style={{
-              height: '32px',
-              color: editorTheme.text.primary,
-              fontSize: typography.fontSize.sm,
-            }}
-          >
-            <Trash2 size={16} />
-            Delete
-          </Button>
-
-          <Button
-            variant="ghost"
-            size="sm"
+          />
+          <ActionButton
+            icon={<Scissors size={16} />}
+            label="Split"
             onClick={onSplit}
-            className="gap-2"
-            style={{
-              height: '32px',
-              color: editorTheme.text.primary,
-              fontSize: typography.fontSize.sm,
-            }}
-          >
-            <Scissors size={16} />
-            Split
-          </Button>
-
-          <Button
-            variant="ghost"
-            size="sm"
+          />
+          <ActionButton
+            icon={<Copy size={16} />}
+            label="Clone"
             onClick={onClone}
-            className="gap-2"
-            style={{
-              height: '32px',
-              color: editorTheme.text.primary,
-              fontSize: typography.fontSize.sm,
-            }}
-          >
-            <Copy size={16} />
-            Clone
-          </Button>
+          />
         </div>
 
         {/* Center Playback Controls */}
         <div className="flex items-center gap-3">
+          {/* Previous Frame */}
           <button
             className="flex items-center justify-center rounded-lg transition-colors"
             style={{
@@ -127,25 +139,30 @@ export const EditorCanvas: React.FC<EditorCanvasProps> = ({
               height: '32px',
               color: editorTheme.text.primary,
             }}
+            onClick={() => onSeek(Math.max(0, currentTime - 1))}
             onMouseEnter={(e) => e.currentTarget.style.background = editorTheme.bg.hover}
             onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
           >
             <SkipBack size={20} />
           </button>
 
+          {/* Play/Pause Button */}
           <button
-            onClick={isPlaying ? onPause : onPlay}
-            className="flex items-center justify-center rounded-full transition-colors"
+            className="flex items-center justify-center rounded-full transition-all"
             style={{
-              width: '40px',
-              height: '40px',
+              width: `${exactMeasurements.canvas.playButtonSize}px`,
+              height: `${exactMeasurements.canvas.playButtonSize}px`,
               background: editorTheme.accent.primary,
               color: '#000000',
             }}
+            onClick={isPlaying ? onPause : onPlay}
+            onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+            onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
           >
             {isPlaying ? <Pause size={20} fill="#000" /> : <Play size={20} fill="#000" />}
           </button>
 
+          {/* Next Frame */}
           <button
             className="flex items-center justify-center rounded-lg transition-colors"
             style={{
@@ -153,70 +170,83 @@ export const EditorCanvas: React.FC<EditorCanvasProps> = ({
               height: '32px',
               color: editorTheme.text.primary,
             }}
+            onClick={() => onSeek(Math.min(duration, currentTime + 1))}
             onMouseEnter={(e) => e.currentTarget.style.background = editorTheme.bg.hover}
             onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
           >
             <SkipForward size={20} />
           </button>
 
-          <span
-            className="ml-2"
+          {/* Time Display */}
+          <div
+            className="ml-3"
             style={{
-              color: editorTheme.text.secondary,
-              fontSize: typography.fontSize.base,
               fontFamily: typography.fontFamily.mono,
+              fontSize: exactMeasurements.canvas.timeDisplayFont,
+              color: editorTheme.text.secondary,
             }}
           >
             {formatTime(currentTime)} | {formatTime(duration)}
-          </span>
+          </div>
         </div>
 
         {/* Right Zoom Controls */}
         <div className="flex items-center gap-2">
+          {/* Zoom Out */}
           <button
-            className="flex items-center justify-center rounded-lg transition-colors"
+            className="flex items-center justify-center rounded transition-colors"
             style={{
               width: '32px',
               height: '32px',
               color: editorTheme.text.primary,
             }}
+            onClick={() => onZoomChange?.(Math.max(0.25, zoom - 0.25))}
             onMouseEnter={(e) => e.currentTarget.style.background = editorTheme.bg.hover}
             onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
           >
-            <ZoomOut size={18} />
+            <Minus size={16} />
           </button>
 
-          <div className="w-24 h-1 rounded-full" style={{ background: editorTheme.bg.active }}>
-            <div
-              className="h-full rounded-full"
-              style={{ width: '60%', background: editorTheme.accent.primary }}
+          {/* Zoom Slider */}
+          <div style={{ width: '96px' }}>
+            <Slider
+              value={[zoom]}
+              onValueChange={([value]) => onZoomChange?.(value)}
+              min={0.25}
+              max={2}
+              step={0.25}
+              className="cursor-pointer"
             />
           </div>
 
+          {/* Zoom In */}
           <button
-            className="flex items-center justify-center rounded-lg transition-colors"
+            className="flex items-center justify-center rounded transition-colors"
             style={{
               width: '32px',
               height: '32px',
               color: editorTheme.text.primary,
             }}
+            onClick={() => onZoomChange?.(Math.min(2, zoom + 0.25))}
             onMouseEnter={(e) => e.currentTarget.style.background = editorTheme.bg.hover}
             onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
           >
-            <ZoomIn size={18} />
+            <Plus size={16} />
           </button>
 
+          {/* Fit to Screen */}
           <button
-            className="flex items-center justify-center rounded-lg transition-colors"
+            className="flex items-center justify-center rounded transition-colors"
             style={{
               width: '32px',
               height: '32px',
               color: editorTheme.text.primary,
             }}
+            onClick={() => onZoomChange?.(1)}
             onMouseEnter={(e) => e.currentTarget.style.background = editorTheme.bg.hover}
             onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
           >
-            <Maximize2 size={18} />
+            <Maximize2 size={16} />
           </button>
         </div>
       </div>

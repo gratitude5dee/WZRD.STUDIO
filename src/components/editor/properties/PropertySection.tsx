@@ -1,6 +1,6 @@
-import { ReactNode } from 'react';
+import { ReactNode, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { editorTheme, typography, exactMeasurements } from '@/lib/editor/theme';
 
 interface PropertySectionProps {
   title: string;
@@ -9,15 +9,52 @@ interface PropertySectionProps {
 }
 
 export function PropertySection({ title, children, defaultOpen = true }: PropertySectionProps) {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+
   return (
-    <Collapsible defaultOpen={defaultOpen} className="border-b border-[#2a2a2a]">
-      <CollapsibleTrigger className="flex items-center justify-between w-full py-3 px-4 hover:bg-white/5 transition-colors">
-        <span className="text-sm font-medium text-white">{title}</span>
-        <ChevronDown className="w-4 h-4 text-white/50 transition-transform duration-200 data-[state=open]:rotate-180" />
-      </CollapsibleTrigger>
-      <CollapsibleContent className="px-4 pb-4 space-y-3">
-        {children}
-      </CollapsibleContent>
-    </Collapsible>
+    <div
+      style={{
+        borderBottom: `1px solid ${editorTheme.border.subtle}`,
+      }}
+    >
+      <button
+        className="flex items-center justify-between w-full transition-colors"
+        style={{
+          padding: `12px ${exactMeasurements.propertiesPanel.padding}px`,
+        }}
+        onClick={() => setIsOpen(!isOpen)}
+        onMouseEnter={(e) => e.currentTarget.style.background = editorTheme.bg.hover}
+        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+      >
+        <span
+          style={{
+            fontSize: typography.fontSize.md,
+            fontWeight: typography.fontWeight.semibold,
+            color: editorTheme.text.primary,
+          }}
+        >
+          {title}
+        </span>
+        <ChevronDown
+          className="transition-transform duration-200"
+          style={{
+            width: '16px',
+            height: '16px',
+            color: editorTheme.text.tertiary,
+            transform: isOpen ? 'rotate(0deg)' : 'rotate(-90deg)',
+          }}
+        />
+      </button>
+      
+      {isOpen && (
+        <div
+          style={{
+            padding: `0 ${exactMeasurements.propertiesPanel.padding}px ${exactMeasurements.propertiesPanel.padding}px`,
+          }}
+        >
+          {children}
+        </div>
+      )}
+    </div>
   );
 }
