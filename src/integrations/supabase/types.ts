@@ -2566,44 +2566,68 @@ export type Database = {
         Row: {
           created_at: string | null
           duration: number | null
+          duration_seconds: number | null
           end_time: number | null
+          file_size: number | null
           id: string
           media_type: string
           metadata: Json | null
+          mime_type: string | null
           name: string
           project_id: string
+          source_type: string | null
           start_time: number | null
           status: string | null
+          storage_bucket: string | null
+          storage_path: string | null
+          thumbnail_url: string | null
           updated_at: string | null
           url: string | null
+          user_id: string
         }
         Insert: {
           created_at?: string | null
           duration?: number | null
+          duration_seconds?: number | null
           end_time?: number | null
+          file_size?: number | null
           id?: string
           media_type: string
           metadata?: Json | null
+          mime_type?: string | null
           name: string
           project_id: string
+          source_type?: string | null
           start_time?: number | null
           status?: string | null
+          storage_bucket?: string | null
+          storage_path?: string | null
+          thumbnail_url?: string | null
           updated_at?: string | null
           url?: string | null
+          user_id?: string
         }
         Update: {
           created_at?: string | null
           duration?: number | null
+          duration_seconds?: number | null
           end_time?: number | null
+          file_size?: number | null
           id?: string
           media_type?: string
           metadata?: Json | null
+          mime_type?: string | null
           name?: string
           project_id?: string
+          source_type?: string | null
           start_time?: number | null
           status?: string | null
+          storage_bucket?: string | null
+          storage_path?: string | null
+          thumbnail_url?: string | null
           updated_at?: string | null
           url?: string | null
+          user_id?: string
         }
         Relationships: [
           {
