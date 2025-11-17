@@ -1,58 +1,143 @@
 import { useState } from 'react';
-import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Input } from '@/components/ui/input';
+import { editorTheme, typography, exactMeasurements } from '@/lib/editor/theme';
 
 interface ColorPickerProps {
-  value: string;
-  onChange: (value: string) => void;
-  label?: string;
+  defaultColor?: string;
+  onChange?: (color: string) => void;
 }
 
-export function ColorPicker({ value, onChange, label }: ColorPickerProps) {
-  const [isOpen, setIsOpen] = useState(false);
+export function ColorPicker({ defaultColor = '#FFFFFF', onChange }: ColorPickerProps) {
+  const [color, setColor] = useState(defaultColor);
 
-  const handleColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onChange(e.target.value);
-  };
-
-  const handleHexChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const hex = e.target.value;
-    if (/^#[0-9A-Fa-f]{0,6}$/.test(hex)) {
-      onChange(hex);
-    }
+  const handleColorChange = (newColor: string) => {
+    setColor(newColor);
+    onChange?.(newColor);
   };
 
   return (
-    <div className="flex items-center gap-2">
-      {label && (
-        <label className="text-sm text-white/70 min-w-[100px]">{label}</label>
-      )}
-      
-      <Popover open={isOpen} onOpenChange={setIsOpen}>
-        <PopoverTrigger asChild>
-          <button
-            className="w-10 h-10 rounded border border-border hover:border-border/80 transition-colors flex-shrink-0"
-            style={{ backgroundColor: value }}
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          className="flex items-center gap-2 transition-all"
+          style={{
+            cursor: 'pointer',
+          }}
+        >
+          <div
+            style={{
+              width: `${exactMeasurements.propertiesPanel.colorSwatchSize}px`,
+              height: `${exactMeasurements.propertiesPanel.colorSwatchSize}px`,
+              borderRadius: '4px',
+              border: `${exactMeasurements.propertiesPanel.colorSwatchBorder}px solid ${editorTheme.border.default}`,
+              background: color,
+              transition: 'transform 0.15s',
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+            onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
           />
-        </PopoverTrigger>
-        <PopoverContent className="w-auto p-3 bg-[#1a1a1a] border-[#2a2a2a]">
-          <div className="space-y-3">
+          <span
+            style={{
+              fontFamily: typography.fontFamily.mono,
+              fontSize: typography.fontSize.xs,
+              color: editorTheme.text.secondary,
+              textTransform: 'uppercase',
+            }}
+          >
+            {color}
+          </span>
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
+        className="w-64"
+        style={{
+          background: editorTheme.bg.tertiary,
+          border: `1px solid ${editorTheme.border.default}`,
+          zIndex: 9999,
+        }}
+      >
+        <div className="space-y-3">
+          <div>
+            <label
+              style={{
+                fontSize: typography.fontSize.sm,
+                color: editorTheme.text.secondary,
+                display: 'block',
+                marginBottom: '8px',
+              }}
+            >
+              Color Picker
+            </label>
             <input
               type="color"
-              value={value}
-              onChange={handleColorChange}
-              className="w-full h-32 cursor-pointer"
+              value={color}
+              onChange={(e) => handleColorChange(e.target.value)}
+              className="w-full h-32 cursor-pointer rounded"
+              style={{
+                border: `1px solid ${editorTheme.border.default}`,
+              }}
             />
           </div>
-        </PopoverContent>
-      </Popover>
+          
+          <div>
+            <label
+              style={{
+                fontSize: typography.fontSize.sm,
+                color: editorTheme.text.secondary,
+                display: 'block',
+                marginBottom: '8px',
+              }}
+            >
+              Hex Value
+            </label>
+            <Input
+              value={color}
+              onChange={(e) => handleColorChange(e.target.value)}
+              style={{
+                fontFamily: typography.fontFamily.mono,
+                fontSize: typography.fontSize.sm,
+                background: editorTheme.bg.secondary,
+                border: `1px solid ${editorTheme.border.default}`,
+                color: editorTheme.text.primary,
+              }}
+            />
+          </div>
 
-      <Input
-        value={value}
-        onChange={handleHexChange}
-        placeholder="#FFFFFF"
-        className="flex-1 bg-[#1a1a1a] border-[#2a2a2a] text-white h-10"
-      />
-    </div>
+          {/* Preset colors */}
+          <div>
+            <label
+              style={{
+                fontSize: typography.fontSize.sm,
+                color: editorTheme.text.secondary,
+                display: 'block',
+                marginBottom: '8px',
+              }}
+            >
+              Presets
+            </label>
+            <div className="grid grid-cols-6 gap-2">
+              {['#FFFFFF', '#000000', '#50EF12', '#7E12FF', '#FF4444', '#4A9EFF', '#FFA500', '#FF69B4'].map((presetColor) => (
+                <button
+                  key={presetColor}
+                  onClick={() => handleColorChange(presetColor)}
+                  style={{
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '4px',
+                    border: `2px solid ${color === presetColor ? editorTheme.accent.primary : editorTheme.border.default}`,
+                    background: presetColor,
+                    cursor: 'pointer',
+                    transition: 'transform 0.15s',
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
+                  onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }
