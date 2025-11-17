@@ -135,7 +135,7 @@ export default function Home() {
             <img 
               src={wzrdLogo} 
               alt="WZRD.STUDIO Logo" 
-              className="h-8 object-contain"
+              className="h-16 object-contain"
             />
             <span className="text-xl font-semibold text-white">Studio</span>
             <span className="text-xs text-white/50 bg-[#292F46] px-2 py-0.5 rounded">ALPHA</span>
