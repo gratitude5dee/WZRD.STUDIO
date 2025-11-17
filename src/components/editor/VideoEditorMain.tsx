@@ -4,6 +4,8 @@ import { useVideoEditorStore } from '@/store/videoEditorStore';
 import { useComputeFlowSync } from '@/hooks/useComputeFlowSync';
 import { useRealtimeTimelineSync } from '@/hooks/useRealtimeTimelineSync';
 import { useEditorShortcuts } from '@/hooks/useEditorShortcuts';
+import { useEditorKeyboardShortcuts } from '@/hooks/editor/useEditorKeyboardShortcuts';
+import { usePropertySync } from '@/hooks/editor/usePropertySync';
 import { loadDemoContent } from '@/lib/demoContent';
 import { EditorHeader } from './EditorHeader';
 import { EditorIconBar, EditorTab } from './EditorIconBar';
@@ -48,6 +50,8 @@ export default function VideoEditorMain() {
   useComputeFlowSync(projectId ?? storeProjectId);
   useRealtimeTimelineSync(projectId ?? storeProjectId);
   useEditorShortcuts();
+  useEditorKeyboardShortcuts();
+  usePropertySync();
 
   const handleTitleChange = (title: string) => {
     // Project name update logic here
