@@ -143,8 +143,8 @@
     --muted-foreground: 220 10% 45%;
 
     /* Stellar Accent - Cosmic Gold */
-    --accent: 45 90% 70%;
-    --accent-foreground: 45 95% 10%;
+    --accent: 275 85% 68%;
+    --accent-foreground: 275 95% 10%;
 
     --destructive: 0 75% 55%;
     --destructive-foreground: 0 0% 98%;
@@ -164,22 +164,22 @@
     /* Odyssey Extended Palette */
     --cosmic-void: 220 25% 8%;
     --nebula-purple: 270 60% 50%;
-    --stellar-gold: 45 95% 60%;
+    --stellar-gold: 275 90% 65%;
     --plasma-blue: 200 85% 55%;
     --quantum-green: 160 70% 45%;
-    --temporal-orange: 25 85% 60%;
+    --temporal-orange: 275 90% 65%;
     --void-shadow: 220 30% 12%;
     
     /* Glass Effects */
     --glass-primary: 230 50% 25% / 0.1;
     --glass-secondary: 270 60% 50% / 0.08;
-    --glass-accent: 45 95% 60% / 0.12;
+    --glass-accent: 275 90% 65% / 0.12;
     --glass-backdrop: 240 10% 5% / 0.4;
     
     /* Glow Effects */
     --glow-primary: 230 80% 60%;
     --glow-secondary: 270 70% 65%;
-    --glow-accent: 45 100% 70%;
+    --glow-accent: 275 95% 70%;
     
     /* AI Canvas Design Tokens */
     --canvas-bg: 0 0% 7%;           /* #121212 - Very dark grey canvas */
@@ -223,7 +223,7 @@
     --muted-foreground: 240 15% 65%;
 
     /* Stellar Accent - Quantum Gold */
-    --accent: 45 95% 65%;
+    --accent: 275 90% 68%;
     --accent-foreground: 220 25% 8%;
 
     --destructive: 0 70% 60%;
@@ -236,7 +236,7 @@
     /* Enhanced Glass Effects for Dark Mode */
     --glass-primary: 200 85% 65% / 0.15;
     --glass-secondary: 270 60% 50% / 0.12;
-    --glass-accent: 45 95% 65% / 0.18;
+    --glass-accent: 275 90% 68% / 0.18;
     --glass-backdrop: 220 25% 6% / 0.6;
     
     /* AI Canvas Design Tokens (Dark Mode Optimized) */
