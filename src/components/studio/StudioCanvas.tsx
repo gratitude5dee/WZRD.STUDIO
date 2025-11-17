@@ -30,8 +30,11 @@ import { CustomConnectionLine } from './ConnectionLine';
 import { ConnectionNodeSelector } from './ConnectionNodeSelector';
 import { CanvasToolbar } from './canvas/CanvasToolbar';
 import { ConnectionModeIndicator } from './canvas/ConnectionModeIndicator';
+import { KeyboardShortcutsOverlay } from './KeyboardShortcutsOverlay';
 import { useConnectionValidation } from '@/hooks/useConnectionValidation';
 import { useConnectionMode } from '@/hooks/useConnectionMode';
+import { useStudioKeyboardShortcuts } from '@/hooks/studio/useStudioKeyboardShortcuts';
+import { useSelectionBox } from '@/hooks/studio/useSelectionBox';
 import { v4 as uuidv4 } from 'uuid';
 import EmptyCanvasState from './EmptyCanvasState';
 
@@ -171,6 +174,69 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
   // Get selected nodes count
   const selectedNodes = useMemo(() => nodes.filter(n => n.selected), [nodes]);
   const selectedCount = selectedNodes.length;
+  
+  // Selection box for multi-select
+  const {
+    selectionBox,
+    isSelecting,
+    startSelection,
+    updateSelection,
+    endSelection,
+    getSelectionBoxStyles,
+  } = useSelectionBox({
+    onSelectionChange: (nodeIds) => {
+      if (nodeIds.length === 1) {
+        onSelectBlock(nodeIds[0]);
+      }
+    },
+  });
+  
+  // Integrated keyboard shortcuts
+  useStudioKeyboardShortcuts({
+    onAddTextNode: () => {
+      const newBlock: Block = {
+        id: uuidv4(),
+        type: 'text',
+        position: { x: 400, y: 300 },
+      };
+      onAddBlock(newBlock);
+    },
+    onAddImageNode: () => {
+      const newBlock: Block = {
+        id: uuidv4(),
+        type: 'image',
+        position: { x: 400, y: 300 },
+      };
+      onAddBlock(newBlock);
+    },
+    onAddVideoNode: () => {
+      const newBlock: Block = {
+        id: uuidv4(),
+        type: 'video',
+        position: { x: 400, y: 300 },
+      };
+      onAddBlock(newBlock);
+    },
+    onDelete: (nodeIds) => {
+      nodeIds.forEach(id => onDeleteBlock(id));
+    },
+    onDuplicate: (nodeIds) => {
+      const nodesToDuplicate = nodes.filter(n => nodeIds.includes(n.id));
+      nodesToDuplicate.forEach(node => {
+        const newBlock: Block = {
+          id: uuidv4(),
+          type: node.type as 'text' | 'image' | 'video',
+          position: {
+            x: node.position.x + 50,
+            y: node.position.y + 50,
+          },
+          initialData: (node.data as any)?.initialData,
+        };
+        onAddBlock(newBlock);
+      });
+    },
+    selectedNodeIds: selectedNodes.map(n => n.id),
+  });
 
   const onConnect = useCallback(
     (connection: Connection) => {
@@ -251,45 +317,26 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
     [onSelectBlock]
   );
 
-  const handlePaneClick = useCallback(() => {
+  const handlePaneClick = useCallback((event: React.MouseEvent) => {
     setShowNodeSelector(false);
     onSelectBlock('');
-  }, [onSelectBlock]);
-
-  // Keyboard shortcuts
+    
+    // Start selection box if not clicking on a node
+    const target = event.target as HTMLElement;
+    if (!target.closest('.react-flow__node')) {
+      // Cast to the correct type for the hook
+      startSelection(event as React.MouseEvent<HTMLDivElement>);
+    }
+  }, [onSelectBlock, startSelection]);
+  
+  // Additional keyboard shortcuts (grid, connection mode, etc.)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Escape: Close node selector or deselect or cancel connection
+      // Escape: Close node selector or cancel connection
       if (e.key === 'Escape') {
         setShowNodeSelector(false);
         setActiveConnection(null);
         cancelClickConnection();
-        onSelectBlock('');
-      }
-
-      // Delete: Delete selected nodes
-      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedCount > 0) {
-        if (document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
-          e.preventDefault();
-          selectedNodes.forEach(node => onDeleteBlock(node.id));
-        }
-      }
-
-      // Cmd/Ctrl + D: Duplicate selected nodes
-      if ((e.metaKey || e.ctrlKey) && e.key === 'd' && selectedCount > 0) {
-        e.preventDefault();
-        selectedNodes.forEach(node => {
-          const newBlock: Block = {
-            id: uuidv4(),
-            type: node.type as 'text' | 'image' | 'video',
-            position: {
-              x: node.position.x + 50,
-              y: node.position.y + 50,
-            },
-            initialData: (node.data as any)?.initialData,
-          };
-          onAddBlock(newBlock);
-        });
       }
 
       // Cmd/Ctrl + 0 or F: Fit view
@@ -327,7 +374,7 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [nodes, selectedNodes, selectedCount, onDeleteBlock, onAddBlock, fitView, onSelectBlock, toggleMode, cancelClickConnection, zoomIn, zoomOut]);
+  }, [fitView, toggleMode, cancelClickConnection, zoomIn, zoomOut]);
 
   // Fit view on initial mount
   useEffect(() => {
@@ -415,6 +462,14 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
           <EmptyCanvasState onAddBlock={(type) => onAddBlock({ id: uuidv4(), type, position: { x: 400, y: 300 } })} />
         </div>
       )}
+      
+      {/* Selection Box */}
+      {selectionBox && (
+        <div
+          style={getSelectionBoxStyles() || undefined}
+          className="transition-all duration-75"
+        />
+      )}
 
       {/* Connection Mode Indicator */}
       <ConnectionModeIndicator
@@ -450,6 +505,9 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
           });
         }}
       />
+      
+      {/* Keyboard Shortcuts Overlay */}
+      <KeyboardShortcutsOverlay />
     </div>
   );
 };
