@@ -400,6 +400,53 @@ export type Database = {
           },
         ]
       }
+      audit_logs: {
+        Row: {
+          action: string
+          correlation_id: string | null
+          created_at: string
+          id: string
+          ip_address: unknown
+          metadata: Json | null
+          resource_id: string | null
+          resource_type: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          correlation_id?: string | null
+          created_at?: string
+          id?: string
+          ip_address?: unknown
+          metadata?: Json | null
+          resource_id?: string | null
+          resource_type: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          correlation_id?: string | null
+          created_at?: string
+          id?: string
+          ip_address?: unknown
+          metadata?: Json | null
+          resource_id?: string | null
+          resource_type?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       automation_analytics: {
         Row: {
           action_id: string | null
@@ -1471,6 +1518,38 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_spend_tracking: {
+        Row: {
+          date: string
+          total_spent_usd: number
+          transaction_count: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          date?: string
+          total_spent_usd?: number
+          transaction_count?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          date?: string
+          total_spent_usd?: number
+          transaction_count?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_spend_tracking_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       design_analytics: {
         Row: {
           created_at: string | null
@@ -1703,6 +1782,107 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      evaluation_results: {
+        Row: {
+          created_at: string | null
+          criteria_breakdown: Json | null
+          detailed_reasoning: Json | null
+          generation_error: string | null
+          generation_time_ms: number | null
+          id: string
+          image_url: string | null
+          judge_confidence: string | null
+          judge_reasoning: string | null
+          judge_score: number | null
+          model_id: string
+          run_id: string
+          test_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          criteria_breakdown?: Json | null
+          detailed_reasoning?: Json | null
+          generation_error?: string | null
+          generation_time_ms?: number | null
+          id?: string
+          image_url?: string | null
+          judge_confidence?: string | null
+          judge_reasoning?: string | null
+          judge_score?: number | null
+          model_id: string
+          run_id: string
+          test_id: string
+        }
+        Update: {
+          created_at?: string | null
+          criteria_breakdown?: Json | null
+          detailed_reasoning?: Json | null
+          generation_error?: string | null
+          generation_time_ms?: number | null
+          id?: string
+          image_url?: string | null
+          judge_confidence?: string | null
+          judge_reasoning?: string | null
+          judge_score?: number | null
+          model_id?: string
+          run_id?: string
+          test_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evaluation_results_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "evaluation_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      evaluation_runs: {
+        Row: {
+          created_at: string | null
+          id: string
+          metadata: Json | null
+          mode: string
+          models: string[]
+          parameters: Json | null
+          progress: number | null
+          status: string
+          tests: string[]
+          total_generations: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          mode?: string
+          models: string[]
+          parameters?: Json | null
+          progress?: number | null
+          status?: string
+          tests: string[]
+          total_generations?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          mode?: string
+          models?: string[]
+          parameters?: Json | null
+          progress?: number | null
+          status?: string
+          tests?: string[]
+          total_generations?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       event_assets: {
         Row: {
@@ -2208,6 +2388,44 @@ export type Database = {
             columns: ["venue_id"]
             isOneToOne: false
             referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      idempotency_keys: {
+        Row: {
+          created_at: string
+          expires_at: string
+          key: string
+          request_hash: string
+          response_data: Json | null
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          key: string
+          request_hash: string
+          response_data?: Json | null
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          key?: string
+          request_hash?: string
+          response_data?: Json | null
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "idempotency_keys_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -4401,6 +4619,78 @@ export type Database = {
           },
         ]
       }
+      transactions: {
+        Row: {
+          amount: string
+          chain_id: number
+          confirmed_at: string | null
+          created_at: string
+          from_address: string
+          from_user_id: string
+          id: string
+          message: string | null
+          status: string
+          thirdweb_transaction_id: string | null
+          to_address: string
+          to_user_id: string
+          token_contract: string
+          token_symbol: string
+          transaction_hash: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount: string
+          chain_id: number
+          confirmed_at?: string | null
+          created_at?: string
+          from_address: string
+          from_user_id: string
+          id?: string
+          message?: string | null
+          status?: string
+          thirdweb_transaction_id?: string | null
+          to_address: string
+          to_user_id: string
+          token_contract: string
+          token_symbol: string
+          transaction_hash?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: string
+          chain_id?: number
+          confirmed_at?: string | null
+          created_at?: string
+          from_address?: string
+          from_user_id?: string
+          id?: string
+          message?: string | null
+          status?: string
+          thirdweb_transaction_id?: string | null
+          to_address?: string
+          to_user_id?: string
+          token_contract?: string
+          token_symbol?: string
+          transaction_hash?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_from_user_id_fkey"
+            columns: ["from_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_to_user_id_fkey"
+            columns: ["to_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_automation_preferences: {
         Row: {
           auto_retry_count: number
@@ -4521,6 +4811,39 @@ export type Database = {
           secret_type?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      users: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          display_name: string | null
+          email: string
+          id: string
+          updated_at: string
+          username: string | null
+          wallet_address: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          email: string
+          id?: string
+          updated_at?: string
+          username?: string | null
+          wallet_address: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          email?: string
+          id?: string
+          updated_at?: string
+          username?: string | null
+          wallet_address?: string
         }
         Relationships: []
       }
@@ -5197,6 +5520,7 @@ export type Database = {
         Args: { func_name: string; max_calls?: number; window_minutes?: number }
         Returns: boolean
       }
+      cleanup_expired_idempotency: { Args: never; Returns: undefined }
       generate_board_slug: { Args: { board_title: string }; Returns: string }
       generate_invoice_number: { Args: never; Returns: string }
       get_available_credits: { Args: never; Returns: number }

@@ -222,7 +222,7 @@ const Landing = () => {
           <div className="flex items-center gap-3 flex-shrink-0">
             <Link
               to="/demo"
-              className="rounded-md font-medium relative cursor-pointer hover:-translate-y-0.5 transition duration-200 inline-block text-center bg-gradient-to-b from-[#e78a53] to-[#e78a53]/80 text-white shadow-[0px_2px_0px_0px_rgba(255,255,255,0.3)_inset] px-3 py-1.5 text-xs sm:text-sm whitespace-nowrap"
+              className="rounded-md font-medium relative cursor-pointer hover:-translate-y-0.5 transition duration-200 inline-block text-center bg-gradient-to-b from-[#8b5cf6] to-[#8b5cf6]/80 text-white shadow-[0px_2px_0px_0px_rgba(255,255,255,0.3)_inset] px-3 py-1.5 text-xs sm:text-sm whitespace-nowrap"
             >
               Demo
             </Link>
@@ -236,7 +236,7 @@ const Landing = () => {
                 </Link>
                 <button
                   onClick={handleLogout}
-                  className="rounded-md font-bold relative cursor-pointer hover:-translate-y-0.5 transition duration-200 inline-block text-center bg-gradient-to-b from-[#e78a53] to-[#e78a53]/80 text-white shadow-[0px_2px_0px_0px_rgba(255,255,255,0.3)_inset] px-3 py-1.5 text-xs sm:text-sm whitespace-nowrap"
+                  className="rounded-md font-bold relative cursor-pointer hover:-translate-y-0.5 transition duration-200 inline-block text-center bg-gradient-to-b from-[#8b5cf6] to-[#8b5cf6]/80 text-white shadow-[0px_2px_0px_0px_rgba(255,255,255,0.3)_inset] px-3 py-1.5 text-xs sm:text-sm whitespace-nowrap"
                 >
                   Log Out
                 </button>
@@ -251,7 +251,7 @@ const Landing = () => {
                 </Link>
                 <Link
                   to="/login?mode=signup"
-                  className="rounded-md font-bold relative cursor-pointer hover:-translate-y-0.5 transition duration-200 inline-block text-center bg-gradient-to-b from-[#e78a53] to-[#e78a53]/80 text-white shadow-[0px_2px_0px_0px_rgba(255,255,255,0.3)_inset] px-3 py-1.5 text-xs sm:text-sm whitespace-nowrap"
+                  className="rounded-md font-bold relative cursor-pointer hover:-translate-y-0.5 transition duration-200 inline-block text-center bg-gradient-to-b from-[#8b5cf6] to-[#8b5cf6]/80 text-white shadow-[0px_2px_0px_0px_rgba(255,255,255,0.3)_inset] px-3 py-1.5 text-xs sm:text-sm whitespace-nowrap"
                 >
                   Sign Up
                 </Link>
@@ -328,7 +328,7 @@ const Landing = () => {
               <div className="border-t border-white/10 pt-4 mt-4 flex flex-col space-y-3">
                 <Link
                   to="/demo"
-                  className="px-4 py-3 text-lg font-bold text-center bg-gradient-to-b from-[#e78a53] to-[#e78a53]/80 text-white rounded-lg shadow-lg hover:-translate-y-0.5 transition-all duration-200"
+                  className="px-4 py-3 text-lg font-bold text-center bg-gradient-to-b from-[#8b5cf6] to-[#8b5cf6]/80 text-white rounded-lg shadow-lg hover:-translate-y-0.5 transition-all duration-200"
                 >
                   Demo
                 </Link>
@@ -342,7 +342,7 @@ const Landing = () => {
                     </Link>
                     <button
                       onClick={handleLogout}
-                      className="px-4 py-3 text-lg font-bold text-center bg-gradient-to-b from-[#e78a53] to-[#e78a53]/80 text-white rounded-lg shadow-lg hover:-translate-y-0.5 transition-all duration-200"
+                      className="px-4 py-3 text-lg font-bold text-center bg-gradient-to-b from-[#8b5cf6] to-[#8b5cf6]/80 text-white rounded-lg shadow-lg hover:-translate-y-0.5 transition-all duration-200"
                     >
                       Log Out
                     </button>
@@ -357,7 +357,7 @@ const Landing = () => {
                     </Link>
                     <Link
                       to="/login?mode=signup"
-                      className="px-4 py-3 text-lg font-bold text-center bg-gradient-to-b from-[#e78a53] to-[#e78a53]/80 text-white rounded-lg shadow-lg hover:-translate-y-0.5 transition-all duration-200"
+                      className="px-4 py-3 text-lg font-bold text-center bg-gradient-to-b from-[#8b5cf6] to-[#8b5cf6]/80 text-white rounded-lg shadow-lg hover:-translate-y-0.5 transition-all duration-200"
                     >
                       Sign Up
                     </Link>
@@ -480,8 +480,8 @@ const Landing = () => {
               {/* CTA Buttons */}
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 w-full px-4">
                 <Link to="/demo" className="w-full sm:w-auto">
-                  <div className="group cursor-pointer border border-white/20 bg-white/5 backdrop-blur-sm gap-2 h-[50px] sm:h-[60px] flex items-center p-[8px] sm:p-[10px] rounded-full hover:border-[#e78a53]/50 transition-all">
-                    <div className="border border-white/20 bg-gradient-to-b from-[#e78a53] to-[#e78a53]/80 h-[34px] sm:h-[40px] rounded-full flex items-center justify-center text-white shadow-[0px_2px_0px_0px_rgba(255,255,255,0.3)_inset]">
+                  <div className="group cursor-pointer border border-white/20 bg-white/5 backdrop-blur-sm gap-2 h-[50px] sm:h-[60px] flex items-center p-[8px] sm:p-[10px] rounded-full hover:border-[#8b5cf6]/50 hover:shadow-[0_0_20px_rgba(139,92,246,0.3)] transition-all">
+                    <div className="border border-white/20 bg-gradient-to-b from-[#8b5cf6] to-[#7c3aed] h-[34px] sm:h-[40px] rounded-full flex items-center justify-center text-white shadow-[0px_2px_0px_0px_rgba(255,255,255,0.3)_inset]">
                       <p className="font-medium tracking-tight mr-2 sm:mr-3 ml-2 sm:ml-3 flex items-center gap-1.5 sm:gap-2 justify-center text-sm sm:text-base">
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
@@ -520,8 +520,8 @@ const Landing = () => {
                   </div>
                 </Link>
                 <Link to="/login?mode=signup" className="w-full sm:w-auto">
-                  <div className="group cursor-pointer border border-white/20 bg-white/5 backdrop-blur-sm gap-2 h-[50px] sm:h-[60px] flex items-center p-[8px] sm:p-[10px] rounded-full hover:border-[#e78a53]/50 transition-all">
-                    <div className="border border-white/20 bg-gradient-to-b from-[#e78a53] to-[#e78a53]/80 h-[34px] sm:h-[40px] rounded-full flex items-center justify-center text-white shadow-[0px_2px_0px_0px_rgba(255,255,255,0.3)_inset]">
+                  <div className="group cursor-pointer border border-white/20 bg-white/5 backdrop-blur-sm gap-2 h-[50px] sm:h-[60px] flex items-center p-[8px] sm:p-[10px] rounded-full hover:border-[#8b5cf6]/50 hover:shadow-[0_0_20px_rgba(139,92,246,0.3)] transition-all">
+                    <div className="border border-white/20 bg-gradient-to-b from-[#8b5cf6] to-[#7c3aed] h-[34px] sm:h-[40px] rounded-full flex items-center justify-center text-white shadow-[0px_2px_0px_0px_rgba(255,255,255,0.3)_inset]">
                       <p className="font-medium tracking-tight mr-2 sm:mr-3 ml-2 sm:ml-3 flex items-center gap-1.5 sm:gap-2 justify-center text-sm sm:text-base">
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
@@ -577,30 +577,75 @@ const Landing = () => {
           zIndex: 1,
         }}
       >
+        {/* Trust Indicators Section */}
+        <section className="py-16 px-4 border-y border-white/5 bg-black/40 backdrop-blur-sm">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="container mx-auto max-w-6xl"
+          >
+            <p className="text-center text-white/40 text-sm mb-8 uppercase tracking-wider">
+              Powered by Industry Leaders
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-12 opacity-50 hover:opacity-70 transition-opacity">
+              <div className="text-white/60 font-bold text-xl">FAL.AI</div>
+              <div className="text-white/60 font-bold text-xl">Supabase</div>
+              <div className="text-white/60 font-bold text-xl">Vercel</div>
+              <div className="text-white/60 font-bold text-xl">React</div>
+              <div className="text-white/60 font-bold text-xl">TypeScript</div>
+            </div>
+          </motion.div>
+        </section>
+
+        {/* Gradient Divider */}
+        <div className="h-px bg-gradient-to-r from-transparent via-[#8b5cf6]/30 to-transparent" />
+
         {/* Features Section */}
-        <div id="features">
+        <div id="features" className="relative">
+          {/* Floating orbs */}
+          <div className="absolute -top-20 -right-20 w-40 h-40 rounded-full bg-[#8b5cf6]/20 blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-20 -left-20 w-40 h-40 rounded-full bg-[#7c3aed]/20 blur-3xl pointer-events-none" />
           <Features />
         </div>
 
+        {/* Gradient Divider */}
+        <div className="h-px bg-gradient-to-r from-transparent via-[#8b5cf6]/30 to-transparent" />
+
         {/* Pricing Section */}
-        <div id="pricing" className="-mt-16">
+        <div id="pricing" className="relative">
           <PricingSection />
         </div>
+
+        {/* Gradient Divider */}
+        <div className="h-px bg-gradient-to-r from-transparent via-[#8b5cf6]/30 to-transparent" />
             
         {/* Testimonials Section */}
-        <div id="testimonials">
+        <div id="testimonials" className="relative">
+          <div className="absolute top-1/2 -right-20 w-60 h-60 rounded-full bg-[#8b5cf6]/10 blur-3xl pointer-events-none" />
+          <div className="absolute top-1/2 -left-20 w-60 h-60 rounded-full bg-[#7c3aed]/10 blur-3xl pointer-events-none" />
           <TestimonialsSection />
         </div>
+
+        {/* Gradient Divider */}
+        <div className="h-px bg-gradient-to-r from-transparent via-[#8b5cf6]/30 to-transparent" />
             
         {/* New Release Promo */}
-        <div>
+        <div className="relative">
           <NewReleasePromo />
         </div>
 
+        {/* Gradient Divider */}
+        <div className="h-px bg-gradient-to-r from-transparent via-[#8b5cf6]/30 to-transparent" />
+
         {/* FAQ Section */}
-        <div id="faq">
+        <div id="faq" className="relative">
           <FAQSection />
         </div>
+
+        {/* Gradient Divider */}
+        <div className="h-px bg-gradient-to-r from-transparent via-[#8b5cf6]/30 to-transparent" />
           
         {/* Sticky Footer */}
         <div>

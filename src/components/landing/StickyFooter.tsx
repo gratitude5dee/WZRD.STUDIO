@@ -9,7 +9,7 @@ export function StickyFooter() {
           {/* Brand */}
           <div className="col-span-1 md:col-span-1">
             <Link to="/" className="inline-block mb-4">
-              <span className="text-white font-bold text-xl tracking-tight bg-gradient-to-r from-[#e78a53] to-[#e78a53]/80 bg-clip-text text-transparent">
+              <span className="text-white font-bold text-xl tracking-tight bg-gradient-to-r from-[#8b5cf6] to-[#7c3aed] bg-clip-text text-transparent">
                 WZRD.STUDIO
               </span>
             </Link>
