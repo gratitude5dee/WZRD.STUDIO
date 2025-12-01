@@ -44,7 +44,7 @@ export function TestimonialsSection() {
   return (
     <section id="testimonials" className="py-24 px-4 bg-black relative overflow-hidden">
       {/* Background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#e78a53]/5 to-transparent pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#8b5cf6]/5 to-transparent pointer-events-none" />
       
       <div className="container mx-auto max-w-7xl relative z-10">
         <motion.div

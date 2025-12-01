@@ -7,24 +7,30 @@ import { cn } from '@/lib/utils';
 
 interface PricingCardProps {
   title: string;
-  price: string;
+  price?: string;
+  monthlyPrice?: number;
+  annualPrice?: number;
   description: string;
   features: string[];
   ctaText: string;
   ctaAction: () => void;
   popular?: boolean;
   delay?: number;
+  isAnnual?: boolean;
 }
 
 export const PricingCard = ({ 
   title, 
-  price, 
+  price,
+  monthlyPrice,
+  annualPrice, 
   description, 
   features, 
   ctaText, 
   ctaAction,
   popular = false,
-  delay = 0
+  delay = 0,
+  isAnnual = false
 }: PricingCardProps) => {
   const fadeInUp = {
     hidden: { opacity: 0, y: 20 },
@@ -37,6 +43,12 @@ export const PricingCard = ({
       } 
     }
   };
+
+  // Calculate display price
+  const displayPrice = price || (monthlyPrice && annualPrice 
+    ? `$${isAnnual ? annualPrice : monthlyPrice}` 
+    : '$0');
+  const priceLabel = price ? '' : isAnnual ? '/year' : '/month';
 
   return (
     <motion.div
@@ -60,8 +72,8 @@ export const PricingCard = ({
       )}>
         <h3 className="text-2xl font-bold mb-2 text-white">{title}</h3>
         <div className="mb-4">
-          <span className="text-3xl font-bold text-white">{price}</span>
-          {price !== "Free" && <span className="text-zinc-400 ml-1">/mo</span>}
+          <span className="text-3xl font-bold text-white">{displayPrice}</span>
+          {priceLabel && <span className="text-zinc-400 ml-1">{priceLabel}</span>}
         </div>
         <p className="text-zinc-400 mb-6">{description}</p>
         
