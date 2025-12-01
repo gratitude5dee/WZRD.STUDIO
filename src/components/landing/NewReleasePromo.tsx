@@ -11,14 +11,14 @@ export function NewReleasePromo() {
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
-          className="relative p-12 rounded-3xl border border-[#e78a53]/30 bg-gradient-to-br from-[#e78a53]/10 via-black to-black overflow-hidden"
+          className="relative p-12 rounded-3xl border border-[#8b5cf6]/30 bg-gradient-to-br from-[#8b5cf6]/10 via-black to-black overflow-hidden"
         >
           {/* Animated gradient background */}
-          <div className="absolute inset-0 bg-gradient-to-r from-[#e78a53]/20 via-transparent to-[#e78a53]/20 animate-pulse pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#8b5cf6]/20 via-transparent to-[#8b5cf6]/20 animate-pulse pointer-events-none" />
           
           <div className="relative z-10 text-center">
-            <div className="inline-flex items-center gap-2 px-4 py-2 mb-6 text-sm rounded-full border border-[#e78a53]/30 bg-[#e78a53]/10 backdrop-blur-sm">
-              <Sparkles className="w-4 h-4 text-[#e78a53]" />
+            <div className="inline-flex items-center gap-2 px-4 py-2 mb-6 text-sm rounded-full border border-[#8b5cf6]/30 bg-[#8b5cf6]/10 backdrop-blur-sm">
+              <Sparkles className="w-4 h-4 text-[#8b5cf6]" />
               <span className="text-white font-medium">New Release</span>
             </div>
             
@@ -30,7 +30,7 @@ export function NewReleasePromo() {
             </p>
             
             <Link to="/demo">
-              <button className="group inline-flex items-center gap-2 px-8 py-4 text-lg font-bold rounded-full bg-gradient-to-b from-[#e78a53] to-[#e78a53]/80 text-white shadow-[0px_2px_0px_0px_rgba(255,255,255,0.3)_inset] hover:-translate-y-1 transition-all duration-200">
+              <button className="group inline-flex items-center gap-2 px-8 py-4 text-lg font-bold rounded-full bg-gradient-to-b from-[#8b5cf6] to-[#7c3aed] text-white shadow-[0px_2px_0px_0px_rgba(255,255,255,0.3)_inset] hover:-translate-y-1 hover:shadow-[0_0_30px_rgba(139,92,246,0.4)] transition-all duration-200">
                 Try Demo Now
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
