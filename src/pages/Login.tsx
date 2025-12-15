@@ -1,94 +1,25 @@
 
-import { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/providers/AuthProvider';
 import { AnimatedLogo } from '@/components/ui/animated-logo';
 import { GlassCard } from '@/components/ui/glass-card';
-import { GlassButton } from '@/components/ui/glass-button';
 import { motion } from 'framer-motion';
-import { Sparkles, ArrowRight } from 'lucide-react';
+import { ConnectEmbed } from "thirdweb/react";
+import { thirdwebClient } from '@/lib/thirdweb/client';
+import { wallets } from '@/lib/thirdweb/wallets';
+import { wzrdTheme } from '@/lib/thirdweb/theme';
 
 const Login = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const location = useLocation();
-  const { toast } = useToast();
-  const { user } = useAuth();
-  const bypassAuthForTests =
-    (typeof import.meta !== 'undefined' && import.meta.env?.VITE_BYPASS_AUTH_FOR_TESTS === 'true') ||
-    (typeof process !== 'undefined' && process.env?.VITE_BYPASS_AUTH_FOR_TESTS === 'true');
+  const { user, thirdwebAccount } = useAuth();
   
-  // Redirect to home if already logged in
+  // Redirect to home if already logged in (either Supabase or Thirdweb)
   useEffect(() => {
-    if (user) {
+    if (user || thirdwebAccount) {
       navigate('/home');
     }
-  }, [user, navigate]);
-
-  const handleSignIn = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      if (bypassAuthForTests) {
-        navigate('/assets');
-        return;
-      }
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
-      if (error) throw error;
-
-      // Successful login - navigate to home
-      navigate('/home');
-    } catch (error: any) {
-      toast({
-        title: "Error signing in",
-        description: error.message,
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      if (bypassAuthForTests) {
-        toast({
-          title: 'Mock mode',
-          description: 'Sign up disabled while tests bypass Supabase.',
-        });
-        return;
-      }
-      const { error } = await supabase.auth.signUp({
-        email,
-        password
-      });
-      if (error) throw error;
-      toast({
-        title: "Success",
-        description: "Please check your email to verify your account"
-      });
-    } catch (error: any) {
-      toast({
-        title: "Error signing up",
-        description: error.message,
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [user, thirdwebAccount, navigate]);
 
   return (
     <div className="min-h-screen relative flex items-center justify-center overflow-hidden">
@@ -209,7 +140,7 @@ const Login = () => {
           className="overflow-hidden"
         >
           {/* Logo Header */}
-          <div className="p-8 pb-0">
+          <div className="p-8 pb-4">
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -221,164 +152,29 @@ const Login = () => {
                 <h1 className="text-2xl font-bold bg-gradient-to-r from-[hsl(var(--glow-primary))] via-[hsl(var(--glow-secondary))] to-[hsl(var(--glow-accent))] bg-clip-text text-transparent">
                   Welcome to WZRD.STUDIO
                 </h1>
-                <p className="text-sm text-white/60 mt-2">
+                <p className="text-sm text-muted-foreground mt-2">
                   Create cinematic AI-powered content
                 </p>
               </div>
             </motion.div>
           </div>
 
-          {/* Tabs */}
-          <div className="p-8 pt-4">
-            <Tabs defaultValue="signin" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 mb-6 bg-white/5 border border-white/10">
-                <TabsTrigger 
-                  value="signin"
-                  className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[hsl(var(--glow-primary))] data-[state=active]:to-[hsl(var(--glow-secondary))] data-[state=active]:text-white"
-                >
-                  Sign In
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="signup"
-                  className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-[hsl(var(--glow-secondary))] data-[state=active]:to-[hsl(var(--glow-accent))] data-[state=active]:text-white"
-                >
-                  Sign Up
-                </TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="signin">
-                <form onSubmit={handleSignIn} className="space-y-5">
-                  <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.3 }}
-                  >
-                    <label className="text-sm font-medium text-white/80 mb-2 block">
-                      Email Address
-                    </label>
-                    <Input 
-                      type="email" 
-                      placeholder="your@email.com" 
-                      value={email} 
-                      onChange={e => setEmail(e.target.value)} 
-                      required 
-                      className="w-full glass-input bg-white/5 border-white/10 text-white placeholder:text-white/40 focus:border-[hsl(var(--glow-primary))] focus:ring-2 focus:ring-[hsl(var(--glow-primary)/0.2)]"
-                    />
-                  </motion.div>
-                  <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.4 }}
-                  >
-                    <label className="text-sm font-medium text-white/80 mb-2 block">
-                      Password
-                    </label>
-                    <Input 
-                      type="password" 
-                      placeholder="••••••••" 
-                      value={password} 
-                      onChange={e => setPassword(e.target.value)} 
-                      required 
-                      className="w-full glass-input bg-white/5 border-white/10 text-white placeholder:text-white/40 focus:border-[hsl(var(--glow-primary))] focus:ring-2 focus:ring-[hsl(var(--glow-primary)/0.2)]"
-                    />
-                  </motion.div>
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.5 }}
-                  >
-                    <GlassButton 
-                      type="submit" 
-                      variant="cosmic"
-                      size="lg"
-                      glow="intense"
-                      className="w-full group"
-                      disabled={loading}
-                    >
-                      {loading ? (
-                        <span className="flex items-center gap-2">
-                          <Sparkles className="w-4 h-4 animate-spin" />
-                          Signing in...
-                        </span>
-                      ) : (
-                        <span className="flex items-center gap-2">
-                          Sign In
-                          <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                        </span>
-                      )}
-                    </GlassButton>
-                  </motion.div>
-                </form>
-              </TabsContent>
-              
-              <TabsContent value="signup">
-                <form onSubmit={handleSignUp} className="space-y-5">
-                  <motion.div
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.3 }}
-                  >
-                    <label className="text-sm font-medium text-white/80 mb-2 block">
-                      Email Address
-                    </label>
-                    <Input 
-                      type="email" 
-                      placeholder="your@email.com" 
-                      value={email} 
-                      onChange={e => setEmail(e.target.value)} 
-                      required 
-                      className="w-full glass-input bg-white/5 border-white/10 text-white placeholder:text-white/40 focus:border-[hsl(var(--glow-secondary))] focus:ring-2 focus:ring-[hsl(var(--glow-secondary)/0.2)]"
-                    />
-                  </motion.div>
-                  <motion.div
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.4 }}
-                  >
-                    <label className="text-sm font-medium text-white/80 mb-2 block">
-                      Password
-                    </label>
-                    <Input 
-                      type="password" 
-                      placeholder="••••••••" 
-                      value={password} 
-                      onChange={e => setPassword(e.target.value)} 
-                      required 
-                      className="w-full glass-input bg-white/5 border-white/10 text-white placeholder:text-white/40 focus:border-[hsl(var(--glow-secondary))] focus:ring-2 focus:ring-[hsl(var(--glow-secondary)/0.2)]"
-                    />
-                    <p className="text-xs text-white/50 mt-2">
-                      At least 8 characters recommended
-                    </p>
-                  </motion.div>
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.5 }}
-                  >
-                    <GlassButton 
-                      type="submit" 
-                      variant="stellar"
-                      size="lg"
-                      glow="intense"
-                      className="w-full group"
-                      disabled={loading}
-                    >
-                      {loading ? (
-                        <span className="flex items-center gap-2">
-                          <Sparkles className="w-4 h-4 animate-spin" />
-                          Creating account...
-                        </span>
-                      ) : (
-                        <span className="flex items-center gap-2">
-                          Create Account
-                          <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                        </span>
-                      )}
-                    </GlassButton>
-                  </motion.div>
-                </form>
-              </TabsContent>
-            </Tabs>
+          {/* Thirdweb Connect Embed */}
+          <div className="px-4 pb-6">
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4, duration: 0.5 }}
+            >
+              <ConnectEmbed
+                client={thirdwebClient}
+                wallets={wallets}
+                theme={wzrdTheme}
+                modalSize="compact"
+                showThirdwebBranding={false}
+                className="!w-full !bg-transparent !border-0"
+              />
+            </motion.div>
           </div>
         </GlassCard>
 
@@ -387,7 +183,7 @@ const Login = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.8 }}
-          className="text-center text-white/40 text-sm mt-6"
+          className="text-center text-muted-foreground text-sm mt-6"
         >
           By continuing, you agree to our Terms of Service
         </motion.p>

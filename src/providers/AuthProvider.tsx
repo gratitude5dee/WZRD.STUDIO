@@ -3,13 +3,22 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import type { User } from '@supabase/supabase-js';
+import { useActiveAccount } from 'thirdweb/react';
+import type { Account } from 'thirdweb/wallets';
 
 interface AuthContextType {
   user: User | null;
+  thirdwebAccount: Account | undefined;
   loading: boolean;
+  isAuthenticated: boolean;
 }
 
-const AuthContext = createContext<AuthContextType>({ user: null, loading: true });
+const AuthContext = createContext<AuthContextType>({ 
+  user: null, 
+  thirdwebAccount: undefined,
+  loading: true,
+  isAuthenticated: false,
+});
 
 const bypassAuthForTests =
   (typeof import.meta !== 'undefined' && import.meta.env?.VITE_BYPASS_AUTH_FOR_TESTS === 'true') ||
@@ -20,6 +29,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
+  
+  // Get thirdweb account from their hook
+  const thirdwebAccount = useActiveAccount();
+  
+  // User is authenticated if either Supabase user OR thirdweb account exists
+  const isAuthenticated = !!(user || thirdwebAccount);
 
   useEffect(() => {
     if (bypassAuthForTests) {
@@ -60,10 +75,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return () => {
       subscription.unsubscribe();
     };
-  }, [navigate, location.pathname, bypassAuthForTests]);
+  }, [navigate, location.pathname]);
+
+  // Handle thirdweb account connection - redirect to home when connected
+  useEffect(() => {
+    if (thirdwebAccount && location.pathname === '/login') {
+      navigate('/home');
+    }
+  }, [thirdwebAccount, location.pathname, navigate]);
 
   return (
-    <AuthContext.Provider value={{ user, loading }}>
+    <AuthContext.Provider value={{ user, thirdwebAccount, loading, isAuthenticated }}>
       {children}
     </AuthContext.Provider>
   );
