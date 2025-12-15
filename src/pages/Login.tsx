@@ -1,18 +1,31 @@
-
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/providers/AuthProvider';
 import { AnimatedLogo } from '@/components/ui/animated-logo';
 import { GlassCard } from '@/components/ui/glass-card';
 import { motion } from 'framer-motion';
 import { ConnectEmbed } from "thirdweb/react";
-import { thirdwebClient } from '@/lib/thirdweb/client';
+import { getThirdwebClient } from '@/lib/thirdweb/client';
 import { wallets } from '@/lib/thirdweb/wallets';
 import { wzrdTheme } from '@/lib/thirdweb/theme';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import type { ThirdwebClient } from "thirdweb";
 
 const Login = () => {
   const navigate = useNavigate();
   const { user, thirdwebAccount } = useAuth();
+  const [thirdwebClient, setThirdwebClient] = useState<ThirdwebClient | null>(null);
+  const [configError, setConfigError] = useState<string | null>(null);
+  
+  // Load Thirdweb client on mount
+  useEffect(() => {
+    getThirdwebClient()
+      .then(setThirdwebClient)
+      .catch((err) => {
+        console.error('Failed to load Thirdweb client:', err);
+        setConfigError(err.message);
+      });
+  }, []);
   
   // Redirect to home if already logged in (either Supabase or Thirdweb)
   useEffect(() => {
@@ -166,14 +179,25 @@ const Login = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4, duration: 0.5 }}
             >
-              <ConnectEmbed
-                client={thirdwebClient}
-                wallets={wallets}
-                theme={wzrdTheme}
-                modalSize="compact"
-                showThirdwebBranding={false}
-                className="!w-full !bg-transparent !border-0"
-              />
+              {configError ? (
+                <div className="text-center py-8">
+                  <p className="text-destructive text-sm">Failed to load authentication</p>
+                  <p className="text-muted-foreground text-xs mt-2">{configError}</p>
+                </div>
+              ) : !thirdwebClient ? (
+                <div className="flex justify-center py-8">
+                  <LoadingSpinner size="lg" />
+                </div>
+              ) : (
+                <ConnectEmbed
+                  client={thirdwebClient}
+                  wallets={wallets}
+                  theme={wzrdTheme}
+                  modalSize="compact"
+                  showThirdwebBranding={false}
+                  className="!w-full !bg-transparent !border-0"
+                />
+              )}
             </motion.div>
           </div>
         </GlassCard>
