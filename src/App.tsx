@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useParams } from "react-router-dom";
+import { ThirdwebProvider } from "thirdweb/react";
 import { AuthProvider } from "@/providers/AuthProvider";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import PerfShell from "@/components/perf/PerfShell";
@@ -44,132 +45,134 @@ const App = () => {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <BrowserRouter>
-          <AuthProvider>
-            <CursorLoadingProvider>
-              <CursorWrapper />
-              <Toaster />
-              <Sonner />
-              <Suspense fallback={fallback}>
-                <Routes>
-                  <Route path="/" element={<Landing />} />
-                  <Route path="/login" element={<Login />} />
-                  <Route
-                    path="/home"
-                    element={
-                      <ProtectedRoute>
-                        <Home />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/project-setup"
-                    element={
-                      <ProtectedRoute>
-                        <ProjectSetup />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/studio"
-                    element={
-                      <ProtectedRoute>
-                        <StudioPage />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/studio/:projectId"
-                    element={
-                      <ProtectedRoute>
-                        <StudioPage />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/assets"
-                    element={
-                      <ProtectedRoute>
-                        <AssetsPage />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/learning-studio"
-                    element={
-                      <ProtectedRoute>
-                        <LearningStudioPage />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/timeline/:projectId"
-                    element={
-                      <ProtectedRoute>
-                        <StoryboardPage />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/editor/:projectId"
-                    element={
-                      <ProtectedRoute>
-                        <EditorPage />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route path="/storyboard/:projectId" element={<RedirectToTimeline />} />
-                  <Route path="/storyboard" element={<Navigate to="/home" replace />} />
-                  <Route path="/timeline" element={<Navigate to="/home" replace />} />
-                  <Route path="/editor" element={<Navigate to="/home" replace />} />
-                  <Route
-                    path="/credits"
-                    element={
-                      <ProtectedRoute>
-                        <Credits />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/storyboard-generator"
-                    element={
-                      <ProtectedRoute>
-                        <Storyboard />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/shot-editor/:shotId"
-                    element={
-                      <ProtectedRoute>
-                        <ShotEditor />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/video-editor/:projectId"
-                    element={
-                      <ProtectedRoute>
-                        <VideoEditor />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/kanvas"
-                    element={
-                      <ProtectedRoute>
-                        <KanvasPage />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </Suspense>
-            </CursorLoadingProvider>
-          </AuthProvider>
-        </BrowserRouter>
-      </TooltipProvider>
+      <ThirdwebProvider>
+        <TooltipProvider>
+          <BrowserRouter>
+            <AuthProvider>
+              <CursorLoadingProvider>
+                <CursorWrapper />
+                <Toaster />
+                <Sonner />
+                <Suspense fallback={fallback}>
+                  <Routes>
+                    <Route path="/" element={<Landing />} />
+                    <Route path="/login" element={<Login />} />
+                    <Route
+                      path="/home"
+                      element={
+                        <ProtectedRoute>
+                          <Home />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/project-setup"
+                      element={
+                        <ProtectedRoute>
+                          <ProjectSetup />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/studio"
+                      element={
+                        <ProtectedRoute>
+                          <StudioPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/studio/:projectId"
+                      element={
+                        <ProtectedRoute>
+                          <StudioPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/assets"
+                      element={
+                        <ProtectedRoute>
+                          <AssetsPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/learning-studio"
+                      element={
+                        <ProtectedRoute>
+                          <LearningStudioPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/timeline/:projectId"
+                      element={
+                        <ProtectedRoute>
+                          <StoryboardPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/editor/:projectId"
+                      element={
+                        <ProtectedRoute>
+                          <EditorPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route path="/storyboard/:projectId" element={<RedirectToTimeline />} />
+                    <Route path="/storyboard" element={<Navigate to="/home" replace />} />
+                    <Route path="/timeline" element={<Navigate to="/home" replace />} />
+                    <Route path="/editor" element={<Navigate to="/home" replace />} />
+                    <Route
+                      path="/credits"
+                      element={
+                        <ProtectedRoute>
+                          <Credits />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/storyboard-generator"
+                      element={
+                        <ProtectedRoute>
+                          <Storyboard />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/shot-editor/:shotId"
+                      element={
+                        <ProtectedRoute>
+                          <ShotEditor />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/video-editor/:projectId"
+                      element={
+                        <ProtectedRoute>
+                          <VideoEditor />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/kanvas"
+                      element={
+                        <ProtectedRoute>
+                          <KanvasPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </Suspense>
+              </CursorLoadingProvider>
+            </AuthProvider>
+          </BrowserRouter>
+        </TooltipProvider>
+      </ThirdwebProvider>
     </QueryClientProvider>
   );
 };
