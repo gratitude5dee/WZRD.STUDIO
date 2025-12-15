@@ -4,11 +4,8 @@
 // ROUTE: POST /functions/v1/asset-processor (invoked by cron or queue)
 // ============================================================================
 
-import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
-import {
-  writableStreamFromWriter,
-} from "https://deno.land/std@0.177.0/streams/conversion.ts";
 import { Image } from "https://deno.land/x/imagescript@1.2.15/mod.ts";
 
 const THUMBNAIL_BUCKET = "asset-thumbnails";
@@ -34,16 +31,8 @@ type ProcessingResult = {
 const MAX_THUMB_EDGE = 512;
 
 async function streamBlobToFile(blob: Blob, filePath: string) {
-  const file = await Deno.open(filePath, {
-    write: true,
-    create: true,
-    truncate: true,
-  });
-  try {
-    await blob.stream().pipeTo(writableStreamFromWriter(file));
-  } finally {
-    file.close();
-  }
+  const arrayBuffer = await blob.arrayBuffer();
+  await Deno.writeFile(filePath, new Uint8Array(arrayBuffer));
 }
 
 async function probeMedia(filePath: string) {
