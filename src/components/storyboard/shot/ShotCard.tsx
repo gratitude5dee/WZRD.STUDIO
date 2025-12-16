@@ -43,6 +43,8 @@ export const ShotCard: React.FC<ShotCardProps> = ({
     localImageProgress,
     localAudioUrl,
     localAudioStatus,
+    localVideoUrl,
+    localVideoStatus,
     isDeleting,
     isSaving,
     isGeneratingPrompt,
@@ -59,6 +61,8 @@ export const ShotCard: React.FC<ShotCardProps> = ({
     setLocalImageStatus,
     setLocalAudioUrl,
     setLocalAudioStatus,
+    setLocalVideoUrl,
+    setLocalVideoStatus,
     setIsDeleting,
     setIsGeneratingPrompt,
     setIsGeneratingImage,
@@ -237,9 +241,9 @@ export const ShotCard: React.FC<ShotCardProps> = ({
       <div className="flex-shrink-0 pointer-events-auto" style={{ touchAction: 'auto' }}>
         <ShotImage
           shotId={shot.id}
-          imageUrl={shot.image_url}
-          videoUrl={shot.video_url}
-          videoStatus={shot.video_status || 'pending'}
+          imageUrl={localImageUrl}
+          videoUrl={localVideoUrl}
+          videoStatus={localVideoStatus || 'pending'}
           status={localImageStatus}
           imageProgress={localImageProgress}
           isGenerating={isGeneratingPrompt || isGeneratingImage}
@@ -331,8 +335,8 @@ export const ShotCard: React.FC<ShotCardProps> = ({
               
               {/* Audio generation */}
               <ShotAudio
-                audioUrl={shot.audio_url}
-                status={shot.audio_status}
+                audioUrl={localAudioUrl}
+                status={localAudioStatus}
                 isGenerating={isGeneratingAudio}
                 hasDialogue={!!dialogue}
                 onGenerateAudio={handleGenerateAudio}

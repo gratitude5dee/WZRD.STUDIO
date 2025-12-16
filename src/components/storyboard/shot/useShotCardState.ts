@@ -16,6 +16,8 @@ export const useShotCardState = (shot: ShotDetails, onUpdate: (updates: Partial<
   const [localImageProgress, setLocalImageProgress] = useState<number>((shot as any).image_progress || 0);
   const [localAudioUrl, setLocalAudioUrl] = useState(shot.audio_url || null);
   const [localAudioStatus, setLocalAudioStatus] = useState<AudioStatus>(shot.audio_status || 'pending');
+  const [localVideoUrl, setLocalVideoUrl] = useState(shot.video_url || null);
+  const [localVideoStatus, setLocalVideoStatus] = useState(shot.video_status || 'pending');
   
   // UI state
   const [isDeleting, setIsDeleting] = useState(false);
@@ -37,10 +39,13 @@ export const useShotCardState = (shot: ShotDetails, onUpdate: (updates: Partial<
     setLocalImageProgress((shot as any).image_progress || 0);
     setLocalAudioUrl(shot.audio_url || null);
     setLocalAudioStatus(shot.audio_status || 'pending');
+    setLocalVideoUrl(shot.video_url || null);
+    setLocalVideoStatus(shot.video_status || 'pending');
     setIsGeneratingImage(shot.image_status === 'generating');
     setIsGeneratingAudio(shot.audio_status === 'generating');
   }, [shot.id, shot.shot_type, shot.prompt_idea, shot.dialogue, shot.sound_effects, 
-      shot.visual_prompt, shot.image_url, shot.image_status, shot.audio_url, shot.audio_status, (shot as any).image_progress]);
+      shot.visual_prompt, shot.image_url, shot.image_status, shot.audio_url, shot.audio_status, 
+      shot.video_url, shot.video_status, (shot as any).image_progress]);
 
   // Set up realtime subscription to receive updates for this shot
   useEffect(() => {
@@ -89,6 +94,15 @@ export const useShotCardState = (shot: ShotDetails, onUpdate: (updates: Partial<
           if (updatedShot.audio_status && updatedShot.audio_status !== localAudioStatus) {
             setLocalAudioStatus(updatedShot.audio_status as AudioStatus);
             setIsGeneratingAudio(updatedShot.audio_status === 'generating');
+          }
+          
+          // Handle video updates
+          if (updatedShot.video_url && updatedShot.video_url !== localVideoUrl) {
+            setLocalVideoUrl(updatedShot.video_url);
+          }
+          
+          if (updatedShot.video_status && updatedShot.video_status !== localVideoStatus) {
+            setLocalVideoStatus(updatedShot.video_status);
           }
         })
       .subscribe();
@@ -163,6 +177,8 @@ export const useShotCardState = (shot: ShotDetails, onUpdate: (updates: Partial<
     localImageProgress,
     localAudioUrl,
     localAudioStatus,
+    localVideoUrl,
+    localVideoStatus,
     isDeleting,
     isSaving,
     isGeneratingPrompt,
@@ -180,6 +196,8 @@ export const useShotCardState = (shot: ShotDetails, onUpdate: (updates: Partial<
     setLocalImageProgress,
     setLocalAudioUrl,
     setLocalAudioStatus,
+    setLocalVideoUrl,
+    setLocalVideoStatus,
     setIsDeleting,
     setIsGeneratingPrompt,
     setIsGeneratingImage,
