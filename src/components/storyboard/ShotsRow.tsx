@@ -392,14 +392,14 @@ const ShotsRow = ({ sceneId, sceneNumber, projectId, onSceneDelete, isSelected =
       exit={{ opacity: 0, y: -20 }}
       transition={{ duration: 0.3 }}
       className={cn(
-        'relative group mb-8 p-6 rounded-[20px] backdrop-blur-sm transition-all duration-300',
-        'bg-gradient-to-br from-zinc-900/40 to-zinc-900/20',
-        'border border-zinc-800/30 hover:border-zinc-700/50',
-        'shadow-[0_8px_32px_rgba(0,0,0,0.4),0_0_0_1px_rgba(255,255,255,0.03),inset_0_1px_0_rgba(255,255,255,0.02)]',
+        'relative group mb-8 p-6 rounded-[24px] backdrop-blur-xl transition-all duration-300',
+        'bg-gradient-to-br from-[rgba(20,20,28,0.7)] to-[rgba(14,14,20,0.5)]',
+        'border border-white/[0.06] hover:border-white/[0.12]',
+        'shadow-[0_8px_40px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.03)]',
         isSelected && [
-          'border-2 border-blue-500/60',
-          'shadow-[0_0_0_4px_rgba(59,130,246,0.15),0_12px_40px_rgba(59,130,246,0.25),inset_0_1px_0_rgba(255,255,255,0.05)]',
-          'bg-gradient-to-br from-blue-950/30 to-zinc-900/40'
+          'border-2 border-primary/50',
+          'shadow-[0_0_0_4px_rgba(20,184,166,0.1),0_12px_48px_rgba(20,184,166,0.2),inset_0_1px_0_rgba(255,255,255,0.05)]',
+          'bg-gradient-to-br from-primary/[0.08] to-[rgba(14,14,20,0.6)]'
         ]
       )}
     >
@@ -408,18 +408,18 @@ const ShotsRow = ({ sceneId, sceneNumber, projectId, onSceneDelete, isSelected =
           <div className="relative">
             <motion.div
               whileHover={{ scale: 1.05 }}
-              className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-600/10
-                backdrop-blur-sm border border-amber-500/30
-                shadow-[0_0_24px_rgba(251,191,36,0.3),inset_0_1px_0_rgba(255,255,255,0.1)]
-                flex items-center justify-center"
+              className={cn(
+                "w-12 h-12 rounded-xl flex items-center justify-center",
+                "bg-gradient-to-br from-amber/25 to-amber/10",
+                "backdrop-blur-md border border-amber/30",
+                "scene-badge-glow"
+              )}
             >
-              <span className="text-2xl font-bold text-amber-400 glow-text-gold">
+              <span className="text-2xl font-bold text-amber glow-text-gold">
                 {sceneNumber}
               </span>
             </motion.div>
-            <div className="absolute -top-1 -right-1 w-3 h-3 bg-amber-400/60 rounded-full
-              blur-sm animate-pulse"
-            />
+            <div className="absolute -top-1 -right-1 w-3 h-3 bg-amber/50 rounded-full blur-sm animate-pulse" />
           </div>
 
           <div>

@@ -300,19 +300,50 @@ export default {
 					'transition': 'all 200ms ease-out',
 				},
 				'.glass-panel': {
-					'background-color': 'rgba(10, 13, 22, 0.8)',
-					'backdrop-filter': 'blur(12px)',
-					'border-color': 'rgba(255, 255, 255, 0.1)',
+					'background': 'linear-gradient(135deg, rgba(15, 15, 20, 0.85) 0%, rgba(10, 12, 18, 0.95) 100%)',
+					'backdrop-filter': 'blur(24px)',
+					'border-color': 'rgba(255, 255, 255, 0.08)',
+				},
+				'.glass-panel-dark': {
+					'background': 'linear-gradient(180deg, rgba(15, 15, 20, 0.9) 0%, rgba(8, 10, 14, 0.95) 100%)',
+					'backdrop-filter': 'blur(32px)',
+					'border-color': 'rgba(255, 255, 255, 0.05)',
 				},
 				'.glass-card': {
-					'background-color': 'rgba(24, 24, 27, 0.6)',
+					'background': 'linear-gradient(135deg, rgba(24, 24, 32, 0.7) 0%, rgba(18, 18, 26, 0.5) 100%)',
+					'backdrop-filter': 'blur(16px)',
+					'border-color': 'rgba(255, 255, 255, 0.1)',
+				},
+				'.glass-card-warm': {
+					'background': 'linear-gradient(135deg, rgba(28, 25, 23, 0.7) 0%, rgba(22, 20, 18, 0.5) 100%)',
+					'backdrop-filter': 'blur(16px)',
+					'border-color': 'rgba(255, 200, 150, 0.1)',
+				},
+				'.glass-stat': {
+					'background': 'linear-gradient(135deg, rgba(20, 20, 28, 0.75) 0%, rgba(16, 16, 22, 0.6) 100%)',
+					'backdrop-filter': 'blur(20px)',
+					'border-color': 'rgba(255, 255, 255, 0.08)',
+				},
+				'.glass-sidebar': {
+					'background': 'linear-gradient(180deg, rgba(12, 12, 18, 0.92) 0%, rgba(8, 8, 12, 0.98) 100%)',
+					'backdrop-filter': 'blur(40px)',
+					'border-color': 'rgba(255, 255, 255, 0.04)',
+				},
+				'.glass-input': {
+					'background-color': 'rgba(0, 0, 0, 0.35)',
 					'backdrop-filter': 'blur(8px)',
 					'border-color': 'rgba(255, 255, 255, 0.1)',
 				},
-				'.glass-input': {
-					'background-color': 'rgba(0, 0, 0, 0.3)',
-					'backdrop-filter': 'blur(4px)',
-					'border-color': 'rgba(255, 255, 255, 0.1)',
+				'.glass-button': {
+					'background': 'linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%)',
+					'backdrop-filter': 'blur(12px)',
+					'border-color': 'rgba(255, 255, 255, 0.15)',
+				},
+				'.glow-teal': {
+					'box-shadow': '0 0 20px rgba(20, 184, 166, 0.4), 0 0 40px rgba(20, 184, 166, 0.2)',
+				},
+				'.glow-amber': {
+					'box-shadow': '0 0 20px rgba(245, 158, 11, 0.4), 0 0 40px rgba(245, 158, 11, 0.2)',
 				},
 			};
 			addUtilities(newUtilities);

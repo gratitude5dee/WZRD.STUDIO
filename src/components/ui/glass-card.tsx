@@ -3,12 +3,12 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const glassCardVariants = cva(
-  "relative overflow-hidden rounded-xl border backdrop-blur-lg transition-all duration-300 group",
+  "relative overflow-hidden rounded-2xl border backdrop-blur-xl transition-all duration-300 group",
   {
     variants: {
       variant: {
         default: 
-          "glass-card border-border/20",
+          "bg-gradient-to-br from-[rgba(24,24,32,0.7)] to-[rgba(18,18,26,0.5)] border-white/[0.08] shadow-[0_8px_32px_rgba(0,0,0,0.3)]",
         cosmic: 
           "bg-gradient-to-br from-glass-backdrop to-cosmic-void/20 border-cosmic-stellar/20 shadow-[0_8px_32px_hsl(var(--cosmic-void)/0.3)]",
         nebula: 
@@ -18,24 +18,34 @@ const glassCardVariants = cva(
         void: 
           "bg-gradient-to-br from-cosmic-void/40 to-cosmic-shadow/30 border-cosmic-void/40 shadow-[0_8px_32px_hsl(var(--cosmic-void)/0.4)]",
         quantum: 
-          "bg-gradient-to-br from-cosmic-quantum/10 to-cosmic-plasma/10 border-cosmic-quantum/30 shadow-[0_8px_32px_hsl(var(--cosmic-quantum)/0.2)]"
+          "bg-gradient-to-br from-cosmic-quantum/10 to-cosmic-plasma/10 border-cosmic-quantum/30 shadow-[0_8px_32px_hsl(var(--cosmic-quantum)/0.2)]",
+        warm: 
+          "bg-gradient-to-br from-[rgba(28,25,23,0.7)] to-[rgba(22,20,18,0.5)] border-amber/10 shadow-[0_8px_32px_rgba(245,158,11,0.1)]",
+        dark: 
+          "bg-gradient-to-br from-[rgba(15,15,20,0.85)] to-[rgba(10,12,18,0.95)] border-white/[0.05] shadow-[0_12px_40px_rgba(0,0,0,0.5)]",
+        stat: 
+          "bg-gradient-to-br from-[rgba(20,20,28,0.75)] to-[rgba(16,16,22,0.6)] border-white/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.35)]",
+        sidebar: 
+          "bg-gradient-to-b from-[rgba(12,12,18,0.92)] to-[rgba(8,8,12,0.98)] border-white/[0.04] shadow-[0_0_40px_rgba(0,0,0,0.4)]"
       },
       depth: {
         flat: "",
-        shallow: "cosmic-depth shadow-md",
-        medium: "cosmic-depth shadow-lg transform-gpu",
-        deep: "cosmic-depth shadow-xl transform-gpu perspective-1000"
+        shallow: "shadow-md",
+        medium: "shadow-lg transform-gpu",
+        deep: "shadow-xl transform-gpu"
       },
       glow: {
         none: "",
-        subtle: "hover:shadow-[0_0_16px_hsl(var(--glow-primary)/0.2)]",
-        medium: "hover:shadow-[0_0_24px_hsl(var(--glow-primary)/0.3)]",
-        intense: "hover:shadow-[0_0_32px_hsl(var(--glow-primary)/0.4)]"
+        subtle: "hover:shadow-[0_0_20px_hsl(var(--primary)/0.15)]",
+        medium: "hover:shadow-[0_0_30px_hsl(var(--primary)/0.25)]",
+        intense: "hover:shadow-[0_0_40px_hsl(var(--primary)/0.35)]",
+        teal: "hover:shadow-[0_0_24px_rgba(20,184,166,0.3)]",
+        amber: "hover:shadow-[0_0_24px_rgba(245,158,11,0.3)]"
       },
       interactive: {
         none: "",
-        hover: "hover:scale-[1.02] hover:-translate-y-1",
-        press: "hover:scale-[1.02] hover:-translate-y-1 active:scale-[0.98] active:translate-y-0"
+        hover: "hover:scale-[1.01] hover:-translate-y-0.5",
+        press: "hover:scale-[1.01] hover:-translate-y-0.5 active:scale-[0.99] active:translate-y-0"
       }
     },
     defaultVariants: {

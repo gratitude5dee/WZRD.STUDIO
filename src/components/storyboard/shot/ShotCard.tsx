@@ -151,24 +151,24 @@ export const ShotCard: React.FC<ShotCardProps> = ({
       style={style}
       ref={setNodeRef}
       className={cn(
-        "relative flex flex-col rounded-[16px] backdrop-blur-sm w-[280px] min-h-[320px] group",
-        "bg-gradient-to-br from-zinc-900/90 to-zinc-900/70 transition-all duration-300",
+        "relative flex flex-col rounded-2xl backdrop-blur-xl w-[280px] min-h-[320px] group",
+        "shot-card-glass transition-all duration-300",
         isSelected 
-          ? 'border-2 border-blue-500/60 shadow-[0_0_0_4px_rgba(59,130,246,0.15),0_8px_32px_rgba(59,130,246,0.2),inset_0_1px_0_rgba(255,255,255,0.03)]' 
-          : 'border border-zinc-800/30 hover:border-zinc-700/50',
-        "shadow-[0_4px_20px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.02)]",
-        "hover:translate-y-[-2px]",
+          ? 'border-2 border-primary/50 shadow-[0_0_0_4px_rgba(20,184,166,0.1),0_8px_32px_rgba(20,184,166,0.2),inset_0_1px_0_rgba(255,255,255,0.04)]' 
+          : 'border border-white/[0.08] hover:border-white/[0.15]',
+        "shadow-[0_4px_24px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.03)]",
+        "hover:-translate-y-1 hover:shadow-[0_8px_32px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.05)]",
         isExpanded && "min-h-[480px] w-[360px]"
       )}
     >
-      {/* Connection Points */}
+      {/* Connection Points - Glass style */}
       <div 
         className={cn(
           "absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 z-30",
-          "w-3 h-3 rounded-full transition-all duration-300 cursor-crosshair",
+          "w-3.5 h-3.5 rounded-full transition-all duration-300 cursor-crosshair",
           connectedPoints.left
-            ? "bg-emerald-500/90 border-2 border-emerald-400 shadow-[0_0_16px_rgba(16,185,129,0.8)] animate-pulse opacity-100"
-            : "bg-zinc-800/80 border-2 border-zinc-600/50 opacity-0 group-hover:opacity-100 hover:w-3.5 hover:h-3.5 hover:bg-blue-500/90 hover:border-blue-400 hover:shadow-[0_0_16px_rgba(59,130,246,0.9)]"
+            ? "bg-primary/90 border-2 border-primary/60 shadow-[0_0_16px_rgba(20,184,166,0.7)] animate-pulse opacity-100"
+            : "bg-[rgba(24,24,32,0.8)] border-2 border-white/[0.15] opacity-0 group-hover:opacity-100 hover:w-4 hover:h-4 hover:bg-primary/80 hover:border-primary/50 hover:shadow-[0_0_16px_rgba(20,184,166,0.6)]"
         )}
         onClick={(e) => {
           e.stopPropagation();
@@ -183,10 +183,10 @@ export const ShotCard: React.FC<ShotCardProps> = ({
       <div 
         className={cn(
           "absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 z-30",
-          "w-3 h-3 rounded-full transition-all duration-300 cursor-crosshair",
+          "w-3.5 h-3.5 rounded-full transition-all duration-300 cursor-crosshair",
           connectedPoints.right
-            ? "bg-emerald-500/90 border-2 border-emerald-400 shadow-[0_0_16px_rgba(16,185,129,0.8)] animate-pulse opacity-100"
-            : "bg-zinc-800/80 border-2 border-zinc-600/50 opacity-0 group-hover:opacity-100 hover:w-3.5 hover:h-3.5 hover:bg-blue-500/90 hover:border-blue-400 hover:shadow-[0_0_16px_rgba(59,130,246,0.9)]"
+            ? "bg-primary/90 border-2 border-primary/60 shadow-[0_0_16px_rgba(20,184,166,0.7)] animate-pulse opacity-100"
+            : "bg-[rgba(24,24,32,0.8)] border-2 border-white/[0.15] opacity-0 group-hover:opacity-100 hover:w-4 hover:h-4 hover:bg-primary/80 hover:border-primary/50 hover:shadow-[0_0_16px_rgba(20,184,166,0.6)]"
         )}
         onClick={(e) => {
           e.stopPropagation();
@@ -198,11 +198,17 @@ export const ShotCard: React.FC<ShotCardProps> = ({
         </div>
       </div>
 
-      {/* Drag handle */}
+      {/* Drag handle - Glass style */}
       <div
         {...attributes}
         {...listeners}
-        className="absolute top-2 left-2 z-20 cursor-grab active:cursor-grabbing bg-zinc-900/70 hover:bg-zinc-800/90 backdrop-blur-sm p-1.5 rounded-lg border border-zinc-700/50 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-auto shadow-[0_2px_8px_rgba(0,0,0,0.3)]"
+        className={cn(
+          "absolute top-2 left-2 z-20 cursor-grab active:cursor-grabbing",
+          "bg-[rgba(0,0,0,0.4)] hover:bg-[rgba(0,0,0,0.6)]",
+          "backdrop-blur-md p-1.5 rounded-xl border border-white/[0.1]",
+          "opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-auto",
+          "shadow-[0_2px_12px_rgba(0,0,0,0.4)]"
+        )}
         style={{ touchAction: 'none' }}
       >
         <Move className="h-4 w-4 text-zinc-400 pointer-events-none" />
@@ -229,10 +235,10 @@ export const ShotCard: React.FC<ShotCardProps> = ({
         <Trash2 className="h-5 w-5" />
       </Button>
 
-      {/* Shot number badge */}
+      {/* Shot number badge - Glass pill style */}
       <motion.div 
-        className="absolute top-2 left-1/2 -translate-x-1/2 z-10 bg-amber-800/80 backdrop-blur-sm text-amber-100 text-xs px-2 py-0.5 rounded-full"
-        whileHover={{ scale: 1.1 }}
+        className="absolute top-2 left-1/2 -translate-x-1/2 z-10 bg-amber/20 backdrop-blur-md text-amber border border-amber/25 text-[10px] font-semibold px-2.5 py-1 rounded-full"
+        whileHover={{ scale: 1.05 }}
       >
         Shot {shot.shot_number}
       </motion.div>

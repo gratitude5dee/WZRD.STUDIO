@@ -32,12 +32,12 @@ const TabNavigation = () => {
 
   return (
     <div className={cn(
-      "border-b px-6 py-3",
-      "bg-gradient-to-r from-card/80 via-card/60 to-card/80",
-      "backdrop-blur-sm border-border/30"
+      "border-b px-6 py-4",
+      "bg-gradient-to-r from-[rgba(15,15,20,0.8)] via-[rgba(12,12,18,0.6)] to-[rgba(15,15,20,0.8)]",
+      "backdrop-blur-xl border-white/[0.05]"
     )}>
       <div className="container mx-auto">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           {visibleTabs.map((tab, index) => {
             const isActive = activeTab === tab;
             const isCompleted = index < activeIndex;
@@ -54,28 +54,37 @@ const TabNavigation = () => {
                 <button
                   onClick={() => handleTabChange(tab)}
                   className={cn(
-                    "relative flex items-center gap-3 px-4 py-2.5 rounded-full text-sm font-medium transition-all duration-300",
-                    isActive && "bg-primary/15 text-primary border border-primary/30 shadow-lg shadow-primary/10",
-                    isCompleted && !isActive && "bg-primary/10 text-primary/80 border border-primary/20",
-                    !isActive && !isCompleted && "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                    "relative flex items-center gap-3 px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300",
+                    "backdrop-blur-md border",
+                    isActive && [
+                      "bg-primary/15 text-primary border-primary/30",
+                      "shadow-[0_0_24px_rgba(20,184,166,0.2),inset_0_1px_0_rgba(255,255,255,0.05)]"
+                    ],
+                    isCompleted && !isActive && [
+                      "bg-primary/10 text-primary/80 border-primary/20"
+                    ],
+                    !isActive && !isCompleted && [
+                      "bg-white/[0.03] text-muted-foreground border-white/[0.06]",
+                      "hover:text-foreground hover:bg-white/[0.06] hover:border-white/[0.1]"
+                    ]
                   )}
                 >
                   {/* Step number or checkmark */}
                   <span className={cn(
-                    "flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold transition-all duration-300",
-                    isActive && "bg-primary text-primary-foreground",
-                    isCompleted && !isActive && "bg-primary/80 text-primary-foreground",
-                    !isActive && !isCompleted && "bg-muted text-muted-foreground"
+                    "flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold transition-all duration-300",
+                    isActive && "bg-primary text-primary-foreground shadow-[0_0_12px_rgba(20,184,166,0.4)]",
+                    isCompleted && !isActive && "bg-primary/70 text-primary-foreground",
+                    !isActive && !isCompleted && "bg-white/[0.08] text-muted-foreground"
                   )}>
                     {isCompleted ? <Check className="w-3.5 h-3.5" /> : stepNumber}
                   </span>
                   
                   <span className="hidden sm:inline">{getTabLabel(tab)}</span>
                   
-                  {/* Active indicator */}
+                  {/* Active indicator line */}
                   {isActive && (
                     <motion.div
-                      className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-primary rounded-full"
+                      className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-12 h-0.5 bg-gradient-to-r from-transparent via-primary to-transparent rounded-full"
                       layoutId="activeTabIndicator"
                       transition={{ duration: 0.3, type: "spring", stiffness: 400, damping: 30 }}
                     />
@@ -84,9 +93,11 @@ const TabNavigation = () => {
                 
                 {/* Connector */}
                 {index < visibleTabs.length - 1 && (
-                  <ChevronRight className={cn(
-                    "mx-1 h-4 w-4 transition-colors duration-300",
-                    index < activeIndex ? "text-primary/60" : "text-muted-foreground/40"
+                  <div className={cn(
+                    "mx-2 w-8 h-px transition-colors duration-300",
+                    index < activeIndex 
+                      ? "bg-gradient-to-r from-primary/50 to-primary/30" 
+                      : "bg-white/[0.08]"
                   )} />
                 )}
               </motion.div>

@@ -351,3 +351,65 @@ body::after {
 .hide-scrollbar {
   -ms-overflow-style: none;
 }
+
+/* Glassmorphism Utilities */
+.glass-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.glass-shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.03) 25%,
+    transparent 50%,
+    rgba(255, 255, 255, 0.02) 75%,
+    transparent 100%
+  );
+  pointer-events: none;
+}
+
+.glow-text-gold {
+  text-shadow: 0 0 10px rgba(245, 158, 11, 0.5), 0 0 20px rgba(245, 158, 11, 0.3);
+}
+
+.glow-text-teal {
+  text-shadow: 0 0 10px rgba(20, 184, 166, 0.5), 0 0 20px rgba(20, 184, 166, 0.3);
+}
+
+/* Premium gradient backgrounds */
+.bg-glass-dark {
+  background: linear-gradient(180deg, rgba(12, 12, 18, 0.95) 0%, rgba(6, 6, 10, 0.98) 100%);
+}
+
+.bg-glass-warm {
+  background: linear-gradient(135deg, rgba(28, 25, 23, 0.8) 0%, rgba(20, 18, 16, 0.6) 100%);
+}
+
+/* Scene badge glow */
+.scene-badge-glow {
+  box-shadow: 
+    0 0 24px rgba(245, 158, 11, 0.35),
+    0 0 48px rgba(245, 158, 11, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* Shot card glass effect */
+.shot-card-glass {
+  background: linear-gradient(135deg, rgba(24, 24, 32, 0.75) 0%, rgba(16, 16, 22, 0.55) 100%);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Active/Selected states with glow */
+.glass-active {
+  border-color: rgba(20, 184, 166, 0.5);
+  box-shadow: 
+    0 0 0 1px rgba(20, 184, 166, 0.2),
+    0 4px 24px rgba(20, 184, 166, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
