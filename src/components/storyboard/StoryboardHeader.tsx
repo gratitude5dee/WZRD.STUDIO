@@ -16,24 +16,22 @@ interface StoryboardHeaderProps {
 const StoryboardHeader = ({ viewMode, setViewMode }: StoryboardHeaderProps) => {
   const navigate = useNavigate();
 
-  const headerButtonBase = "text-sm transition-all-fast rounded-md px-3 py-1.5 flex items-center gap-1.5";
-  const ghostBtnClass = cn(headerButtonBase, "text-zinc-300 hover:text-white hover:bg-white/5");
-  const iconBtnClass = cn(headerButtonBase, "text-zinc-400 hover:text-white bg-transparent hover:bg-white/10 border border-white/10 hover:border-white/20 h-8 w-8 p-0 justify-center");
-  const actionBtnClass = cn(headerButtonBase, "bg-white/5 hover:bg-white/10 text-white shadow-sm border border-white/10");
-
   return (
     <header className={cn(
       "w-full sticky top-0 z-50",
-      "bg-gradient-to-b from-zinc-950/98 to-zinc-900/95",
-      "backdrop-blur-xl border-b border-zinc-800/50",
-      "shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.02)]",
+      "bg-gradient-to-b from-[rgba(12,12,18,0.98)] to-[rgba(8,8,14,0.95)]",
+      "backdrop-blur-2xl border-b border-white/[0.05]",
+      "shadow-[0_8px_40px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.03)]",
       "px-6 py-3"
     )}>
-      <div className="flex items-center justify-between mb-2">
+      {/* Top shine line */}
+      <div className="absolute top-0 left-6 right-6 h-px bg-gradient-to-r from-transparent via-white/[0.08] to-transparent" />
+      
+      <div className="flex items-center justify-between mb-3">
         <Logo size="sm" showVersion={false} />
       </div>
       
-      {/* Bottom row with other buttons */}
+      {/* Bottom row with action buttons */}
       <div className="flex items-center justify-between">
         {/* Left section with navigation buttons */}
         <div className="flex items-center space-x-2">
@@ -46,20 +44,20 @@ const StoryboardHeader = ({ viewMode, setViewMode }: StoryboardHeaderProps) => {
           ].map((item) => (
             <motion.div 
               key={item.label}
-              whileHover={{ scale: 1.03, y: -1 }}
-              whileTap={{ scale: 0.97 }}
+              whileHover={{ scale: 1.02, y: -1 }}
+              whileTap={{ scale: 0.98 }}
             >
               <Button 
                 variant="ghost" 
                 size="sm" 
                 className={cn(
-                  "text-sm px-3 py-1.5 rounded-lg",
-                  "bg-zinc-900/30 backdrop-blur-sm",
-                  "border border-zinc-800/30",
-                  "hover:bg-zinc-800/50 hover:border-zinc-700/50",
-                  "shadow-[0_2px_8px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.03)]",
+                  "text-sm px-3 py-2 rounded-xl",
+                  "bg-gradient-to-br from-white/[0.06] to-white/[0.02]",
+                  "backdrop-blur-md border border-white/[0.08]",
+                  "hover:bg-white/[0.1] hover:border-white/[0.12]",
+                  "shadow-[0_2px_12px_rgba(0,0,0,0.25),inset_0_1px_0_rgba(255,255,255,0.04)]",
                   "transition-all duration-200",
-                  "text-zinc-300 hover:text-white"
+                  "text-muted-foreground hover:text-foreground"
                 )}
               >
                 <item.icon className="h-3.5 w-3.5 mr-1.5" />
@@ -72,90 +70,86 @@ const StoryboardHeader = ({ viewMode, setViewMode }: StoryboardHeaderProps) => {
         {/* Right section with action buttons */}
         <div className="flex items-center gap-2">
           <CreditsDisplay showTooltip={true} />
-          <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+          
+          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
             <Button 
               variant="ghost" 
               size="icon"
               className={cn(
-                "w-9 h-9 rounded-lg",
-                "bg-zinc-900/30 backdrop-blur-sm",
-                "border border-zinc-800/30",
-                "hover:bg-zinc-800/50 hover:border-zinc-700/50",
-                "shadow-[0_2px_8px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.03)]",
+                "w-9 h-9 rounded-xl",
+                "bg-gradient-to-br from-white/[0.06] to-white/[0.02]",
+                "backdrop-blur-md border border-white/[0.08]",
+                "hover:bg-white/[0.1] hover:border-white/[0.12]",
+                "shadow-[0_2px_12px_rgba(0,0,0,0.25),inset_0_1px_0_rgba(255,255,255,0.04)]",
                 "transition-all duration-200",
-                "text-zinc-400 hover:text-white"
+                "text-muted-foreground hover:text-foreground"
               )}
             >
               <Undo className="w-4 h-4" />
             </Button>
           </motion.div>
-          <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+          
+          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
             <Button 
               variant="ghost" 
               size="icon"
               className={cn(
-                "w-9 h-9 rounded-lg",
-                "bg-zinc-900/30 backdrop-blur-sm",
-                "border border-zinc-800/30",
-                "hover:bg-zinc-800/50 hover:border-zinc-700/50",
-                "shadow-[0_2px_8px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.03)]",
+                "w-9 h-9 rounded-xl",
+                "bg-gradient-to-br from-white/[0.06] to-white/[0.02]",
+                "backdrop-blur-md border border-white/[0.08]",
+                "hover:bg-white/[0.1] hover:border-white/[0.12]",
+                "shadow-[0_2px_12px_rgba(0,0,0,0.25),inset_0_1px_0_rgba(255,255,255,0.04)]",
                 "transition-all duration-200",
-                "text-zinc-400 hover:text-white"
+                "text-muted-foreground hover:text-foreground"
               )}
             >
               <Redo className="w-4 h-4" />
             </Button>
           </motion.div>
           
-          {/* Preview Button - Premium Primary */}
+          {/* Preview Button - Premium Glass with Glow */}
           <motion.div 
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
           >
             <Button 
               variant="default" 
               className={cn(
-                "relative overflow-hidden",
-                "bg-gradient-to-br from-blue-600 to-purple-600",
-                "border border-blue-500/30",
-                "shadow-[0_0_24px_rgba(139,92,246,0.4),0_4px_20px_rgba(59,130,246,0.3),inset_0_1px_0_rgba(255,255,255,0.15)]",
-                "hover:shadow-[0_0_32px_rgba(139,92,246,0.5),0_6px_28px_rgba(59,130,246,0.4),inset_0_1px_0_rgba(255,255,255,0.2)]",
+                "relative overflow-hidden rounded-xl",
+                "bg-gradient-to-br from-primary/90 to-primary/70",
+                "border border-primary/40",
+                "shadow-[0_0_30px_rgba(20,184,166,0.35),0_4px_20px_rgba(20,184,166,0.25),inset_0_1px_0_rgba(255,255,255,0.15)]",
+                "hover:shadow-[0_0_40px_rgba(20,184,166,0.5),0_6px_28px_rgba(20,184,166,0.35),inset_0_1px_0_rgba(255,255,255,0.2)]",
                 "transition-all duration-300"
               )}
             >
-              {/* Gradient overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-transparent via-white/5 to-white/10" />
+              {/* Glass overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-transparent via-white/[0.05] to-white/[0.12]" />
               
               <Play className="w-4 h-4 fill-current mr-2 relative z-10" />
-              <span className="relative z-10 font-medium">Preview</span>
+              <span className="relative z-10 font-semibold">Preview</span>
               
-              {/* Animated shine effect */}
+              {/* Animated shine */}
               <motion.div
                 className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
-                animate={{
-                  x: ['-200%', '200%']
-                }}
-                transition={{
-                  duration: 2,
-                  repeat: Infinity,
-                  repeatDelay: 3
-                }}
+                animate={{ x: ['-200%', '200%'] }}
+                transition={{ duration: 2.5, repeat: Infinity, repeatDelay: 4 }}
               />
             </Button>
           </motion.div>
           
           {/* Share Button */}
-          <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
             <Button 
               variant="ghost" 
               className={cn(
-                "px-3 py-2 rounded-lg",
-                "bg-zinc-900/30 backdrop-blur-sm",
-                "border border-zinc-800/30",
-                "hover:bg-zinc-800/50 hover:border-zinc-700/50",
-                "shadow-[0_2px_8px_rgba(0,0,0,0.2),inset_0_1px_0_rgba(255,255,255,0.03)]",
+                "px-4 py-2 rounded-xl",
+                "bg-gradient-to-br from-white/[0.06] to-white/[0.02]",
+                "backdrop-blur-md border border-white/[0.08]",
+                "hover:bg-white/[0.1] hover:border-white/[0.12]",
+                "shadow-[0_2px_12px_rgba(0,0,0,0.25),inset_0_1px_0_rgba(255,255,255,0.04)]",
                 "transition-all duration-200",
-                "text-zinc-300 hover:text-white"
+                "text-muted-foreground hover:text-foreground"
               )}
             >
               <Share className="w-4 h-4 mr-1.5" />

@@ -40,14 +40,16 @@ export const Sidebar = ({ activeView, onViewChange }: SidebarProps) => {
   return (
     <aside className={cn(
       "w-64 h-screen flex flex-col fixed left-0 top-0 z-50",
-      "bg-gradient-to-b from-card/95 to-background/95",
-      "backdrop-blur-xl border-r border-border/30"
+      "glass-sidebar border-r border-white/[0.04]"
     )}>
-      {/* Gradient overlay for depth */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 pointer-events-none" />
+      {/* Subtle gradient overlay for depth */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.03] via-transparent to-accent/[0.02] pointer-events-none" />
+      
+      {/* Top highlight line */}
+      <div className="absolute top-0 left-4 right-4 h-px bg-gradient-to-r from-transparent via-white/[0.08] to-transparent" />
       
       {/* Workspace Switcher */}
-      <div className="relative z-10 p-4 border-b border-border/30">
+      <div className="relative z-10 p-4 border-b border-white/[0.05]">
         <WorkspaceSwitcher />
       </div>
 
@@ -57,7 +59,7 @@ export const Sidebar = ({ activeView, onViewChange }: SidebarProps) => {
         <div>
           <div className="flex items-center gap-2 px-3 mb-3">
             <Sparkles className="w-3.5 h-3.5 text-primary" />
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Main Menu</span>
+            <span className="text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-[0.15em]">Main Menu</span>
           </div>
           <div className="space-y-1">
             {mainNavItems.map((item) => {
@@ -77,14 +79,21 @@ export const Sidebar = ({ activeView, onViewChange }: SidebarProps) => {
                   className={cn(
                     "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200",
                     isActive
-                      ? "bg-primary/15 text-primary border border-primary/30 shadow-lg shadow-primary/10"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                      ? "bg-primary/15 text-primary border border-primary/25 shadow-[0_0_20px_rgba(20,184,166,0.15),inset_0_1px_0_rgba(255,255,255,0.05)]"
+                      : "text-muted-foreground hover:text-foreground hover:bg-white/[0.04]"
                   )}
                 >
-                  <Icon className={cn("w-4 h-4", isActive && "text-primary")} />
+                  <div className={cn(
+                    "w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200",
+                    isActive 
+                      ? "bg-primary/20 shadow-[0_0_12px_rgba(20,184,166,0.3)]" 
+                      : "bg-white/[0.04]"
+                  )}>
+                    <Icon className={cn("w-4 h-4", isActive && "text-primary")} />
+                  </div>
                   <span className="flex-1 text-left">{item.label}</span>
                   {item.showBadge && (
-                    <Badge variant="secondary" className="text-[10px] bg-primary/20 text-primary border-primary/30 px-1.5">
+                    <Badge variant="secondary" className="text-[9px] bg-primary/20 text-primary border-primary/25 px-1.5 py-0.5 font-semibold">
                       New
                     </Badge>
                   )}
@@ -97,8 +106,8 @@ export const Sidebar = ({ activeView, onViewChange }: SidebarProps) => {
         {/* Secondary Navigation */}
         <div>
           <div className="flex items-center gap-2 px-3 mb-3">
-            <Users className="w-3.5 h-3.5 text-muted-foreground/70" />
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Collaborate</span>
+            <Users className="w-3.5 h-3.5 text-muted-foreground/50" />
+            <span className="text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-[0.15em]">Collaborate</span>
           </div>
           <div className="space-y-1">
             {secondaryNavItems.map((item) => {
@@ -112,11 +121,16 @@ export const Sidebar = ({ activeView, onViewChange }: SidebarProps) => {
                   className={cn(
                     "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200",
                     isActive
-                      ? "bg-primary/15 text-primary border border-primary/30"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                      ? "bg-primary/15 text-primary border border-primary/25"
+                      : "text-muted-foreground hover:text-foreground hover:bg-white/[0.04]"
                   )}
                 >
-                  <Icon className="w-4 h-4" />
+                  <div className={cn(
+                    "w-8 h-8 rounded-lg flex items-center justify-center",
+                    isActive ? "bg-primary/20" : "bg-white/[0.04]"
+                  )}>
+                    <Icon className="w-4 h-4" />
+                  </div>
                   <span>{item.label}</span>
                 </button>
               );
@@ -130,7 +144,9 @@ export const Sidebar = ({ activeView, onViewChange }: SidebarProps) => {
             onClick={() => setFavoritesOpen(!favoritesOpen)}
             className="w-full flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
-            <Star className="w-4 h-4 text-amber" />
+            <div className="w-8 h-8 rounded-lg bg-amber/10 flex items-center justify-center">
+              <Star className="w-4 h-4 text-amber" />
+            </div>
             <span className="flex-1 text-left font-medium">Favorites</span>
             <ChevronDown
               className={cn(
@@ -141,17 +157,17 @@ export const Sidebar = ({ activeView, onViewChange }: SidebarProps) => {
           </button>
           
           {favoritesOpen && (
-            <div className="mt-2 ml-6 pl-3 border-l border-border/30 space-y-1">
-              <p className="text-xs text-muted-foreground/60 py-2 italic">No favorites yet</p>
+            <div className="mt-2 ml-6 pl-3 border-l border-white/[0.06] space-y-1">
+              <p className="text-xs text-muted-foreground/50 py-2 italic">No favorites yet</p>
             </div>
           )}
         </div>
       </nav>
 
       {/* Bottom Section */}
-      <div className="relative z-10 p-4 border-t border-border/30 space-y-4">
+      <div className="relative z-10 p-4 border-t border-white/[0.05] space-y-4">
         {/* Credits Display */}
-        <div className="p-3 rounded-xl bg-gradient-to-br from-primary/10 to-accent/5 border border-primary/20">
+        <div className="p-3 rounded-xl bg-gradient-to-br from-primary/[0.08] to-accent/[0.04] border border-primary/15 backdrop-blur-sm">
           <CreditsDisplay showTooltip={false} />
         </div>
         
@@ -159,14 +175,16 @@ export const Sidebar = ({ activeView, onViewChange }: SidebarProps) => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1">
             <button className={cn(
-              "flex items-center justify-center w-9 h-9 rounded-lg transition-all duration-200",
-              "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+              "flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-200",
+              "text-muted-foreground hover:text-foreground hover:bg-white/[0.06]",
+              "border border-transparent hover:border-white/[0.08]"
             )}>
               <Settings className="w-4 h-4" />
             </button>
             <button className={cn(
-              "flex items-center justify-center w-9 h-9 rounded-lg transition-all duration-200",
-              "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+              "flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-200",
+              "text-muted-foreground hover:text-foreground hover:bg-white/[0.06]",
+              "border border-transparent hover:border-white/[0.08]"
             )}>
               <HelpCircle className="w-4 h-4" />
             </button>
@@ -174,8 +192,9 @@ export const Sidebar = ({ activeView, onViewChange }: SidebarProps) => {
           <button 
             onClick={handleLogout}
             className={cn(
-              "flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all duration-200",
-              "text-muted-foreground hover:text-rose-400 hover:bg-rose-500/10"
+              "flex items-center gap-2 px-3 py-2 rounded-xl text-sm transition-all duration-200",
+              "text-muted-foreground hover:text-rose-400 hover:bg-rose-500/10 hover:border-rose-500/20",
+              "border border-transparent"
             )}
             title="Log out"
           >
