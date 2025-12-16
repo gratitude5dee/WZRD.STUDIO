@@ -258,22 +258,12 @@ async function processSingleScene(
 
       console.log(`[Scene ${scene.scene_number}] Inserted ${insertedShots.length} shots. Processing in parallel batches...`);
 
-      // Process shots in parallel batches of 3 for faster generation
-      const SHOT_BATCH_SIZE = 3;
-      for (let i = 0; i < insertedShots.length; i += SHOT_BATCH_SIZE) {
-        const batch = insertedShots.slice(i, i + SHOT_BATCH_SIZE);
-        console.log(`[Scene ${scene.scene_number}] Processing batch ${Math.floor(i / SHOT_BATCH_SIZE) + 1}: shots ${i + 1}-${Math.min(i + SHOT_BATCH_SIZE, insertedShots.length)}`);
-        
-        // Process batch in parallel
-        await Promise.all(
-          batch.map(shot => processSingleShot(shot, scene, projectData, supabaseClient))
-        );
-        
-        // Small delay between batches to avoid overwhelming APIs
-        if (i + SHOT_BATCH_SIZE < insertedShots.length) {
-          await delay(300);
-        }
-      }
+      // Process ALL shots in parallel for maximum speed (no batching within scene)
+      console.log(`[Scene ${scene.scene_number}] Processing all ${insertedShots.length} shots in parallel...`);
+      
+      await Promise.all(
+        insertedShots.map(shot => processSingleShot(shot, scene, projectData, supabaseClient))
+      );
       
       console.log(`[Scene ${scene.scene_number}] Finished processing all shots.`);
       
@@ -319,49 +309,35 @@ async function processProjectSetup(
       return;
     }
 
-    console.log(`[Background Processing ${project_id}] Processing ${scenesData.length} scenes...`);
-    console.log(`[Background Processing ${project_id}] Prioritizing Scene 1 for immediate loading...`);
+    console.log(`[Background Processing ${project_id}] Processing ${scenesData.length} scenes in PARALLEL...`);
 
+    // Process ALL scenes in parallel batches of 4 (no Scene 1 priority blocking)
+    const SCENE_BATCH_SIZE = 4;
     let totalShotsCreated = 0;
     
-    // Process Scene 1 first for immediate user feedback
-    const [firstScene, ...remainingScenes] = scenesData;
-    
-    if (firstScene) {
-      console.log(`[Scene ${firstScene.scene_number}] Starting priority scene processing...`);
-      const shotsCreated = await processSingleScene(
-        firstScene,
-        projectData,
-        project_id,
-        supabaseClient
-      );
-      totalShotsCreated += shotsCreated;
-      console.log(`[Scene ${firstScene.scene_number}] Created ${shotsCreated} shots.`);
-    }
-    
-    // Process remaining scenes in parallel batches of 2
-    if (remainingScenes.length > 0) {
-      console.log(`[Background Processing ${project_id}] Processing ${remainingScenes.length} remaining scenes in parallel...`);
+    for (let i = 0; i < scenesData.length; i += SCENE_BATCH_SIZE) {
+      const batch = scenesData.slice(i, i + SCENE_BATCH_SIZE);
+      console.log(`[Background Processing ${project_id}] Processing scene batch ${Math.floor(i / SCENE_BATCH_SIZE) + 1}: scenes ${batch.map(s => s.scene_number).join(', ')}`);
       
-      const SCENE_BATCH_SIZE = 2;
-      for (let i = 0; i < remainingScenes.length; i += SCENE_BATCH_SIZE) {
-        const batch = remainingScenes.slice(i, i + SCENE_BATCH_SIZE);
-        console.log(`[Background Processing ${project_id}] Processing scene batch: ${batch.map(s => s.scene_number).join(', ')}`);
-        
-        const results = await Promise.all(
-          batch.map(scene => processSingleScene(
-            scene,
-            projectData,
-            project_id,
-            supabaseClient
-          ))
-        );
-        
-        totalShotsCreated += results.reduce((sum, count) => sum + count, 0);
+      // Process all scenes in this batch simultaneously
+      const results = await Promise.all(
+        batch.map(scene => processSingleScene(
+          scene,
+          projectData,
+          project_id,
+          supabaseClient
+        ))
+      );
+      
+      totalShotsCreated += results.reduce((sum, count) => sum + count, 0);
+      
+      // Small delay between scene batches to avoid API overwhelm
+      if (i + SCENE_BATCH_SIZE < scenesData.length) {
+        await delay(200);
       }
     }
 
-    console.log(`[Background Processing ${project_id}] Complete. Created ${totalShotsCreated} shots.`);
+    console.log(`[Background Processing ${project_id}] Complete. Created ${totalShotsCreated} shots across all scenes.`);
     
   } catch (error: any) {
     console.error(`[Background Processing ${project_id}] Error:`, error.message);
