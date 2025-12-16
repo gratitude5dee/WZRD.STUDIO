@@ -10,6 +10,7 @@ import { SortDropdown, SortOption } from '@/components/home/SortDropdown';
 import { ProjectViewModeSelector } from '@/components/home/ProjectViewModeSelector';
 import { StatCard } from '@/components/home/StatCard';
 import { DemoBanner } from '@/components/demo/DemoBanner';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { useAuth } from '@/providers/AuthProvider';
 import { supabaseService } from '@/services/supabaseService';
 import { useToast } from '@/hooks/use-toast';
@@ -141,6 +142,7 @@ export default function Home() {
               <p className="text-sm text-muted-foreground">Welcome back! Here's your creative overview</p>
             </div>
             <div className="flex items-center gap-3">
+              <ThemeToggle />
               <img 
                 src={wzrdLogo} 
                 alt="WZRD.STUDIO Logo" 
