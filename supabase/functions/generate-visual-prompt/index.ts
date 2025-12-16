@@ -45,13 +45,13 @@ serve(async (req) => {
         scene_id,
         shot_type,
         prompt_idea,
-        scenes!inner(
+        scenes(
           description,
           location,
           lighting,
           weather
         ),
-        projects!inner(
+        projects(
           genre,
           tone,
           video_style,
@@ -59,15 +59,27 @@ serve(async (req) => {
         )
       `)
       .eq("id", shotId)
-      .single();
+      .maybeSingle();
 
-    if (shotError || !shot) {
-      console.error(`[generate-visual-prompt][Shot ${shotId}] Error fetching shot: ${shotError?.message}`);
+    if (shotError) {
+      console.error(`[generate-visual-prompt][Shot ${shotId}] Error fetching shot: ${shotError.message}`);
       return new Response(
-        JSON.stringify({ success: false, error: shotError?.message || "Shot not found" }),
+        JSON.stringify({ success: false, error: shotError.message }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (!shot) {
+      console.error(`[generate-visual-prompt][Shot ${shotId}] Shot not found`);
+      return new Response(
+        JSON.stringify({ success: false, error: "Shot not found" }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    // Handle missing scene or project data
+    const sceneData = shot.scenes || { description: '', location: '', lighting: '', weather: '' };
+    const projectData = shot.projects || { genre: '', tone: '', video_style: '', cinematic_inspiration: '' };
 
     console.log(`[generate-visual-prompt][Shot ${shotId}] Data fetched successfully.`);
 
@@ -77,16 +89,16 @@ serve(async (req) => {
       shot.prompt_idea,
       shot.shot_type,
       {
-        description: shot.scenes.description,
-        location: shot.scenes.location,
-        lighting: shot.scenes.lighting,
-        weather: shot.scenes.weather
+        description: sceneData.description,
+        location: sceneData.location,
+        lighting: sceneData.lighting,
+        weather: sceneData.weather
       },
       {
-        genre: shot.projects.genre,
-        tone: shot.projects.tone,
-        video_style: shot.projects.video_style,
-        cinematic_inspiration: shot.projects.cinematic_inspiration
+        genre: projectData.genre,
+        tone: projectData.tone,
+        video_style: projectData.video_style,
+        cinematic_inspiration: projectData.cinematic_inspiration
       }
     );
 
