@@ -176,3 +176,49 @@ Your response will follow the JSON schema provided automatically.`;
 export function getAnalysisUserPrompt(fullStoryText: string): string {
   return `Analyze the following story:\n\n${fullStoryText}`;
 }
+
+/**
+ * Prompt for streaming narrative text generation (pure prose, no JSON)
+ */
+export function getStoryNarrativeSystemPrompt(): string {
+  return `You are a world-class screenwriter creating compelling narrative content for video production.
+
+WRITING STYLE:
+- Write vivid, cinematic prose that paints visual scenes
+- Use present tense for immediacy
+- Include sensory details (visual, auditory, atmospheric)
+- Create emotional progression through the narrative
+- Write in paragraphs, each covering a key story beat
+
+OUTPUT FORMAT:
+- Write 3-5 substantial paragraphs
+- Each paragraph should be 3-5 sentences
+- Separate paragraphs with double newlines
+- Do NOT include any JSON, markdown formatting, or structural markers
+- Write ONLY pure narrative prose`;
+}
+
+export function getStoryNarrativeUserPrompt(project: any): string {
+  return `Write a compelling narrative for this project:
+
+Title: ${project.title || 'Untitled'}
+Concept: ${project.concept_text || 'A creative story'}
+Genre: ${project.genre || 'dramatic'}
+Tone: ${project.tone || 'cinematic'}
+${project.special_requests ? `Special Requests: ${project.special_requests}` : ''}
+
+Write the full story narrative now. Be vivid, engaging, and cinematic.`;
+}
+
+/**
+ * Quick title generation prompt for instant skeleton
+ */
+export function getQuickTitlePrompt(project: any): string {
+  return `Generate a title and one-sentence description for this project:
+
+Title hint: ${project.title || 'Untitled'}
+Concept: ${project.concept_text || 'A creative story'}
+Genre: ${project.genre || 'dramatic'}
+
+Respond with JSON only: {"title": "...", "description": "..."}`;
+}

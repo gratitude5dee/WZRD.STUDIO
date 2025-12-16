@@ -14,7 +14,10 @@ import {
   getStorylineSystemPrompt, 
   getStorylineUserPrompt, 
   getAnalysisSystemPrompt, 
-  getAnalysisUserPrompt 
+  getAnalysisUserPrompt,
+  getStoryNarrativeSystemPrompt,
+  getStoryNarrativeUserPrompt,
+  getQuickTitlePrompt
 } from './prompts.ts';
 import { 
   saveStorylineData, 
@@ -22,6 +25,73 @@ import {
   triggerCharacterImageGeneration,
   triggerShotVisualPromptGeneration 
 } from './database.ts';
+
+/**
+ * Process SSE stream from Groq and update database with streamed content
+ */
+async function processGroqStream(
+  response: Response, 
+  supabaseClient: any, 
+  storylineId: string,
+  updateInterval: number = 150
+): Promise<string> {
+  const reader = response.body?.getReader();
+  if (!reader) throw new Error('No response body');
+  
+  const decoder = new TextDecoder();
+  let fullText = '';
+  let buffer = '';
+  let lastUpdateLength = 0;
+  
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    
+    buffer += decoder.decode(value, { stream: true });
+    
+    // Process complete SSE lines
+    let newlineIndex: number;
+    while ((newlineIndex = buffer.indexOf('\n')) !== -1) {
+      let line = buffer.slice(0, newlineIndex);
+      buffer = buffer.slice(newlineIndex + 1);
+      
+      if (line.endsWith('\r')) line = line.slice(0, -1);
+      if (!line.startsWith('data: ')) continue;
+      
+      const jsonStr = line.slice(6).trim();
+      if (jsonStr === '[DONE]') continue;
+      
+      try {
+        const parsed = JSON.parse(jsonStr);
+        const content = parsed.choices?.[0]?.delta?.content;
+        if (content) {
+          fullText += content;
+          
+          // Update DB every ~150 characters for smooth streaming
+          if (fullText.length - lastUpdateLength >= updateInterval) {
+            await supabaseClient
+              .from('storylines')
+              .update({ full_story: fullText })
+              .eq('id', storylineId);
+            lastUpdateLength = fullText.length;
+          }
+        }
+      } catch {
+        // Incomplete JSON, will be handled in next iteration
+      }
+    }
+  }
+  
+  // Final update with complete text
+  if (fullText.length > lastUpdateLength) {
+    await supabaseClient
+      .from('storylines')
+      .update({ full_story: fullText })
+      .eq('id', storylineId);
+  }
+  
+  return fullText;
+}
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -80,15 +150,97 @@ serve(async (req) => {
       let storyline_id: string | null = null;
       
       try {
-        // Step 1: Generate storyline with Groq
-        console.log('Generating storyline with Groq AI (structured JSON output)...');
+        // ========== PHASE 1: INSTANT SKELETON ==========
+        // Generate quick title/description for immediate user feedback
+        console.log('Phase 1: Generating quick title for instant skeleton...');
+        
+        const quickTitleResponse = await fetch(
+          `${Deno.env.get('SUPABASE_URL')}/functions/v1/gemini-storyline-generation`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              systemPrompt: 'You are a creative writer. Return valid JSON only.',
+              prompt: getQuickTitlePrompt(project),
+              model: 'llama-3.1-8b-instant', // Fast model for quick response
+              temperature: 0.7
+            }),
+          }
+        );
+
+        let quickTitle = project.title || 'Untitled Story';
+        let quickDescription = project.concept_text || 'A creative narrative';
+        
+        if (quickTitleResponse.ok) {
+          try {
+            const quickData = await quickTitleResponse.json();
+            if (quickData.parsed?.title) quickTitle = quickData.parsed.title;
+            if (quickData.parsed?.description) quickDescription = quickData.parsed.description;
+          } catch (e) {
+            console.warn('Could not parse quick title, using defaults');
+          }
+        }
+
+        // Create storyline skeleton IMMEDIATELY (user sees this in <1 second)
+        const { data: storylineRecord, error: storylineError } = await supabaseClient
+          .from('storylines')
+          .insert({
+            project_id,
+            title: quickTitle,
+            description: quickDescription,
+            full_story: '', // Will be streamed
+            status: 'generating',
+            is_selected: !generate_alternative
+          })
+          .select()
+          .single();
+        
+        if (storylineError) throw storylineError;
+        storyline_id = storylineRecord.id;
+        console.log(`Created instant skeleton with ID: ${storyline_id}`);
+
+        // ========== PHASE 2: TRUE STREAMING ==========
+        // Stream the full story narrative token-by-token
+        console.log('Phase 2: Starting true Groq streaming for story narrative...');
+        
+        const streamResponse = await fetch(
+          `${Deno.env.get('SUPABASE_URL')}/functions/v1/groq-stream`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              systemPrompt: getStoryNarrativeSystemPrompt(),
+              prompt: getStoryNarrativeUserPrompt(project),
+              model: generate_alternative ? 'llama-3.1-8b-instant' : 'llama-3.3-70b-versatile',
+              temperature: generate_alternative ? 0.9 : 0.7,
+              maxTokens: 2048
+            }),
+          }
+        );
+
+        if (!streamResponse.ok) {
+          const errorText = await streamResponse.text();
+          console.error('Stream error:', errorText);
+          if (streamResponse.status === 429) {
+            throw new Error('429: Rate limited. Please wait a moment and try again.');
+          }
+          throw new Error(`Streaming failed: ${streamResponse.statusText}`);
+        }
+
+        // Process the stream and update DB in real-time
+        const fullStoryText = await processGroqStream(streamResponse, supabaseClient, storyline_id);
+        console.log(`Completed streaming story: ${fullStoryText.length} characters`);
+
+        // ========== PHASE 3: STRUCTURED DATA ==========
+        // Generate scenes with JSON mode (existing logic)
+        console.log('Phase 3: Generating structured scene data...');
         const storylineSystemPrompt = getStorylineSystemPrompt(generate_alternative);
         const storylineUserPrompt = getStorylineUserPrompt(project, generate_alternative, existingStorylines);
         
         const { STORYLINE_RESPONSE_SCHEMA, ALTERNATIVE_STORYLINE_SCHEMA } = await import('./gemini-schemas.ts');
         const responseSchema = generate_alternative ? ALTERNATIVE_STORYLINE_SCHEMA : STORYLINE_RESPONSE_SCHEMA;
         
-        const geminiResponse = await fetch(
+        const structuredResponse = await fetch(
           `${Deno.env.get('SUPABASE_URL')}/functions/v1/gemini-storyline-generation`,
           {
             method: 'POST',
@@ -103,70 +255,43 @@ serve(async (req) => {
           }
         );
 
-        if (!geminiResponse.ok) {
-          const errorData = await geminiResponse.json().catch(() => ({ error: 'Unknown error' }));
-          // Propagate specific error codes for client handling
-          if (geminiResponse.status === 402) {
+        if (!structuredResponse.ok) {
+          const errorData = await structuredResponse.json().catch(() => ({ error: 'Unknown error' }));
+          if (structuredResponse.status === 402) {
             throw new Error('402: AI credits exhausted. Please add funds to continue generating.');
           }
-          if (geminiResponse.status === 429) {
+          if (structuredResponse.status === 429) {
             throw new Error('429: Rate limited. Please wait a moment and try again.');
           }
-          throw new Error(`Groq generation failed: ${errorData.error || geminiResponse.statusText}`);
+          throw new Error(`Groq generation failed: ${errorData.error || structuredResponse.statusText}`);
         }
 
-        const geminiData = await geminiResponse.json();
-        const storylineData = geminiData.parsed as StorylineResponseData;
+        const structuredData = await structuredResponse.json();
+        const storylineData = structuredData.parsed as StorylineResponseData;
 
         if (!storylineData || !storylineData.primary_storyline) {
-          throw new Error('Failed to parse valid storyline from Groq');
+          console.warn('No structured data, continuing with streamed story only');
+        } else {
+          // Update storyline with better title/description if available
+          if (storylineData.primary_storyline.title || storylineData.primary_storyline.description) {
+            await supabaseClient
+              .from('storylines')
+              .update({ 
+                title: storylineData.primary_storyline.title || quickTitle,
+                description: storylineData.primary_storyline.description || quickDescription
+              })
+              .eq('id', storyline_id);
+          }
         }
-
-        console.log('Successfully generated storyline with Groq');
-        const fullStoryText = storylineData.primary_storyline.full_story;
-
-        // Step 2: Create storyline skeleton
-        const { data: storylineRecord, error: storylineError } = await supabaseClient
-          .from('storylines')
-          .insert({
-            project_id,
-            title: storylineData.primary_storyline.title,
-            description: storylineData.primary_storyline.description,
-            full_story: '', // Will be populated progressively
-            status: 'generating',
-            is_selected: !generate_alternative
-          })
-          .select()
-          .single();
-        
-        if (storylineError) throw storylineError;
-        storyline_id = storylineRecord.id;
-        console.log(`Created storyline skeleton with ID: ${storyline_id}`);
-
-        // Step 3: Stream full story (paragraph by paragraph)
-        const paragraphs = fullStoryText.split('\n\n').filter(p => p.trim());
-        let accumulatedStory = '';
-        
-        for (const paragraph of paragraphs) {
-          accumulatedStory += paragraph + '\n\n';
-          await supabaseClient
-            .from('storylines')
-            .update({ full_story: accumulatedStory.trim() })
-            .eq('id', storyline_id);
-          
-          await new Promise(resolve => setTimeout(resolve, 100)); // Smooth streaming
-        }
-
-        console.log('Completed streaming full story');
 
         // Step 4: Stream scenes (one by one)
-        const sceneBreakdown = storylineData.scene_breakdown || [];
+        const sceneBreakdown = storylineData?.scene_breakdown || [];
         for (const scene of sceneBreakdown) {
           await supabaseClient
             .from('scenes')
             .insert({
               project_id,
-              storyline_id,
+              storyline_id: storyline_id,
               scene_number: scene.scene_number,
               title: scene.title,
               description: scene.description,
@@ -175,7 +300,7 @@ serve(async (req) => {
               weather: scene.weather
             });
           
-          await new Promise(resolve => setTimeout(resolve, 150)); // Smooth scene appearance
+          await new Promise(resolve => setTimeout(resolve, 100)); // Smooth scene appearance
         }
 
         console.log(`Completed streaming ${sceneBreakdown.length} scenes`);
