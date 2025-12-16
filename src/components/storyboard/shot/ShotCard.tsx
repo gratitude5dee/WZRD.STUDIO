@@ -40,6 +40,7 @@ export const ShotCard: React.FC<ShotCardProps> = ({
     localVisualPrompt,
     localImageUrl,
     localImageStatus,
+    localImageProgress,
     localAudioUrl,
     localAudioStatus,
     isDeleting,
@@ -240,6 +241,7 @@ export const ShotCard: React.FC<ShotCardProps> = ({
           videoUrl={shot.video_url}
           videoStatus={shot.video_status || 'pending'}
           status={localImageStatus}
+          imageProgress={localImageProgress}
           isGenerating={isGeneratingPrompt || isGeneratingImage}
           hasVisualPrompt={!!localVisualPrompt}
           onGenerateImage={handleGenerateImage}
