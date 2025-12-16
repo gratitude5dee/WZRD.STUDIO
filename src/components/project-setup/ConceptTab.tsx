@@ -128,15 +128,22 @@ const ConceptTab = ({ projectData, updateProjectData }: ConceptTabProps) => {
   };
 
   return (
-    <div className="flex flex-col min-h-full bg-[#111319]">
+    <div className="flex flex-col min-h-full bg-background">
       <div className="p-6">
-        <h1 className="text-2xl font-bold mb-6 text-white">Input your concept</h1>
+        <div className="flex items-center gap-2 mb-6">
+          <h1 className="text-2xl font-bold text-foreground">Input your concept</h1>
+          <span className="text-xl">💡</span>
+        </div>
         
         <div className="flex mb-6">
           <div className="flex-1 grid grid-cols-1 gap-4 md:grid-cols-2">
-            {/* Option cards with enhanced animations */}
+            {/* Option cards with teal accents */}
             <motion.div 
-              className={`p-6 rounded-lg ${projectData.conceptOption === 'ai' ? 'bg-[#001036] border border-blue-600' : 'bg-[#1E222B]'} cursor-pointer flex items-start gap-3 relative overflow-hidden transition-all duration-300`}
+              className={`p-6 rounded-xl cursor-pointer flex items-start gap-3 relative overflow-hidden transition-all duration-300 backdrop-blur-sm border ${
+                projectData.conceptOption === 'ai' 
+                  ? 'bg-primary/10 border-primary/40 shadow-lg shadow-primary/10' 
+                  : 'bg-card/60 border-border/40 hover:border-border/60'
+              }`}
               onClick={() => handleConceptOptionChange('ai')}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
@@ -144,26 +151,34 @@ const ConceptTab = ({ projectData, updateProjectData }: ConceptTabProps) => {
             >
               {projectData.conceptOption === 'ai' && (
                 <motion.div 
-                  className="absolute inset-0 bg-blue-500/5"
+                  className="absolute inset-0 bg-primary/5"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.3 }}
                 />
               )}
-              <div className={`p-2 ${projectData.conceptOption === 'ai' ? 'text-blue-400' : 'text-zinc-400'} transition-colors duration-300`}>
+              <div className={`p-2 rounded-lg transition-colors duration-300 ${
+                projectData.conceptOption === 'ai' ? 'text-primary bg-primary/20' : 'text-muted-foreground bg-muted/50'
+              }`}>
                 <RefreshCw className="h-5 w-5" />
               </div>
               <div>
-                <h3 className={`text-lg font-medium ${projectData.conceptOption === 'ai' ? 'text-blue-400' : 'text-white'} transition-colors duration-300`}>
+                <h3 className={`text-lg font-medium transition-colors duration-300 ${
+                  projectData.conceptOption === 'ai' ? 'text-primary' : 'text-foreground'
+                }`}>
                   Develop concept with AI
                 </h3>
-                <p className="text-sm text-zinc-400">AI involvement in script editing and writing</p>
+                <p className="text-sm text-muted-foreground">AI involvement in script editing and writing</p>
               </div>
             </motion.div>
             
             <motion.div 
-              className={`p-6 rounded-lg ${projectData.conceptOption === 'manual' ? 'bg-[#001036] border border-blue-600' : 'bg-[#1E222B]'} cursor-pointer flex items-start gap-3 relative overflow-hidden transition-all duration-300`}
+              className={`p-6 rounded-xl cursor-pointer flex items-start gap-3 relative overflow-hidden transition-all duration-300 backdrop-blur-sm border ${
+                projectData.conceptOption === 'manual' 
+                  ? 'bg-primary/10 border-primary/40 shadow-lg shadow-primary/10' 
+                  : 'bg-card/60 border-border/40 hover:border-border/60'
+              }`}
               onClick={() => handleConceptOptionChange('manual')}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
@@ -171,21 +186,25 @@ const ConceptTab = ({ projectData, updateProjectData }: ConceptTabProps) => {
             >
               {projectData.conceptOption === 'manual' && (
                 <motion.div 
-                  className="absolute inset-0 bg-blue-500/5"
+                  className="absolute inset-0 bg-primary/5"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.3 }}
                 />
               )}
-              <div className={`p-2 ${projectData.conceptOption === 'manual' ? 'text-blue-400' : 'text-zinc-400'} transition-colors duration-300`}>
+              <div className={`p-2 rounded-lg transition-colors duration-300 ${
+                projectData.conceptOption === 'manual' ? 'text-primary bg-primary/20' : 'text-muted-foreground bg-muted/50'
+              }`}>
                 <FileText className="h-5 w-5" />
               </div>
               <div>
-                <h3 className={`text-lg font-medium ${projectData.conceptOption === 'manual' ? 'text-blue-400' : 'text-white'} transition-colors duration-300`}>
+                <h3 className={`text-lg font-medium transition-colors duration-300 ${
+                  projectData.conceptOption === 'manual' ? 'text-primary' : 'text-foreground'
+                }`}>
                   Stick to the script
                 </h3>
-                <p className="text-sm text-zinc-400">Visualize your idea or script as written</p>
+                <p className="text-sm text-muted-foreground">Visualize your idea or script as written</p>
               </div>
             </motion.div>
           </div>
@@ -193,11 +212,11 @@ const ConceptTab = ({ projectData, updateProjectData }: ConceptTabProps) => {
           {/* Examples section (only visible on desktop) */}
           <div className="hidden lg:block lg:w-[350px] ml-6">
             <div className="mb-4 flex justify-between items-center">
-              <h2 className="font-semibold text-zinc-300">EXAMPLES</h2>
+              <h2 className="font-semibold text-muted-foreground uppercase text-xs tracking-wider">Examples</h2>
               <Button 
                 variant="ghost" 
                 size="icon" 
-                className="text-zinc-400 hover:text-zinc-200"
+                className="text-muted-foreground hover:text-foreground hover:bg-primary/10"
                 onClick={handleRegenerateExamples}
                 disabled={isGeneratingExamples}
               >
@@ -205,23 +224,23 @@ const ConceptTab = ({ projectData, updateProjectData }: ConceptTabProps) => {
               </Button>
             </div>
             
-            <div className="space-y-4">
+            <div className="space-y-3">
               {exampleConcepts.map((concept, index) => (
                 <motion.div 
                   key={index} 
-                  className="bg-[#1E222B] rounded-lg p-4 cursor-pointer hover:bg-[#252A36] transition-colors"
+                  className="bg-card/60 backdrop-blur-sm rounded-xl p-4 cursor-pointer border border-border/40 hover:border-amber/40 hover:shadow-lg hover:shadow-amber/5 transition-all duration-300"
                   onClick={() => handleUseExampleConcept(concept)}
-                  whileHover={{ scale: 1.02, backgroundColor: 'rgba(45, 55, 72, 1)' }}
+                  whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   transition={{ duration: 0.2 }}
                 >
-                  <div className="flex justify-between">
-                    <h3 className="font-medium text-white">{concept.title}</h3>
-                    <span className="text-xs text-zinc-500 uppercase px-2 py-0.5 rounded border border-zinc-800">
+                  <div className="flex justify-between items-start">
+                    <h3 className="font-medium text-foreground">{concept.title}</h3>
+                    <span className="text-[10px] text-amber uppercase px-2 py-0.5 rounded-full bg-amber/10 border border-amber/20 font-medium">
                       {concept.type}
                     </span>
                   </div>
-                  <p className="text-sm text-zinc-400 mt-2 line-clamp-3">{concept.description}</p>
+                  <p className="text-sm text-muted-foreground mt-2 line-clamp-3">{concept.description}</p>
                 </motion.div>
               ))}
             </div>
@@ -230,7 +249,7 @@ const ConceptTab = ({ projectData, updateProjectData }: ConceptTabProps) => {
         
         {/* Text area */}
         <motion.div 
-          className="border border-zinc-800 rounded-lg bg-[#111319] mb-6 overflow-hidden"
+          className="border border-border/40 rounded-xl bg-card/40 backdrop-blur-sm mb-6 overflow-hidden focus-within:border-primary/40 focus-within:shadow-lg focus-within:shadow-primary/5 transition-all duration-300"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.3, delay: 0.1 }}
@@ -239,14 +258,14 @@ const ConceptTab = ({ projectData, updateProjectData }: ConceptTabProps) => {
             value={projectData.concept}
             onChange={handleConceptChange}
             placeholder="Input anything from a full script, a few scenes, or a story..."
-            className="min-h-[200px] bg-transparent border-none focus-visible:ring-0 resize-none text-white placeholder:text-zinc-600"
+            className="min-h-[200px] bg-transparent border-none focus-visible:ring-0 resize-none text-foreground placeholder:text-muted-foreground/60"
           />
-          <div className="flex justify-between items-center px-3 py-2 text-sm text-zinc-500 border-t border-zinc-800">
-            <Button variant="outline" size="sm" className="h-8 px-3 bg-[#1E222B] border-zinc-800 text-zinc-400 hover:bg-zinc-800">
+          <div className="flex justify-between items-center px-4 py-3 text-sm text-muted-foreground border-t border-border/30 bg-card/30">
+            <Button variant="outline" size="sm" className="h-8 px-3 bg-card/60 border-border/40 text-muted-foreground hover:bg-primary/10 hover:text-primary hover:border-primary/30 transition-all duration-200">
               <FileText className="h-4 w-4 mr-2" />
               Upload Text
             </Button>
-            <div>{conceptCharCount} / 12000</div>
+            <div className="text-xs">{conceptCharCount} / 12000</div>
           </div>
         </motion.div>
         
@@ -284,12 +303,16 @@ const ConceptTab = ({ projectData, updateProjectData }: ConceptTabProps) => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: 0.15 }}
               >
-                <label className="text-sm text-zinc-400 mb-2 block">FORMAT</label>
-                <div className="flex gap-2">
+                <label className="text-xs text-muted-foreground mb-2 block uppercase tracking-wider font-medium">Format</label>
+                <div className="flex gap-2 flex-wrap">
                   <Button
                     type="button"
                     variant={projectData.format === 'custom' ? 'default' : 'outline'}
-                    className={`rounded-full transition-all duration-300 ${projectData.format === 'custom' ? 'bg-blue-600 text-white' : 'bg-transparent border-zinc-700 text-zinc-400'}`}
+                    className={`rounded-full transition-all duration-300 ${
+                      projectData.format === 'custom' 
+                        ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20' 
+                        : 'bg-card/60 border-border/40 text-muted-foreground hover:text-foreground hover:border-primary/40'
+                    }`}
                     onClick={() => handleFormatChange('custom')}
                   >
                     Custom
@@ -297,7 +320,11 @@ const ConceptTab = ({ projectData, updateProjectData }: ConceptTabProps) => {
                   <Button
                     type="button"
                     variant={projectData.format === 'short' ? 'default' : 'outline'}
-                    className={`rounded-full transition-all duration-300 ${projectData.format === 'short' ? 'bg-blue-600 text-white' : 'bg-transparent border-zinc-700 text-zinc-400'}`}
+                    className={`rounded-full transition-all duration-300 ${
+                      projectData.format === 'short' 
+                        ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20' 
+                        : 'bg-card/60 border-border/40 text-muted-foreground hover:text-foreground hover:border-primary/40'
+                    }`}
                     onClick={() => handleFormatChange('short')}
                   >
                     Short Film
@@ -305,7 +332,11 @@ const ConceptTab = ({ projectData, updateProjectData }: ConceptTabProps) => {
                   <Button
                     type="button"
                     variant={projectData.format === 'commercial' ? 'default' : 'outline'}
-                    className={`rounded-full transition-all duration-300 ${projectData.format === 'commercial' ? 'bg-blue-600 text-white' : 'bg-transparent border-zinc-700 text-zinc-400'}`}
+                    className={`rounded-full transition-all duration-300 ${
+                      projectData.format === 'commercial' 
+                        ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20' 
+                        : 'bg-card/60 border-border/40 text-muted-foreground hover:text-foreground hover:border-primary/40'
+                    }`}
                     onClick={() => handleFormatChange('commercial')}
                   >
                     Commercial
