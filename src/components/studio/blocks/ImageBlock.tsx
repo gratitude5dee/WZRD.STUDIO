@@ -4,11 +4,20 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useGeminiImage } from '@/hooks/useGeminiImage';
-import { Download, Copy, Maximize2, Sparkles, Info, Upload, Video, MessageSquare, Send, Plus } from 'lucide-react';
+import { falAI, FalStreamEvent } from '@/lib/falai-client';
+import { Download, Copy, Maximize2, Sparkles, Info, Upload, Video, MessageSquare, Send, Plus, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { BlockFloatingToolbar } from './BlockFloatingToolbar';
 import { v4 as uuidv4 } from 'uuid';
 import { motion } from 'framer-motion';
+import { Progress } from '@/components/ui/progress';
+
+interface StreamProgress {
+  status: string;
+  progress: number;
+  queuePosition?: number;
+  logs?: string[];
+}
 
 interface ImageBlockProps {
   id: string;
@@ -35,6 +44,7 @@ interface ImageBlockProps {
     aspectRatio?: string;
   };
   displayMode?: 'input' | 'display';
+  useStreaming?: boolean;
 }
 
 const ImageBlock: React.FC<ImageBlockProps> = ({
@@ -51,7 +61,8 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
   onSpawnBlocks,
   blockPosition = { x: 0, y: 0 },
   initialData,
-  displayMode: initialDisplayMode
+  displayMode: initialDisplayMode,
+  useStreaming = true
 }) => {
   const blockRef = useRef<HTMLDivElement>(null);
   const [prompt, setPrompt] = useState(initialData?.prompt || '');
@@ -66,11 +77,27 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
   );
   const [progress, setProgress] = useState(0);
   const [timeRemaining, setTimeRemaining] = useState(30);
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [streamProgress, setStreamProgress] = useState<StreamProgress | null>(null);
   const { isGenerating, generateImage } = useGeminiImage();
 
-  // Simulate progress during generation
+  // Handle streaming progress
+  const handleStreamProgress = (event: FalStreamEvent) => {
+    if (event.type === 'progress' && event.event) {
+      const progressPercent = event.event.progress || 0;
+      setProgress(progressPercent * 100);
+      setStreamProgress({
+        status: event.event.status || 'processing',
+        progress: progressPercent * 100,
+        queuePosition: event.event.queue_position,
+        logs: event.event.logs
+      });
+    }
+  };
+
+  // Simulate progress during non-streaming generation
   useEffect(() => {
-    if (isGenerating) {
+    if (isGenerating && !isStreaming) {
       setProgress(0);
       setTimeRemaining(30);
       const interval = setInterval(() => {
@@ -78,10 +105,10 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
         setTimeRemaining(prev => Math.max(prev - 1, 1));
       }, 1000);
       return () => clearInterval(interval);
-    } else {
+    } else if (!isGenerating && !isStreaming) {
       setProgress(100);
     }
-  }, [isGenerating]);
+  }, [isGenerating, isStreaming]);
 
   const generateShortTitle = (fullPrompt: string): string => {
     const words = fullPrompt.trim().split(/\s+/);
@@ -97,18 +124,77 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
       return;
     }
     
-    console.log('🎨 Generation started:', { generationCount, prompt, aspectRatio });
+    console.log('🎨 Generation started:', { generationCount, prompt, aspectRatio, useStreaming });
+    
+    // Convert aspect ratio to Fal.ai format
+    const aspectRatioMap: Record<string, string> = {
+      '1:1': 'square',
+      '16:9': 'landscape_16_9',
+      '9:16': 'portrait_16_9',
+      '4:3': 'landscape_4_3',
+      '3:4': 'portrait_4_3'
+    };
+    const falAspectRatio = aspectRatioMap[aspectRatio] || 'landscape_4_3';
     
     if (generationCount === 1) {
       console.log('📸 Generating single image');
-      const results = await generateImage(prompt, 1, aspectRatio);
-      console.log('✅ Single image result:', results);
-      if (results && results.length > 0) {
-        setGeneratedImage({ 
-          url: results[0].url, 
-          generationTime: results[0].generationTime 
-        });
-        toast.success('Image generated!');
+      
+      // Use streaming if enabled
+      if (useStreaming) {
+        setIsStreaming(true);
+        setProgress(0);
+        setStreamProgress({ status: 'starting', progress: 0 });
+        
+        try {
+          const startTime = Date.now();
+          const result = await falAI.streamGenerateImage(prompt, {
+            modelId: selectedModel || 'fal-ai/flux/dev',
+            image_size: falAspectRatio,
+            num_images: 1,
+            onProgress: handleStreamProgress,
+            onComplete: (res) => {
+              console.log('✅ Streaming complete:', res);
+              const generationTime = Date.now() - startTime;
+              
+              if (res?.images?.[0]?.url) {
+                setGeneratedImage({ 
+                  url: res.images[0].url, 
+                  generationTime 
+                });
+                setDisplayMode('display');
+                toast.success(`Image generated in ${(generationTime / 1000).toFixed(1)}s!`);
+              }
+            },
+            onError: (error) => {
+              console.error('❌ Streaming error:', error);
+              toast.error(`Generation failed: ${error.message}`);
+            }
+          });
+          
+          // Handle non-streaming result if callback wasn't called
+          if (result?.images?.[0]?.url && !generatedImage) {
+            const generationTime = Date.now() - startTime;
+            setGeneratedImage({ 
+              url: result.images[0].url, 
+              generationTime 
+            });
+            setDisplayMode('display');
+          }
+        } finally {
+          setIsStreaming(false);
+          setStreamProgress(null);
+        }
+      } else {
+        // Fallback to non-streaming
+        const results = await generateImage(prompt, 1, aspectRatio);
+        console.log('✅ Single image result:', results);
+        if (results && results.length > 0) {
+          setGeneratedImage({ 
+            url: results[0].url, 
+            generationTime: results[0].generationTime 
+          });
+          toast.success('Image generated!');
+        }
       }
     } else if (generationCount > 1) {
       console.log(`🎭 Generating ${generationCount} images for spawning`);
@@ -141,7 +227,7 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
               imageUrl: img.url,
               generationTime: img.generationTime,
               aspectRatio: aspectRatio,
-              mode: 'display' // Display spawned images immediately
+              mode: 'display'
             }
           };
           
@@ -459,16 +545,16 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
                 size="icon"
                 className="h-7 w-7 bg-blue-600 hover:bg-blue-700 text-white"
                 onClick={handleGenerate}
-                disabled={isGenerating || !prompt.trim() || isGeneratingPrompt}
+                disabled={isGenerating || isStreaming || !prompt.trim() || isGeneratingPrompt}
                 onMouseDown={(e) => e.stopPropagation()}
               >
-                <Send className="w-3.5 h-3.5" />
+                {isStreaming ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
               </Button>
             </div>
           </div>
 
           {/* Loading State with Progress */}
-          {isGenerating && (
+          {(isGenerating || isStreaming) && (
             <div className="space-y-3">
               <div className="aspect-square rounded-xl bg-zinc-900/50 border border-zinc-800/30 relative overflow-hidden">
                 {/* Animated Progress Overlay */}
@@ -478,11 +564,55 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
                   transition={{ duration: 2, repeat: Infinity }}
                 />
                 
-                {/* Timer Badge */}
-                <div className="absolute top-3 right-3">
-                  <Badge className="bg-black/60 text-white text-xs backdrop-blur-sm border-0">
-                    ~{timeRemaining}s
+                {/* Streaming Status Badge */}
+                <div className="absolute top-3 right-3 flex flex-col items-end gap-1.5">
+                  {streamProgress?.queuePosition !== undefined && streamProgress.queuePosition > 0 && (
+                    <Badge className="bg-amber-500/80 text-white text-xs backdrop-blur-sm border-0">
+                      Queue: #{streamProgress.queuePosition}
+                    </Badge>
+                  )}
+                  <Badge className="bg-black/60 text-white text-xs backdrop-blur-sm border-0 flex items-center gap-1.5">
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                    {streamProgress?.status || 'Generating'}
                   </Badge>
+                </div>
+                
+                {/* Center Progress Indicator */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="relative">
+                    <svg className="w-20 h-20 -rotate-90">
+                      <circle
+                        cx="40"
+                        cy="40"
+                        r="35"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                        fill="transparent"
+                        className="text-zinc-800"
+                      />
+                      <motion.circle
+                        cx="40"
+                        cy="40"
+                        r="35"
+                        stroke="url(#gradient)"
+                        strokeWidth="4"
+                        fill="transparent"
+                        strokeLinecap="round"
+                        initial={{ strokeDasharray: "0 220" }}
+                        animate={{ strokeDasharray: `${(progress / 100) * 220} 220` }}
+                        transition={{ duration: 0.3 }}
+                      />
+                      <defs>
+                        <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                          <stop offset="0%" stopColor="#3b82f6" />
+                          <stop offset="100%" stopColor="#8b5cf6" />
+                        </linearGradient>
+                      </defs>
+                    </svg>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className="text-lg font-semibold text-white">{Math.round(progress)}%</span>
+                    </div>
+                  </div>
                 </div>
                 
                 {/* Bottom Info */}
@@ -502,17 +632,13 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
               {/* Progress Bar */}
               <div className="space-y-2">
                 <div className="flex justify-between text-xs text-zinc-500">
-                  <span>Generating image...</span>
-                  <span>{progress}%</span>
+                  <span className="flex items-center gap-1.5">
+                    {isStreaming && <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />}
+                    {isStreaming ? 'Streaming...' : 'Generating image...'}
+                  </span>
+                  <span>{Math.round(progress)}%</span>
                 </div>
-                <div className="h-1 bg-zinc-800/50 rounded-full overflow-hidden">
-                  <motion.div 
-                    className="h-full bg-gradient-to-r from-blue-500 to-purple-500"
-                    initial={{ width: 0 }}
-                    animate={{ width: `${progress}%` }}
-                    transition={{ duration: 0.3 }}
-                  />
-                </div>
+                <Progress value={progress} className="h-1.5" />
               </div>
             </div>
           )}

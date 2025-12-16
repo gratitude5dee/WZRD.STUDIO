@@ -32,3 +32,9 @@ verify_jwt = false
 
 [functions.groq-stream]
 verify_jwt = false
+
+[functions.admin-add-credits]
+verify_jwt = false
+
+[functions.fal-stream]
+verify_jwt = false
