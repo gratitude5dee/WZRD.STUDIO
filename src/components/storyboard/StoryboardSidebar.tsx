@@ -79,7 +79,7 @@ const StoryboardSidebar: React.FC<StoryboardSidebarProps> = ({ data, onUpdate })
     "rounded-lg text-xs h-8 px-3",
     "bg-zinc-900/50 backdrop-blur-sm",
     "border border-zinc-800/50",
-    "focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20",
+    "focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20",
     "shadow-[inset_0_1px_2px_rgba(0,0,0,0.3)]",
     "transition-all duration-200",
     "placeholder:text-zinc-600"
@@ -89,8 +89,8 @@ const StoryboardSidebar: React.FC<StoryboardSidebarProps> = ({ data, onUpdate })
   return (
     <div className={cn(
       "w-full h-full relative overflow-hidden",
-      "bg-gradient-to-br from-zinc-950/95 to-zinc-900/90",
-      "backdrop-blur-xl border-r border-zinc-800/50",
+      "bg-gradient-to-br from-zinc-950/95 to-[#0A0A0F]",
+      "backdrop-blur-xl border-r border-white/[0.06]",
       "shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]"
     )}>
       <ScrollArea className="h-full text-white">
@@ -105,15 +105,15 @@ const StoryboardSidebar: React.FC<StoryboardSidebarProps> = ({ data, onUpdate })
             {/* Glass card container */}
             <div className={cn(
               "rounded-xl p-4 mb-6",
-              "bg-gradient-to-br from-blue-950/30 to-zinc-900/40",
-              "backdrop-blur-sm border border-blue-500/20",
-              "shadow-[0_4px_20px_rgba(59,130,246,0.15),inset_0_1px_0_rgba(255,255,255,0.03)]"
+              "bg-gradient-to-br from-purple-950/30 to-zinc-900/40",
+              "backdrop-blur-sm border border-purple-500/20",
+              "shadow-[0_4px_20px_rgba(139,92,246,0.15),inset_0_1px_0_rgba(255,255,255,0.03)]"
             )}>
               {/* Accent corner glow */}
-              <div className="absolute top-0 right-0 w-20 h-20 bg-blue-500/10 rounded-full blur-2xl" />
+              <div className="absolute top-0 right-0 w-20 h-20 bg-purple-500/10 rounded-full blur-2xl" />
               
-              <h2 className="text-lg font-bold text-blue-400 mb-2 font-serif tracking-wide relative z-10
-                shadow-[0_0_20px_rgba(47,123,188,0.4)]">
+              <h2 className="text-lg font-bold text-purple-400 mb-2 font-serif tracking-wide relative z-10
+                shadow-[0_0_20px_rgba(139,92,246,0.4)]">
                 {data.projectTitle || 'Project Title'}
               </h2>
               <p className="text-zinc-400 text-xs leading-relaxed line-clamp-3 relative z-10">
@@ -158,7 +158,7 @@ const StoryboardSidebar: React.FC<StoryboardSidebarProps> = ({ data, onUpdate })
                 <div className="flex items-center gap-2">
                   <div className="w-7 h-7 rounded-md bg-zinc-800/50 flex items-center justify-center
                     shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
-                    <Settings className="w-3.5 h-3.5 text-blue-400" />
+                    <Settings className="w-3.5 h-3.5 text-purple-400" />
                   </div>
                   <h3 className="text-zinc-200 font-medium text-xs uppercase tracking-wider">
                     Location

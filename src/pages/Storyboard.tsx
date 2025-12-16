@@ -357,7 +357,7 @@ const StoryboardPage = () => {
   // Render logic
   if (isLoading && !projectDetails) {
     return (
-      <div className="flex items-center justify-center h-screen bg-[#0A0D16] text-white">
+      <div className="flex items-center justify-center h-screen bg-[#0A0A0F] text-white">
         <Loader2 className="h-8 w-8 animate-spin text-purple-400" />
         <span className="ml-3">Loading Storyboard...</span>
       </div>
@@ -366,7 +366,7 @@ const StoryboardPage = () => {
 
   if (!projectDetails && !isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen bg-[#0A0D16] text-white p-6">
+      <div className="flex flex-col items-center justify-center h-screen bg-[#0A0A0F] text-white p-6">
         <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
         <h2 className="text-xl font-semibold mb-2">Error Loading Project</h2>
         <p className="text-zinc-400 mb-6">Could not load project data. The project ID might be missing or invalid.</p>
@@ -376,7 +376,10 @@ const StoryboardPage = () => {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-[#0A0D16]">
+    <div className="flex flex-col h-screen bg-[#0A0A0F] relative overflow-hidden">
+      {/* Ambient Glow Effects */}
+      <div className="fixed top-[-20%] left-[-10%] w-[60%] h-[60%] bg-[radial-gradient(ellipse,rgba(139,92,246,0.12)_0%,transparent_70%)] pointer-events-none z-0" />
+      <div className="fixed bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-[radial-gradient(ellipse,rgba(124,58,237,0.08)_0%,transparent_70%)] pointer-events-none z-0" />
       <AppHeader />
       <ResizablePanelGroup direction="horizontal" className="flex-grow">
         {/* Sidebar */}

@@ -43,10 +43,10 @@ export const EditorMediaPanel: React.FC<EditorMediaPanelProps> = ({
 
   return (
     <div
-      className="flex flex-col border-r overflow-hidden"
+      className="flex flex-col border-r overflow-hidden backdrop-blur-xl relative z-10"
       style={{
         width: `${exactMeasurements.mediaPanel.width}px`,
-        background: editorTheme.bg.secondary,
+        background: 'rgba(15, 15, 20, 0.8)',
         borderColor: editorTheme.border.subtle,
       }}
     >

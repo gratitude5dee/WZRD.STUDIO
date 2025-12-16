@@ -167,7 +167,7 @@ export const AppHeader = ({
 
   return (
     <header className={cn(
-      "w-full bg-black border-b border-zinc-800/50 px-6 py-3 flex items-center justify-between",
+      "w-full bg-[rgba(10,10,15,0.9)] backdrop-blur-xl border-b border-white/[0.06] px-6 py-3 flex items-center justify-between relative z-20",
       className
     )}>
       <div className="flex items-center gap-4">
