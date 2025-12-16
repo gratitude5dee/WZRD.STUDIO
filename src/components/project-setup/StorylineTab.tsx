@@ -10,6 +10,7 @@ import { Loader2, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useProjectContext } from './ProjectContext';
+import { StorylineProgress } from './StorylineProgress';
 import type { Storyline } from './types';
 import { ProjectData } from './types';
 
@@ -31,9 +32,10 @@ const StorylineTab = ({ projectData, updateProjectData }: StorylineTabProps) => 
   
   // Streaming state
   const [streamingStory, setStreamingStory] = useState('');
-  const [streamingStatus, setStreamingStatus] = useState<'pending' | 'generating' | 'complete' | 'failed'>('pending');
+  const [streamingStatus, setStreamingStatus] = useState<'idle' | 'creating' | 'generating' | 'scenes' | 'characters' | 'complete' | 'failed'>('idle');
   const [streamingScenes, setStreamingScenes] = useState<any[]>([]);
   const [streamingCharacters, setStreamingCharacters] = useState<any[]>([]);
+  const [generationError, setGenerationError] = useState<string | undefined>();
   
   // Determine the project ID to use (URL param takes precedence)
   const currentProjectId = params.id || contextProjectId;
@@ -54,9 +56,38 @@ const StorylineTab = ({ projectData, updateProjectData }: StorylineTabProps) => 
   useEffect(() => {
     if (!currentProjectId) return;
     
-    // Subscribe to storyline updates (streaming full_story and status changes)
+    // Subscribe to storyline INSERT (immediate skeleton) and UPDATE events
     const storylineChannel = supabase
-      .channel(`storyline-updates-${currentProjectId}`)
+      .channel(`storyline-changes-${currentProjectId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'storylines',
+          filter: `project_id=eq.${currentProjectId}`
+        },
+        (payload) => {
+          console.log('Storyline INSERT received:', payload);
+          const newStoryline = payload.new as Storyline;
+          
+          // Immediately show the skeleton storyline
+          if (newStoryline.status === 'generating') {
+            setStreamingStatus('generating');
+            setStreamingStory('');
+            setStreamingScenes([]);
+            setStreamingCharacters([]);
+            
+            // If it's a main storyline, set as selected
+            if (newStoryline.is_selected) {
+              setSelectedStoryline(newStoryline);
+            } else {
+              // Add to alternatives
+              setAlternativeStorylines(prev => [newStoryline, ...prev]);
+            }
+          }
+        }
+      )
       .on(
         'postgres_changes',
         {
@@ -66,21 +97,35 @@ const StorylineTab = ({ projectData, updateProjectData }: StorylineTabProps) => 
           filter: `project_id=eq.${currentProjectId}`
         },
         (payload) => {
-          console.log('Storyline update received:', payload);
+          console.log('Storyline UPDATE received:', payload);
           const newStoryline = payload.new as Storyline;
           
           setStreamingStory(newStoryline.full_story || '');
-          setStreamingStatus(newStoryline.status || 'pending');
+          
+          // Map DB status to progress status
+          if (newStoryline.status === 'generating' && newStoryline.full_story) {
+            setStreamingStatus('generating');
+          }
           
           // Update selected storyline if it's being updated
-          if (selectedStoryline?.id === newStoryline.id) {
+          if (selectedStoryline?.id === newStoryline.id || newStoryline.is_selected) {
             setSelectedStoryline(newStoryline);
+          } else {
+            // Update in alternatives list
+            setAlternativeStorylines(prev => 
+              prev.map(s => s.id === newStoryline.id ? newStoryline : s)
+            );
           }
           
           if (newStoryline.status === 'complete') {
+            setStreamingStatus('complete');
+            setIsGenerating(false);
             toast.success('Storyline generation complete!');
-            fetchStorylines(); // Refresh to get final data
+            fetchStorylines();
           } else if (newStoryline.status === 'failed') {
+            setStreamingStatus('failed');
+            setIsGenerating(false);
+            setGenerationError(newStoryline.failure_reason || 'Generation failed');
             toast.error('Storyline generation failed');
           }
         }
@@ -101,7 +146,7 @@ const StorylineTab = ({ projectData, updateProjectData }: StorylineTabProps) => 
         (payload) => {
           console.log('New scene received:', payload);
           setStreamingScenes(prev => [...prev, payload.new]);
-          toast.info(`Scene ${payload.new.scene_number} added`, { duration: 2000 });
+          setStreamingStatus('scenes');
         }
       )
       .subscribe();
@@ -120,7 +165,7 @@ const StorylineTab = ({ projectData, updateProjectData }: StorylineTabProps) => 
         (payload) => {
           console.log('New character received:', payload);
           setStreamingCharacters(prev => [...prev, payload.new]);
-          toast.info(`Character discovered: ${payload.new.name}`, { duration: 2000 });
+          setStreamingStatus('characters');
         }
       )
       .subscribe();
@@ -227,6 +272,11 @@ const StorylineTab = ({ projectData, updateProjectData }: StorylineTabProps) => 
 
     try {
       setIsGenerating(true);
+      setStreamingStatus('creating');
+      setGenerationError(undefined);
+      setStreamingStory('');
+      setStreamingScenes([]);
+      setStreamingCharacters([]);
       
       // Call our edge function with a flag to generate alternative storylines
       const { data, error } = await supabase.functions.invoke('generate-storylines', {
@@ -237,22 +287,40 @@ const StorylineTab = ({ projectData, updateProjectData }: StorylineTabProps) => 
       });
       
       if (error) {
-        throw new Error(error.message || "Function invocation failed");
+        // Handle specific error codes
+        const errorMessage = error.message || "Function invocation failed";
+        if (errorMessage.includes('402') || errorMessage.includes('Payment')) {
+          throw new Error('AI credits exhausted. Please add funds in Settings → Workspace → Usage to continue generating.');
+        }
+        if (errorMessage.includes('429') || errorMessage.includes('Rate')) {
+          throw new Error('Rate limited. Please wait a moment and try again.');
+        }
+        throw new Error(errorMessage);
       }
       
       // Check the success flag from the response
       if (data && data.success) {
-        toast.success(`Generated a new alternative storyline`);
-        await fetchStorylines(); // Refresh storylines list
+        // Don't show success toast here - realtime will handle it
+        // Generation continues in background, UI updates via realtime
       } else {
-        throw new Error(data?.error || data?.message || 'Failed to generate alternative storyline');
+        const errorMsg = data?.error || data?.message || 'Failed to generate storyline';
+        // Check for AI-specific errors in response
+        if (errorMsg.includes('402') || errorMsg.includes('credits')) {
+          throw new Error('AI credits exhausted. Please add funds in Settings → Workspace → Usage to continue generating.');
+        }
+        if (errorMsg.includes('429') || errorMsg.includes('rate')) {
+          throw new Error('Rate limited. Please wait a moment and try again.');
+        }
+        throw new Error(errorMsg);
       }
     } catch (error: any) {
-      console.error("Error generating alternative storyline:", error);
-      toast.error(`Failed to generate alternative: ${error.message}`);
-    } finally {
+      console.error("Error generating storyline:", error);
+      setStreamingStatus('failed');
+      setGenerationError(error.message);
+      toast.error(error.message);
       setIsGenerating(false);
     }
+    // Note: isGenerating is set to false via realtime subscription when complete/failed
   };
 
   return (
@@ -341,13 +409,13 @@ const StorylineTab = ({ projectData, updateProjectData }: StorylineTabProps) => 
           {/* Main Storyline Editor - Now spans 2 columns */}
           <div className="md:col-span-2">
             <div className="bg-black rounded-lg border border-zinc-800 p-6 min-h-[400px]">
-              {/* Show streaming status indicator */}
-              {streamingStatus === 'generating' && (
-                <div className="flex items-center gap-2 text-blue-400 mb-4 p-3 bg-blue-950/20 rounded border border-blue-900">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>Generating storyline in real-time...</span>
-                </div>
-              )}
+              {/* Show generation progress indicator */}
+              <StorylineProgress 
+                status={streamingStatus}
+                scenesCount={streamingScenes.length}
+                charactersCount={streamingCharacters.length}
+                errorMessage={generationError}
+              />
               
               {isLoading && !selectedStoryline ? (
                 <div className="flex justify-center items-center h-full py-20">
@@ -372,20 +440,28 @@ const StorylineTab = ({ projectData, updateProjectData }: StorylineTabProps) => 
                   
                   {/* Display streaming or final story */}
                   <div className="prose prose-invert max-w-none">
-                    {streamingStatus === 'generating' && streamingStory ? (
+                    {['creating', 'generating', 'scenes', 'characters'].includes(streamingStatus) && streamingStory ? (
                       <p className="text-zinc-300 whitespace-pre-line animate-fade-in">
                         {streamingStory}
-                        <span className="inline-block w-2 h-5 bg-blue-400 ml-1 animate-pulse"></span>
+                        <span className="inline-block w-2 h-5 bg-primary ml-1 animate-pulse"></span>
                       </p>
                     ) : selectedStoryline?.full_story ? (
                       <p className="text-zinc-300 whitespace-pre-line">
                         {selectedStoryline.full_story}
                       </p>
+                    ) : streamingStatus === 'creating' ? (
+                      <div className="space-y-3">
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-5/6" />
+                        <Skeleton className="h-4 w-4/5" />
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-3/4" />
+                      </div>
                     ) : (
                       <Skeleton className="h-48 w-full" />
                     )}
                   </div>
-                  
+
                   {/* Show streaming scenes */}
                   {streamingScenes.length > 0 && (
                     <div className="mt-6 space-y-2">

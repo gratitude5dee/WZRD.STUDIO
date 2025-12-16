@@ -184,6 +184,10 @@ export default {
 					'0%': { opacity: '0', transform: 'translateY(50px)' },
 					'100%': { opacity: '1', transform: 'translateY(0)' }
 				},
+				'fade-in': {
+					'0%': { opacity: '0' },
+					'100%': { opacity: '1' }
+				},
 				'hologram': {
 					'0%, 100%': { backgroundPosition: '0% 0%' },
 					'50%': { backgroundPosition: '100% 100%' }

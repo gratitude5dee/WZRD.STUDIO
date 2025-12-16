@@ -105,6 +105,13 @@ serve(async (req) => {
 
         if (!geminiResponse.ok) {
           const errorData = await geminiResponse.json().catch(() => ({ error: 'Unknown error' }));
+          // Propagate specific error codes for client handling
+          if (geminiResponse.status === 402) {
+            throw new Error('402: AI credits exhausted. Please add funds to continue generating.');
+          }
+          if (geminiResponse.status === 429) {
+            throw new Error('429: Rate limited. Please wait a moment and try again.');
+          }
           throw new Error(`Gemini generation failed: ${errorData.error || geminiResponse.statusText}`);
         }
 
