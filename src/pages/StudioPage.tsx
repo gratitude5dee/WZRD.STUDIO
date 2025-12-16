@@ -257,6 +257,8 @@ const StudioPage = () => {
             onUpdateBlockData={handleUpdateBlockData}
             blockModels={blockModels}
             onModelChange={handleModelChange}
+            projectId={projectId}
+            useComputeFlow={false}
           />
         )}
       </div>
