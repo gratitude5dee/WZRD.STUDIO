@@ -15,7 +15,9 @@ import {
   Box,
   Workflow,
   Send,
-  GitBranch
+  GitBranch,
+  Sparkles,
+  ChevronRight
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { HANDLE_COLORS, Port, DataType, isTypeCompatible } from '@/types/computeFlow';
@@ -31,12 +33,11 @@ export interface ComputeNodeData {
   preview?: { type: string; url?: string; data?: any };
   collapsed?: boolean;
   color?: string;
+  model?: string;
   onExecute?: () => void;
   onDelete?: () => void;
   onParamsChange?: (params: Record<string, any>) => void;
 }
-
-const ROW_HEIGHT = 50;
 
 const NODE_ICONS: Record<string, React.ElementType> = {
   Image: Image,
@@ -49,115 +50,110 @@ const NODE_ICONS: Record<string, React.ElementType> = {
   Gateway: GitBranch,
 };
 
+const MODEL_OPTIONS: Record<string, string[]> = {
+  Image: ['Flux Dev', 'Flux Pro', 'SDXL', 'Midjourney'],
+  Text: ['GPT-4o', 'Claude 3.5', 'Gemini Pro', 'Llama 3'],
+  Video: ['Minimax', 'Runway Gen-3', 'Pika', 'Kling'],
+};
+
+const HELPER_TEXT: Record<string, string> = {
+  Image: "Try 'An abstract geometric pattern with vibrant colors'",
+  Text: "Try 'Write a compelling product description'",
+  Video: "Try 'A cinematic drone shot over mountains'",
+  Prompt: "Connect text or image inputs to enhance prompts",
+  Model: "Select and configure AI model parameters",
+  Transform: "Apply transformations to your data",
+  Output: "Export or save your generated content",
+  Gateway: "Route data based on conditions",
+};
+
 export const ComputeNode = memo(({ id, data, selected }: NodeProps) => {
   const nodeData = (data as unknown) as ComputeNodeData;
   const { getEdges } = useReactFlow();
   const [collapsed, setCollapsed] = useState(nodeData.collapsed ?? false);
   const [hoveredHandle, setHoveredHandle] = useState<string | null>(null);
+  const [selectedModel, setSelectedModel] = useState(nodeData.model || MODEL_OPTIONS[nodeData.kind]?.[0] || '');
 
   const Icon = NODE_ICONS[nodeData.kind] || Box;
+  const helperText = HELPER_TEXT[nodeData.kind] || '';
+  const models = MODEL_OPTIONS[nodeData.kind] || [];
 
-  // Calculate border color based on status
-  const borderColor = useMemo(() => {
+  // Get primary color based on node type
+  const primaryColor = useMemo(() => {
+    const outputType = nodeData.outputs?.[0]?.datatype || 'any';
+    return HANDLE_COLORS[outputType as DataType] || HANDLE_COLORS.any;
+  }, [nodeData.outputs]);
+
+  // Status indicator styles
+  const statusStyles = useMemo(() => {
     switch (nodeData.status) {
-      case 'running': return 'border-blue-500';
-      case 'succeeded': return 'border-green-500';
-      case 'failed': return 'border-red-500';
-      case 'queued': return 'border-yellow-500';
-      default: return selected ? 'border-purple-500' : 'border-zinc-700/50';
+      case 'running': return { ring: 'ring-2 ring-blue-500/50', dot: 'bg-blue-500' };
+      case 'succeeded': return { ring: 'ring-2 ring-green-500/50', dot: 'bg-green-500' };
+      case 'failed': return { ring: 'ring-2 ring-red-500/50', dot: 'bg-red-500' };
+      case 'queued': return { ring: 'ring-2 ring-amber-500/50', dot: 'bg-amber-500' };
+      default: return { ring: selected ? 'ring-2 ring-purple-500/40' : '', dot: 'bg-zinc-600' };
     }
   }, [nodeData.status, selected]);
-
-  // Status icon
-  const StatusIcon = useMemo(() => {
-    switch (nodeData.status) {
-      case 'running': return <Loader2 className="w-4 h-4 animate-spin text-blue-400" />;
-      case 'succeeded': return <CheckCircle2 className="w-4 h-4 text-green-400" />;
-      case 'failed': return <AlertCircle className="w-4 h-4 text-red-400" />;
-      case 'queued': return <Loader2 className="w-4 h-4 text-yellow-400" />;
-      default: return null;
-    }
-  }, [nodeData.status]);
 
   // Handle validation for connections
   const isValidConnection = useCallback((connection: Connection) => {
     const edges = getEdges();
     const targetPort = nodeData.inputs?.find(p => p.id === connection.targetHandle);
-    
     if (!targetPort) return false;
     return true;
   }, [nodeData.inputs, getEdges]);
 
-  // Get icon color based on output type
-  const iconBgColor = useMemo(() => {
-    const outputType = nodeData.outputs?.[0]?.datatype || 'any';
-    return HANDLE_COLORS[outputType as DataType] || HANDLE_COLORS.any;
-  }, [nodeData.outputs]);
-
   return (
     <div
       className={cn(
-        'relative flex flex-col rounded-xl border-2 backdrop-blur-sm',
-        'min-w-[380px] shadow-2xl transition-all duration-200',
-        'bg-zinc-900/95',
-        borderColor,
-        nodeData.status === 'running' && 'animate-pulse'
+        'relative flex flex-col rounded-2xl border border-zinc-800/80 backdrop-blur-md',
+        'min-w-[280px] max-w-[320px] transition-all duration-200',
+        'bg-zinc-900/90 shadow-xl',
+        statusStyles.ring
       )}
       style={{ 
         boxShadow: selected 
-          ? '0 0 30px rgba(139, 92, 246, 0.4), 0 8px 32px rgba(0, 0, 0, 0.5)' 
+          ? `0 0 40px ${primaryColor}20, 0 8px 32px rgba(0, 0, 0, 0.6)` 
           : '0 8px 32px rgba(0, 0, 0, 0.4)'
       }}
     >
-      {/* Header */}
-      <div className="flex items-center gap-3 px-4 py-3 border-b border-zinc-700/50">
-        {/* Node icon */}
+      {/* Compact Header */}
+      <div className="flex items-center gap-2.5 px-3 py-2.5">
+        {/* Icon with glow */}
         <div 
-          className="w-10 h-10 rounded-xl flex items-center justify-center text-lg font-bold transition-all"
+          className="w-8 h-8 rounded-lg flex items-center justify-center"
           style={{ 
-            backgroundColor: `${iconBgColor}20`,
-            boxShadow: `0 0 20px ${iconBgColor}30`
+            backgroundColor: `${primaryColor}15`,
+            boxShadow: `0 0 12px ${primaryColor}20`
           }}
         >
-          <Icon className="w-5 h-5" style={{ color: iconBgColor }} />
+          <Icon className="w-4 h-4" style={{ color: primaryColor }} />
         </div>
         
-        {/* Title */}
-        <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-white text-sm truncate">{nodeData.label}</h3>
-          <span className="text-xs text-zinc-500">{nodeData.kind}</span>
-        </div>
+        {/* Type Label */}
+        <span className="text-sm font-medium text-zinc-300">{nodeData.kind}</span>
+        
+        {/* Model Selector (if applicable) */}
+        {models.length > 0 && (
+          <div className="ml-auto flex items-center gap-1 text-xs text-zinc-500 bg-zinc-800/60 px-2 py-1 rounded-md">
+            <Sparkles className="w-3 h-3" />
+            <span className="text-zinc-400">{selectedModel}</span>
+            <ChevronRight className="w-3 h-3" />
+          </div>
+        )}
 
-        {/* Status & Controls */}
-        <div className="flex items-center gap-2">
-          {StatusIcon}
-          
-          {nodeData.status === 'running' && nodeData.progress !== undefined && (
-            <div className="w-16 h-1.5 bg-zinc-700 rounded-full overflow-hidden">
-              <motion.div 
-                className="h-full bg-blue-500"
-                initial={{ width: 0 }}
-                animate={{ width: `${nodeData.progress}%` }}
-                transition={{ duration: 0.3 }}
-              />
-            </div>
-          )}
-          
-          <button
-            onClick={() => setCollapsed(!collapsed)}
-            className="p-1.5 hover:bg-zinc-700/50 rounded-lg transition-colors text-zinc-400 hover:text-white"
-          >
-            {collapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
-          </button>
-          
-          <button
-            onClick={nodeData.onExecute}
-            className="p-1.5 hover:bg-purple-500/20 text-purple-400 hover:text-purple-300 rounded-lg transition-colors"
-            title="Execute node"
-          >
-            <Play className="w-4 h-4" />
-          </button>
-        </div>
+        {/* Status dot */}
+        <div className={cn('w-2 h-2 rounded-full', statusStyles.dot, 
+          nodeData.status === 'running' && 'animate-pulse'
+        )} />
+        
+        {/* Collapse toggle */}
+        <button
+          onClick={() => setCollapsed(!collapsed)}
+          className="p-1 hover:bg-zinc-700/50 rounded transition-colors text-zinc-500 hover:text-zinc-300"
+        >
+          {collapsed ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronUp className="w-3.5 h-3.5" />}
+        </button>
       </div>
 
       {/* Content (collapsible) */}
@@ -167,130 +163,156 @@ export const ComputeNode = memo(({ id, data, selected }: NodeProps) => {
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
+            transition={{ duration: 0.15 }}
             className="overflow-hidden"
           >
-            <div className="p-4 space-y-4">
-              {/* Preview */}
-              {nodeData.preview && (
-                <div className="rounded-lg overflow-hidden border border-zinc-700/50">
+            <div className="px-3 pb-3 space-y-3">
+              {/* Preview Area */}
+              {nodeData.preview ? (
+                <div className="rounded-xl overflow-hidden border border-zinc-800/50 bg-zinc-950/50">
                   {nodeData.preview.type === 'image' && nodeData.preview.url && (
                     <img 
                       src={nodeData.preview.url} 
                       alt="Preview" 
-                      className="w-full h-40 object-cover"
+                      className="w-full h-36 object-cover"
                     />
                   )}
                   {nodeData.preview.type === 'text' && (
-                    <div className="p-3 text-sm text-zinc-300 max-h-28 overflow-y-auto bg-zinc-800/50">
+                    <div className="p-2.5 text-xs text-zinc-400 max-h-24 overflow-y-auto">
                       {nodeData.preview.data}
                     </div>
                   )}
                 </div>
-              )}
-
-              {/* Parameters */}
-              {nodeData.params && Object.keys(nodeData.params).length > 0 && (
-                <div className="space-y-3">
-                  {Object.entries(nodeData.params).slice(0, 3).map(([key, value]) => (
-                    <div key={key} className="flex flex-col gap-1">
-                      <label className="text-xs text-zinc-500 font-medium capitalize">{key}</label>
-                      <input
-                        type="text"
-                        value={String(value || '')}
-                        onChange={(e) => nodeData.onParamsChange?.({ ...nodeData.params, [key]: e.target.value })}
-                        className="bg-zinc-800/80 border border-zinc-700/50 rounded-lg px-3 py-2 text-sm text-white focus:border-purple-500/50 focus:outline-none transition-colors"
-                        placeholder={`Enter ${key}...`}
-                      />
-                    </div>
-                  ))}
+              ) : (
+                /* Empty preview placeholder */
+                <div className="h-32 rounded-xl border border-dashed border-zinc-800/60 bg-zinc-950/30 flex items-center justify-center">
+                  <div className="text-center">
+                    <Icon className="w-8 h-8 text-zinc-700 mx-auto mb-1" />
+                    <span className="text-xs text-zinc-600">No preview</span>
+                  </div>
                 </div>
               )}
 
-              {/* Empty state for params */}
-              {(!nodeData.params || Object.keys(nodeData.params).length === 0) && !nodeData.preview && (
-                <div className="text-center py-4 text-zinc-500 text-sm">
-                  No parameters configured
+              {/* Progress bar for running state */}
+              {nodeData.status === 'running' && nodeData.progress !== undefined && (
+                <div className="h-1 bg-zinc-800 rounded-full overflow-hidden">
+                  <motion.div 
+                    className="h-full rounded-full"
+                    style={{ backgroundColor: primaryColor }}
+                    initial={{ width: 0 }}
+                    animate={{ width: `${nodeData.progress}%` }}
+                    transition={{ duration: 0.3 }}
+                  />
                 </div>
+              )}
+
+              {/* Quick action button */}
+              <button
+                onClick={nodeData.onExecute}
+                className={cn(
+                  'w-full flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-medium',
+                  'transition-all duration-200',
+                  nodeData.status === 'running' 
+                    ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
+                    : 'bg-purple-500/20 text-purple-400 hover:bg-purple-500/30 hover:text-purple-300'
+                )}
+                disabled={nodeData.status === 'running'}
+              >
+                {nodeData.status === 'running' ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Play className="w-3.5 h-3.5" />
+                    Generate
+                  </>
+                )}
+              </button>
+
+              {/* Helper text */}
+              {helperText && (
+                <p className="text-[10px] text-zinc-600 italic leading-relaxed">
+                  {helperText}
+                </p>
               )}
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Input Handles (Left side) */}
+      {/* Input Handles (Left side) - Small circular */}
       {nodeData.inputs?.map((port, index) => {
-        const top = collapsed ? 32 : 80 + index * ROW_HEIGHT;
+        const top = collapsed ? 24 : 60 + index * 40;
         const color = HANDLE_COLORS[port.datatype as DataType] || HANDLE_COLORS.any;
+        const isHovered = hoveredHandle === port.id;
 
         return (
           <React.Fragment key={port.id}>
-            {/* Handle label */}
-            {!collapsed && (
-              <span
-                className="absolute left-0 -translate-x-full pr-3 text-xs font-mono text-zinc-400 pointer-events-none whitespace-nowrap"
-                style={{ top: top - 6 }}
-              >
-                {port.name}
-              </span>
-            )}
-            
-            {/* Handle */}
             <Handle
               type="target"
               position={Position.Left}
               id={port.id}
-              className="!rounded-sm !border-2 !border-zinc-800 transition-all duration-150"
+              className="!rounded-full !border-2 transition-all duration-150"
               style={{
-                width: 12,
-                height: 12,
+                width: isHovered ? 12 : 10,
+                height: isHovered ? 12 : 10,
                 background: color,
+                borderColor: 'rgb(24 24 27)',
                 top,
-                transform: hoveredHandle === port.id ? 'scale(1.4)' : 'scale(1)',
-                boxShadow: hoveredHandle === port.id ? `0 0 10px ${color}` : 'none',
+                boxShadow: isHovered ? `0 0 12px ${color}` : 'none',
               }}
               onMouseEnter={() => setHoveredHandle(port.id)}
               onMouseLeave={() => setHoveredHandle(null)}
               isValidConnection={isValidConnection}
             />
+            {/* Tooltip label on hover */}
+            {isHovered && !collapsed && (
+              <div
+                className="absolute left-0 -translate-x-full pr-2 text-[10px] text-zinc-400 whitespace-nowrap pointer-events-none"
+                style={{ top: top - 5 }}
+              >
+                {port.name}
+              </div>
+            )}
           </React.Fragment>
         );
       })}
 
-      {/* Output Handles (Right side) */}
+      {/* Output Handles (Right side) - Small circular */}
       {nodeData.outputs?.map((port, index) => {
-        const top = collapsed ? 32 : 80 + index * ROW_HEIGHT;
+        const top = collapsed ? 24 : 60 + index * 40;
         const color = HANDLE_COLORS[port.datatype as DataType] || HANDLE_COLORS.any;
+        const isHovered = hoveredHandle === port.id;
 
         return (
           <React.Fragment key={port.id}>
-            {/* Handle label */}
-            {!collapsed && (
-              <span
-                className="absolute right-0 translate-x-full pl-3 text-xs font-mono text-zinc-400 pointer-events-none whitespace-nowrap"
-                style={{ top: top - 6 }}
-              >
-                {port.name}
-              </span>
-            )}
-            
-            {/* Handle */}
             <Handle
               type="source"
               position={Position.Right}
               id={port.id}
-              className="!rounded-sm !border-2 !border-zinc-800 transition-all duration-150"
+              className="!rounded-full !border-2 transition-all duration-150"
               style={{
-                width: 12,
-                height: 12,
+                width: isHovered ? 12 : 10,
+                height: isHovered ? 12 : 10,
                 background: color,
+                borderColor: 'rgb(24 24 27)',
                 top,
-                transform: hoveredHandle === port.id ? 'scale(1.4)' : 'scale(1)',
-                boxShadow: hoveredHandle === port.id ? `0 0 10px ${color}` : 'none',
+                boxShadow: isHovered ? `0 0 12px ${color}` : 'none',
               }}
               onMouseEnter={() => setHoveredHandle(port.id)}
               onMouseLeave={() => setHoveredHandle(null)}
             />
+            {/* Tooltip label on hover */}
+            {isHovered && !collapsed && (
+              <div
+                className="absolute right-0 translate-x-full pl-2 text-[10px] text-zinc-400 whitespace-nowrap pointer-events-none"
+                style={{ top: top - 5 }}
+              >
+                {port.name}
+              </div>
+            )}
           </React.Fragment>
         );
       })}

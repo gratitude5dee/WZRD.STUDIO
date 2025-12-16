@@ -33,6 +33,8 @@ import { ConnectionNodeSelector } from './ConnectionNodeSelector';
 import { CanvasToolbar } from './canvas/CanvasToolbar';
 import { ConnectionModeIndicator } from './canvas/ConnectionModeIndicator';
 import { KeyboardShortcutsOverlay } from './KeyboardShortcutsOverlay';
+import { QueueIndicator } from './QueueIndicator';
+import { StudioGalleryPanel } from './StudioGalleryPanel';
 import { useConnectionValidation } from '@/hooks/useConnectionValidation';
 import { useConnectionMode } from '@/hooks/useConnectionMode';
 import { useStudioKeyboardShortcuts } from '@/hooks/studio/useStudioKeyboardShortcuts';
@@ -195,6 +197,7 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
   const [nodeSelectorPosition, setNodeSelectorPosition] = useState({ x: 0, y: 0 });
   const [activeConnection, setActiveConnection] = useState<any>(null);
   const [showGrid, setShowGrid] = useState(true);
+  const [showGallery, setShowGallery] = useState(false);
   
   // Get selected nodes count
   const selectedNodes = useMemo(() => nodes.filter(n => n.selected), [nodes]);
@@ -611,6 +614,30 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
       
       {/* Keyboard Shortcuts Overlay */}
       <KeyboardShortcutsOverlay />
+      
+      {/* Queue Indicator - Bottom right */}
+      {useComputeFlow && <QueueIndicator />}
+      
+      {/* Gallery Panel - Right side */}
+      {useComputeFlow && (
+        <StudioGalleryPanel
+          isOpen={showGallery}
+          onToggle={() => setShowGallery(prev => !prev)}
+          onAddToCanvas={(item) => {
+            const newBlock: Block = {
+              id: uuidv4(),
+              type: item.type === 'image' ? 'image' : item.type === 'video' ? 'video' : 'text',
+              position: { x: 400, y: 300 },
+              initialData: {
+                imageUrl: item.url,
+                prompt: item.nodeLabel,
+              },
+            };
+            onAddBlock(newBlock);
+            toast.success('Added to canvas');
+          }}
+        />
+      )}
     </div>
   );
 };
