@@ -131,7 +131,7 @@ export default function TimelinePanel() {
   });
 
   return (
-    <div className="h-full bg-muted/30 flex flex-col border-t border-border">
+    <div className="h-full bg-[rgba(15,15,20,0.6)] backdrop-blur-lg flex flex-col border-t border-white/[0.06] relative z-10">
       <TimelineRuler zoom={zoom} scrollOffset={scrollOffset} durationMs={durationMs} />
       <div
         ref={(node) => {
@@ -141,13 +141,13 @@ export default function TimelinePanel() {
           }
           timelineDropRef(node);
         }}
-        className={`flex-1 overflow-auto bg-muted/20 relative transition-colors ${
-          isOverTimeline ? 'bg-primary/5' : ''
+        className={`flex-1 overflow-auto bg-[rgba(10,10,15,0.4)] relative transition-colors ${
+          isOverTimeline ? 'bg-purple-500/5' : ''
         }`}
         onScroll={handleScroll}
         onClick={handleEmptyClick}
         style={{
-          backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 19px, hsl(var(--border) / 0.3) 19px, hsl(var(--border) / 0.3) 20px)',
+          backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 19px, rgba(255,255,255,0.03) 19px, rgba(255,255,255,0.03) 20px)',
         }}
       >
         {/* Playhead */}

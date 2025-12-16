@@ -21,11 +21,11 @@ export default function PropertiesPanel({ selectedClipIds, selectedAudioTrackIds
   if (!selectedClip && !selectedAudioTrack) {
     return (
       <div
-        className="flex items-center justify-center"
+        className="flex items-center justify-center backdrop-blur-xl relative z-10"
         style={{
           width: `${exactMeasurements.propertiesPanel.width}px`,
-          background: editorTheme.bg.secondary,
-          borderLeft: `1px solid ${editorTheme.border.subtle}`,
+          background: 'rgba(15, 15, 20, 0.8)',
+          borderLeft: '1px solid rgba(255, 255, 255, 0.06)',
         }}
       >
         <p
@@ -42,11 +42,11 @@ export default function PropertiesPanel({ selectedClipIds, selectedAudioTrackIds
 
   return (
     <div
-      className="flex flex-col overflow-y-auto"
+      className="flex flex-col overflow-y-auto backdrop-blur-xl relative z-10"
       style={{
         width: `${exactMeasurements.propertiesPanel.width}px`,
-        background: editorTheme.bg.secondary,
-        borderLeft: `1px solid ${editorTheme.border.subtle}`,
+        background: 'rgba(15, 15, 20, 0.8)',
+        borderLeft: '1px solid rgba(255, 255, 255, 0.06)',
       }}
     >
       {/* Header - Caption Title */}
@@ -276,7 +276,7 @@ export default function PropertiesPanel({ selectedClipIds, selectedAudioTrackIds
                 >
                   Active
                 </Label>
-                <ColorPicker defaultColor="#50EF12" />
+                <ColorPicker defaultColor="#8B5CF6" />
               </div>
 
               <div className="flex items-center justify-between">
@@ -288,7 +288,7 @@ export default function PropertiesPanel({ selectedClipIds, selectedAudioTrackIds
                 >
                   Active Fill
                 </Label>
-                <ColorPicker defaultColor="#7E12FF" />
+                <ColorPicker defaultColor="#A78BFA" />
               </div>
             </div>
           </PropertySection>

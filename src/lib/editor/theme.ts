@@ -1,19 +1,19 @@
-// Editor Theme Configuration - Pixel Perfect
+// Editor Theme Configuration - Unified Design System
 export const editorTheme = {
-  // Backgrounds
+  // Backgrounds - Unified with Project Setup
   bg: {
-    primary: '#0A0A0A',      // Main background
-    secondary: '#1A1A1A',    // Panel backgrounds
-    tertiary: '#242424',     // Elevated elements
-    hover: '#2A2A2A',        // Hover states
-    active: '#323232',       // Active/selected states
+    primary: '#0A0A0F',      // Main background (unified)
+    secondary: '#0F0F14',    // Panel backgrounds
+    tertiary: '#161620',     // Elevated elements
+    hover: '#1A1A24',        // Hover states
+    active: '#222230',       // Active/selected states
   },
   
   // Borders & Dividers
   border: {
-    subtle: '#2A2A2A',       // Subtle dividers
-    default: '#3A3A3A',      // Default borders
-    focus: '#4A4A4A',        // Focus rings
+    subtle: 'rgba(255, 255, 255, 0.06)',
+    default: 'rgba(255, 255, 255, 0.1)',
+    focus: '#8B5CF6',        // Purple focus
   },
   
   // Text
@@ -24,19 +24,25 @@ export const editorTheme = {
     disabled: '#505050',     // Disabled text
   },
   
-  // Accents
+  // Accents - Purple brand system
   accent: {
-    primary: '#50EF12',      // Primary green (Export, active elements)
-    secondary: '#7E12FF',    // Purple (Active fill, selections)
-    tertiary: '#FFFFFF',     // White accent
+    primary: '#8B5CF6',      // Primary purple
+    secondary: '#A78BFA',    // Light purple
+    tertiary: '#7C3AED',     // Dark purple
   },
   
   // Semantic
   semantic: {
-    success: '#50EF12',
-    warning: '#FFA500',
-    error: '#FF4444',
-    info: '#4A9EFF',
+    success: '#22C55E',
+    warning: '#F59E0B',
+    error: '#EF4444',
+    info: '#3B82F6',
+  },
+
+  // Glass effects
+  glass: {
+    panel: 'rgba(15, 15, 20, 0.8)',
+    blur: '12px',
   },
 } as const;
 

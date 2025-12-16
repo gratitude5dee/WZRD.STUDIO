@@ -68,9 +68,12 @@ export default function VideoEditorMain() {
 
   return (
     <div
-      className="flex flex-col h-full"
+      className="flex flex-col h-full relative overflow-hidden"
       style={{ background: editorTheme.bg.primary }}
     >
+      {/* Ambient Glow Effects */}
+      <div className="fixed top-[-20%] left-[-10%] w-[60%] h-[60%] bg-[radial-gradient(ellipse,rgba(139,92,246,0.08)_0%,transparent_70%)] pointer-events-none z-0" />
+      <div className="fixed bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-[radial-gradient(ellipse,rgba(124,58,237,0.06)_0%,transparent_70%)] pointer-events-none z-0" />
       {/* Header */}
       <EditorHeader
         projectTitle={projectName || 'Untitled video'}

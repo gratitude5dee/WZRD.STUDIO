@@ -29,12 +29,12 @@ export const EditorHeader: React.FC<EditorHeaderProps> = ({
   return (
     <TooltipProvider delayDuration={300}>
       <header
-        className="flex items-center justify-between border-b"
+        className="flex items-center justify-between border-b backdrop-blur-xl relative z-10"
         style={{
           height: `${exactMeasurements.header.height}px`,
           paddingLeft: `${exactMeasurements.header.paddingX}px`,
           paddingRight: `${exactMeasurements.header.paddingX}px`,
-          background: editorTheme.bg.secondary,
+          background: 'rgba(15, 15, 20, 0.9)',
           borderColor: editorTheme.border.subtle,
         }}
       >
