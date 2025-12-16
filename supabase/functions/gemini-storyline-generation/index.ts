@@ -10,7 +10,7 @@ serve(async (req) => {
     const { 
       systemPrompt, 
       prompt, 
-      model = 'google/gemini-2.5-flash',
+      model = 'llama-3.3-70b-versatile',
       responseSchema,
       temperature = 0.7
     } = await req.json();
@@ -19,47 +19,43 @@ serve(async (req) => {
       return errorResponse('Prompt is required', 400);
     }
 
-    if (!responseSchema) {
-      return errorResponse('Response schema is required for structured output', 400);
+    const GROQ_API_KEY = Deno.env.get("GROQ_API_KEY");
+    if (!GROQ_API_KEY) {
+      return errorResponse('GROQ_API_KEY is not configured', 500);
     }
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      return errorResponse('LOVABLE_API_KEY is not configured', 500);
-    }
+    console.log(`Generating structured storyline with Groq model: ${model}`);
 
-    console.log(`Generating structured storyline with model: ${model}`);
+    // Build the system message with schema instructions for JSON output
+    let fullSystemPrompt = systemPrompt || '';
+    if (responseSchema) {
+      fullSystemPrompt += `\n\nIMPORTANT: You MUST respond with valid JSON that matches this exact schema:\n${JSON.stringify(responseSchema, null, 2)}\n\nDo not include any text before or after the JSON. Only output the JSON object.`;
+    }
 
     const messages: any[] = [];
-    if (systemPrompt) {
-      messages.push({ role: "system", content: systemPrompt });
+    if (fullSystemPrompt) {
+      messages.push({ role: "system", content: fullSystemPrompt });
     }
     messages.push({ role: "user", content: prompt });
 
-    // Call Lovable AI Gateway with timeout
+    // Call Groq API with timeout
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s timeout
+    const timeoutId = setTimeout(() => controller.abort(), 120000); // 120s timeout for long generations
 
     let response;
     try {
-      response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          Authorization: `Bearer ${GROQ_API_KEY}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
           model,
           messages,
           temperature,
-          response_format: {
-            type: "json_schema",
-            json_schema: {
-              name: "storyline_generation",
-              strict: true,
-              schema: responseSchema
-            }
-          }
+          max_tokens: 8192,
+          response_format: { type: "json_object" }
         }),
         signal: controller.signal
       });
@@ -67,8 +63,8 @@ serve(async (req) => {
     } catch (fetchError) {
       clearTimeout(timeoutId);
       if (fetchError.name === 'AbortError') {
-        console.error('Request timeout (60s exceeded)');
-        return errorResponse("Request timeout (60s exceeded)", 504);
+        console.error('Request timeout (120s exceeded)');
+        return errorResponse("Request timeout (120s exceeded)", 504);
       }
       throw fetchError;
     }
@@ -77,12 +73,9 @@ serve(async (req) => {
       if (response.status === 429) {
         return errorResponse("Rate limits exceeded, please try again later.", 429);
       }
-      if (response.status === 402) {
-        return errorResponse("Payment required, please add funds to your Lovable AI workspace.", 402);
-      }
       const errorText = await response.text();
-      console.error("AI gateway error:", response.status, errorText);
-      return errorResponse("AI gateway error", 500, { details: errorText });
+      console.error("Groq API error:", response.status, errorText);
+      return errorResponse("Groq API error", 500, { details: errorText });
     }
 
     const data = await response.json();
@@ -90,9 +83,8 @@ serve(async (req) => {
 
     // Enhanced validation before JSON parsing
     if (!content || content.trim() === '') {
-      console.error('Empty content from AI Gateway:', {
+      console.error('Empty content from Groq API:', {
         status: response.status,
-        headers: Object.fromEntries(response.headers.entries()),
         usage: data.usage,
         model
       });
@@ -127,7 +119,7 @@ serve(async (req) => {
     });
 
   } catch (error) {
-    console.error("Error in gemini-storyline-generation:", error);
+    console.error("Error in storyline-generation:", error);
     return errorResponse(error instanceof Error ? error.message : "Unknown error", 500);
   }
 });

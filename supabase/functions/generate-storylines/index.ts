@@ -80,8 +80,8 @@ serve(async (req) => {
       let storyline_id: string | null = null;
       
       try {
-        // Step 1: Generate storyline with Gemini
-        console.log('Generating storyline with Gemini AI (structured JSON output)...');
+        // Step 1: Generate storyline with Groq
+        console.log('Generating storyline with Groq AI (structured JSON output)...');
         const storylineSystemPrompt = getStorylineSystemPrompt(generate_alternative);
         const storylineUserPrompt = getStorylineUserPrompt(project, generate_alternative, existingStorylines);
         
@@ -96,7 +96,7 @@ serve(async (req) => {
             body: JSON.stringify({
               systemPrompt: storylineSystemPrompt,
               prompt: storylineUserPrompt,
-              model: generate_alternative ? 'google/gemini-2.5-flash' : 'google/gemini-2.5-pro',
+              model: generate_alternative ? 'llama-3.1-8b-instant' : 'llama-3.3-70b-versatile',
               responseSchema: responseSchema,
               temperature: generate_alternative ? 1.0 : 0.7
             }),
@@ -112,17 +112,17 @@ serve(async (req) => {
           if (geminiResponse.status === 429) {
             throw new Error('429: Rate limited. Please wait a moment and try again.');
           }
-          throw new Error(`Gemini generation failed: ${errorData.error || geminiResponse.statusText}`);
+          throw new Error(`Groq generation failed: ${errorData.error || geminiResponse.statusText}`);
         }
 
         const geminiData = await geminiResponse.json();
         const storylineData = geminiData.parsed as StorylineResponseData;
 
         if (!storylineData || !storylineData.primary_storyline) {
-          throw new Error('Failed to parse valid storyline from Gemini');
+          throw new Error('Failed to parse valid storyline from Groq');
         }
 
-        console.log('Successfully generated storyline with Gemini');
+        console.log('Successfully generated storyline with Groq');
         const fullStoryText = storylineData.primary_storyline.full_story;
 
         // Step 2: Create storyline skeleton
@@ -197,7 +197,7 @@ serve(async (req) => {
                 body: JSON.stringify({
                   systemPrompt: analysisSystemPrompt,
                   prompt: analysisUserPrompt,
-                  model: 'google/gemini-2.5-flash',
+                  model: 'llama-3.1-8b-instant',
                   responseSchema: ANALYSIS_RESPONSE_SCHEMA,
                   temperature: 0.5
                 }),
