@@ -7,6 +7,24 @@ export interface FalAIClientOptions {
   onError?: (error: Error) => void
 }
 
+export interface FalStreamEvent {
+  type: 'progress' | 'done' | 'error'
+  event?: {
+    status?: string
+    progress?: number
+    queue_position?: number
+    logs?: string[]
+  }
+  result?: any
+  error?: string
+}
+
+export interface FalStreamOptions {
+  onProgress?: (event: FalStreamEvent) => void
+  onComplete?: (result: any) => void
+  onError?: (error: Error) => void
+}
+
 export interface FalAIExecuteOptions {
   metadata?: {
     projectId?: string
@@ -240,6 +258,105 @@ export class FalAIClient {
       supabase.removeChannel(this.channel)
       this.channel = null
     }
+  }
+
+  // Stream generation with real-time progress updates
+  async streamGenerate(
+    modelId: string,
+    inputs: Record<string, any>,
+    options?: FalStreamOptions
+  ): Promise<any> {
+    const SUPABASE_URL = 'https://ixkkrousepsiorwlaycp.supabase.co'
+    
+    try {
+      console.log('🚀 Starting streaming generation:', modelId)
+      
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/fal-stream`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ modelId, inputs })
+      })
+
+      if (!response.ok) {
+        throw new Error(`Stream request failed: ${response.status}`)
+      }
+
+      if (!response.body) {
+        throw new Error('No response body')
+      }
+
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+      let result: any = null
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        const chunk = decoder.decode(value)
+        const lines = chunk.split('\n')
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.slice(6)) as FalStreamEvent
+              
+              if (data.type === 'progress') {
+                console.log('📡 Progress event:', data.event)
+                options?.onProgress?.(data)
+              } else if (data.type === 'done') {
+                console.log('✅ Generation complete')
+                result = data.result
+                options?.onComplete?.(data.result)
+              } else if (data.type === 'error') {
+                console.error('❌ Stream error:', data.error)
+                options?.onError?.(new Error(data.error || 'Unknown error'))
+              }
+            } catch (parseError) {
+              // Ignore parse errors for partial data
+            }
+          }
+        }
+      }
+
+      return result
+    } catch (error) {
+      console.error('Stream generation error:', error)
+      options?.onError?.(error as Error)
+      throw error
+    }
+  }
+
+  // Stream image generation with progress
+  async streamGenerateImage(
+    prompt: string,
+    options?: {
+      modelId?: string
+      image_size?: string
+      num_images?: number
+      guidance_scale?: number
+      num_inference_steps?: number
+    } & FalStreamOptions
+  ): Promise<any> {
+    const modelId = options?.modelId || 'fal-ai/flux/dev'
+    
+    const inputs = {
+      prompt,
+      image_size: options?.image_size || 'landscape_4_3',
+      num_images: options?.num_images || 1,
+      guidance_scale: options?.guidance_scale || 3.5,
+      num_inference_steps: options?.num_inference_steps || 28,
+      enable_safety_checker: true,
+      output_format: 'png'
+    }
+
+    return this.streamGenerate(modelId, inputs, {
+      onProgress: options?.onProgress,
+      onComplete: options?.onComplete,
+      onError: options?.onError
+    })
   }
 
   // Specialized functions for common use cases in storyboard and timeline
