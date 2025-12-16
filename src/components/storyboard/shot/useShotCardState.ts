@@ -13,6 +13,7 @@ export const useShotCardState = (shot: ShotDetails, onUpdate: (updates: Partial<
   const [localVisualPrompt, setLocalVisualPrompt] = useState(shot.visual_prompt || '');
   const [localImageUrl, setLocalImageUrl] = useState(shot.image_url || null);
   const [localImageStatus, setLocalImageStatus] = useState<ImageStatus>(shot.image_status || 'pending');
+  const [localImageProgress, setLocalImageProgress] = useState<number>((shot as any).image_progress || 0);
   const [localAudioUrl, setLocalAudioUrl] = useState(shot.audio_url || null);
   const [localAudioStatus, setLocalAudioStatus] = useState<AudioStatus>(shot.audio_status || 'pending');
   
@@ -33,12 +34,13 @@ export const useShotCardState = (shot: ShotDetails, onUpdate: (updates: Partial<
     setLocalVisualPrompt(shot.visual_prompt || '');
     setLocalImageUrl(shot.image_url || null);
     setLocalImageStatus(shot.image_status || 'pending');
+    setLocalImageProgress((shot as any).image_progress || 0);
     setLocalAudioUrl(shot.audio_url || null);
     setLocalAudioStatus(shot.audio_status || 'pending');
     setIsGeneratingImage(shot.image_status === 'generating');
     setIsGeneratingAudio(shot.audio_status === 'generating');
   }, [shot.id, shot.shot_type, shot.prompt_idea, shot.dialogue, shot.sound_effects, 
-      shot.visual_prompt, shot.image_url, shot.image_status, shot.audio_url, shot.audio_status]);
+      shot.visual_prompt, shot.image_url, shot.image_status, shot.audio_url, shot.audio_status, (shot as any).image_progress]);
 
   // Set up realtime subscription to receive updates for this shot
   useEffect(() => {
@@ -58,7 +60,7 @@ export const useShotCardState = (shot: ShotDetails, onUpdate: (updates: Partial<
         }, 
         (payload) => {
           console.log(`Received realtime update for shot ${shot.id}:`, payload);
-          const updatedShot = payload.new as ShotDetails;
+          const updatedShot = payload.new as any;
           
           // Only update specific fields to avoid overwriting user's input
           if (updatedShot.visual_prompt && updatedShot.visual_prompt !== localVisualPrompt) {
@@ -72,6 +74,11 @@ export const useShotCardState = (shot: ShotDetails, onUpdate: (updates: Partial<
           if (updatedShot.image_status && updatedShot.image_status !== localImageStatus) {
             setLocalImageStatus(updatedShot.image_status as ImageStatus);
             setIsGeneratingImage(updatedShot.image_status === 'generating');
+          }
+          
+          // Handle image progress updates
+          if (updatedShot.image_progress !== undefined && updatedShot.image_progress !== localImageProgress) {
+            setLocalImageProgress(updatedShot.image_progress);
           }
 
           // Handle audio updates
@@ -153,6 +160,7 @@ export const useShotCardState = (shot: ShotDetails, onUpdate: (updates: Partial<
     localVisualPrompt,
     localImageUrl,
     localImageStatus,
+    localImageProgress,
     localAudioUrl,
     localAudioStatus,
     isDeleting,
@@ -169,6 +177,7 @@ export const useShotCardState = (shot: ShotDetails, onUpdate: (updates: Partial<
     setSoundEffects,
     setLocalVisualPrompt,
     setLocalImageStatus,
+    setLocalImageProgress,
     setLocalAudioUrl,
     setLocalAudioStatus,
     setIsDeleting,

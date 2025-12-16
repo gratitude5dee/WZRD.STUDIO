@@ -14,6 +14,7 @@ interface ShotImageProps {
   videoUrl: string | null;
   videoStatus: 'pending' | 'generating' | 'completed' | 'failed';
   status: ImageStatus;
+  imageProgress?: number;
   isGenerating: boolean;
   hasVisualPrompt: boolean;
   onGenerateImage: () => void;
@@ -27,6 +28,7 @@ const ShotImage: React.FC<ShotImageProps> = ({
   videoUrl,
   videoStatus,
   status,
+  imageProgress = 0,
   isGenerating,
   hasVisualPrompt,
   onGenerateImage,
@@ -256,11 +258,22 @@ const ShotImage: React.FC<ShotImageProps> = ({
   // Loading/Generating/Pending/Failed States
   return (
     <div className="w-full aspect-video bg-zinc-900/50 backdrop-blur-sm flex flex-col items-center justify-center p-3 relative overflow-hidden border-b border-white/5 pointer-events-auto">
+      {/* Progress bar overlay for generating state */}
+      {(isGenerating || status === 'generating') && (
+        <div className="absolute bottom-0 left-0 right-0 h-1 bg-zinc-800 z-20">
+          <motion.div 
+            className="h-full bg-gradient-to-r from-blue-500 to-purple-500"
+            initial={{ width: 0 }}
+            animate={{ width: `${imageProgress}%` }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
+          />
+        </div>
+      )}
       <div className="relative z-10 pointer-events-auto">
         {isGenerating || status === 'generating' ? (
           <div className="flex flex-col items-center justify-center gap-2">
             <Loader2 className="h-5 w-5 animate-spin text-blue-400 mb-1" />
-            <span className="text-xs text-zinc-300">Generating image...</span>
+            <span className="text-xs text-zinc-300">Generating image... {imageProgress > 0 ? `${imageProgress}%` : ''}</span>
           </div>
         ) : status === 'failed' ? (
           <div className="flex flex-col items-center justify-center gap-2">

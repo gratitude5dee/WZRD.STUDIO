@@ -2,7 +2,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { FAL_MODELS, executeFalModel } from '../_shared/falai-client.ts';
+import { fal } from "https://esm.sh/@fal-ai/client@1.2.3";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") as string;
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") as string;
@@ -12,6 +12,11 @@ const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// Configure FAL client
+fal.config({
+  credentials: Deno.env.get('FAL_KEY')
+});
 
 // Convert image size string to FAL.AI format
 function convertImageSizeToFalFormat(imageSize: string): { width: number; height: number } | string {
@@ -100,37 +105,21 @@ serve(async (req) => {
       );
     }
 
-    console.log(`[generate-shot-image][Shot ${shotId}] Starting image generation process.`);
+    console.log(`[generate-shot-image][Shot ${shotId}] Starting image generation with streaming.`);
 
-    // Update shot status to generating
-    console.log(`[generate-shot-image][Shot ${shotId}] Updating status to 'generating'.`);
+    // Update shot status to generating immediately (instant UI feedback)
+    console.log(`[generate-shot-image][Shot ${shotId}] Updating status to 'generating' with progress 0.`);
     const { error: statusUpdateError } = await supabase
       .from("shots")
       .update({ 
         image_status: "generating",
+        image_progress: 0,
         failure_reason: null // Clear any previous failure reason
       })
       .eq("id", shotId);
       
     if (statusUpdateError) {
       console.error(`[generate-shot-image][Shot ${shotId}] Failed to update status: ${statusUpdateError.message}`);
-      // Continue anyway as this is not critical for the actual generation
-    }
-
-    console.log(`[generate-shot-image][Shot ${shotId}] Status updated to 'generating'. Visual prompt: ${shot.visual_prompt.substring(0, 60)}...`);
-
-    // Get the user information to associate the generation with
-    console.log(`[generate-shot-image][Shot ${shotId}] Getting user information...`);
-    const { data: authData, error: authError } = await supabase.auth.getUser(
-      req.headers.get("Authorization")?.split("Bearer ")[1] || ""
-    );
-
-    if (authError || !authData.user) {
-      console.error(`[generate-shot-image][Shot ${shotId}] Error getting user: ${authError?.message}`);
-      return new Response(
-        JSON.stringify({ success: false, error: "User not authenticated" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
     }
 
     // Get project's aspect ratio (default to 16:9 if not found)
@@ -151,26 +140,63 @@ serve(async (req) => {
     console.log(`[generate-shot-image][Shot ${shotId}] Using aspect ratio: ${aspectRatio}, FAL image size:`, falImageSize);
 
     try {
-      // Use FAL.AI directly with FLUX Schnell for fast image generation
-      console.log(`[generate-shot-image][Shot ${shotId}] Calling FAL.AI with FLUX Schnell...`);
+      // Use FAL.AI streaming for instant feedback
+      console.log(`[generate-shot-image][Shot ${shotId}] Starting FAL.AI stream with FLUX Schnell...`);
       
-      const result = await executeFalModel(FAL_MODELS.FLUX_SCHNELL, {
-        prompt: shot.visual_prompt,
-        image_size: falImageSize,
-        num_inference_steps: 4,
-        num_images: 1,
-        enable_safety_checker: true,
+      const stream = await fal.stream("fal-ai/flux/schnell", {
+        input: {
+          prompt: shot.visual_prompt,
+          image_size: falImageSize,
+          num_inference_steps: 4,
+          num_images: 1,
+          enable_safety_checker: true,
+        }
       });
 
-      if (!result.success) {
-        console.error(`[generate-shot-image][Shot ${shotId}] FAL.AI error: ${result.error}`);
-        throw new Error(result.error || 'FAL.AI generation failed');
+      // Track progress from stream events
+      let lastProgress = 0;
+      let progressUpdateCount = 0;
+      
+      for await (const event of stream) {
+        console.log(`[generate-shot-image][Shot ${shotId}] Stream event:`, JSON.stringify(event));
+        
+        // Calculate progress from event data
+        let progress = 0;
+        if (event.progress !== undefined) {
+          progress = Math.round(event.progress * 100);
+        } else if (event.status === 'IN_QUEUE') {
+          progress = 5;
+        } else if (event.status === 'IN_PROGRESS') {
+          // Increment progress for each event during generation
+          progress = Math.min(10 + progressUpdateCount * 15, 85);
+          progressUpdateCount++;
+        }
+        
+        // Only update DB if progress increased significantly (avoid too many updates)
+        if (progress > lastProgress && progress - lastProgress >= 10) {
+          lastProgress = progress;
+          console.log(`[generate-shot-image][Shot ${shotId}] Updating progress to ${progress}%`);
+          await supabase
+            .from("shots")
+            .update({ image_progress: progress })
+            .eq("id", shotId);
+        }
       }
 
-      const imageUrl = result.data?.images?.[0]?.url;
+      // Get final result
+      const result = await stream.done();
+      console.log(`[generate-shot-image][Shot ${shotId}] Stream completed, result:`, JSON.stringify(result));
+
+      const imageUrl = result?.images?.[0]?.url;
       if (!imageUrl) {
         throw new Error('No image URL returned from FAL.AI');
       }
+
+      // Update progress to 90% before download/upload
+      await supabase
+        .from("shots")
+        .update({ image_progress: 90 })
+        .eq("id", shotId);
 
       console.log(`[generate-shot-image][Shot ${shotId}] Image generated successfully, downloading and uploading to storage...`);
 
@@ -200,12 +226,13 @@ serve(async (req) => {
         .from('workflow-media')
         .getPublicUrl(fileName);
 
-      // Update shot with the generated image
+      // Update shot with the generated image and 100% progress
       const { error: updateError } = await supabase
         .from("shots")
         .update({ 
           image_url: publicUrl,
-          image_status: "completed"
+          image_status: "completed",
+          image_progress: 100
         })
         .eq("id", shotId);
 
@@ -233,6 +260,7 @@ serve(async (req) => {
         .from("shots")
         .update({ 
           image_status: "failed",
+          image_progress: 0,
           failure_reason: error.message
         })
         .eq("id", shotId);

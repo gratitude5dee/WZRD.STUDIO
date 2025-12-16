@@ -3949,6 +3949,7 @@ export type Database = {
           dialogue: string | null
           failure_reason: string | null
           id: string
+          image_progress: number | null
           image_status: string | null
           image_url: string | null
           luma_generation_id: string | null
@@ -3970,6 +3971,7 @@ export type Database = {
           dialogue?: string | null
           failure_reason?: string | null
           id?: string
+          image_progress?: number | null
           image_status?: string | null
           image_url?: string | null
           luma_generation_id?: string | null
@@ -3991,6 +3993,7 @@ export type Database = {
           dialogue?: string | null
           failure_reason?: string | null
           id?: string
+          image_progress?: number | null
           image_status?: string | null
           image_url?: string | null
           luma_generation_id?: string | null
