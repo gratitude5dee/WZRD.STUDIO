@@ -50,3 +50,9 @@ verify_jwt = false
 
 [functions.elevenlabs-music]
 verify_jwt = false
+
+[functions.compute-execute]
+verify_jwt = false
+
+[functions.compute-save-graph]
+verify_jwt = false
