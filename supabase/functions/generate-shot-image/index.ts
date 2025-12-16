@@ -140,54 +140,55 @@ serve(async (req) => {
     console.log(`[generate-shot-image][Shot ${shotId}] Using aspect ratio: ${aspectRatio}, FAL image size:`, falImageSize);
 
     try {
-      // Use FAL.AI streaming for instant feedback
-      console.log(`[generate-shot-image][Shot ${shotId}] Starting FAL.AI stream with FLUX Schnell...`);
+      // Use FAL.AI subscribe with onQueueUpdate for real-time progress
+      console.log(`[generate-shot-image][Shot ${shotId}] Starting FAL.AI generation with FLUX Schnell...`);
       
-      const stream = await fal.stream("fal-ai/flux/schnell", {
+      let lastProgress = 0;
+      
+      const result = await fal.subscribe("fal-ai/flux/schnell", {
         input: {
           prompt: shot.visual_prompt,
           image_size: falImageSize,
           num_inference_steps: 4,
           num_images: 1,
           enable_safety_checker: true,
-        }
+        },
+        logs: true,
+        onQueueUpdate: async (update) => {
+          console.log(`[generate-shot-image][Shot ${shotId}] Queue update: ${update.status}`);
+          
+          let progress = 0;
+          if (update.status === 'IN_QUEUE') {
+            progress = 10;
+            console.log(`[generate-shot-image][Shot ${shotId}] In queue, position: ${(update as any).position || 'unknown'}`);
+          } else if (update.status === 'IN_PROGRESS') {
+            progress = 50;
+            // Log any progress messages from the model
+            if ((update as any).logs) {
+              (update as any).logs.forEach((log: any) => {
+                console.log(`[generate-shot-image][Shot ${shotId}] Log: ${log.message}`);
+              });
+            }
+          } else if (update.status === 'COMPLETED') {
+            progress = 85;
+          }
+          
+          // Update DB if progress increased
+          if (progress > lastProgress) {
+            lastProgress = progress;
+            console.log(`[generate-shot-image][Shot ${shotId}] Updating progress to ${progress}%`);
+            await supabase
+              .from("shots")
+              .update({ image_progress: progress })
+              .eq("id", shotId);
+          }
+        },
       });
 
-      // Track progress from stream events
-      let lastProgress = 0;
-      let progressUpdateCount = 0;
-      
-      for await (const event of stream) {
-        console.log(`[generate-shot-image][Shot ${shotId}] Stream event:`, JSON.stringify(event));
-        
-        // Calculate progress from event data
-        let progress = 0;
-        if (event.progress !== undefined) {
-          progress = Math.round(event.progress * 100);
-        } else if (event.status === 'IN_QUEUE') {
-          progress = 5;
-        } else if (event.status === 'IN_PROGRESS') {
-          // Increment progress for each event during generation
-          progress = Math.min(10 + progressUpdateCount * 15, 85);
-          progressUpdateCount++;
-        }
-        
-        // Only update DB if progress increased significantly (avoid too many updates)
-        if (progress > lastProgress && progress - lastProgress >= 10) {
-          lastProgress = progress;
-          console.log(`[generate-shot-image][Shot ${shotId}] Updating progress to ${progress}%`);
-          await supabase
-            .from("shots")
-            .update({ image_progress: progress })
-            .eq("id", shotId);
-        }
-      }
+      console.log(`[generate-shot-image][Shot ${shotId}] Generation completed, result received`);
 
-      // Get final result
-      const result = await stream.done();
-      console.log(`[generate-shot-image][Shot ${shotId}] Stream completed, result:`, JSON.stringify(result));
-
-      const imageUrl = result?.images?.[0]?.url;
+      // Access image URL from result (fal.subscribe returns the result directly)
+      const imageUrl = result?.images?.[0]?.url || (result as any)?.data?.images?.[0]?.url;
       if (!imageUrl) {
         throw new Error('No image URL returned from FAL.AI');
       }
