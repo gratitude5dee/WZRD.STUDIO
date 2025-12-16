@@ -24,7 +24,9 @@ import '@xyflow/react/dist/style.css';
 import { ReactFlowTextNode } from './nodes/ReactFlowTextNode';
 import { ReactFlowImageNode } from './nodes/ReactFlowImageNode';
 import { ReactFlowVideoNode } from './nodes/ReactFlowVideoNode';
+import { ComputeNode } from './nodes/ComputeNode';
 import { EnhancedStudioEdge } from './edges/EnhancedStudioEdge';
+import { ComputeEdge } from './edges/ComputeEdge';
 import { BezierConnection } from './connections/BezierConnection';
 import { CustomConnectionLine } from './ConnectionLine';
 import { ConnectionNodeSelector } from './ConnectionNodeSelector';
@@ -35,8 +37,11 @@ import { useConnectionValidation } from '@/hooks/useConnectionValidation';
 import { useConnectionMode } from '@/hooks/useConnectionMode';
 import { useStudioKeyboardShortcuts } from '@/hooks/studio/useStudioKeyboardShortcuts';
 import { useSelectionBox } from '@/hooks/studio/useSelectionBox';
+import { HANDLE_COLORS, DataType, ConnectionValidator, isTypeCompatible } from '@/types/computeFlow';
+import { useComputeFlowStore } from '@/store/computeFlowStore';
 import { v4 as uuidv4 } from 'uuid';
 import EmptyCanvasState from './EmptyCanvasState';
+import { toast } from 'sonner';
 
 interface Block {
   id: string;
@@ -63,6 +68,8 @@ interface StudioCanvasProps {
   onUpdateBlockData: (id: string, data: Partial<Block>) => void;
   blockModels: Record<string, string>;
   onModelChange: (blockId: string, modelId: string) => void;
+  projectId?: string;
+  useComputeFlow?: boolean;
 }
 
 // Node types configuration (outside component for React Flow optimization)
@@ -70,18 +77,20 @@ const nodeTypes: NodeTypes = {
   text: ReactFlowTextNode,
   image: ReactFlowImageNode,
   video: ReactFlowVideoNode,
+  compute: ComputeNode,
 };
 
 // Edge types configuration
 const edgeTypes: EdgeTypes = {
   bezier: BezierConnection,
   studio: EnhancedStudioEdge,
-  default: BezierConnection, // Use Bezier as default
+  compute: ComputeEdge,
+  default: BezierConnection,
 };
 
 // Default edge options
 const defaultEdgeOptions = {
-  type: 'bezier', // Use Bezier connections
+  type: 'bezier',
   animated: false,
   data: {
     status: 'idle',
@@ -99,9 +108,11 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
   onUpdateBlockData,
   blockModels,
   onModelChange,
+  projectId,
+  useComputeFlow = false,
 }) => {
-  const { screenToFlowPosition, fitView, zoomIn, zoomOut } = useReactFlow();
-  const { isValidConnection } = useConnectionValidation();
+  const { screenToFlowPosition, fitView, zoomIn, zoomOut, getEdges } = useReactFlow();
+  const { isValidConnection: isValidBlockConnection } = useConnectionValidation();
   const { 
     connectionState, 
     isClickMode, 
@@ -109,6 +120,20 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
     toggleMode,
     cancelClickConnection 
   } = useConnectionMode();
+  
+  // Compute flow store
+  const { 
+    nodeDefinitions, 
+    edgeDefinitions, 
+    loadGraph, 
+    saveGraph,
+    addNode: addComputeNode,
+    updateNode: updateComputeNode,
+    removeNode: removeComputeNode,
+  } = useComputeFlowStore();
+  
+  // Track dragging data type for handle highlighting
+  const [draggingDataType, setDraggingDataType] = useState<DataType | null>(null);
   
   // Handler for spawning multiple blocks
   const handleSpawnBlocks = useCallback((spawnedBlocks: Array<Block>) => {
@@ -238,13 +263,86 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
     selectedNodeIds: selectedNodes.map(n => n.id),
   });
 
+  // Enhanced connection validation for compute flow
+  const isValidConnection = useCallback((connection: Connection): boolean => {
+    // Use legacy validation for non-compute flow
+    if (!useComputeFlow) {
+      return isValidBlockConnection(connection);
+    }
+    
+    const { source, target, sourceHandle, targetHandle } = connection;
+    if (!source || !target || !sourceHandle || !targetHandle) return false;
+
+    // Prevent self-connections
+    if (source === target) {
+      toast.error('Cannot connect node to itself');
+      return false;
+    }
+
+    const sourceNode = nodeDefinitions.find(n => n.id === source);
+    const targetNode = nodeDefinitions.find(n => n.id === target);
+    if (!sourceNode || !targetNode) return isValidBlockConnection(connection);
+
+    const sourcePort = sourceNode.outputs.find(p => p.id === sourceHandle);
+    const targetPort = targetNode.inputs.find(p => p.id === targetHandle);
+    if (!sourcePort || !targetPort) return isValidBlockConnection(connection);
+
+    // Validate using ConnectionValidator
+    const validation = ConnectionValidator.validateConnection(
+      sourcePort,
+      targetPort,
+      edgeDefinitions,
+      source,
+      target
+    );
+
+    if (!validation.valid) {
+      toast.error(validation.error || 'Invalid connection');
+      return false;
+    }
+
+    return true;
+  }, [useComputeFlow, isValidBlockConnection, nodeDefinitions, edgeDefinitions]);
+
   const onConnect = useCallback(
     (connection: Connection) => {
       if (isValidConnection(connection)) {
-        setEdges((eds) => addEdge({ ...connection, type: 'studio' }, eds));
+        const { source, sourceHandle } = connection;
+        
+        // Determine edge type and data
+        let edgeType = 'studio';
+        let edgeData: any = { status: 'idle', dataType: 'data' };
+        
+        if (useComputeFlow && source && sourceHandle) {
+          const sourceNode = nodeDefinitions.find(n => n.id === source);
+          const sourcePort = sourceNode?.outputs.find(p => p.id === sourceHandle);
+          if (sourcePort) {
+            edgeType = 'compute';
+            edgeData = {
+              dataType: sourcePort.datatype,
+              status: 'idle',
+            };
+          }
+        }
+        
+        setEdges((eds) => addEdge({ 
+          ...connection, 
+          id: uuidv4(),
+          type: edgeType,
+          data: edgeData,
+          style: useComputeFlow && edgeData.dataType ? {
+            stroke: HANDLE_COLORS[edgeData.dataType as DataType],
+            strokeWidth: 2,
+          } : undefined,
+        }, eds));
+        
+        // Auto-save for compute flow
+        if (useComputeFlow && projectId) {
+          setTimeout(() => saveGraph(projectId), 100);
+        }
       }
     },
-    [isValidConnection]
+    [isValidConnection, useComputeFlow, nodeDefinitions, projectId, saveGraph]
   );
 
   const onConnectEnd = useCallback(
@@ -447,6 +545,11 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
         />
         <MiniMap
           nodeColor={(node) => {
+            if (node.type === 'compute') {
+              const data = node.data as any;
+              const outputType = data?.outputs?.[0]?.datatype || 'any';
+              return HANDLE_COLORS[outputType as DataType] || HANDLE_COLORS.any;
+            }
             if (node.type === 'text') return 'hsl(var(--chart-1))';
             if (node.type === 'image') return 'hsl(var(--chart-2))';
             if (node.type === 'video') return 'hsl(var(--chart-3))';
