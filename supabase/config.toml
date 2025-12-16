@@ -38,3 +38,6 @@ verify_jwt = false
 
 [functions.fal-stream]
 verify_jwt = false
+
+[functions.gen-shots]
+verify_jwt = false
