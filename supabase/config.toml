@@ -1,5 +1,8 @@
 project_id = "ixkkrousepsiorwlaycp"
 
+[functions.wallet-auth]
+verify_jwt = false
+
 [functions.studio-save-state]
 verify_jwt = false
 
