@@ -2,6 +2,7 @@
 // EDGE FUNCTION: asset-processor
 // PURPOSE: Background job to process uploaded assets (thumbnails, metadata)
 // ROUTE: POST /functions/v1/asset-processor (invoked by cron or queue)
+// VERSION: 2.0.0 - Fixed deprecated Deno std imports
 // ============================================================================
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
