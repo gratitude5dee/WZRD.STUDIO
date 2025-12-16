@@ -130,16 +130,22 @@ export default function Home() {
         <div className="flex-1 ml-64">
           {/* Header */}
           <header className={cn(
-            "h-16 border-b border-border/30 flex items-center justify-center px-6",
+            "h-20 border-b border-border/30 flex items-center justify-between px-6",
             "bg-gradient-to-r from-card/50 via-transparent to-card/50 backdrop-blur-sm"
           )}>
+            <div className="flex flex-col">
+              <div className="flex items-center gap-2">
+                <span className="text-xl font-semibold text-foreground">Dashboard</span>
+                <span className="text-lg">📊</span>
+              </div>
+              <p className="text-sm text-muted-foreground">Welcome back! Here's your creative overview</p>
+            </div>
             <div className="flex items-center gap-3">
               <img 
                 src={wzrdLogo} 
                 alt="WZRD.STUDIO Logo" 
-                className="h-12 object-contain"
+                className="h-10 object-contain"
               />
-              <span className="text-xl font-semibold text-foreground">Studio</span>
               <span className="text-xs text-primary bg-primary/10 px-2 py-0.5 rounded-full border border-primary/20 font-medium">
                 ALPHA
               </span>

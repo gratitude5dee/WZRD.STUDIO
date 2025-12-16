@@ -120,6 +120,13 @@
     --glitch-red: 0 100% 50%;
     --glitch-blue: 200 100% 50%;
 
+    /* NEW: Teal & Amber Accent System */
+    --teal: 168 76% 42%;
+    --teal-foreground: 168 76% 98%;
+    --amber: 38 92% 50%;
+    --amber-foreground: 38 92% 10%;
+    --gold: 43 96% 56%;
+
     /* Odyssey Light Mode - Cosmic Foundation */
     --background: 240 10% 96%;
     --foreground: 220 15% 15%;
@@ -131,8 +138,8 @@
     --popover-foreground: 220 15% 15%;
 
     /* Cosmic Primary - Deep Space Blue */
-    --primary: 230 50% 25%;
-    --primary-foreground: 240 100% 98%;
+    --primary: 168 76% 42%;
+    --primary-foreground: 168 76% 98%;
 
     /* Nebula Secondary - Ethereal Purple */
     --secondary: 270 30% 85%;
@@ -143,15 +150,15 @@
     --muted-foreground: 220 10% 45%;
 
     /* Stellar Accent - Cosmic Gold */
-    --accent: 275 85% 68%;
-    --accent-foreground: 275 95% 10%;
+    --accent: 38 92% 50%;
+    --accent-foreground: 38 92% 10%;
 
     --destructive: 0 75% 55%;
     --destructive-foreground: 0 0% 98%;
 
     --border: 240 20% 85%;
     --input: 240 20% 92%;
-    --ring: 230 50% 25%;
+    --ring: 168 76% 42%;
 
     /* Refined Purple Theme Colors (Partiful-inspired) */
     --refined-deep: 30 27 75;
@@ -164,22 +171,22 @@
     /* Odyssey Extended Palette */
     --cosmic-void: 220 25% 8%;
     --nebula-purple: 270 60% 50%;
-    --stellar-gold: 275 90% 65%;
+    --stellar-gold: 38 92% 50%;
     --plasma-blue: 200 85% 55%;
     --quantum-green: 160 70% 45%;
-    --temporal-orange: 275 90% 65%;
+    --temporal-orange: 38 92% 50%;
     --void-shadow: 220 30% 12%;
     
     /* Glass Effects */
-    --glass-primary: 230 50% 25% / 0.1;
+    --glass-primary: 168 76% 42% / 0.1;
     --glass-secondary: 270 60% 50% / 0.08;
-    --glass-accent: 275 90% 65% / 0.12;
+    --glass-accent: 38 92% 50% / 0.12;
     --glass-backdrop: 240 10% 5% / 0.4;
     
     /* Glow Effects */
-    --glow-primary: 230 80% 60%;
+    --glow-primary: 168 80% 50%;
     --glow-secondary: 270 70% 65%;
-    --glow-accent: 275 95% 70%;
+    --glow-accent: 38 95% 60%;
     
     /* AI Canvas Design Tokens */
     --canvas-bg: 0 0% 7%;           /* #121212 - Very dark grey canvas */
@@ -189,7 +196,7 @@
     --accent-blue: 217 91% 60%;     /* #3B82F6 - Neutral blue */
     --accent-purple: 258 90% 66%;   /* #8B5CF6 - Purple alternative */
     --connector-default: 0 0% 27%;  /* #444444 - Subtle grey */
-    --connector-active: 217 91% 60%; /* #3B82F6 - Active connector */
+    --connector-active: 168 76% 42%; /* Teal - Active connector */
     
     /* Purple Scale for UI Components */
     --purple-400: 258 90% 66%;      /* #A78BFA - Light purple */
@@ -210,8 +217,15 @@
     --popover: 220 30% 10%;
     --popover-foreground: 240 20% 92%;
 
-    /* Cosmic Primary - Stellar Blue */
-    --primary: 200 85% 65%;
+    /* NEW: Teal & Amber Accent System for Dark Mode */
+    --teal: 168 76% 42%;
+    --teal-foreground: 168 76% 98%;
+    --amber: 38 92% 50%;
+    --amber-foreground: 38 92% 10%;
+    --gold: 43 96% 56%;
+
+    /* Primary - Teal */
+    --primary: 168 76% 42%;
     --primary-foreground: 220 25% 8%;
 
     /* Nebula Secondary - Deep Purple */
@@ -222,8 +236,8 @@
     --muted: 220 20% 12%;
     --muted-foreground: 240 15% 65%;
 
-    /* Stellar Accent - Quantum Gold */
-    --accent: 275 90% 68%;
+    /* Accent - Amber/Gold */
+    --accent: 38 92% 50%;
     --accent-foreground: 220 25% 8%;
 
     --destructive: 0 70% 60%;
@@ -231,12 +245,12 @@
 
     --border: 220 30% 18%;
     --input: 220 30% 12%;
-    --ring: 200 85% 65%;
+    --ring: 168 76% 42%;
 
     /* Enhanced Glass Effects for Dark Mode */
-    --glass-primary: 200 85% 65% / 0.15;
+    --glass-primary: 168 76% 42% / 0.15;
     --glass-secondary: 270 60% 50% / 0.12;
-    --glass-accent: 275 90% 68% / 0.18;
+    --glass-accent: 38 92% 50% / 0.18;
     --glass-backdrop: 220 25% 6% / 0.6;
     
     /* AI Canvas Design Tokens (Dark Mode Optimized) */
@@ -247,7 +261,7 @@
     --accent-blue: 217 91% 60%;     /* #3B82F6 - Neutral blue */
     --accent-purple: 258 90% 66%;   /* #8B5CF6 - Purple alternative */
     --connector-default: 0 0% 27%;  /* #444444 - Subtle grey */
-    --connector-active: 217 91% 60%; /* #3B82F6 - Active connector */
+    --connector-active: 168 76% 42%; /* Teal - Active connector */
     
     /* Purple Scale for UI Components */
     --purple-400: 258 90% 66%;      /* #A78BFA - Light purple */

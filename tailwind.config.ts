@@ -52,6 +52,16 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
+				// NEW: Teal & Amber Accent Colors
+				teal: {
+					DEFAULT: 'hsl(var(--teal))',
+					foreground: 'hsl(var(--teal-foreground))'
+				},
+				amber: {
+					DEFAULT: 'hsl(var(--amber))',
+					foreground: 'hsl(var(--amber-foreground))'
+				},
+				gold: 'hsl(var(--gold))',
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',
@@ -117,6 +127,7 @@ export default {
 				'glow-purple-sm': '0 0 8px rgba(147, 51, 234, 0.4), 0 0 15px rgba(147, 51, 234, 0.15)',
 				'glow-purple-md': '0 0 15px rgba(147, 51, 234, 0.5), 0 0 25px rgba(147, 51, 234, 0.2)',
 				'glow-blue-md': '0 0 15px rgba(47, 123, 188, 0.5), 0 0 25px rgba(47, 123, 188, 0.2)',
+				'glow-teal-md': '0 0 15px rgba(20, 184, 166, 0.5), 0 0 25px rgba(20, 184, 166, 0.2)',
 			},
 			transitionDuration: {
 				'std': '300ms',
