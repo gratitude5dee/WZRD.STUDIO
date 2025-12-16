@@ -57,11 +57,11 @@ const TabNavigation = () => {
                     "relative flex items-center gap-3 px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-300",
                     "backdrop-blur-md border",
                     isActive && [
-                      "bg-primary/15 text-primary border-primary/30",
-                      "shadow-[0_0_24px_rgba(20,184,166,0.2),inset_0_1px_0_rgba(255,255,255,0.05)]"
+                      "bg-[rgba(139,92,246,0.15)] text-[#A78BFA] border-[rgba(139,92,246,0.35)]",
+                      "shadow-[0_0_28px_rgba(139,92,246,0.25),inset_0_1px_0_rgba(255,255,255,0.05)]"
                     ],
                     isCompleted && !isActive && [
-                      "bg-primary/10 text-primary/80 border-primary/20"
+                      "bg-[rgba(139,92,246,0.1)] text-[#C4B5FD] border-[rgba(139,92,246,0.25)]"
                     ],
                     !isActive && !isCompleted && [
                       "bg-white/[0.03] text-muted-foreground border-white/[0.06]",
@@ -72,8 +72,8 @@ const TabNavigation = () => {
                   {/* Step number or checkmark */}
                   <span className={cn(
                     "flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold transition-all duration-300",
-                    isActive && "bg-primary text-primary-foreground shadow-[0_0_12px_rgba(20,184,166,0.4)]",
-                    isCompleted && !isActive && "bg-primary/70 text-primary-foreground",
+                    isActive && "bg-[#8B5CF6] text-white shadow-[0_0_16px_rgba(139,92,246,0.5)]",
+                    isCompleted && !isActive && "bg-[rgba(139,92,246,0.7)] text-white",
                     !isActive && !isCompleted && "bg-white/[0.08] text-muted-foreground"
                   )}>
                     {isCompleted ? <Check className="w-3.5 h-3.5" /> : stepNumber}
@@ -84,7 +84,7 @@ const TabNavigation = () => {
                   {/* Active indicator line */}
                   {isActive && (
                     <motion.div
-                      className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-12 h-0.5 bg-gradient-to-r from-transparent via-primary to-transparent rounded-full"
+                      className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-12 h-0.5 bg-gradient-to-r from-transparent via-[#8B5CF6] to-transparent rounded-full"
                       layoutId="activeTabIndicator"
                       transition={{ duration: 0.3, type: "spring", stiffness: 400, damping: 30 }}
                     />
@@ -96,7 +96,7 @@ const TabNavigation = () => {
                   <div className={cn(
                     "mx-2 w-8 h-px transition-colors duration-300",
                     index < activeIndex 
-                      ? "bg-gradient-to-r from-primary/50 to-primary/30" 
+                      ? "bg-gradient-to-r from-[rgba(139,92,246,0.5)] to-[rgba(139,92,246,0.3)]" 
                       : "bg-white/[0.08]"
                   )} />
                 )}

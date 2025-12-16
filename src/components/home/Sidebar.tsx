@@ -43,7 +43,7 @@ export const Sidebar = ({ activeView, onViewChange }: SidebarProps) => {
       "glass-sidebar border-r border-white/[0.04]"
     )}>
       {/* Subtle gradient overlay for depth */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.03] via-transparent to-accent/[0.02] pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-br from-[rgba(139,92,246,0.04)] via-transparent to-[rgba(245,158,11,0.02)] pointer-events-none" />
       
       {/* Top highlight line */}
       <div className="absolute top-0 left-4 right-4 h-px bg-gradient-to-r from-transparent via-white/[0.08] to-transparent" />
@@ -58,7 +58,7 @@ export const Sidebar = ({ activeView, onViewChange }: SidebarProps) => {
         {/* Main Menu Section */}
         <div>
           <div className="flex items-center gap-2 px-3 mb-3">
-            <Sparkles className="w-3.5 h-3.5 text-primary" />
+            <Sparkles className="w-3.5 h-3.5 text-[#A78BFA]" />
             <span className="text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-[0.15em]">Main Menu</span>
           </div>
           <div className="space-y-1">
@@ -79,21 +79,21 @@ export const Sidebar = ({ activeView, onViewChange }: SidebarProps) => {
                   className={cn(
                     "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200",
                     isActive
-                      ? "bg-primary/15 text-primary border border-primary/25 shadow-[0_0_20px_rgba(20,184,166,0.15),inset_0_1px_0_rgba(255,255,255,0.05)]"
+                      ? "bg-[rgba(139,92,246,0.15)] text-[#A78BFA] border border-[rgba(139,92,246,0.3)] shadow-[0_0_20px_rgba(139,92,246,0.2),inset_0_1px_0_rgba(255,255,255,0.05)]"
                       : "text-muted-foreground hover:text-foreground hover:bg-white/[0.04]"
                   )}
                 >
                   <div className={cn(
                     "w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200",
                     isActive 
-                      ? "bg-primary/20 shadow-[0_0_12px_rgba(20,184,166,0.3)]" 
+                      ? "bg-[rgba(139,92,246,0.25)] shadow-[0_0_16px_rgba(139,92,246,0.4)]" 
                       : "bg-white/[0.04]"
                   )}>
-                    <Icon className={cn("w-4 h-4", isActive && "text-primary")} />
+                    <Icon className={cn("w-4 h-4", isActive && "text-[#A78BFA]")} />
                   </div>
                   <span className="flex-1 text-left">{item.label}</span>
                   {item.showBadge && (
-                    <Badge variant="secondary" className="text-[9px] bg-primary/20 text-primary border-primary/25 px-1.5 py-0.5 font-semibold">
+                    <Badge variant="secondary" className="text-[9px] bg-[rgba(139,92,246,0.2)] text-[#A78BFA] border-[rgba(139,92,246,0.3)] px-1.5 py-0.5 font-semibold">
                       New
                     </Badge>
                   )}
@@ -121,15 +121,15 @@ export const Sidebar = ({ activeView, onViewChange }: SidebarProps) => {
                   className={cn(
                     "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200",
                     isActive
-                      ? "bg-primary/15 text-primary border border-primary/25"
+                      ? "bg-[rgba(139,92,246,0.15)] text-[#A78BFA] border border-[rgba(139,92,246,0.3)]"
                       : "text-muted-foreground hover:text-foreground hover:bg-white/[0.04]"
                   )}
                 >
                   <div className={cn(
                     "w-8 h-8 rounded-lg flex items-center justify-center",
-                    isActive ? "bg-primary/20" : "bg-white/[0.04]"
+                    isActive ? "bg-[rgba(139,92,246,0.25)]" : "bg-white/[0.04]"
                   )}>
-                    <Icon className="w-4 h-4" />
+                    <Icon className={cn("w-4 h-4", isActive && "text-[#A78BFA]")} />
                   </div>
                   <span>{item.label}</span>
                 </button>
@@ -167,7 +167,7 @@ export const Sidebar = ({ activeView, onViewChange }: SidebarProps) => {
       {/* Bottom Section */}
       <div className="relative z-10 p-4 border-t border-white/[0.05] space-y-4">
         {/* Credits Display */}
-        <div className="p-3 rounded-xl bg-gradient-to-br from-primary/[0.08] to-accent/[0.04] border border-primary/15 backdrop-blur-sm">
+        <div className="p-3 rounded-xl bg-gradient-to-br from-[rgba(139,92,246,0.1)] to-[rgba(245,158,11,0.05)] border border-[rgba(139,92,246,0.2)] backdrop-blur-sm">
           <CreditsDisplay showTooltip={false} />
         </div>
         

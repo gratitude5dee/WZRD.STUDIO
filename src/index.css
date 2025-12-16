@@ -217,16 +217,16 @@
     --popover: 220 30% 10%;
     --popover-foreground: 240 20% 92%;
 
-    /* NEW: Teal & Amber Accent System for Dark Mode */
-    --teal: 168 76% 42%;
-    --teal-foreground: 168 76% 98%;
+    /* NEW: Purple & Amber Accent System for Dark Mode */
+    --purple: 258 90% 66%;
+    --purple-foreground: 0 0% 100%;
     --amber: 38 92% 50%;
     --amber-foreground: 38 92% 10%;
     --gold: 43 96% 56%;
 
-    /* Primary - Teal */
-    --primary: 168 76% 42%;
-    --primary-foreground: 220 25% 8%;
+    /* Primary - Vibrant Purple #8B5CF6 */
+    --primary: 258 90% 66%;
+    --primary-foreground: 0 0% 100%;
 
     /* Nebula Secondary - Deep Purple */
     --secondary: 270 40% 15%;
@@ -245,10 +245,10 @@
 
     --border: 220 30% 18%;
     --input: 220 30% 12%;
-    --ring: 168 76% 42%;
+    --ring: 258 90% 66%;
 
-    /* Enhanced Glass Effects for Dark Mode */
-    --glass-primary: 168 76% 42% / 0.15;
+    /* Enhanced Glass Effects for Dark Mode - Purple */
+    --glass-primary: 258 90% 66% / 0.15;
     --glass-secondary: 270 60% 50% / 0.12;
     --glass-accent: 38 92% 50% / 0.18;
     --glass-backdrop: 220 25% 6% / 0.6;
@@ -407,9 +407,38 @@ body::after {
 
 /* Active/Selected states with glow */
 .glass-active {
-  border-color: rgba(20, 184, 166, 0.5);
+  border-color: rgba(139, 92, 246, 0.5);
   box-shadow: 
-    0 0 0 1px rgba(20, 184, 166, 0.2),
-    0 4px 24px rgba(20, 184, 166, 0.15),
+    0 0 0 1px rgba(139, 92, 246, 0.2),
+    0 4px 28px rgba(139, 92, 246, 0.18),
     inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* Purple glass effects */
+.glass-active-purple {
+  border-color: rgba(139, 92, 246, 0.5);
+  box-shadow: 
+    0 0 0 1px rgba(139, 92, 246, 0.2),
+    0 4px 28px rgba(139, 92, 246, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.glow-text-purple {
+  text-shadow: 0 0 12px rgba(139, 92, 246, 0.5), 0 0 24px rgba(139, 92, 246, 0.3);
+}
+
+/* Premium gradient background */
+.bg-premium-dark {
+  background: 
+    radial-gradient(ellipse at top left, rgba(139, 92, 246, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at bottom right, rgba(245, 158, 11, 0.05) 0%, transparent 50%),
+    linear-gradient(180deg, hsl(220 25% 6%) 0%, hsl(220 28% 4%) 100%);
+}
+
+/* Purple scene badge glow */
+.scene-badge-glow-purple {
+  box-shadow: 
+    0 0 20px rgba(139, 92, 246, 0.3),
+    0 0 40px rgba(139, 92, 246, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
