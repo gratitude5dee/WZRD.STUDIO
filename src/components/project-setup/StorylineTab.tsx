@@ -441,12 +441,20 @@ const StorylineTab = ({ projectData, updateProjectData }: StorylineTabProps) => 
                   {/* Display streaming or final story */}
                   <div className="prose prose-invert max-w-none">
                     {['creating', 'generating', 'scenes', 'characters'].includes(streamingStatus) && streamingStory ? (
-                      <p className="text-zinc-300 whitespace-pre-line animate-fade-in">
-                        {streamingStory}
-                        <span className="inline-block w-2 h-5 bg-primary ml-1 animate-pulse"></span>
-                      </p>
+                      <div className="relative">
+                        <p className="text-zinc-300 whitespace-pre-line leading-relaxed transition-all duration-75">
+                          {streamingStory}
+                          <span className="inline-block w-0.5 h-5 bg-primary ml-0.5 animate-[blink_0.8s_ease-in-out_infinite]" />
+                        </p>
+                        <style>{`
+                          @keyframes blink {
+                            0%, 50% { opacity: 1; }
+                            51%, 100% { opacity: 0; }
+                          }
+                        `}</style>
+                      </div>
                     ) : selectedStoryline?.full_story ? (
-                      <p className="text-zinc-300 whitespace-pre-line">
+                      <p className="text-zinc-300 whitespace-pre-line leading-relaxed">
                         {selectedStoryline.full_story}
                       </p>
                     ) : streamingStatus === 'creating' ? (
