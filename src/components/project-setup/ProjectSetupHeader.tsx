@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/ui/logo';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { cn } from '@/lib/utils';
 
 interface ProjectSetupHeaderProps {
@@ -49,6 +50,7 @@ const ProjectSetupHeader = ({ currentStep = 1, totalSteps = 4 }: ProjectSetupHea
         </div>
         
         <div className="flex items-center gap-3">
+          <ThemeToggle />
           <Button variant="ghost" className="bg-transparent hover:bg-primary/10 text-primary">
             Upgrade
           </Button>

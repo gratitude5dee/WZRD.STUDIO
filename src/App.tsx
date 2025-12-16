@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useParams } from "react-router-dom";
 import { ThirdwebProvider } from "thirdweb/react";
+import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/providers/AuthProvider";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import PerfShell from "@/components/perf/PerfShell";
@@ -45,9 +46,10 @@ const App = () => {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ThirdwebProvider>
-        <TooltipProvider>
-          <BrowserRouter>
+      <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+        <ThirdwebProvider>
+          <TooltipProvider>
+            <BrowserRouter>
             <AuthProvider>
               <CursorLoadingProvider>
                 <CursorWrapper />
@@ -173,7 +175,8 @@ const App = () => {
           </BrowserRouter>
         </TooltipProvider>
       </ThirdwebProvider>
-    </QueryClientProvider>
+    </ThemeProvider>
+  </QueryClientProvider>
   );
 };
 
