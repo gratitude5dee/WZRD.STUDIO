@@ -1087,6 +1087,242 @@ export type Database = {
         }
         Relationships: []
       }
+      compute_edges: {
+        Row: {
+          created_at: string
+          data_type: string
+          id: string
+          metadata: Json | null
+          project_id: string
+          source_node_id: string
+          source_port_id: string
+          status: string
+          target_node_id: string
+          target_port_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          data_type?: string
+          id?: string
+          metadata?: Json | null
+          project_id: string
+          source_node_id: string
+          source_port_id: string
+          status?: string
+          target_node_id: string
+          target_port_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          data_type?: string
+          id?: string
+          metadata?: Json | null
+          project_id?: string
+          source_node_id?: string
+          source_port_id?: string
+          status?: string
+          target_node_id?: string
+          target_port_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compute_edges_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compute_edges_source_node_id_fkey"
+            columns: ["source_node_id"]
+            isOneToOne: false
+            referencedRelation: "compute_nodes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compute_edges_target_node_id_fkey"
+            columns: ["target_node_id"]
+            isOneToOne: false
+            referencedRelation: "compute_nodes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      compute_nodes: {
+        Row: {
+          created_at: string
+          error: string | null
+          id: string
+          inputs: Json
+          is_dirty: boolean | null
+          kind: string
+          label: string
+          metadata: Json | null
+          outputs: Json
+          params: Json
+          position: Json
+          preview: Json | null
+          progress: number | null
+          project_id: string
+          size: Json | null
+          status: string
+          updated_at: string
+          user_id: string
+          version: string
+        }
+        Insert: {
+          created_at?: string
+          error?: string | null
+          id?: string
+          inputs?: Json
+          is_dirty?: boolean | null
+          kind: string
+          label?: string
+          metadata?: Json | null
+          outputs?: Json
+          params?: Json
+          position?: Json
+          preview?: Json | null
+          progress?: number | null
+          project_id: string
+          size?: Json | null
+          status?: string
+          updated_at?: string
+          user_id: string
+          version?: string
+        }
+        Update: {
+          created_at?: string
+          error?: string | null
+          id?: string
+          inputs?: Json
+          is_dirty?: boolean | null
+          kind?: string
+          label?: string
+          metadata?: Json | null
+          outputs?: Json
+          params?: Json
+          position?: Json
+          preview?: Json | null
+          progress?: number | null
+          project_id?: string
+          size?: Json | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+          version?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compute_nodes_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      compute_run_events: {
+        Row: {
+          artifacts: Json | null
+          created_at: string
+          id: string
+          message: string | null
+          node_id: string
+          progress: number | null
+          run_id: string
+          status: string
+        }
+        Insert: {
+          artifacts?: Json | null
+          created_at?: string
+          id?: string
+          message?: string | null
+          node_id: string
+          progress?: number | null
+          run_id: string
+          status: string
+        }
+        Update: {
+          artifacts?: Json | null
+          created_at?: string
+          id?: string
+          message?: string | null
+          node_id?: string
+          progress?: number | null
+          run_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compute_run_events_node_id_fkey"
+            columns: ["node_id"]
+            isOneToOne: false
+            referencedRelation: "compute_nodes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compute_run_events_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "compute_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      compute_runs: {
+        Row: {
+          created_at: string
+          error: string | null
+          execution_order: Json | null
+          finished_at: string | null
+          id: string
+          logs: Json | null
+          outputs: Json | null
+          project_id: string
+          started_at: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          error?: string | null
+          execution_order?: Json | null
+          finished_at?: string | null
+          id?: string
+          logs?: Json | null
+          outputs?: Json | null
+          project_id: string
+          started_at?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          error?: string | null
+          execution_order?: Json | null
+          finished_at?: string | null
+          id?: string
+          logs?: Json | null
+          outputs?: Json | null
+          project_id?: string
+          started_at?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compute_runs_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contact_venues: {
         Row: {
           contact_id: string

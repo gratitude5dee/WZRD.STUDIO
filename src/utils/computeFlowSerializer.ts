@@ -97,9 +97,9 @@ export function deserializeFromComputeFlow(
     id: edge.id,
     sourceBlockId: edge.source.nodeId,
     targetBlockId: edge.target.nodeId,
-    sourcePoint: 'right',
-    targetPoint: 'left',
-    dataType: edge.dataType,
+    sourcePoint: 'right' as const,
+    targetPoint: 'left' as const,
+    dataType: edge.dataType === 'audio' ? 'any' : edge.dataType,
     sourcePointId: edge.source.portId,
     targetPointId: edge.target.portId
   }));

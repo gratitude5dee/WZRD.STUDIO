@@ -1,9 +1,38 @@
 // Compute Flow Type Definitions - Based on Functional Requirements
 
-export type DataType = 'image' | 'text' | 'video' | 'tensor' | 'json' | 'any';
+export type DataType = 'image' | 'text' | 'video' | 'tensor' | 'json' | 'audio' | 'any';
 export type Cardinality = '1' | 'n'; // 1 = single connection, n = multiple
 export type NodeStatus = 'idle' | 'queued' | 'running' | 'succeeded' | 'failed' | 'canceled' | 'dirty';
 export type EdgeStatus = 'idle' | 'running' | 'succeeded' | 'error';
+export type PortPosition = 'top' | 'right' | 'bottom' | 'left';
+
+// Color mapping for data types (matching reference images - purple theme)
+export const HANDLE_COLORS: Record<DataType, string> = {
+  image: '#22c55e',      // Green
+  text: '#f59e0b',       // Amber
+  video: '#8b5cf6',      // Purple
+  audio: '#ec4899',      // Pink
+  tensor: '#06b6d4',     // Cyan
+  json: '#64748b',       // Slate
+  any: '#94a3b8',        // Gray
+};
+
+// Type compatibility matrix
+export const TYPE_COMPATIBILITY: Record<DataType, DataType[]> = {
+  image: ['image', 'any'],
+  text: ['text', 'any', 'image', 'video', 'audio'], // Text can connect anywhere as metadata
+  video: ['video', 'any'],
+  audio: ['audio', 'any'],
+  tensor: ['tensor', 'any'],
+  json: ['json', 'any'],
+  any: ['image', 'text', 'video', 'audio', 'tensor', 'json', 'any'],
+};
+
+export function isTypeCompatible(sourceType: DataType, targetType: DataType): boolean {
+  if (sourceType === 'any' || targetType === 'any') return true;
+  if (sourceType === 'text') return true; // Text is universally compatible
+  return TYPE_COMPATIBILITY[sourceType]?.includes(targetType) ?? false;
+}
 
 export interface Port {
   id: string;
