@@ -102,22 +102,22 @@ serve(async (req) => {
       }
     );
 
-    console.log(`[generate-visual-prompt][Shot ${shotId}] Calling Lovable AI Gateway with Gemini 2.5 Flash...`);
+    console.log(`[generate-visual-prompt][Shot ${shotId}] Calling Groq API...`);
     
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
-      throw new Error('LOVABLE_API_KEY not configured');
+    const GROQ_API_KEY = Deno.env.get('GROQ_API_KEY');
+    if (!GROQ_API_KEY) {
+      throw new Error('GROQ_API_KEY not configured');
     }
 
-    // Call Lovable AI Gateway with Gemini 2.5 Flash
-    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    // Call Groq API
+    const aiResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        'Authorization': `Bearer ${GROQ_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
+        model: 'llama-3.3-70b-versatile',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
@@ -129,21 +129,18 @@ serve(async (req) => {
 
     if (!aiResponse.ok) {
       const errorText = await aiResponse.text();
-      console.error(`[generate-visual-prompt][Shot ${shotId}] AI Gateway error: ${aiResponse.status} - ${errorText}`);
+      console.error(`[generate-visual-prompt][Shot ${shotId}] Groq API error: ${aiResponse.status} - ${errorText}`);
       if (aiResponse.status === 429) {
         throw new Error('Rate limit exceeded. Please try again later.');
       }
-      if (aiResponse.status === 402) {
-        throw new Error('Credits exhausted. Please add credits to your workspace.');
-      }
-      throw new Error(`AI Gateway error: ${aiResponse.status}`);
+      throw new Error(`Groq API error: ${aiResponse.status}`);
     }
 
     const aiData = await aiResponse.json();
     const visualPrompt = aiData.choices?.[0]?.message?.content?.trim();
 
     if (!visualPrompt) {
-      throw new Error('No response received from AI Gateway');
+      throw new Error('No response received from Groq API');
     }
     console.log(`[generate-visual-prompt][Shot ${shotId}] Generated visual prompt:`, visualPrompt);
 

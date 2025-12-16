@@ -3,12 +3,9 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { authenticateRequest, AuthError } from '../_shared/auth.ts';
 import { corsHeaders, errorResponse, successResponse, handleCors } from '../_shared/response.ts';
-import { callClaudeApi, safeParseJson } from '../_shared/claude.ts';
 import {
   getShotIdeasSystemPrompt,
   getShotIdeasUserPrompt,
-  getShotTypeSystemPrompt,
-  getShotTypeUserPrompt,
   getVisualPromptSystemPrompt,
   getVisualPromptUserPrompt,
   getDialogueSystemPrompt,
@@ -24,25 +21,25 @@ interface RequestBody {
 // Helper function to introduce delay
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-// Helper function to call Lovable AI Gateway
-async function callLovableAI(
+// Helper function to call Groq API
+async function callGroqAI(
   systemPrompt: string,
   userPrompt: string,
   maxTokens: number
 ): Promise<string> {
-  const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-  if (!LOVABLE_API_KEY) {
-    throw new Error('LOVABLE_API_KEY not configured');
+  const GROQ_API_KEY = Deno.env.get('GROQ_API_KEY');
+  if (!GROQ_API_KEY) {
+    throw new Error('GROQ_API_KEY not configured');
   }
   
-  const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+  const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+      'Authorization': `Bearer ${GROQ_API_KEY}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'google/gemini-2.5-flash',
+      model: 'llama-3.3-70b-versatile',
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt }
@@ -55,11 +52,8 @@ async function callLovableAI(
     if (response.status === 429) {
       throw new Error('Rate limit exceeded. Please try again later.');
     }
-    if (response.status === 402) {
-      throw new Error('Credits exhausted. Please add credits to your workspace.');
-    }
     const errorText = await response.text();
-    throw new Error(`AI Gateway error: ${response.status} - ${errorText}`);
+    throw new Error(`Groq API error: ${response.status} - ${errorText}`);
   }
   
   const data = await response.json();
@@ -71,33 +65,32 @@ async function processSingleShot(
   shot: any,
   scene: any,
   projectData: any,
-  supabaseClient: any,
-  claudeApiKey: string
+  supabaseClient: any
 ) {
   try {
     console.log(`[Shot ${shot.id}] Starting content generation...`);
     
-    // Generate all content using Lovable AI (more reliable than Claude for this use case)
+    // Generate all content using Groq AI
     let visualPrompt = '';
     let dialogue = '';
     let soundEffects = '';
     
     try {
       [visualPrompt, dialogue, soundEffects] = await Promise.all([
-        // Visual Prompt using Lovable AI
-        callLovableAI(
+        // Visual Prompt using Groq AI
+        callGroqAI(
           getVisualPromptSystemPrompt(),
           getVisualPromptUserPrompt(shot.prompt_idea || '', shot.shot_type || 'medium', scene, projectData),
           300
         ),
-        // Dialogue using Lovable AI
-        callLovableAI(
+        // Dialogue using Groq AI
+        callGroqAI(
           getDialogueSystemPrompt(),
           getDialogueUserPrompt(shot.prompt_idea, shot.shot_type, scene, projectData),
           150
         ),
-        // Sound Effects using Lovable AI
-        callLovableAI(
+        // Sound Effects using Groq AI
+        callGroqAI(
           getSoundEffectsSystemPrompt(),
           getSoundEffectsUserPrompt(shot.prompt_idea, shot.shot_type, scene),
           100
@@ -164,15 +157,14 @@ async function processSingleScene(
   scene: any,
   projectData: any,
   project_id: string,
-  supabaseClient: any,
-  claudeApiKey: string
+  supabaseClient: any
 ) {
   try {
     console.log(`[Scene ${scene.scene_number}] Generating shot ideas...`);
     
     let shotIdeasContent = '';
     try {
-      shotIdeasContent = await callLovableAI(
+      shotIdeasContent = await callGroqAI(
         getShotIdeasSystemPrompt(),
         getShotIdeasUserPrompt(scene),
         150
@@ -274,7 +266,7 @@ async function processSingleScene(
         
         // Process batch in parallel
         await Promise.all(
-          batch.map(shot => processSingleShot(shot, scene, projectData, supabaseClient, claudeApiKey))
+          batch.map(shot => processSingleShot(shot, scene, projectData, supabaseClient))
         );
         
         // Small delay between batches to avoid overwhelming APIs
@@ -298,8 +290,7 @@ async function processSingleScene(
 async function processProjectSetup(
   project_id: string,
   user_id: string,
-  supabaseClient: any,
-  claudeApiKey: string
+  supabaseClient: any
 ) {
   console.log(`[Background Processing ${project_id}] Starting...`);
   
@@ -342,8 +333,7 @@ async function processProjectSetup(
         firstScene,
         projectData,
         project_id,
-        supabaseClient,
-        claudeApiKey
+        supabaseClient
       );
       totalShotsCreated += shotsCreated;
       console.log(`[Scene ${firstScene.scene_number}] Created ${shotsCreated} shots.`);
@@ -363,8 +353,7 @@ async function processProjectSetup(
             scene,
             projectData,
             project_id,
-            supabaseClient,
-            claudeApiKey
+            supabaseClient
           ))
         );
         
@@ -393,9 +382,6 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
-
-    const claudeApiKey = Deno.env.get('ANTHROPIC_API_KEY');
-    if (!claudeApiKey) return errorResponse('Server config error: Anthropic key missing', 500);
 
     // 1. Fetch Project and Scene Data
     const { data: projectData, error: projectErr } = await supabaseClient
@@ -428,11 +414,11 @@ serve(async (req) => {
     if (typeof EdgeRuntime !== 'undefined') {
       // @ts-ignore
       EdgeRuntime.waitUntil(
-        processProjectSetup(project_id, user.id, supabaseClient, claudeApiKey)
+        processProjectSetup(project_id, user.id, supabaseClient)
       );
     } else {
       // Fallback for local development
-      processProjectSetup(project_id, user.id, supabaseClient, claudeApiKey).catch(err => {
+      processProjectSetup(project_id, user.id, supabaseClient).catch(err => {
         console.error('Background processing error:', err);
       });
     }

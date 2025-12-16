@@ -7,18 +7,25 @@ serve(async (req) => {
   }
 
   try {
-    const { prompt, model = 'google/gemini-2.5-flash', systemPrompt, stream = false } = await req.json();
+    const { prompt, model = 'llama-3.3-70b-versatile', systemPrompt, stream = false } = await req.json();
 
     if (!prompt) {
       return errorResponse('Prompt is required', 400);
     }
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      return errorResponse('LOVABLE_API_KEY is not configured', 500);
+    const GROQ_API_KEY = Deno.env.get("GROQ_API_KEY");
+    if (!GROQ_API_KEY) {
+      return errorResponse('GROQ_API_KEY is not configured', 500);
     }
 
-    console.log('Generating text with model:', model);
+    // Map old model names to Groq models
+    let groqModel = model;
+    if (model.startsWith('google/') || model.startsWith('openai/')) {
+      // Default to llama-3.3-70b-versatile for any external model request
+      groqModel = 'llama-3.3-70b-versatile';
+    }
+
+    console.log('Generating text with Groq model:', groqModel);
 
     const messages: any[] = [];
     if (systemPrompt) {
@@ -26,14 +33,14 @@ serve(async (req) => {
     }
     messages.push({ role: "user", content: prompt });
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: `Bearer ${GROQ_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model,
+        model: groqModel,
         messages,
         stream,
       }),
@@ -43,12 +50,9 @@ serve(async (req) => {
       if (response.status === 429) {
         return errorResponse("Rate limits exceeded, please try again later.", 429);
       }
-      if (response.status === 402) {
-        return errorResponse("Payment required, please add funds to your Lovable AI workspace.", 402);
-      }
       const errorText = await response.text();
-      console.error("AI gateway error:", response.status, errorText);
-      return errorResponse("AI gateway error", 500);
+      console.error("Groq API error:", response.status, errorText);
+      return errorResponse("Groq API error", 500);
     }
 
     if (stream) {

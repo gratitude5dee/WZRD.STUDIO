@@ -1,6 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import * as fal from "https://esm.sh/@fal-ai/serverless-client@0.15.0";
 import { corsHeaders, errorResponse, successResponse, handleCors } from '../_shared/response.ts';
 import { getCharacterVisualSystemPrompt, getCharacterVisualUserPrompt } from '../_shared/prompts.ts';
 
@@ -75,6 +76,13 @@ serve(async (req) => {
     { auth: { persistSession: false } }
   );
 
+  // Configure FAL.AI
+  const FAL_KEY = Deno.env.get('FAL_KEY');
+  if (!FAL_KEY) {
+    return errorResponse('FAL_KEY not configured', 500);
+  }
+  fal.config({ credentials: FAL_KEY });
+
   try {
     const { character_id, project_id }: RequestBody = await req.json();
     if (!character_id) return errorResponse('character_id is required', 400);
@@ -113,12 +121,12 @@ serve(async (req) => {
       return errorResponse('Character not found', 404, fetchError?.message);
     }
 
-    // 2. Generate Visual Prompt using Lovable AI with Gemini 2.5 Flash
+    // 2. Generate Visual Prompt using Groq API
     console.log(`Generating visual prompt for character: ${charData.name}`);
     
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
-      return errorResponse('LOVABLE_API_KEY not configured', 500);
+    const GROQ_API_KEY = Deno.env.get('GROQ_API_KEY');
+    if (!GROQ_API_KEY) {
+      return errorResponse('GROQ_API_KEY not configured', 500);
     }
 
     const visualPromptSystem = getCharacterVisualSystemPrompt();
@@ -128,14 +136,14 @@ serve(async (req) => {
       charData.project
     );
 
-    const promptResponse = await fetchWithRetry('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    const promptResponse = await fetchWithRetry('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        'Authorization': `Bearer ${GROQ_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
+        model: 'llama-3.3-70b-versatile',
         messages: [
           { role: 'system', content: visualPromptSystem },
           { role: 'user', content: visualPromptUser }
@@ -160,37 +168,27 @@ serve(async (req) => {
 
     console.log(`Generated visual prompt: ${visualPrompt}`);
 
-    // 3. Generate Image using Lovable AI with Nano banana
-    console.log('Calling Lovable AI Gateway with Nano banana for image generation...');
+    // 3. Generate Image using FAL.AI FLUX
+    console.log('Calling FAL.AI FLUX for image generation...');
     
-    const imageResponse = await fetchWithRetry('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json',
+    const result = await fal.subscribe("fal-ai/flux/schnell", {
+      input: {
+        prompt: visualPrompt,
+        image_size: "square_hd",
+        num_inference_steps: 4,
+        num_images: 1,
+        enable_safety_checker: true,
       },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash-image-preview',
-        messages: [
-          { role: 'user', content: visualPrompt }
-        ],
-        modalities: ['image', 'text']
-      }),
-    }, 3, 30000);
+      logs: true,
+    });
 
-    if (!imageResponse.ok) {
-      console.error('Failed to generate character image:', imageResponse.status);
-      return errorResponse('Failed to generate character image', 500);
-    }
-
-    const imageData = await imageResponse.json();
-    const imageUrl = imageData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+    const imageUrl = result?.images?.[0]?.url;
 
     if (!imageUrl) {
-      console.error('No image URL returned');
+      console.error('No image URL returned from FAL.AI');
       return errorResponse('Failed to generate character image', 500);
     }
-    console.log(`Generated Image URL (base64): ${imageUrl.substring(0, 50)}...`);
+    console.log(`Generated Image URL: ${imageUrl}`);
 
     // 4. Return immediate response and update DB in background
     const successResponseData = { 
@@ -262,4 +260,3 @@ serve(async (req) => {
     return errorResponse(error.message || 'Failed to generate character image', 500);
   }
 });
-
