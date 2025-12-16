@@ -23,19 +23,19 @@ export const StatCard = ({
     <div className={cn(
       "relative group p-5 rounded-2xl overflow-hidden transition-all duration-300",
       "glass-stat border border-white/[0.08]",
-      "hover:border-primary/30 hover:shadow-[0_0_30px_rgba(20,184,166,0.12)]",
+      "hover:border-[rgba(139,92,246,0.35)] hover:shadow-[0_0_35px_rgba(139,92,246,0.15)]",
       "hover:-translate-y-0.5",
       className
     )}>
       {/* Subtle gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-br from-[rgba(139,92,246,0.03)] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
       
       {/* Top shine line */}
       <div className="absolute top-0 left-4 right-4 h-px bg-gradient-to-r from-transparent via-white/[0.08] to-transparent" />
       
-      {/* Icon positioned top-right with glass effect */}
-      <div className="absolute top-4 right-4 w-11 h-11 rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 border border-primary/20 flex items-center justify-center group-hover:scale-105 group-hover:shadow-[0_0_20px_rgba(20,184,166,0.25)] transition-all duration-300">
-        <div className="text-primary">
+      {/* Icon positioned top-right with purple glass effect */}
+      <div className="absolute top-4 right-4 w-12 h-12 rounded-xl bg-gradient-to-br from-[rgba(139,92,246,0.2)] to-[rgba(124,58,237,0.1)] border border-[rgba(139,92,246,0.25)] flex items-center justify-center group-hover:scale-105 group-hover:shadow-[0_0_24px_rgba(139,92,246,0.35)] transition-all duration-300">
+        <div className="text-[#A78BFA]">
           {icon}
         </div>
       </div>

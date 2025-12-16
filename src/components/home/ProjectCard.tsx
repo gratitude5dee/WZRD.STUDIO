@@ -112,7 +112,7 @@ export const ProjectCard = ({ project, onOpen, onDelete }: ProjectCardProps) => 
           "group relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-300",
           "bg-gradient-to-br from-[rgba(24,24,32,0.75)] to-[rgba(16,16,22,0.55)]",
           "backdrop-blur-xl border border-white/[0.08]",
-          "hover:border-primary/35 hover:shadow-[0_8px_40px_rgba(20,184,166,0.12),0_0_0_1px_rgba(20,184,166,0.1)]",
+          "hover:border-[rgba(139,92,246,0.4)] hover:shadow-[0_8px_45px_rgba(139,92,246,0.15),0_0_0_1px_rgba(139,92,246,0.12)]",
           "hover:-translate-y-1"
         )}
         onClick={handleCardClick}
@@ -122,8 +122,8 @@ export const ProjectCard = ({ project, onOpen, onDelete }: ProjectCardProps) => 
         {/* Top shine line */}
         <div className="absolute top-0 left-4 right-4 h-px bg-gradient-to-r from-transparent via-white/[0.1] to-transparent z-10" />
         
-        {/* Glow effect on hover */}
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.05] via-transparent to-accent/[0.03] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+          {/* Glow effect on hover */}
+          <div className="absolute inset-0 bg-gradient-to-br from-[rgba(139,92,246,0.06)] via-transparent to-[rgba(245,158,11,0.03)] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
         
         {/* Thumbnail */}
         <div className="relative aspect-video bg-gradient-to-br from-muted/30 to-muted/10 overflow-hidden">
@@ -164,8 +164,8 @@ export const ProjectCard = ({ project, onOpen, onDelete }: ProjectCardProps) => 
             "absolute inset-0 flex items-center justify-center transition-all duration-300",
             isHovered ? "opacity-100" : "opacity-0"
           )}>
-            <div className="w-14 h-14 rounded-full bg-primary/90 backdrop-blur-md flex items-center justify-center shadow-[0_0_30px_rgba(20,184,166,0.5)] hover:scale-110 transition-transform border border-primary/40">
-              <Play className="w-6 h-6 text-primary-foreground ml-1" fill="currentColor" />
+            <div className="w-14 h-14 rounded-full bg-[rgba(139,92,246,0.9)] backdrop-blur-md flex items-center justify-center shadow-[0_0_35px_rgba(139,92,246,0.6)] hover:scale-110 transition-transform border border-[rgba(167,139,250,0.4)]">
+              <Play className="w-6 h-6 text-white ml-1" fill="currentColor" />
             </div>
           </div>
 
@@ -219,7 +219,7 @@ export const ProjectCard = ({ project, onOpen, onDelete }: ProjectCardProps) => 
 
         {/* Content */}
         <div className="relative p-4">
-          <h3 className="text-base font-semibold text-foreground mb-1 truncate group-hover:text-primary transition-colors">
+          <h3 className="text-base font-semibold text-foreground mb-1 truncate group-hover:text-[#A78BFA] transition-colors">
             {project.title}
           </h3>
           

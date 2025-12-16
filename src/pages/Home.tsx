@@ -148,7 +148,7 @@ export default function Home() {
                 alt="WZRD.STUDIO Logo" 
                 className="h-10 object-contain"
               />
-              <span className="text-xs text-primary bg-primary/10 px-2 py-0.5 rounded-full border border-primary/20 font-medium">
+              <span className="text-xs text-[#A78BFA] bg-[rgba(139,92,246,0.15)] px-2 py-0.5 rounded-full border border-[rgba(139,92,246,0.25)] font-medium">
                 ALPHA
               </span>
             </div>
@@ -247,8 +247,8 @@ export default function Home() {
                 onClick={handleCreateProject}
                 className={cn(
                   "flex items-center gap-2 h-9 px-4 rounded-lg text-sm font-medium transition-all duration-200",
-                  "bg-gradient-to-r from-primary to-primary/80 text-primary-foreground",
-                  "hover:shadow-lg hover:shadow-primary/25 hover:-translate-y-0.5"
+                  "bg-gradient-to-r from-[#8B5CF6] to-[#7C3AED] text-white",
+                  "hover:shadow-[0_0_30px_rgba(139,92,246,0.4)] hover:-translate-y-0.5"
                 )}
               >
                 <Plus className="w-4 h-4" />
@@ -261,8 +261,8 @@ export default function Home() {
           <main className="p-6">
             {isLoading ? (
               <div className="flex flex-col items-center justify-center py-20">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center mb-4">
-                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[rgba(139,92,246,0.2)] to-[rgba(245,158,11,0.15)] flex items-center justify-center mb-4">
+                  <Loader2 className="w-8 h-8 animate-spin text-[#A78BFA]" />
                 </div>
                 <p className="text-sm text-muted-foreground">Loading projects...</p>
               </div>
@@ -291,8 +291,8 @@ export default function Home() {
             ) : filteredProjects.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20">
                 <div className="text-center max-w-md">
-                  <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
-                    <Plus className="w-10 h-10 text-primary" />
+                  <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-[rgba(139,92,246,0.2)] to-[rgba(245,158,11,0.15)] flex items-center justify-center">
+                    <Plus className="w-10 h-10 text-[#A78BFA]" />
                   </div>
                   <h3 className="text-xl font-semibold text-foreground mb-2">Create your first project</h3>
                   <p className="text-sm text-muted-foreground mb-6">
@@ -302,8 +302,8 @@ export default function Home() {
                     onClick={handleCreateProject}
                     className={cn(
                       "px-6 py-3 rounded-xl text-sm font-medium transition-all duration-200",
-                      "bg-gradient-to-r from-primary to-primary/80 text-primary-foreground",
-                      "hover:shadow-lg hover:shadow-primary/25 hover:-translate-y-0.5"
+                      "bg-gradient-to-r from-[#8B5CF6] to-[#7C3AED] text-white",
+                      "hover:shadow-[0_0_30px_rgba(139,92,246,0.4)] hover:-translate-y-0.5"
                     )}
                   >
                     Create Project

@@ -26,7 +26,9 @@ const glassCardVariants = cva(
         stat: 
           "bg-gradient-to-br from-[rgba(20,20,28,0.75)] to-[rgba(16,16,22,0.6)] border-white/[0.08] shadow-[0_8px_24px_rgba(0,0,0,0.35)]",
         sidebar: 
-          "bg-gradient-to-b from-[rgba(12,12,18,0.92)] to-[rgba(8,8,12,0.98)] border-white/[0.04] shadow-[0_0_40px_rgba(0,0,0,0.4)]"
+          "bg-gradient-to-b from-[rgba(12,12,18,0.92)] to-[rgba(8,8,12,0.98)] border-white/[0.04] shadow-[0_0_40px_rgba(0,0,0,0.4)]",
+        purple: 
+          "bg-gradient-to-br from-[rgba(139,92,246,0.1)] to-[rgba(124,58,237,0.05)] border-[rgba(139,92,246,0.25)] shadow-[0_8px_32px_rgba(139,92,246,0.15)]"
       },
       depth: {
         flat: "",
@@ -36,10 +38,10 @@ const glassCardVariants = cva(
       },
       glow: {
         none: "",
-        subtle: "hover:shadow-[0_0_20px_hsl(var(--primary)/0.15)]",
-        medium: "hover:shadow-[0_0_30px_hsl(var(--primary)/0.25)]",
-        intense: "hover:shadow-[0_0_40px_hsl(var(--primary)/0.35)]",
-        teal: "hover:shadow-[0_0_24px_rgba(20,184,166,0.3)]",
+        subtle: "hover:shadow-[0_0_20px_rgba(139,92,246,0.2)]",
+        medium: "hover:shadow-[0_0_30px_rgba(139,92,246,0.3)]",
+        intense: "hover:shadow-[0_0_40px_rgba(139,92,246,0.4)]",
+        purple: "hover:shadow-[0_0_28px_rgba(139,92,246,0.35)]",
         amber: "hover:shadow-[0_0_24px_rgba(245,158,11,0.3)]"
       },
       interactive: {
