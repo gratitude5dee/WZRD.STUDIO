@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import * as fal from "https://esm.sh/@fal-ai/serverless-client@0.15.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -12,7 +13,7 @@ serve(async (req) => {
   }
 
   try {
-    const { imageUrl, question, model = 'google/gemini-2.5-flash' } = await req.json();
+    const { imageUrl, question } = await req.json();
 
     if (!imageUrl || !question) {
       return new Response(
@@ -24,9 +25,9 @@ serve(async (req) => {
       );
     }
 
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
-      console.error('LOVABLE_API_KEY is not configured');
+    const FAL_KEY = Deno.env.get('FAL_KEY');
+    if (!FAL_KEY) {
+      console.error('FAL_KEY is not configured');
       return new Response(
         JSON.stringify({ error: 'API key not configured' }),
         { 
@@ -36,77 +37,24 @@ serve(async (req) => {
       );
     }
 
-    console.log('🔍 Analyzing image with Gemini Vision:', { model, question: question.substring(0, 50) });
+    // Configure FAL.AI
+    fal.config({ credentials: FAL_KEY });
 
-    const response = await fetch(
-      'https://ai.gateway.lovable.dev/v1/chat/completions',
-      {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model,
-          messages: [
-            {
-              role: 'user',
-              content: [
-                {
-                  type: 'text',
-                  text: question
-                },
-                {
-                  type: 'image_url',
-                  image_url: { 
-                    url: imageUrl 
-                  }
-                }
-              ]
-            }
-          ]
-        })
-      }
-    );
+    console.log('🔍 Analyzing image with FAL.AI Moondream:', { question: question.substring(0, 50) });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('AI Gateway error:', response.status, errorText);
-      
-      if (response.status === 429) {
-        return new Response(
-          JSON.stringify({ error: 'Rate limit exceeded. Please try again later.' }),
-          { 
-            status: 429, 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-          }
-        );
-      }
-      
-      if (response.status === 402) {
-        return new Response(
-          JSON.stringify({ error: 'Payment required. Please add credits to your workspace.' }),
-          { 
-            status: 402, 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-          }
-        );
-      }
+    // Use FAL.AI Moondream2 for image analysis
+    const result = await fal.subscribe("fal-ai/moondream2", {
+      input: {
+        image_url: imageUrl,
+        prompt: question,
+      },
+      logs: true,
+    });
 
-      return new Response(
-        JSON.stringify({ error: 'AI Gateway error', details: errorText }),
-        { 
-          status: response.status, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      );
-    }
-
-    const data = await response.json();
-    const aiResponse = data.choices?.[0]?.message?.content;
+    const aiResponse = result?.output || result?.response || result?.answer;
 
     if (!aiResponse) {
-      console.error('No content in AI response:', data);
+      console.error('No content in FAL.AI response:', result);
       return new Response(
         JSON.stringify({ error: 'No response from AI' }),
         { 

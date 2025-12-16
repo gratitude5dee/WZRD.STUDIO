@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import * as fal from "https://esm.sh/@fal-ai/serverless-client@0.15.0";
 import { corsHeaders, errorResponse, handleCors } from '../_shared/response.ts';
 
 serve(async (req) => {
@@ -7,79 +8,80 @@ serve(async (req) => {
   }
 
   try {
-    const { prompt, imageUrl, editMode = false } = await req.json();
+    const { prompt, imageUrl, editMode = false, imageSize = 'square_hd' } = await req.json();
 
     if (!prompt) {
       return errorResponse('Prompt is required', 400);
     }
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      return errorResponse('LOVABLE_API_KEY is not configured', 500);
+    const FAL_KEY = Deno.env.get("FAL_KEY");
+    if (!FAL_KEY) {
+      return errorResponse('FAL_KEY is not configured', 500);
     }
 
-    console.log('Generating image with Lovable AI Gateway (gemini-2.5-flash-image-preview)');
+    // Configure FAL.AI
+    fal.config({ credentials: FAL_KEY });
 
-    // Enhance prompt to force image generation (trim to avoid whitespace issues)
-    const cleanPrompt = prompt.trim();
-    const enhancedPrompt = editMode 
-      ? cleanPrompt 
-      : `Create a high-quality image: ${cleanPrompt}`;
+    console.log('Generating image with FAL.AI FLUX');
 
-    console.log('Original prompt:', prompt);
-    console.log('Enhanced prompt:', enhancedPrompt);
+    // Determine image size format for FAL
+    let falImageSize: any = imageSize;
+    if (typeof imageSize === 'string') {
+      // Map common size names to FAL format
+      const sizeMap: Record<string, any> = {
+        'square': 'square',
+        'square_hd': 'square_hd',
+        'portrait': 'portrait_4_3',
+        'portrait_hd': 'portrait_16_9',
+        'landscape': 'landscape_4_3',
+        'landscape_hd': 'landscape_16_9',
+      };
+      falImageSize = sizeMap[imageSize] || 'square_hd';
+    }
 
-    // Build message content for Lovable AI Gateway
-    const content: any[] = [{ type: "text", text: enhancedPrompt }];
-    
+    let result: any;
+
     if (editMode && imageUrl) {
-      // For edit mode, include the image
-      content.push({
-        type: "image_url",
-        image_url: { url: imageUrl }
+      // Image-to-image mode using FLUX img2img
+      console.log('Using image-to-image mode');
+      result = await fal.subscribe("fal-ai/flux/dev/image-to-image", {
+        input: {
+          prompt: prompt,
+          image_url: imageUrl,
+          strength: 0.75,
+          num_inference_steps: 28,
+          guidance_scale: 3.5,
+          num_images: 1,
+          enable_safety_checker: true,
+        },
+        logs: true,
+      });
+    } else {
+      // Text-to-image mode using FLUX Schnell (fast) or Dev (quality)
+      console.log('Using text-to-image mode');
+      result = await fal.subscribe("fal-ai/flux/schnell", {
+        input: {
+          prompt: prompt,
+          image_size: falImageSize,
+          num_inference_steps: 4,
+          num_images: 1,
+          enable_safety_checker: true,
+        },
+        logs: true,
       });
     }
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash-image-preview",
-        messages: [{ role: "user", content }],
-        modalities: ["image", "text"]
-      })
-    });
+    const generatedImageUrl = result?.images?.[0]?.url;
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("Lovable AI error:", response.status, errorText);
-      return errorResponse(`Lovable AI error: ${response.status}`, 500);
-    }
-
-    const data = await response.json();
-
-    // Check if we got text instead of an image
-    const textContent = data.choices?.[0]?.message?.content;
-    if (textContent && !data.choices?.[0]?.message?.images) {
-      console.error("Received text instead of image:", textContent);
-      return errorResponse("AI responded with text instead of generating an image. Try a more specific prompt.", 500);
-    }
-
-    // Extract the generated image from the response
-    const imageUrl_result = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-
-    if (!imageUrl_result) {
-      console.error("No image in response:", JSON.stringify(data));
+    if (!generatedImageUrl) {
+      console.error("No image in response:", JSON.stringify(result));
       return errorResponse("No image generated. The AI may need a more descriptive prompt.", 500);
     }
 
-    console.log(`Successfully generated image (${imageUrl_result.length} bytes)`);
+    console.log(`Successfully generated image`);
 
     return new Response(JSON.stringify({ 
-      imageUrl: imageUrl_result,
+      imageUrl: generatedImageUrl,
       prompt 
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
