@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Loader2, UserPlus, Plus } from 'lucide-react';
+import { Loader2, UserPlus, Plus, FolderKanban, Activity, Image, Sparkles } from 'lucide-react';
 import wzrdLogo from '@/assets/wzrd-logo.png';
 import { ProjectList } from '@/components/home/ProjectList';
 import { ProjectListView } from '@/components/home/ProjectListView';
@@ -8,11 +8,14 @@ import { Sidebar } from '@/components/home/Sidebar';
 import { SearchBar } from '@/components/home/SearchBar';
 import { SortDropdown, SortOption } from '@/components/home/SortDropdown';
 import { ProjectViewModeSelector } from '@/components/home/ProjectViewModeSelector';
+import { StatCard } from '@/components/home/StatCard';
 import { DemoBanner } from '@/components/demo/DemoBanner';
 import { useAuth } from '@/providers/AuthProvider';
 import { supabaseService } from '@/services/supabaseService';
 import { useToast } from '@/hooks/use-toast';
+import { useCredits } from '@/hooks/useCredits';
 import { isDemoModeEnabled, getDemoProjects } from '@/utils/demoMode';
+import { cn } from '@/lib/utils';
 import type { Project } from '@/components/home/ProjectCard';
 
 type ViewMode = 'grid' | 'list';
@@ -21,6 +24,7 @@ export default function Home() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
+  const { availableCredits } = useCredits();
   const isDemo = isDemoModeEnabled();
 
   const [activeView, setActiveView] = useState('all');
@@ -40,11 +44,9 @@ export default function Home() {
     
     try {
       if (isDemo) {
-        // Use demo projects from localStorage
         const demoProjects = getDemoProjects();
         setProjects(demoProjects as Project[]);
       } else {
-        // Fetch real projects from Supabase
         const data = await supabaseService.projects.list();
         setProjects(data as Project[]);
       }
@@ -80,11 +82,9 @@ export default function Home() {
   // Filter projects
   const filteredProjects = projects
     .filter((project) => {
-      // Filter by tab
       if (activeTab === 'private' && !project.is_private) return false;
       if (activeTab === 'public' && project.is_private) return false;
       
-      // Filter by search
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
         return (
@@ -96,7 +96,6 @@ export default function Home() {
       return true;
     })
     .sort((a, b) => {
-      // Sort projects
       switch (sortBy) {
         case 'name':
           return a.title.localeCompare(b.title);
@@ -123,143 +122,202 @@ export default function Home() {
   return (
     <>
       {isDemo && <DemoBanner />}
-      <div className="min-h-screen bg-[#0A0A0A] flex w-full">
+      <div className="min-h-screen bg-background flex w-full">
         {/* Sidebar */}
         <Sidebar activeView={activeView} onViewChange={setActiveView} />
 
         {/* Main Content */}
         <div className="flex-1 ml-64">
-        {/* New Top Header with Logo */}
-        <header className="h-16 border-b border-white/[0.08] flex items-center justify-center px-6">
-          <div className="flex items-center gap-3">
-            <img 
-              src={wzrdLogo} 
-              alt="WZRD.STUDIO Logo" 
-              className="h-16 object-contain"
-            />
-            <span className="text-xl font-semibold text-white">Studio</span>
-            <span className="text-xs text-white/50 bg-[#292F46] px-2 py-0.5 rounded">ALPHA</span>
-          </div>
-        </header>
+          {/* Header */}
+          <header className={cn(
+            "h-16 border-b border-border/30 flex items-center justify-center px-6",
+            "bg-gradient-to-r from-card/50 via-transparent to-card/50 backdrop-blur-sm"
+          )}>
+            <div className="flex items-center gap-3">
+              <img 
+                src={wzrdLogo} 
+                alt="WZRD.STUDIO Logo" 
+                className="h-12 object-contain"
+              />
+              <span className="text-xl font-semibold text-foreground">Studio</span>
+              <span className="text-xs text-primary bg-primary/10 px-2 py-0.5 rounded-full border border-primary/20 font-medium">
+                ALPHA
+              </span>
+            </div>
+          </header>
 
-        {/* Toolbar */}
-        <div className="h-14 border-b border-white/[0.08] flex items-center justify-between px-6">
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-white/60">
-              {filteredProjects.length} {filteredProjects.length === 1 ? 'project' : 'projects'}
-            </span>
+          {/* Stats Row */}
+          <div className="px-6 py-6 border-b border-border/30 bg-gradient-to-b from-card/30 to-transparent">
+            <div className="grid grid-cols-4 gap-4">
+              <StatCard 
+                icon={<FolderKanban className="w-5 h-5" />}
+                label="Total Projects"
+                value={projects.length}
+                trend="+12%"
+                trendDirection="up"
+              />
+              <StatCard 
+                icon={<Activity className="w-5 h-5" />}
+                label="Recent Activity"
+                value={filteredProjects.filter(p => {
+                  const updated = new Date(p.updated_at);
+                  const weekAgo = new Date();
+                  weekAgo.setDate(weekAgo.getDate() - 7);
+                  return updated > weekAgo;
+                }).length}
+                trend="This week"
+                trendDirection="neutral"
+              />
+              <StatCard 
+                icon={<Image className="w-5 h-5" />}
+                label="Generated Assets"
+                value="--"
+                trend="Coming soon"
+                trendDirection="neutral"
+              />
+              <StatCard 
+                icon={<Sparkles className="w-5 h-5" />}
+                label="Credits"
+                value={availableCredits?.toLocaleString() || '0'}
+                trend="Available"
+                trendDirection="neutral"
+              />
+            </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <SortDropdown value={sortBy} onChange={setSortBy} />
-            <ProjectViewModeSelector viewMode={viewMode} setViewMode={setViewMode} />
-          </div>
-        </div>
+          {/* Toolbar */}
+          <div className="h-14 border-b border-border/30 flex items-center justify-between px-6 bg-card/20">
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-muted-foreground font-medium">
+                {filteredProjects.length} {filteredProjects.length === 1 ? 'project' : 'projects'}
+              </span>
+            </div>
 
-        {/* Tabs and Actions Bar */}
-        <div className="h-16 border-b border-white/[0.08] flex items-center justify-between px-6">
-          {/* Left: Tabs */}
-          <div className="flex items-center gap-1">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                  activeTab === tab.id
-                    ? 'text-white bg-white/[0.08]'
-                    : 'text-white/60 hover:text-white hover:bg-white/[0.04]'
-                }`}
-              >
-                {tab.label}
-                <span className="ml-2 text-xs text-white/40">({tab.count})</span>
+            <div className="flex items-center gap-3">
+              <SortDropdown value={sortBy} onChange={setSortBy} />
+              <ProjectViewModeSelector viewMode={viewMode} setViewMode={setViewMode} />
+            </div>
+          </div>
+
+          {/* Tabs and Actions Bar */}
+          <div className="h-16 border-b border-border/30 flex items-center justify-between px-6">
+            {/* Left: Tabs */}
+            <div className="flex items-center gap-1 p-1 rounded-xl bg-muted/30">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={cn(
+                    "px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200",
+                    activeTab === tab.id
+                      ? "text-foreground bg-background shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  {tab.label}
+                  <span className="ml-2 text-xs opacity-60">({tab.count})</span>
+                </button>
+              ))}
+            </div>
+
+            {/* Center: Search */}
+            <div className="flex-1 max-w-md mx-6">
+              <SearchBar onSearch={handleSearch} />
+            </div>
+
+            {/* Right: Actions */}
+            <div className="flex items-center gap-3">
+              <button className={cn(
+                "flex items-center gap-2 h-9 px-4 rounded-lg text-sm font-medium transition-all duration-200",
+                "bg-muted/50 border border-border/50 text-muted-foreground",
+                "hover:text-foreground hover:border-border hover:bg-muted"
+              )}>
+                <UserPlus className="w-4 h-4" />
+                <span>Invite</span>
               </button>
-            ))}
+              <button
+                onClick={handleCreateProject}
+                className={cn(
+                  "flex items-center gap-2 h-9 px-4 rounded-lg text-sm font-medium transition-all duration-200",
+                  "bg-gradient-to-r from-primary to-primary/80 text-primary-foreground",
+                  "hover:shadow-lg hover:shadow-primary/25 hover:-translate-y-0.5"
+                )}
+              >
+                <Plus className="w-4 h-4" />
+                <span>New Project</span>
+              </button>
+            </div>
           </div>
 
-          {/* Center: Search */}
-          <div className="flex-1 max-w-md mx-6">
-            <SearchBar onSearch={handleSearch} />
-          </div>
-
-          {/* Right: Actions */}
-          <div className="flex items-center gap-3">
-            <button className="flex items-center gap-2 h-9 px-4 bg-white/[0.04] border border-white/[0.08] rounded-lg text-sm text-white/60 hover:text-white hover:border-white/[0.16] transition-colors">
-              <UserPlus className="w-4 h-4" />
-              <span>Invite</span>
-            </button>
-            <button
-              onClick={handleCreateProject}
-              className="flex items-center gap-2 h-9 px-4 bg-gradient-to-br from-purple-500 to-purple-700 rounded-lg text-sm text-white font-medium hover:shadow-lg hover:shadow-purple-500/25 transition-all"
-            >
-              <Plus className="w-4 h-4" />
-              <span>New Project</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Content Area */}
-        <main className="p-6">
-          {isLoading ? (
-            <div className="flex flex-col items-center justify-center py-20">
-              <Loader2 className="w-8 h-8 animate-spin text-white/40 mb-4" />
-              <p className="text-sm text-white/40">Loading projects...</p>
-            </div>
-          ) : error ? (
-            <div className="flex flex-col items-center justify-center py-20">
-              <div className="text-center max-w-md">
-                <h3 className="text-lg font-semibold text-white mb-2">Error Loading Projects</h3>
-                <p className="text-sm text-white/60 mb-6">{error}</p>
-                <button
-                  onClick={() => window.location.reload()}
-                  className="px-4 py-2 bg-white/[0.08] border border-white/[0.08] rounded-lg text-sm text-white hover:bg-white/[0.12] transition-colors"
-                >
-                  Retry
-                </button>
-              </div>
-            </div>
-          ) : filteredProjects.length === 0 && searchQuery ? (
-            <div className="flex flex-col items-center justify-center py-20">
-              <div className="text-center max-w-md">
-                <h3 className="text-lg font-semibold text-white mb-2">No results found</h3>
-                <p className="text-sm text-white/60">
-                  Try adjusting your search or filters
-                </p>
-              </div>
-            </div>
-          ) : filteredProjects.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20">
-              <div className="text-center max-w-md">
-                <div className="w-16 h-16 mx-auto mb-6 rounded-xl bg-gradient-to-br from-purple-500/20 to-purple-700/20 flex items-center justify-center">
-                  <Plus className="w-8 h-8 text-white/60" />
+          {/* Content Area */}
+          <main className="p-6">
+            {isLoading ? (
+              <div className="flex flex-col items-center justify-center py-20">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center mb-4">
+                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
                 </div>
-                <h3 className="text-lg font-semibold text-white mb-2">Create your first project</h3>
-                <p className="text-sm text-white/60 mb-6">
-                  Start bringing your ideas to life
-                </p>
-                <button
-                  onClick={handleCreateProject}
-                  className="px-6 py-2.5 bg-gradient-to-br from-purple-500 to-purple-700 rounded-lg text-sm text-white font-medium hover:shadow-lg hover:shadow-purple-500/25 transition-all"
-                >
-                  Create Project
-                </button>
+                <p className="text-sm text-muted-foreground">Loading projects...</p>
               </div>
-            </div>
-          ) : viewMode === 'list' ? (
-            <ProjectListView
-              projects={filteredProjects}
-              onOpenProject={handleOpenProject}
-              onRefresh={fetchProjects}
-            />
-          ) : (
-            <ProjectList
-              projects={filteredProjects}
-              onOpenProject={handleOpenProject}
-              onCreateProject={handleCreateProject}
-            />
-          )}
-        </main>
+            ) : error ? (
+              <div className="flex flex-col items-center justify-center py-20">
+                <div className="text-center max-w-md">
+                  <h3 className="text-lg font-semibold text-foreground mb-2">Error Loading Projects</h3>
+                  <p className="text-sm text-muted-foreground mb-6">{error}</p>
+                  <button
+                    onClick={() => window.location.reload()}
+                    className="px-4 py-2 bg-muted border border-border rounded-lg text-sm text-foreground hover:bg-muted/80 transition-colors"
+                  >
+                    Retry
+                  </button>
+                </div>
+              </div>
+            ) : filteredProjects.length === 0 && searchQuery ? (
+              <div className="flex flex-col items-center justify-center py-20">
+                <div className="text-center max-w-md">
+                  <h3 className="text-lg font-semibold text-foreground mb-2">No results found</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Try adjusting your search or filters
+                  </p>
+                </div>
+              </div>
+            ) : filteredProjects.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20">
+                <div className="text-center max-w-md">
+                  <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
+                    <Plus className="w-10 h-10 text-primary" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-foreground mb-2">Create your first project</h3>
+                  <p className="text-sm text-muted-foreground mb-6">
+                    Start bringing your ideas to life with AI-powered video creation
+                  </p>
+                  <button
+                    onClick={handleCreateProject}
+                    className={cn(
+                      "px-6 py-3 rounded-xl text-sm font-medium transition-all duration-200",
+                      "bg-gradient-to-r from-primary to-primary/80 text-primary-foreground",
+                      "hover:shadow-lg hover:shadow-primary/25 hover:-translate-y-0.5"
+                    )}
+                  >
+                    Create Project
+                  </button>
+                </div>
+              </div>
+            ) : viewMode === 'list' ? (
+              <ProjectListView
+                projects={filteredProjects}
+                onOpenProject={handleOpenProject}
+                onRefresh={fetchProjects}
+              />
+            ) : (
+              <ProjectList
+                projects={filteredProjects}
+                onOpenProject={handleOpenProject}
+                onCreateProject={handleCreateProject}
+              />
+            )}
+          </main>
+        </div>
       </div>
-    </div>
     </>
   );
 }

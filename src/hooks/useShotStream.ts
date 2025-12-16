@@ -89,8 +89,8 @@ export const useShotStream = (
 
   const streamEndpoint = useMemo(() => {
     if (endpoint) return endpoint;
-    const base = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '') ?? '';
-    return `${base}/gen/shots`;
+    // Use Supabase edge function URL
+    return `https://ixkkrousepsiorwlaycp.supabase.co/functions/v1/gen-shots`;
   }, [endpoint]);
 
   const clearPerformance = useCallback(() => {
