@@ -1,4 +1,4 @@
-
+// Settings tab for project configuration
 import { useState, useEffect } from 'react';
 import { type ProjectData, Character } from './types';
 import { Input } from '@/components/ui/input';
