@@ -138,15 +138,14 @@ async function processSingleShot(
     
     console.log(`[Shot ${shot.id}] All content saved to DB. Triggering image generation.`);
     
-    // Trigger image generation asynchronously
+    // Trigger image generation asynchronously (no await - fire and forget)
     supabaseClient.functions.invoke('generate-shot-image', {
       body: { shot_id: shot.id }
     }).catch((invokeError: any) => {
       console.error(`[Shot ${shot.id}] Error invoking generate-shot-image:`, invokeError);
     });
     
-    // Rate limit protection
-    await delay(500);
+    // No delay needed - parallel processing handles rate limiting via batches
     
   } catch (error: any) {
     console.error(`[Shot ${shot.id}] Error: ${error.message}`);
@@ -265,11 +264,23 @@ async function processSingleScene(
         return 0;
       }
 
-      console.log(`[Scene ${scene.scene_number}] Inserted ${insertedShots.length} shots.`);
+      console.log(`[Scene ${scene.scene_number}] Inserted ${insertedShots.length} shots. Processing in parallel batches...`);
 
-      // Process each shot sequentially to avoid rate limits and ensure proper ordering
-      for (const shot of insertedShots) {
-        await processSingleShot(shot, scene, projectData, supabaseClient, claudeApiKey);
+      // Process shots in parallel batches of 3 for faster generation
+      const SHOT_BATCH_SIZE = 3;
+      for (let i = 0; i < insertedShots.length; i += SHOT_BATCH_SIZE) {
+        const batch = insertedShots.slice(i, i + SHOT_BATCH_SIZE);
+        console.log(`[Scene ${scene.scene_number}] Processing batch ${Math.floor(i / SHOT_BATCH_SIZE) + 1}: shots ${i + 1}-${Math.min(i + SHOT_BATCH_SIZE, insertedShots.length)}`);
+        
+        // Process batch in parallel
+        await Promise.all(
+          batch.map(shot => processSingleShot(shot, scene, projectData, supabaseClient, claudeApiKey))
+        );
+        
+        // Small delay between batches to avoid overwhelming APIs
+        if (i + SHOT_BATCH_SIZE < insertedShots.length) {
+          await delay(300);
+        }
       }
       
       console.log(`[Scene ${scene.scene_number}] Finished processing all shots.`);
@@ -322,18 +333,43 @@ async function processProjectSetup(
 
     let totalShotsCreated = 0;
     
-    // Process scenes sequentially to avoid overwhelming the API (Scene 1 first)
-    for (const scene of scenesData) {
-      console.log(`[Scene ${scene.scene_number}] Starting scene processing...`);
+    // Process Scene 1 first for immediate user feedback
+    const [firstScene, ...remainingScenes] = scenesData;
+    
+    if (firstScene) {
+      console.log(`[Scene ${firstScene.scene_number}] Starting priority scene processing...`);
       const shotsCreated = await processSingleScene(
-        scene,
+        firstScene,
         projectData,
         project_id,
         supabaseClient,
         claudeApiKey
       );
       totalShotsCreated += shotsCreated;
-      console.log(`[Scene ${scene.scene_number}] Created ${shotsCreated} shots.`);
+      console.log(`[Scene ${firstScene.scene_number}] Created ${shotsCreated} shots.`);
+    }
+    
+    // Process remaining scenes in parallel batches of 2
+    if (remainingScenes.length > 0) {
+      console.log(`[Background Processing ${project_id}] Processing ${remainingScenes.length} remaining scenes in parallel...`);
+      
+      const SCENE_BATCH_SIZE = 2;
+      for (let i = 0; i < remainingScenes.length; i += SCENE_BATCH_SIZE) {
+        const batch = remainingScenes.slice(i, i + SCENE_BATCH_SIZE);
+        console.log(`[Background Processing ${project_id}] Processing scene batch: ${batch.map(s => s.scene_number).join(', ')}`);
+        
+        const results = await Promise.all(
+          batch.map(scene => processSingleScene(
+            scene,
+            projectData,
+            project_id,
+            supabaseClient,
+            claudeApiKey
+          ))
+        );
+        
+        totalShotsCreated += results.reduce((sum, count) => sum + count, 0);
+      }
     }
 
     console.log(`[Background Processing ${project_id}] Complete. Created ${totalShotsCreated} shots.`);
