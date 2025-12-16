@@ -52,8 +52,8 @@ class GenerationService {
         settings: params,
       })
 
-      // Call FAL.ai
-      const result = await this.falClient.execute(
+      // Use streaming via fal-stream edge function
+      const result = await this.streamGenerate(
         modelId,
         {
           prompt: params.prompt,
@@ -63,19 +63,12 @@ class GenerationService {
           guidance_scale: params.guidanceScale || 3.5,
           seed: params.seed,
         },
-        {
-          onProgress: (progress) => {
-            onProgress?.(progress)
-          },
-          onError: (error) => {
-            this.logGeneration(generationId, { status: 'failed', error: error.message })
-          },
-        }
+        onProgress
       )
 
-      const imageUrl = result.images?.[0]?.url || result.data?.images?.[0]?.url
-      const imageWidth = result.images?.[0]?.width || result.data?.images?.[0]?.width || 1024
-      const imageHeight = result.images?.[0]?.height || result.data?.images?.[0]?.height || 1024
+      const imageUrl = result.images?.[0]?.url
+      const imageWidth = result.images?.[0]?.width || 1024
+      const imageHeight = result.images?.[0]?.height || 1024
 
       if (!imageUrl) {
         throw new Error('No image URL returned from generation')
@@ -115,6 +108,79 @@ class GenerationService {
     }
   }
 
+  private async streamGenerate(
+    modelId: string,
+    inputs: Record<string, any>,
+    onProgress?: (progress: number) => void
+  ): Promise<any> {
+    const response = await fetch(
+      'https://ixkkrousepsiorwlaycp.supabase.co/functions/v1/fal-stream',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml4a2tyb3VzZXBzaW9yd2xheWNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDAzMzI1MjcsImV4cCI6MjA1NTkwODUyN30.eX_P7bJam2IZ20GEghfjfr-pNwMynsdVb3Rrfipgls4',
+          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml4a2tyb3VzZXBzaW9yd2xheWNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDAzMzI1MjcsImV4cCI6MjA1NTkwODUyN30.eX_P7bJam2IZ20GEghfjfr-pNwMynsdVb3Rrfipgls4',
+        },
+        body: JSON.stringify({ modelId, inputs }),
+      }
+    )
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      throw new Error(`Streaming generation failed: ${errorText}`)
+    }
+
+    const reader = response.body?.getReader()
+    if (!reader) {
+      throw new Error('No response body')
+    }
+
+    const decoder = new TextDecoder()
+    let result: any = null
+    let progressValue = 0
+
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+
+      const chunk = decoder.decode(value, { stream: true })
+      const lines = chunk.split('\n').filter(line => line.startsWith('data: '))
+
+      for (const line of lines) {
+        try {
+          const jsonStr = line.slice(6).trim()
+          if (!jsonStr) continue
+          
+          const event = JSON.parse(jsonStr)
+          
+          if (event.type === 'progress' && event.event) {
+            // Update progress based on queue/processing status
+            if (event.event.status === 'IN_QUEUE') {
+              progressValue = 10
+            } else if (event.event.status === 'IN_PROGRESS') {
+              progressValue = Math.min(90, progressValue + 10)
+            }
+            onProgress?.(progressValue)
+          } else if (event.type === 'done' && event.result) {
+            result = event.result
+            onProgress?.(100)
+          } else if (event.type === 'error') {
+            throw new Error(event.error)
+          }
+        } catch (e) {
+          // Skip invalid JSON
+        }
+      }
+    }
+
+    if (!result) {
+      throw new Error('No result received from stream')
+    }
+
+    return result
+  }
+
   async imageToImage(
     params: ImageToImageParams,
     onProgress?: (progress: number) => void
@@ -133,8 +199,8 @@ class GenerationService {
         settings: params,
       })
 
-      // Call FAL.ai
-      const result = await this.falClient.execute(
+      // Use streaming via fal-stream edge function
+      const result = await this.streamGenerate(
         modelId,
         {
           image_url: params.imageUrl,
@@ -145,19 +211,12 @@ class GenerationService {
           guidance_scale: params.guidanceScale || 3.5,
           seed: params.seed,
         },
-        {
-          onProgress: (progress) => {
-            onProgress?.(progress)
-          },
-          onError: (error) => {
-            this.logGeneration(generationId, { status: 'failed', error: error.message })
-          },
-        }
+        onProgress
       )
 
-      const imageUrl = result.images?.[0]?.url || result.data?.images?.[0]?.url
-      const imageWidth = result.images?.[0]?.width || result.data?.images?.[0]?.width || 1024
-      const imageHeight = result.images?.[0]?.height || result.data?.images?.[0]?.height || 1024
+      const imageUrl = result.images?.[0]?.url
+      const imageWidth = result.images?.[0]?.width || 1024
+      const imageHeight = result.images?.[0]?.height || 1024
 
       if (!imageUrl) {
         throw new Error('No image URL returned from generation')
