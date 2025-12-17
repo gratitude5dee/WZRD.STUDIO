@@ -22,8 +22,11 @@ export const ProjectList = ({ projects, onOpenProject, onCreateProject }: Projec
   };
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-5">
-      <NewProjectCard onClick={onCreateProject} />
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 md:gap-5">
+      {/* New Project Card - hidden on mobile (use bottom nav FAB instead) */}
+      <div className="hidden md:block">
+        <NewProjectCard onClick={onCreateProject} />
+      </div>
       {localProjects.map((project) => (
         <ProjectCard
           key={project.id}
