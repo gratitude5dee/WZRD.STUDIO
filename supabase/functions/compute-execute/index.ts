@@ -58,16 +58,60 @@ serve(async (req) => {
       });
     }
 
-    // Fetch all nodes and edges for the project
-    const { data: nodes, error: nodesError } = await supabaseClient
+    // First try to fetch from compute_nodes (new system)
+    let { data: nodes, error: nodesError } = await supabaseClient
       .from('compute_nodes')
       .select('*')
       .eq('project_id', projectId);
 
-    const { data: edges, error: edgesError } = await supabaseClient
+    let { data: edges, error: edgesError } = await supabaseClient
       .from('compute_edges')
       .select('*')
       .eq('project_id', projectId);
+
+    // If no compute_nodes found, fallback to studio_blocks (legacy system)
+    if ((!nodes || nodes.length === 0) && !nodesError) {
+      console.log('[ComputeExecute] No compute_nodes found, trying studio_blocks...');
+      
+      const { data: blocks, error: blocksError } = await supabaseClient
+        .from('studio_blocks')
+        .select('*')
+        .eq('project_id', projectId);
+
+      if (blocksError) {
+        console.error('[ComputeExecute] Error fetching studio_blocks:', blocksError);
+        return new Response(JSON.stringify({ error: 'Failed to fetch compute graph' }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+
+      if (blocks && blocks.length > 0) {
+        // Transform studio_blocks to compute node format
+        nodes = blocks.map((block: any, index: number) => ({
+          id: block.id,
+          project_id: block.project_id,
+          user_id: block.user_id,
+          kind: mapBlockTypeToKind(block.block_type),
+          label: block.block_type || 'Block',
+          position: { x: block.position_x || 0, y: block.position_y || 0 },
+          params: {
+            prompt: block.prompt,
+            model: block.selected_model,
+            imageUrl: block.generated_output_url,
+            ...block.generation_metadata
+          },
+          inputs: [],
+          outputs: [],
+          status: 'idle',
+          version: '1.0.0',
+          created_at: block.created_at,
+          updated_at: block.updated_at,
+        }));
+        edges = []; // No edges in studio_blocks system
+        console.log('[ComputeExecute] Transformed', nodes.length, 'studio_blocks to compute nodes');
+      }
+    }
 
     if (nodesError || edgesError) {
       console.error('[ComputeExecute] Error fetching graph:', nodesError || edgesError);
@@ -687,4 +731,25 @@ async function executeAudioNode(
     prompt: finalPrompt,
     data: node.params 
   };
+}
+
+// ============= Helper Functions for Legacy Support =============
+
+/**
+ * Map studio_blocks block_type to compute_nodes kind
+ */
+function mapBlockTypeToKind(blockType: string): string {
+  const typeMap: Record<string, string> = {
+    'text': 'Text',
+    'prompt': 'Prompt',
+    'image': 'Image',
+    'video': 'Video',
+    'audio': 'Audio',
+    'upload': 'Upload',
+    'output': 'Output',
+    'combine': 'Combine',
+    'transform': 'Transform',
+  };
+  
+  return typeMap[blockType?.toLowerCase()] || 'Text';
 }
