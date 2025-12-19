@@ -3237,6 +3237,1133 @@ export type Database = {
           },
         ]
       }
+      mrkt_activations: {
+        Row: {
+          account: string | null
+          activation_key: Json | null
+          agent_url: string | null
+          created_at: string | null
+          deployed_at: string | null
+          deployment_type: Database["public"]["Enums"]["deployment_type"]
+          error_message: string | null
+          expires_at: string | null
+          id: string
+          is_live: boolean | null
+          platform: string | null
+          principal_id: string
+          requested_at: string | null
+          signal_id: string
+          status: Database["public"]["Enums"]["activation_status"] | null
+          updated_at: string | null
+        }
+        Insert: {
+          account?: string | null
+          activation_key?: Json | null
+          agent_url?: string | null
+          created_at?: string | null
+          deployed_at?: string | null
+          deployment_type: Database["public"]["Enums"]["deployment_type"]
+          error_message?: string | null
+          expires_at?: string | null
+          id?: string
+          is_live?: boolean | null
+          platform?: string | null
+          principal_id: string
+          requested_at?: string | null
+          signal_id: string
+          status?: Database["public"]["Enums"]["activation_status"] | null
+          updated_at?: string | null
+        }
+        Update: {
+          account?: string | null
+          activation_key?: Json | null
+          agent_url?: string | null
+          created_at?: string | null
+          deployed_at?: string | null
+          deployment_type?: Database["public"]["Enums"]["deployment_type"]
+          error_message?: string | null
+          expires_at?: string | null
+          id?: string
+          is_live?: boolean | null
+          platform?: string | null
+          principal_id?: string
+          requested_at?: string | null
+          signal_id?: string
+          status?: Database["public"]["Enums"]["activation_status"] | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mrkt_activations_principal_id_fkey"
+            columns: ["principal_id"]
+            isOneToOne: false
+            referencedRelation: "mrkt_principals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mrkt_activations_signal_id_fkey"
+            columns: ["signal_id"]
+            isOneToOne: false
+            referencedRelation: "mrkt_signals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mrkt_analytics_events: {
+        Row: {
+          created_at: string | null
+          event_name: string
+          id: string
+          latency_ms: number | null
+          properties: Json
+          tenant_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          event_name: string
+          id?: string
+          latency_ms?: number | null
+          properties: Json
+          tenant_id: string
+        }
+        Update: {
+          created_at?: string | null
+          event_name?: string
+          id?: string
+          latency_ms?: number | null
+          properties?: Json
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mrkt_analytics_events_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "mrkt_tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mrkt_audit_events: {
+        Row: {
+          action: string
+          after_state: Json | null
+          before_state: Json | null
+          created_at: string | null
+          event_type: string
+          id: string
+          ip_address: unknown
+          metadata: Json | null
+          principal_id: string | null
+          resource_id: string | null
+          resource_type: string
+          tenant_id: string
+          user_agent: string | null
+        }
+        Insert: {
+          action: string
+          after_state?: Json | null
+          before_state?: Json | null
+          created_at?: string | null
+          event_type: string
+          id?: string
+          ip_address?: unknown
+          metadata?: Json | null
+          principal_id?: string | null
+          resource_id?: string | null
+          resource_type: string
+          tenant_id: string
+          user_agent?: string | null
+        }
+        Update: {
+          action?: string
+          after_state?: Json | null
+          before_state?: Json | null
+          created_at?: string | null
+          event_type?: string
+          id?: string
+          ip_address?: unknown
+          metadata?: Json | null
+          principal_id?: string | null
+          resource_id?: string | null
+          resource_type?: string
+          tenant_id?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mrkt_audit_events_principal_id_fkey"
+            columns: ["principal_id"]
+            isOneToOne: false
+            referencedRelation: "mrkt_principals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mrkt_audit_events_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "mrkt_tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mrkt_authorized_properties: {
+        Row: {
+          authorization_method: string | null
+          authorized_at: string | null
+          created_at: string | null
+          domain: string
+          id: string
+          metadata: Json | null
+          name: string
+          property_id: string
+          seller_id: string
+          tags: string[] | null
+        }
+        Insert: {
+          authorization_method?: string | null
+          authorized_at?: string | null
+          created_at?: string | null
+          domain: string
+          id?: string
+          metadata?: Json | null
+          name: string
+          property_id: string
+          seller_id: string
+          tags?: string[] | null
+        }
+        Update: {
+          authorization_method?: string | null
+          authorized_at?: string | null
+          created_at?: string | null
+          domain?: string
+          id?: string
+          metadata?: Json | null
+          name?: string
+          property_id?: string
+          seller_id?: string
+          tags?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mrkt_authorized_properties_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "mrkt_sellers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mrkt_briefs: {
+        Row: {
+          ai_extracted: Json | null
+          attachments: string[] | null
+          brand_manifest: Json
+          brief_text: string | null
+          budget: Json
+          constraints: Json | null
+          created_at: string | null
+          flighting: Json | null
+          id: string
+          kpis: Json | null
+          matched_sellers: Json | null
+          principal_id: string
+          promoted_offering: string | null
+          status: Database["public"]["Enums"]["brief_status"] | null
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          ai_extracted?: Json | null
+          attachments?: string[] | null
+          brand_manifest: Json
+          brief_text?: string | null
+          budget: Json
+          constraints?: Json | null
+          created_at?: string | null
+          flighting?: Json | null
+          id?: string
+          kpis?: Json | null
+          matched_sellers?: Json | null
+          principal_id: string
+          promoted_offering?: string | null
+          status?: Database["public"]["Enums"]["brief_status"] | null
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          ai_extracted?: Json | null
+          attachments?: string[] | null
+          brand_manifest?: Json
+          brief_text?: string | null
+          budget?: Json
+          constraints?: Json | null
+          created_at?: string | null
+          flighting?: Json | null
+          id?: string
+          kpis?: Json | null
+          matched_sellers?: Json | null
+          principal_id?: string
+          promoted_offering?: string | null
+          status?: Database["public"]["Enums"]["brief_status"] | null
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mrkt_briefs_principal_id_fkey"
+            columns: ["principal_id"]
+            isOneToOne: false
+            referencedRelation: "mrkt_principals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mrkt_briefs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "mrkt_tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mrkt_creative_assets: {
+        Row: {
+          asset_id: string
+          created_at: string | null
+          creative_id: string
+          duration_seconds: number | null
+          file_size: number | null
+          height: number | null
+          id: string
+          metadata: Json | null
+          mime_type: string | null
+          name: string | null
+          storage_url: string
+          type: Database["public"]["Enums"]["asset_type"]
+          width: number | null
+        }
+        Insert: {
+          asset_id: string
+          created_at?: string | null
+          creative_id: string
+          duration_seconds?: number | null
+          file_size?: number | null
+          height?: number | null
+          id?: string
+          metadata?: Json | null
+          mime_type?: string | null
+          name?: string | null
+          storage_url: string
+          type: Database["public"]["Enums"]["asset_type"]
+          width?: number | null
+        }
+        Update: {
+          asset_id?: string
+          created_at?: string | null
+          creative_id?: string
+          duration_seconds?: number | null
+          file_size?: number | null
+          height?: number | null
+          id?: string
+          metadata?: Json | null
+          mime_type?: string | null
+          name?: string | null
+          storage_url?: string
+          type?: Database["public"]["Enums"]["asset_type"]
+          width?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mrkt_creative_assets_creative_id_fkey"
+            columns: ["creative_id"]
+            isOneToOne: false
+            referencedRelation: "mrkt_creatives"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mrkt_creative_formats: {
+        Row: {
+          agent_url: string
+          cached_at: string | null
+          description: string | null
+          id: string
+          name: string
+          specs: Json
+          type: string
+        }
+        Insert: {
+          agent_url: string
+          cached_at?: string | null
+          description?: string | null
+          id: string
+          name: string
+          specs: Json
+          type: string
+        }
+        Update: {
+          agent_url?: string
+          cached_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          specs?: Json
+          type?: string
+        }
+        Relationships: []
+      }
+      mrkt_creative_syncs: {
+        Row: {
+          created_at: string | null
+          creative_id: string
+          error_message: string | null
+          id: string
+          media_buy_id: string
+          platform: string
+          platform_creative_id: string | null
+          sync_status: string | null
+          synced_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          creative_id: string
+          error_message?: string | null
+          id?: string
+          media_buy_id: string
+          platform: string
+          platform_creative_id?: string | null
+          sync_status?: string | null
+          synced_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          creative_id?: string
+          error_message?: string | null
+          id?: string
+          media_buy_id?: string
+          platform?: string
+          platform_creative_id?: string | null
+          sync_status?: string | null
+          synced_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mrkt_creative_syncs_creative_id_fkey"
+            columns: ["creative_id"]
+            isOneToOne: false
+            referencedRelation: "mrkt_creatives"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mrkt_creative_syncs_media_buy_id_fkey"
+            columns: ["media_buy_id"]
+            isOneToOne: false
+            referencedRelation: "mrkt_media_buys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mrkt_creatives: {
+        Row: {
+          created_at: string | null
+          format_agent_url: string
+          format_id: string
+          id: string
+          manifest: Json
+          preview_expires_at: string | null
+          preview_url: string | null
+          principal_id: string
+          promoted_offering: string | null
+          review_notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: Database["public"]["Enums"]["creative_status"] | null
+          tenant_id: string
+          updated_at: string | null
+          validation_errors: Json | null
+        }
+        Insert: {
+          created_at?: string | null
+          format_agent_url: string
+          format_id: string
+          id?: string
+          manifest: Json
+          preview_expires_at?: string | null
+          preview_url?: string | null
+          principal_id: string
+          promoted_offering?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["creative_status"] | null
+          tenant_id: string
+          updated_at?: string | null
+          validation_errors?: Json | null
+        }
+        Update: {
+          created_at?: string | null
+          format_agent_url?: string
+          format_id?: string
+          id?: string
+          manifest?: Json
+          preview_expires_at?: string | null
+          preview_url?: string | null
+          principal_id?: string
+          promoted_offering?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["creative_status"] | null
+          tenant_id?: string
+          updated_at?: string | null
+          validation_errors?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mrkt_creatives_principal_id_fkey"
+            columns: ["principal_id"]
+            isOneToOne: false
+            referencedRelation: "mrkt_principals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mrkt_creatives_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "mrkt_principals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mrkt_creatives_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "mrkt_tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mrkt_decision_logs: {
+        Row: {
+          applied_rules: Json
+          campaign_id: string | null
+          confidence: number | null
+          created_at: string | null
+          decision: Database["public"]["Enums"]["decision_result"]
+          id: string
+          impression_context: Json
+          package_id: string | null
+          reason_codes: string[]
+          tenant_id: string
+          timing: Json
+          user_signals: Json | null
+        }
+        Insert: {
+          applied_rules: Json
+          campaign_id?: string | null
+          confidence?: number | null
+          created_at?: string | null
+          decision: Database["public"]["Enums"]["decision_result"]
+          id?: string
+          impression_context: Json
+          package_id?: string | null
+          reason_codes: string[]
+          tenant_id: string
+          timing: Json
+          user_signals?: Json | null
+        }
+        Update: {
+          applied_rules?: Json
+          campaign_id?: string | null
+          confidence?: number | null
+          created_at?: string | null
+          decision?: Database["public"]["Enums"]["decision_result"]
+          id?: string
+          impression_context?: Json
+          package_id?: string | null
+          reason_codes?: string[]
+          tenant_id?: string
+          timing?: Json
+          user_signals?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mrkt_decision_logs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "mrkt_tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mrkt_media_buys: {
+        Row: {
+          brand_manifest: Json
+          brief_id: string | null
+          budget: number
+          buyer_ref: string
+          created_at: string | null
+          currency: string | null
+          delivery_metrics: Json | null
+          end_time: string
+          external_ids: Json | null
+          id: string
+          principal_id: string
+          start_time: string
+          status: Database["public"]["Enums"]["media_buy_status"] | null
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          brand_manifest: Json
+          brief_id?: string | null
+          budget: number
+          buyer_ref: string
+          created_at?: string | null
+          currency?: string | null
+          delivery_metrics?: Json | null
+          end_time: string
+          external_ids?: Json | null
+          id?: string
+          principal_id: string
+          start_time: string
+          status?: Database["public"]["Enums"]["media_buy_status"] | null
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          brand_manifest?: Json
+          brief_id?: string | null
+          budget?: number
+          buyer_ref?: string
+          created_at?: string | null
+          currency?: string | null
+          delivery_metrics?: Json | null
+          end_time?: string
+          external_ids?: Json | null
+          id?: string
+          principal_id?: string
+          start_time?: string
+          status?: Database["public"]["Enums"]["media_buy_status"] | null
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mrkt_media_buys_brief_id_fkey"
+            columns: ["brief_id"]
+            isOneToOne: false
+            referencedRelation: "mrkt_briefs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mrkt_media_buys_principal_id_fkey"
+            columns: ["principal_id"]
+            isOneToOne: false
+            referencedRelation: "mrkt_principals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mrkt_media_buys_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "mrkt_tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mrkt_packages: {
+        Row: {
+          bid_price: number | null
+          budget: number
+          buyer_ref: string
+          created_at: string | null
+          creative_ids: string[] | null
+          delivery_metrics: Json | null
+          format_ids: Json
+          id: string
+          media_buy_id: string
+          pacing: Database["public"]["Enums"]["pacing_type"] | null
+          pricing_option_id: string
+          product_id: string
+          seller_id: string
+          status: Database["public"]["Enums"]["package_status"] | null
+          targeting_overlay: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          bid_price?: number | null
+          budget: number
+          buyer_ref: string
+          created_at?: string | null
+          creative_ids?: string[] | null
+          delivery_metrics?: Json | null
+          format_ids: Json
+          id?: string
+          media_buy_id: string
+          pacing?: Database["public"]["Enums"]["pacing_type"] | null
+          pricing_option_id: string
+          product_id: string
+          seller_id: string
+          status?: Database["public"]["Enums"]["package_status"] | null
+          targeting_overlay?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          bid_price?: number | null
+          budget?: number
+          buyer_ref?: string
+          created_at?: string | null
+          creative_ids?: string[] | null
+          delivery_metrics?: Json | null
+          format_ids?: Json
+          id?: string
+          media_buy_id?: string
+          pacing?: Database["public"]["Enums"]["pacing_type"] | null
+          pricing_option_id?: string
+          product_id?: string
+          seller_id?: string
+          status?: Database["public"]["Enums"]["package_status"] | null
+          targeting_overlay?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mrkt_packages_media_buy_id_fkey"
+            columns: ["media_buy_id"]
+            isOneToOne: false
+            referencedRelation: "mrkt_media_buys"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mrkt_packages_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "mrkt_sellers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mrkt_policies: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          enabled: boolean | null
+          id: string
+          name: string
+          priority: number | null
+          rules: Json
+          tenant_id: string
+          type: Database["public"]["Enums"]["policy_type"]
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          enabled?: boolean | null
+          id?: string
+          name: string
+          priority?: number | null
+          rules: Json
+          tenant_id: string
+          type: Database["public"]["Enums"]["policy_type"]
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          enabled?: boolean | null
+          id?: string
+          name?: string
+          priority?: number | null
+          rules?: Json
+          tenant_id?: string
+          type?: Database["public"]["Enums"]["policy_type"]
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mrkt_policies_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "mrkt_tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mrkt_principals: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          external_id: string | null
+          id: string
+          metadata: Json | null
+          org_id: string | null
+          permissions: Json | null
+          roles: Database["public"]["Enums"]["principal_role"][] | null
+          tenant_id: string
+          type: Database["public"]["Enums"]["principal_type"]
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          external_id?: string | null
+          id?: string
+          metadata?: Json | null
+          org_id?: string | null
+          permissions?: Json | null
+          roles?: Database["public"]["Enums"]["principal_role"][] | null
+          tenant_id: string
+          type: Database["public"]["Enums"]["principal_type"]
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          external_id?: string | null
+          id?: string
+          metadata?: Json | null
+          org_id?: string | null
+          permissions?: Json | null
+          roles?: Database["public"]["Enums"]["principal_role"][] | null
+          tenant_id?: string
+          type?: Database["public"]["Enums"]["principal_type"]
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mrkt_principals_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "mrkt_tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mrkt_products: {
+        Row: {
+          created_at: string | null
+          delivery_type: Database["public"]["Enums"]["delivery_type"]
+          description: string | null
+          estimated_reach: Json | null
+          format_ids: Json
+          id: string
+          name: string
+          placements: Json | null
+          pricing_options: Json
+          seller_id: string
+          status: Database["public"]["Enums"]["product_status"] | null
+          targeting: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          delivery_type: Database["public"]["Enums"]["delivery_type"]
+          description?: string | null
+          estimated_reach?: Json | null
+          format_ids: Json
+          id: string
+          name: string
+          placements?: Json | null
+          pricing_options: Json
+          seller_id: string
+          status?: Database["public"]["Enums"]["product_status"] | null
+          targeting?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          delivery_type?: Database["public"]["Enums"]["delivery_type"]
+          description?: string | null
+          estimated_reach?: Json | null
+          format_ids?: Json
+          id?: string
+          name?: string
+          placements?: Json | null
+          pricing_options?: Json
+          seller_id?: string
+          status?: Database["public"]["Enums"]["product_status"] | null
+          targeting?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mrkt_products_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "mrkt_sellers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mrkt_sellers: {
+        Row: {
+          agent_url: string | null
+          config: Json | null
+          created_at: string | null
+          description: string | null
+          domain: string
+          id: string
+          logo_url: string | null
+          name: string
+          status: Database["public"]["Enums"]["seller_status"] | null
+          tenant_id: string
+          type: Database["public"]["Enums"]["seller_type"]
+          updated_at: string | null
+          verification: Json | null
+          verified_at: string | null
+        }
+        Insert: {
+          agent_url?: string | null
+          config?: Json | null
+          created_at?: string | null
+          description?: string | null
+          domain: string
+          id?: string
+          logo_url?: string | null
+          name: string
+          status?: Database["public"]["Enums"]["seller_status"] | null
+          tenant_id: string
+          type: Database["public"]["Enums"]["seller_type"]
+          updated_at?: string | null
+          verification?: Json | null
+          verified_at?: string | null
+        }
+        Update: {
+          agent_url?: string | null
+          config?: Json | null
+          created_at?: string | null
+          description?: string | null
+          domain?: string
+          id?: string
+          logo_url?: string | null
+          name?: string
+          status?: Database["public"]["Enums"]["seller_status"] | null
+          tenant_id?: string
+          type?: Database["public"]["Enums"]["seller_type"]
+          updated_at?: string | null
+          verification?: Json | null
+          verified_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mrkt_sellers_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "mrkt_tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mrkt_signal_discoveries: {
+        Row: {
+          context_id: string | null
+          created_at: string | null
+          filters: Json | null
+          id: string
+          principal_id: string
+          query_text: string
+          result_count: number | null
+          result_signals: string[] | null
+          tenant_id: string
+        }
+        Insert: {
+          context_id?: string | null
+          created_at?: string | null
+          filters?: Json | null
+          id?: string
+          principal_id: string
+          query_text: string
+          result_count?: number | null
+          result_signals?: string[] | null
+          tenant_id: string
+        }
+        Update: {
+          context_id?: string | null
+          created_at?: string | null
+          filters?: Json | null
+          id?: string
+          principal_id?: string
+          query_text?: string
+          result_count?: number | null
+          result_signals?: string[] | null
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mrkt_signal_discoveries_principal_id_fkey"
+            columns: ["principal_id"]
+            isOneToOne: false
+            referencedRelation: "mrkt_principals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mrkt_signal_discoveries_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "mrkt_tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mrkt_signals: {
+        Row: {
+          cached_at: string | null
+          catalog_type: Database["public"]["Enums"]["catalog_type"] | null
+          coverage_percentage: number | null
+          data_provider: string | null
+          description: string | null
+          id: string
+          metadata: Json | null
+          name: string
+          pricing: Json | null
+          signal_agent_segment_id: string
+          signal_agent_url: string | null
+          signal_type: Database["public"]["Enums"]["signal_type"]
+          tenant_id: string
+        }
+        Insert: {
+          cached_at?: string | null
+          catalog_type?: Database["public"]["Enums"]["catalog_type"] | null
+          coverage_percentage?: number | null
+          data_provider?: string | null
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          name: string
+          pricing?: Json | null
+          signal_agent_segment_id: string
+          signal_agent_url?: string | null
+          signal_type: Database["public"]["Enums"]["signal_type"]
+          tenant_id: string
+        }
+        Update: {
+          cached_at?: string | null
+          catalog_type?: Database["public"]["Enums"]["catalog_type"] | null
+          coverage_percentage?: number | null
+          data_provider?: string | null
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          name?: string
+          pricing?: Json | null
+          signal_agent_segment_id?: string
+          signal_agent_url?: string | null
+          signal_type?: Database["public"]["Enums"]["signal_type"]
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mrkt_signals_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "mrkt_tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mrkt_tenants: {
+        Row: {
+          admin_token_hash: string | null
+          config: Json | null
+          created_at: string | null
+          id: string
+          name: string
+          status: Database["public"]["Enums"]["tenant_status"] | null
+          subdomain: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          admin_token_hash?: string | null
+          config?: Json | null
+          created_at?: string | null
+          id?: string
+          name: string
+          status?: Database["public"]["Enums"]["tenant_status"] | null
+          subdomain?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          admin_token_hash?: string | null
+          config?: Json | null
+          created_at?: string | null
+          id?: string
+          name?: string
+          status?: Database["public"]["Enums"]["tenant_status"] | null
+          subdomain?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      mrkt_workflow_tasks: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          error_message: string | null
+          id: string
+          input_data: Json | null
+          max_retries: number | null
+          output_data: Json | null
+          principal_id: string | null
+          retry_count: number | null
+          started_at: string | null
+          status: string | null
+          task_type: string
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          input_data?: Json | null
+          max_retries?: number | null
+          output_data?: Json | null
+          principal_id?: string | null
+          retry_count?: number | null
+          started_at?: string | null
+          status?: string | null
+          task_type: string
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          input_data?: Json | null
+          max_retries?: number | null
+          output_data?: Json | null
+          principal_id?: string | null
+          retry_count?: number | null
+          started_at?: string | null
+          status?: string | null
+          task_type?: string
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mrkt_workflow_tasks_principal_id_fkey"
+            columns: ["principal_id"]
+            isOneToOne: false
+            referencedRelation: "mrkt_principals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mrkt_workflow_tasks_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "mrkt_tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       music_items: {
         Row: {
           album: string | null
@@ -3650,6 +4777,7 @@ export type Database = {
           avatar_url: string | null
           connected_accounts: Json | null
           created_at: string
+          full_name: string | null
           id: string
           last_wallet_connection: string | null
           onboarding_completed: boolean
@@ -3665,6 +4793,7 @@ export type Database = {
           avatar_url?: string | null
           connected_accounts?: Json | null
           created_at?: string
+          full_name?: string | null
           id: string
           last_wallet_connection?: string | null
           onboarding_completed?: boolean
@@ -3680,6 +4809,7 @@ export type Database = {
           avatar_url?: string | null
           connected_accounts?: Json | null
           created_at?: string
+          full_name?: string | null
           id?: string
           last_wallet_connection?: string | null
           onboarding_completed?: boolean
@@ -3935,6 +5065,39 @@ export type Database = {
           session_identifier?: string
           title?: string | null
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      revenue_distributions: {
+        Row: {
+          created_at: string
+          distributed_at: string
+          id: string
+          song_id: string
+          status: string
+          total_revenue: number
+          transaction_hash: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          distributed_at?: string
+          id?: string
+          song_id: string
+          status?: string
+          total_revenue?: number
+          transaction_hash?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          distributed_at?: string
+          id?: string
+          song_id?: string
+          status?: string
+          total_revenue?: number
+          transaction_hash?: string | null
           user_id?: string
         }
         Relationships: []
@@ -4261,6 +5424,27 @@ export type Database = {
           },
         ]
       }
+      song_likes: {
+        Row: {
+          created_at: string
+          id: string
+          song_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          song_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          song_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       sources: {
         Row: {
           created_at: string | null
@@ -4488,6 +5672,60 @@ export type Database = {
           },
         ]
       }
+      submissions: {
+        Row: {
+          audio_url: string | null
+          brief_id: string
+          created_at: string
+          id: string
+          notes: string | null
+          one_stop_cleared: boolean | null
+          pro_affiliations: Json | null
+          publishers: Json | null
+          sample_free: boolean | null
+          status: string
+          track_title: string
+          track_url: string | null
+          updated_at: string
+          user_id: string
+          writers: Json | null
+        }
+        Insert: {
+          audio_url?: string | null
+          brief_id: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          one_stop_cleared?: boolean | null
+          pro_affiliations?: Json | null
+          publishers?: Json | null
+          sample_free?: boolean | null
+          status?: string
+          track_title: string
+          track_url?: string | null
+          updated_at?: string
+          user_id: string
+          writers?: Json | null
+        }
+        Update: {
+          audio_url?: string | null
+          brief_id?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          one_stop_cleared?: boolean | null
+          pro_affiliations?: Json | null
+          publishers?: Json | null
+          sample_free?: boolean | null
+          status?: string
+          track_title?: string
+          track_url?: string | null
+          updated_at?: string
+          user_id?: string
+          writers?: Json | null
+        }
+        Relationships: []
+      }
       tech_packs: {
         Row: {
           created_at: string | null
@@ -4708,6 +5946,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      token_holders: {
+        Row: {
+          created_at: string
+          holder_address: string
+          holder_name: string | null
+          id: string
+          song_id: string
+          token_count: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          holder_address: string
+          holder_name?: string | null
+          id?: string
+          song_id: string
+          token_count?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          holder_address?: string
+          holder_name?: string | null
+          id?: string
+          song_id?: string
+          token_count?: number
+          updated_at?: string
+        }
+        Relationships: []
       }
       tour_contacts: {
         Row: {
@@ -5025,6 +6293,53 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_revenue_claims: {
+        Row: {
+          claimed_at: string | null
+          created_at: string
+          id: string
+          revenue_amount: number
+          revenue_distribution_id: string
+          song_id: string
+          status: string
+          token_count: number | null
+          transaction_hash: string | null
+          user_id: string
+        }
+        Insert: {
+          claimed_at?: string | null
+          created_at?: string
+          id?: string
+          revenue_amount?: number
+          revenue_distribution_id: string
+          song_id: string
+          status?: string
+          token_count?: number | null
+          transaction_hash?: string | null
+          user_id: string
+        }
+        Update: {
+          claimed_at?: string | null
+          created_at?: string
+          id?: string
+          revenue_amount?: number
+          revenue_distribution_id?: string
+          song_id?: string
+          status?: string
+          token_count?: number | null
+          transaction_hash?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_revenue_claims_revenue_distribution_id_fkey"
+            columns: ["revenue_distribution_id"]
+            isOneToOne: false
+            referencedRelation: "revenue_distributions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_secrets: {
         Row: {
@@ -5784,6 +7099,7 @@ export type Database = {
         Returns: boolean
       }
       cleanup_expired_idempotency: { Args: never; Returns: undefined }
+      cleanup_mrkt_decision_logs: { Args: never; Returns: undefined }
       generate_board_slug: { Args: { board_title: string }; Returns: string }
       generate_invoice_number: { Args: never; Returns: string }
       get_available_credits: { Args: never; Returns: number }
@@ -5802,6 +7118,8 @@ export type Database = {
           upcoming_gigs: number
         }[]
       }
+      get_mrkt_principal_id: { Args: never; Returns: string }
+      get_mrkt_tenant_id: { Args: never; Returns: string }
       get_public_waitlist_count: { Args: never; Returns: number }
       get_recent_signups_admin: {
         Args: { limit_count?: number }
@@ -5826,6 +7144,16 @@ export type Database = {
         Args: { access_type: string; ip_address?: string; user_agent?: string }
         Returns: undefined
       }
+      mrkt_has_any_role: {
+        Args: {
+          required_roles: Database["public"]["Enums"]["principal_role"][]
+        }
+        Returns: boolean
+      }
+      mrkt_has_role: {
+        Args: { required_role: Database["public"]["Enums"]["principal_role"] }
+        Returns: boolean
+      }
       use_credits: {
         Args: { credit_cost?: number; metadata?: Json; resource_type: string }
         Returns: boolean
@@ -5836,7 +7164,63 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      activation_status:
+        | "pending"
+        | "processing"
+        | "active"
+        | "failed"
+        | "expired"
+      asset_type: "image" | "video" | "audio" | "html" | "text" | "json"
+      brief_status:
+        | "draft"
+        | "submitted"
+        | "processing"
+        | "seller_matched"
+        | "pending_approval"
+        | "active"
+        | "completed"
+        | "error"
+        | "rejected"
+      catalog_type: "public" | "personalized" | "private"
+      creative_status:
+        | "draft"
+        | "pending_review"
+        | "approved"
+        | "rejected"
+        | "archived"
+      decision_result: "allow" | "deny"
+      delivery_type: "guaranteed" | "non_guaranteed"
+      deployment_type: "platform" | "agent"
+      media_buy_status:
+        | "pending_activation"
+        | "active"
+        | "paused"
+        | "completed"
+        | "cancelled"
+      pacing_type: "even" | "asap" | "front_loaded"
+      package_status:
+        | "pending"
+        | "pending_creative"
+        | "active"
+        | "paused"
+        | "completed"
+      policy_type:
+        | "brand_safety"
+        | "frequency_cap"
+        | "first_party_match"
+        | "custom"
+      principal_role: "buyer" | "seller" | "admin" | "viewer"
+      principal_type: "advertiser" | "agency" | "rmn" | "publisher" | "admin"
+      product_status: "active" | "paused" | "archived"
+      seller_status: "pending" | "verified" | "active" | "suspended"
+      seller_type:
+        | "publisher"
+        | "sales_house"
+        | "rep_firm"
+        | "ssp"
+        | "ad_network"
+      signal_type: "audience" | "contextual" | "geo" | "temporal" | "custom"
+      tenant_status: "active" | "suspended" | "deleted"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -5963,6 +7347,71 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      activation_status: [
+        "pending",
+        "processing",
+        "active",
+        "failed",
+        "expired",
+      ],
+      asset_type: ["image", "video", "audio", "html", "text", "json"],
+      brief_status: [
+        "draft",
+        "submitted",
+        "processing",
+        "seller_matched",
+        "pending_approval",
+        "active",
+        "completed",
+        "error",
+        "rejected",
+      ],
+      catalog_type: ["public", "personalized", "private"],
+      creative_status: [
+        "draft",
+        "pending_review",
+        "approved",
+        "rejected",
+        "archived",
+      ],
+      decision_result: ["allow", "deny"],
+      delivery_type: ["guaranteed", "non_guaranteed"],
+      deployment_type: ["platform", "agent"],
+      media_buy_status: [
+        "pending_activation",
+        "active",
+        "paused",
+        "completed",
+        "cancelled",
+      ],
+      pacing_type: ["even", "asap", "front_loaded"],
+      package_status: [
+        "pending",
+        "pending_creative",
+        "active",
+        "paused",
+        "completed",
+      ],
+      policy_type: [
+        "brand_safety",
+        "frequency_cap",
+        "first_party_match",
+        "custom",
+      ],
+      principal_role: ["buyer", "seller", "admin", "viewer"],
+      principal_type: ["advertiser", "agency", "rmn", "publisher", "admin"],
+      product_status: ["active", "paused", "archived"],
+      seller_status: ["pending", "verified", "active", "suspended"],
+      seller_type: [
+        "publisher",
+        "sales_house",
+        "rep_firm",
+        "ssp",
+        "ad_network",
+      ],
+      signal_type: ["audience", "contextual", "geo", "temporal", "custom"],
+      tenant_status: ["active", "suspended", "deleted"],
+    },
   },
 } as const
