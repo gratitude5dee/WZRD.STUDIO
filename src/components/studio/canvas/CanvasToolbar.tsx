@@ -9,7 +9,11 @@ import {
   ZoomOut,
   Trash2,
   Copy,
-  Layers
+  Layers,
+  Play,
+  Square,
+  Loader2,
+  Save
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -29,6 +33,13 @@ interface CanvasToolbarProps {
   onDeleteSelected: () => void;
   onDuplicateSelected: () => void;
   className?: string;
+  // Execution props
+  isExecuting?: boolean;
+  executionProgress?: { completed: number; total: number };
+  onExecute?: () => void;
+  onCancelExecution?: () => void;
+  onSave?: () => void;
+  isSaving?: boolean;
 }
 
 export const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
@@ -43,6 +54,12 @@ export const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
   onDeleteSelected,
   onDuplicateSelected,
   className,
+  isExecuting = false,
+  executionProgress,
+  onExecute,
+  onCancelExecution,
+  onSave,
+  isSaving = false,
 }) => {
   return (
     <motion.div
@@ -58,6 +75,83 @@ export const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
       )}
     >
       <TooltipProvider delayDuration={300}>
+        {/* Execute/Stop Button */}
+        {onExecute && (
+          <>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                {isExecuting ? (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 bg-red-500/20 text-red-400 hover:bg-red-500/30"
+                    onClick={onCancelExecution}
+                  >
+                    <Square className="h-4 w-4" />
+                  </Button>
+                ) : (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 bg-green-500/20 text-green-400 hover:bg-green-500/30"
+                    onClick={onExecute}
+                  >
+                    <Play className="h-4 w-4" />
+                  </Button>
+                )}
+              </TooltipTrigger>
+              <TooltipContent side="top" className="flex items-center gap-2">
+                <span>{isExecuting ? 'Stop Execution' : 'Run Graph'}</span>
+                <kbd className="px-1.5 py-0.5 text-[10px] font-mono bg-zinc-800 rounded">⌘R</kbd>
+              </TooltipContent>
+            </Tooltip>
+
+            {/* Execution Progress */}
+            {isExecuting && executionProgress && (
+              <div className="flex items-center gap-2 px-2">
+                <Loader2 className="h-3.5 w-3.5 text-purple-400 animate-spin" />
+                <span className="text-xs text-zinc-400">
+                  {executionProgress.completed}/{executionProgress.total}
+                </span>
+              </div>
+            )}
+
+            <Separator orientation="vertical" className="h-6 bg-zinc-700/50" />
+          </>
+        )}
+
+        {/* Save Button */}
+        {onSave && (
+          <>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={cn(
+                    'h-9 w-9 transition-all',
+                    isSaving && 'opacity-50 cursor-not-allowed'
+                  )}
+                  onClick={onSave}
+                  disabled={isSaving}
+                >
+                  {isSaving ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Save className="h-4 w-4" />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="flex items-center gap-2">
+                <span>Save Graph</span>
+                <kbd className="px-1.5 py-0.5 text-[10px] font-mono bg-zinc-800 rounded">⌘S</kbd>
+              </TooltipContent>
+            </Tooltip>
+
+            <Separator orientation="vertical" className="h-6 bg-zinc-700/50" />
+          </>
+        )}
+
         {/* Connection Mode Toggle */}
         <Tooltip>
           <TooltipTrigger asChild>
@@ -82,8 +176,6 @@ export const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
             <kbd className="px-1.5 py-0.5 text-[10px] font-mono bg-zinc-800 rounded">C</kbd>
           </TooltipContent>
         </Tooltip>
-
-        <Separator orientation="vertical" className="h-6 bg-zinc-700/50" />
 
         {/* Grid Toggle */}
         <Tooltip>
