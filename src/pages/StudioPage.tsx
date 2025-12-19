@@ -2,19 +2,20 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { useParams } from 'react-router-dom';
-import { Loader2 } from 'lucide-react';
+import { Info, Loader2 } from 'lucide-react';
 import { useAppStore } from '@/store/appStore';
 import AppHeader from '@/components/AppHeader';
 import StudioSidebar from '@/components/studio/StudioSidebar';
 import StudioCanvas from '@/components/studio/StudioCanvas';
 import BlockSettingsModal from '@/components/studio/BlockSettingsModal';
+import StudioInspectorPanel from '@/components/studio/StudioInspectorPanel';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { AssetType, ProjectAsset } from '@/types/assets';
 
 export interface Block {
   id: string;
-  type: 'text' | 'image' | 'video';
+  type: 'text' | 'image' | 'video' | 'upload';
   position: { x: number; y: number };
   initialData?: {
     prompt?: string;
@@ -150,7 +151,7 @@ const StudioPage = () => {
     };
   }, []);
   
-  const handleAddBlock = useCallback((blockOrType: Block | 'text' | 'image' | 'video') => {
+  const handleAddBlock = useCallback((blockOrType: Block | 'text' | 'image' | 'video' | 'upload') => {
     const newBlock = typeof blockOrType === 'string'
       ? {
           id: uuidv4(),
@@ -227,40 +228,55 @@ const StudioPage = () => {
   const selectedBlock = blocks.find(b => b.id === selectedBlockId);
   const selectedBlockType = selectedBlock?.type || null;
   const selectedModel = selectedBlockId ? blockModels[selectedBlockId] : '';
-  
+  const activeJobs = 0;
+
   return (
-    <div className="h-screen flex flex-col bg-black text-white">
+    <div className="h-screen flex flex-col bg-[#0a0a0a] text-white">
       <AppHeader />
-      
+
       <div className="flex-1 flex overflow-hidden">
         <StudioSidebar
           onAddBlock={handleAddBlock}
           projectId={projectId}
           onAssetSelect={handleAssetInsert}
         />
-        
-        {isLoading ? (
-          <div className="flex-1 flex items-center justify-center bg-black">
-            <div className="flex flex-col items-center gap-3">
-              <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
-              <p className="text-sm text-zinc-400">Loading project...</p>
+
+        <div className="flex-1 flex bg-[#0a0a0a]">
+          {isLoading ? (
+            <div className="flex-1 flex items-center justify-center bg-black">
+              <div className="flex flex-col items-center gap-3">
+                <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
+                <p className="text-sm text-zinc-400">Loading project...</p>
+              </div>
             </div>
-          </div>
-        ) : (
-          <StudioCanvas 
-            blocks={blocks}
-            selectedBlockId={selectedBlockId}
-            onSelectBlock={handleSelectBlock}
-            onAddBlock={handleAddBlock}
-            onDeleteBlock={handleDeleteBlock}
-            onUpdateBlockPosition={handleUpdateBlockPosition}
-            onUpdateBlockData={handleUpdateBlockData}
-            blockModels={blockModels}
-            onModelChange={handleModelChange}
-            projectId={projectId}
-            useComputeFlow={true}
-          />
-        )}
+          ) : (
+            <StudioCanvas
+              blocks={blocks}
+              selectedBlockId={selectedBlockId}
+              onSelectBlock={handleSelectBlock}
+              onAddBlock={handleAddBlock}
+              onDeleteBlock={handleDeleteBlock}
+              onUpdateBlockPosition={handleUpdateBlockPosition}
+              onUpdateBlockData={handleUpdateBlockData}
+              blockModels={blockModels}
+              onModelChange={handleModelChange}
+              projectId={projectId}
+              useComputeFlow={true}
+            />
+          )}
+        </div>
+
+        <StudioInspectorPanel activeJobs={activeJobs} />
+      </div>
+
+      <div className="border-t border-zinc-800 bg-[#0f0f0f] px-6 py-3 flex items-center justify-between text-sm">
+        <div className="flex items-center gap-3 text-zinc-200">
+          <span className="w-6 h-6 rounded-full border border-zinc-700 flex items-center justify-center">
+            <Info className="w-4 h-4" />
+          </span>
+          <span>Your Workspace is almost out of credits</span>
+        </div>
+        <button className="text-emerald-400 font-medium">Upgrade now</button>
       </div>
 
       {/* Block Settings Modal */}

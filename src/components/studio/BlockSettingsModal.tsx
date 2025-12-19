@@ -15,7 +15,7 @@ interface Model {
 interface BlockSettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  blockType: 'text' | 'image' | 'video' | null;
+  blockType: 'text' | 'image' | 'video' | 'upload' | null;
   selectedModel: string;
   onModelChange: (modelId: string) => void;
 }
@@ -42,7 +42,7 @@ const VIDEO_MODELS: Model[] = [
   { id: 'luma-dream', name: 'Luma Dream', description: 'Cinematic quality', credits: 25, time: '~90s', icon: 'video' },
 ];
 
-const getModelsForBlockType = (blockType: 'text' | 'image' | 'video' | null): Model[] => {
+const getModelsForBlockType = (blockType: 'text' | 'image' | 'video' | 'upload' | null): Model[] => {
   if (blockType === 'text') return TEXT_MODELS;
   if (blockType === 'image') return IMAGE_MODELS;
   if (blockType === 'video') return VIDEO_MODELS;

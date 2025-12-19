@@ -24,6 +24,7 @@ import '@xyflow/react/dist/style.css';
 import { ReactFlowTextNode } from './nodes/ReactFlowTextNode';
 import { ReactFlowImageNode } from './nodes/ReactFlowImageNode';
 import { ReactFlowVideoNode } from './nodes/ReactFlowVideoNode';
+import { ReactFlowUploadNode } from './nodes/ReactFlowUploadNode';
 import { ComputeNode } from './nodes/ComputeNode';
 import { EnhancedStudioEdge } from './edges/EnhancedStudioEdge';
 import { ComputeEdge } from './edges/ComputeEdge';
@@ -47,7 +48,7 @@ import { toast } from 'sonner';
 
 interface Block {
   id: string;
-  type: 'text' | 'image' | 'video';
+  type: 'text' | 'image' | 'video' | 'upload';
   position: { x: number; y: number };
   initialData?: {
     prompt?: string;
@@ -79,6 +80,7 @@ const nodeTypes: NodeTypes = {
   text: ReactFlowTextNode,
   image: ReactFlowImageNode,
   video: ReactFlowVideoNode,
+  upload: ReactFlowUploadNode,
   compute: ComputeNode,
 };
 
@@ -257,7 +259,7 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
       nodesToDuplicate.forEach(node => {
         const newBlock: Block = {
           id: uuidv4(),
-          type: node.type as 'text' | 'image' | 'video',
+          type: node.type as 'text' | 'image' | 'video' | 'upload',
           position: {
             x: node.position.x + 50,
             y: node.position.y + 50,
@@ -371,7 +373,7 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
   );
 
   const handleSelectNodeType = useCallback(
-    (type: 'text' | 'image' | 'video') => {
+    (type: 'text' | 'image' | 'video' | 'upload') => {
       const newBlock: Block = {
         id: uuidv4(),
         type,
@@ -560,6 +562,7 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
             if (node.type === 'text') return 'hsl(var(--chart-1))';
             if (node.type === 'image') return 'hsl(var(--chart-2))';
             if (node.type === 'video') return 'hsl(var(--chart-3))';
+            if (node.type === 'upload') return 'hsl(var(--chart-2))';
             return 'hsl(var(--muted))';
           }}
           className="bg-zinc-900 border-zinc-800"
@@ -604,7 +607,7 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
           selectedNodes.forEach(node => {
             const newBlock: Block = {
               id: uuidv4(),
-              type: node.type as 'text' | 'image' | 'video',
+              type: node.type as 'text' | 'image' | 'video' | 'upload',
               position: {
                 x: node.position.x + 50,
                 y: node.position.y + 50,
