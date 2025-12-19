@@ -11,7 +11,7 @@ import { AssetLibrary, AssetUploader } from '@/components/assets';
 import type { ProjectAsset, AssetType } from '@/types/assets';
 
 interface StudioSidebarProps {
-  onAddBlock: (blockType: 'text' | 'image' | 'video') => void;
+  onAddBlock: (blockType: 'text' | 'image' | 'video' | 'upload') => void;
   projectId?: string;
   onAssetSelect?: (asset: ProjectAsset) => void;
 }
@@ -124,7 +124,7 @@ const StudioSidebar = ({ onAddBlock, projectId, onAssetSelect }: StudioSidebarPr
           
           <AnimatePresence>
             {showAddMenu && (
-              <motion.div 
+              <motion.div
                 className="absolute left-14 top-0 w-64 bg-zinc-900 border border-zinc-800 rounded-lg shadow-xl z-50"
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -132,9 +132,11 @@ const StudioSidebar = ({ onAddBlock, projectId, onAssetSelect }: StudioSidebarPr
                 transition={{ duration: 0.2 }}
               >
                 <div className="p-2">
-                  <h3 className="text-xs font-semibold text-zinc-500 px-3 py-2">ADD BLOCK</h3>
-                  
-                  <button 
+                  <div className="px-3 py-2">
+                    <h3 className="text-xs font-semibold text-zinc-400">Add Block</h3>
+                  </div>
+
+                  <button
                     className="w-full flex items-center justify-between px-3 py-2 hover:bg-zinc-800 rounded-md text-white text-sm"
                     onClick={() => {
                       onAddBlock('text');
@@ -149,8 +151,8 @@ const StudioSidebar = ({ onAddBlock, projectId, onAssetSelect }: StudioSidebarPr
                     </div>
                     <span className="text-xs text-zinc-500">T</span>
                   </button>
-                  
-                  <button 
+
+                  <button
                     className="w-full flex items-center justify-between px-3 py-2 hover:bg-zinc-800 rounded-md text-white text-sm"
                     onClick={() => {
                       onAddBlock('image');
@@ -165,8 +167,8 @@ const StudioSidebar = ({ onAddBlock, projectId, onAssetSelect }: StudioSidebarPr
                     </div>
                     <span className="text-xs text-zinc-500">I</span>
                   </button>
-                  
-                  <button 
+
+                  <button
                     className="w-full flex items-center justify-between px-3 py-2 hover:bg-zinc-800 rounded-md text-white text-sm"
                     onClick={() => {
                       onAddBlock('video');
@@ -181,21 +183,43 @@ const StudioSidebar = ({ onAddBlock, projectId, onAssetSelect }: StudioSidebarPr
                     </div>
                     <span className="text-xs text-zinc-500">V</span>
                   </button>
-                  
-                  <div className="border-t border-zinc-800 my-1"></div>
-                  
-                  <button className="w-full flex items-center justify-between px-3 py-2 hover:bg-zinc-800 rounded-md text-white text-sm">
+
+                  <div className="border-t border-zinc-800 my-2" />
+
+                  <div className="px-3 py-2">
+                    <h3 className="text-xs font-semibold text-zinc-400">Add Source</h3>
+                  </div>
+
+                  <button
+                    className="w-full flex items-center justify-between px-3 py-2 hover:bg-zinc-800 rounded-md text-white text-sm"
+                    onClick={() => {
+                      onAddBlock('upload');
+                      setShowAddMenu(false);
+                    }}
+                  >
                     <div className="flex items-center gap-3">
-                      <span>Navigate / Select</span>
+                      <div className="bg-zinc-800 w-7 h-7 rounded-full flex items-center justify-center">
+                        <Inbox className="h-3.5 w-3.5 text-white" />
+                      </div>
+                      <span>Upload</span>
                     </div>
+                    <span className="text-xs text-zinc-500">U</span>
                   </button>
-                  
-                  <button className="w-full flex items-center justify-between px-3 py-2 hover:bg-zinc-800 rounded-md text-white text-sm">
-                    <div className="flex items-center gap-3">
-                      <HelpCircle className="h-3.5 w-3.5 text-zinc-500" />
-                      <span>Learn about Blocks</span>
+
+                  <div className="border-t border-zinc-800 my-2" />
+
+                  <div className="px-3 py-2 space-y-2">
+                    <div className="flex items-center justify-between text-xs text-zinc-500">
+                      <span>↑↓ Navigate</span>
+                      <span>↵ Select</span>
                     </div>
-                  </button>
+                    <button className="w-full flex items-center justify-between px-2 py-2 hover:bg-zinc-800 rounded-md text-white text-sm">
+                      <div className="flex items-center gap-3">
+                        <HelpCircle className="h-3.5 w-3.5 text-zinc-500" />
+                        <span>Learn about Blocks</span>
+                      </div>
+                    </button>
+                  </div>
                 </div>
               </motion.div>
             )}
