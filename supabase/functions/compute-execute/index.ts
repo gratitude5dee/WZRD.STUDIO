@@ -543,7 +543,8 @@ async function executeImageNode(
 
   fal.config({ credentials: FAL_KEY });
 
-  const model = node.params?.model ?? 'fal-ai/flux/dev';
+  const rawModel = node.params?.model ?? 'flux-dev';
+  const model = mapModelToFalId(rawModel);
   const prompt = node.params?.prompt ?? inputs.prompt ?? '';
   const negativePrompt = node.params?.negativePrompt ?? '';
 
@@ -642,7 +643,8 @@ async function executeVideoNode(
 
   fal.config({ credentials: FAL_KEY });
 
-  const model = node.params?.model ?? 'fal-ai/kling-video/v1/standard/text-to-video';
+  const rawModel = node.params?.model ?? 'kling-2-1';
+  const model = mapModelToFalId(rawModel);
   const prompt = node.params?.prompt ?? inputs.prompt ?? '';
 
   // Substitute input variables
@@ -752,4 +754,35 @@ function mapBlockTypeToKind(blockType: string): string {
   };
   
   return typeMap[blockType?.toLowerCase()] || 'Text';
+}
+
+/**
+ * Map short-form model IDs to full FAL AI identifiers
+ */
+function mapModelToFalId(model: string): string {
+  const modelMap: Record<string, string> = {
+    // Image models
+    'flux-dev': 'fal-ai/flux/dev',
+    'flux-schnell': 'fal-ai/flux/schnell',
+    'flux-pro': 'fal-ai/flux-pro/v1.1',
+    'ideogram': 'fal-ai/ideogram/v2',
+    'luma-photon': 'fal-ai/luma/photon',
+    'recraft': 'fal-ai/recraft-v3',
+    'stable': 'fal-ai/stable-diffusion-v3-medium',
+    'gemini-2.5-flash-image': 'fal-ai/flux/schnell',
+    'gemini-2.5-flash-image-preview': 'fal-ai/flux/schnell',
+    
+    // Video models
+    'kling-2-1': 'fal-ai/kling-video/v1/standard/text-to-video',
+    'hailuo': 'fal-ai/minimax/video-01',
+    'luma-dream': 'fal-ai/luma-dream-machine',
+    'gemini-2.5-flash-video': 'fal-ai/kling-video/v1/standard/text-to-video',
+  };
+  
+  // If already a valid FAL ID (contains '/'), return as-is
+  if (model && model.includes('/')) {
+    return model;
+  }
+  
+  return modelMap[model] ?? 'fal-ai/flux/dev';
 }
