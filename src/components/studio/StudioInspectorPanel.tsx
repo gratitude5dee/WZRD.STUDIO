@@ -1,5 +1,5 @@
 import { Sparkles, Share2 } from 'lucide-react';
-import { Select } from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 
 interface StudioInspectorPanelProps {
@@ -23,10 +23,15 @@ const StudioInspectorPanel = ({ activeJobs = 0, onGenerate }: StudioInspectorPan
 
       <div className="space-y-2">
         <label className="text-sm text-zinc-400">Model</label>
-        <Select defaultValue="gpt-5" className="bg-[#0a0a0a] border-zinc-800 text-white">
-          <option value="gpt-5">GPT-5</option>
-          <option value="flux-dev">Flux Dev</option>
-          <option value="kling-2-1">Kling 2.1</option>
+        <Select defaultValue="gpt-5">
+          <SelectTrigger className="bg-[#0a0a0a] border-zinc-800 text-white">
+            <SelectValue placeholder="Select model" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="gpt-5">GPT-5</SelectItem>
+            <SelectItem value="flux-dev">Flux Dev</SelectItem>
+            <SelectItem value="kling-2-1">Kling 2.1</SelectItem>
+          </SelectContent>
         </Select>
       </div>
 
