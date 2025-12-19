@@ -69,7 +69,17 @@ serve(async (req) => {
     if (!response.ok) {
       const errorText = await response.text();
       console.error("Luma API error:", response.status, errorText);
-      return errorResponse("Failed to start video generation", 500);
+      
+      // Parse and return user-friendly error messages
+      try {
+        const errorData = JSON.parse(errorText);
+        if (errorData.detail === "Insufficient credits") {
+          return errorResponse("Your Luma account has insufficient credits. Please add credits at lumalabs.ai", 402);
+        }
+        return errorResponse(errorData.detail || "Luma API error", response.status);
+      } catch {
+        return errorResponse("Failed to start video generation", 500);
+      }
     }
 
     const data = await response.json();
