@@ -11,12 +11,22 @@ import type {
 import { NODE_TYPE_CONFIGS } from '@/types/computeFlow';
 import { v4 as uuidv4 } from 'uuid';
 
+interface ExecutionProgress {
+  runId: string | null;
+  isRunning: boolean;
+  completed: number;
+  total: number;
+  startedAt: Date | null;
+  error: string | null;
+}
+
 interface ComputeFlowState {
   nodeDefinitions: NodeDefinition[];
   edgeDefinitions: EdgeDefinition[];
   isLoading: boolean;
   isSaving: boolean;
   error: string | null;
+  execution: ExecutionProgress;
   
   // Actions
   loadGraph: (projectId: string) => Promise<void>;
@@ -27,10 +37,17 @@ interface ComputeFlowState {
   removeNode: (nodeId: string) => void;
   addEdge: (edge: EdgeDefinition) => void;
   removeEdge: (edgeId: string) => void;
-  setNodeStatus: (nodeId: string, status: NodeStatus, progress?: number) => void;
+  setNodeStatus: (nodeId: string, status: NodeStatus, progress?: number, preview?: any) => void;
+  setNodePreview: (nodeId: string, preview: any) => void;
   executeGraph: (projectId: string) => Promise<void>;
+  executeGraphStreaming: (projectId: string) => Promise<void>;
+  cancelExecution: () => void;
   clearGraph: () => void;
+  resetNodeStatuses: () => void;
 }
+
+// Abort controller for cancellation
+let executionAbortController: AbortController | null = null;
 
 export const useComputeFlowStore = create<ComputeFlowState>((set, get) => ({
   nodeDefinitions: [],
@@ -38,6 +55,14 @@ export const useComputeFlowStore = create<ComputeFlowState>((set, get) => ({
   isLoading: false,
   isSaving: false,
   error: null,
+  execution: {
+    runId: null,
+    isRunning: false,
+    completed: 0,
+    total: 0,
+    startedAt: null,
+    error: null,
+  },
 
   loadGraph: async (projectId: string) => {
     set({ isLoading: true, error: null });
@@ -180,51 +205,205 @@ export const useComputeFlowStore = create<ComputeFlowState>((set, get) => ({
     }));
   },
 
-  setNodeStatus: (nodeId, status, progress) => {
+  setNodeStatus: (nodeId, status, progress, preview) => {
     set(state => ({
       nodeDefinitions: state.nodeDefinitions.map(n =>
-        n.id === nodeId ? { ...n, status, progress: progress ?? n.progress } : n
+        n.id === nodeId 
+          ? { 
+              ...n, 
+              status, 
+              progress: progress ?? n.progress,
+              preview: preview ?? n.preview,
+            } 
+          : n
       ),
     }));
   },
 
-  executeGraph: async (projectId: string) => {
+  setNodePreview: (nodeId, preview) => {
+    set(state => ({
+      nodeDefinitions: state.nodeDefinitions.map(n =>
+        n.id === nodeId ? { ...n, preview } : n
+      ),
+    }));
+  },
+
+  resetNodeStatuses: () => {
+    set(state => ({
+      nodeDefinitions: state.nodeDefinitions.map(n => ({
+        ...n,
+        status: 'idle',
+        progress: 0,
+        error: undefined,
+      })),
+      execution: {
+        runId: null,
+        isRunning: false,
+        completed: 0,
+        total: 0,
+        startedAt: null,
+        error: null,
+      },
+    }));
+  },
+
+  /**
+   * Execute graph with SSE streaming updates
+   */
+  executeGraphStreaming: async (projectId: string) => {
+    const { execution, nodeDefinitions } = get();
+    
+    if (execution.isRunning) {
+      console.warn('Execution already in progress');
+      return;
+    }
+
+    console.log('🚀 Executing compute graph with streaming...');
+
+    // Reset all node statuses to queued
+    set(state => ({
+      nodeDefinitions: state.nodeDefinitions.map(n => ({
+        ...n,
+        status: 'queued' as NodeStatus,
+        progress: 0,
+        error: undefined,
+      })),
+      execution: {
+        runId: null,
+        isRunning: true,
+        completed: 0,
+        total: nodeDefinitions.length,
+        startedAt: new Date(),
+        error: null,
+      },
+    }));
+
+    // Create abort controller
+    executionAbortController = new AbortController();
+
     try {
-      console.log('🚀 Executing compute graph...');
-      const { data, error } = await supabase.functions.invoke('compute-execute', {
-        body: { projectId },
-      });
-
-      if (error) throw error;
-
-      console.log('✅ Execution started, run ID:', data?.runId);
-
-      // Set up realtime subscription for run events
-      if (data?.runId) {
-        const channel = supabase
-          .channel(`run:${data.runId}`)
-          .on('postgres_changes', {
-            event: '*',
-            schema: 'public',
-            table: 'compute_run_events',
-            filter: `run_id=eq.${data.runId}`,
-          }, (payload) => {
-            const event = payload.new as any;
-            if (event) {
-              get().setNodeStatus(event.node_id, event.status, event.progress);
-            }
-          })
-          .subscribe();
-
-        // Cleanup subscription after 5 minutes (max execution time)
-        setTimeout(() => {
-          supabase.removeChannel(channel);
-        }, 300000);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error('Not authenticated');
       }
+
+      const response = await fetch(
+        `https://ixkkrousepsiorwlaycp.supabase.co/functions/v1/compute-execute`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({ projectId }),
+          signal: executionAbortController.signal,
+        }
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
+
+      const contentType = response.headers.get('content-type') || '';
+      
+      if (contentType.includes('text/event-stream')) {
+        // Process SSE stream
+        const reader = response.body?.getReader();
+        if (!reader) throw new Error('No response body');
+
+        const decoder = new TextDecoder();
+        let buffer = '';
+        let currentEvent = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() ?? '';
+
+          for (const line of lines) {
+            const trimmedLine = line.trim();
+            
+            if (trimmedLine.startsWith('event:')) {
+              currentEvent = trimmedLine.slice(6).trim();
+              continue;
+            }
+            
+            if (trimmedLine.startsWith('data:')) {
+              const jsonStr = trimmedLine.slice(5).trim();
+              if (!jsonStr) continue;
+
+              try {
+                const data = JSON.parse(jsonStr);
+                handleSSEEvent(currentEvent || 'message', data, set, get);
+              } catch (e) {
+                console.warn('Failed to parse SSE data:', jsonStr);
+              }
+            }
+          }
+        }
+      } else {
+        // Handle JSON response (fallback)
+        const data = await response.json();
+        
+        if (data.error) {
+          throw new Error(data.error);
+        }
+
+        set(state => ({
+          execution: {
+            ...state.execution,
+            runId: data.runId,
+            isRunning: false,
+          },
+        }));
+      }
+
     } catch (error: any) {
       console.error('Execution error:', error);
-      set({ error: error.message });
+      
+      const errorMessage = error.name === 'AbortError' ? 'Cancelled' : error.message;
+      
+      set(state => ({
+        error: errorMessage,
+        execution: {
+          ...state.execution,
+          isRunning: false,
+          error: errorMessage,
+        },
+      }));
     }
+  },
+
+  /**
+   * Cancel the current execution
+   */
+  cancelExecution: () => {
+    console.log('🛑 Cancelling execution');
+    
+    if (executionAbortController) {
+      executionAbortController.abort();
+      executionAbortController = null;
+    }
+
+    set(state => ({
+      execution: {
+        ...state.execution,
+        isRunning: false,
+        error: 'Cancelled',
+      },
+    }));
+  },
+
+  /**
+   * Legacy execute (kept for backwards compatibility)
+   */
+  executeGraph: async (projectId: string) => {
+    // Use streaming version by default
+    return get().executeGraphStreaming(projectId);
   },
 
   clearGraph: () => {
@@ -232,6 +411,117 @@ export const useComputeFlowStore = create<ComputeFlowState>((set, get) => ({
       nodeDefinitions: [],
       edgeDefinitions: [],
       error: null,
+      execution: {
+        runId: null,
+        isRunning: false,
+        completed: 0,
+        total: 0,
+        startedAt: null,
+        error: null,
+      },
     });
   },
 }));
+
+/**
+ * Handle SSE events from compute-execute
+ */
+function handleSSEEvent(
+  event: string,
+  data: any,
+  set: any,
+  get: () => ComputeFlowState
+) {
+  console.log(`📨 SSE Event: ${event}`, data);
+
+  switch (event) {
+    case 'meta':
+      set((state: ComputeFlowState) => ({
+        execution: {
+          ...state.execution,
+          runId: data.run_id,
+          total: data.total_nodes || state.execution.total,
+        },
+      }));
+      break;
+
+    case 'node_status':
+      const { node_id, status, output, error, processing_time_ms } = data;
+      const mappedStatus = mapStatus(status);
+      
+      set((state: ComputeFlowState) => {
+        const isCompleted = ['completed', 'failed', 'skipped'].includes(status);
+        
+        return {
+          nodeDefinitions: state.nodeDefinitions.map(n =>
+            n.id === node_id
+              ? {
+                  ...n,
+                  status: mappedStatus,
+                  progress: isCompleted ? 100 : (status === 'running' ? 50 : 0),
+                  preview: output || n.preview,
+                  error: error || undefined,
+                }
+              : n
+          ),
+          execution: {
+            ...state.execution,
+            completed: isCompleted 
+              ? state.execution.completed + 1 
+              : state.execution.completed,
+          },
+        };
+      });
+      break;
+
+    case 'node_progress':
+      const { node_id: progressNodeId, progress } = data;
+      
+      set((state: ComputeFlowState) => ({
+        nodeDefinitions: state.nodeDefinitions.map(n =>
+          n.id === progressNodeId
+            ? { ...n, progress: progress || n.progress }
+            : n
+        ),
+      }));
+      break;
+
+    case 'complete':
+      set((state: ComputeFlowState) => ({
+        execution: {
+          ...state.execution,
+          isRunning: false,
+          completed: data.completed_nodes || state.execution.completed,
+          total: data.total_nodes || state.execution.total,
+        },
+      }));
+      break;
+
+    case 'error':
+      set((state: ComputeFlowState) => ({
+        error: data.error,
+        execution: {
+          ...state.execution,
+          isRunning: false,
+          error: data.error,
+        },
+      }));
+      break;
+  }
+}
+
+/**
+ * Map backend status to frontend NodeStatus
+ */
+function mapStatus(backendStatus: string): NodeStatus {
+  switch (backendStatus) {
+    case 'running': return 'running';
+    case 'completed': return 'succeeded';
+    case 'succeeded': return 'succeeded';
+    case 'failed': return 'failed';
+    case 'skipped': return 'failed';
+    case 'pending': return 'queued';
+    case 'queued': return 'queued';
+    default: return 'idle';
+  }
+}

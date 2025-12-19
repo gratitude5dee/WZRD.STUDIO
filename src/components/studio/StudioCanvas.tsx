@@ -132,6 +132,10 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
     addNode: addComputeNode,
     updateNode: updateComputeNode,
     removeNode: removeComputeNode,
+    executeGraphStreaming,
+    cancelExecution,
+    execution,
+    isSaving,
   } = useComputeFlowStore();
   
   // Track dragging data type for handle highlighting
@@ -610,6 +614,13 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
             onAddBlock(newBlock);
           });
         }}
+        // Execution props
+        isExecuting={execution.isRunning}
+        executionProgress={execution}
+        onExecute={useComputeFlow && projectId ? () => executeGraphStreaming(projectId) : undefined}
+        onCancelExecution={cancelExecution}
+        onSave={useComputeFlow && projectId ? () => saveGraph(projectId) : undefined}
+        isSaving={isSaving}
       />
       
       {/* Keyboard Shortcuts Overlay */}
