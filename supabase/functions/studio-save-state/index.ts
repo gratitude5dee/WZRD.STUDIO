@@ -65,7 +65,7 @@ Deno.serve(async (req) => {
         const blocksToInsert = blocks.map((block: any) => ({
           project_id: projectId,
           user_id: user.id,
-          block_type: block.type,
+          block_type: (block.type || 'text').toLowerCase(), // Normalize to lowercase
           position_x: block.position.x,
           position_y: block.position.y,
           prompt: block.initialData?.prompt || null,
