@@ -117,7 +117,7 @@ const VideoBlock: React.FC<VideoBlockProps> = ({
     setCurrentFrame(0);
     setEstimatedTime(45);
     setGenerationStage('Initializing');
-    generateVideo(prompt);
+    generateVideo(prompt, selectedModel);
   };
 
   const handleSelectSuggestion = (suggestionText: string) => {
