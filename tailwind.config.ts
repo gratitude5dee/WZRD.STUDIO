@@ -206,6 +206,18 @@ export default {
 				'stars': {
 					'from': { transform: 'translateY(0px)' },
 					'to': { transform: 'translateY(-100px)' }
+				},
+				'gradient-shift': {
+					'0%': { backgroundPosition: '0% 50%' },
+					'100%': { backgroundPosition: '200% 50%' }
+				},
+				'border-flow': {
+					'0%': { backgroundPosition: '0% 50%' },
+					'100%': { backgroundPosition: '200% 50%' }
+				},
+				'pulse-glow': {
+					'0%, 100%': { opacity: '0.3', strokeWidth: '3' },
+					'50%': { opacity: '0.8', strokeWidth: '5' }
 				}
 			},
 			animation: {
@@ -214,6 +226,9 @@ export default {
 				'shimmer': 'shimmer 2s infinite linear',
 				'glow-pulse': 'glow-pulse 3s ease-in-out infinite',
 				'text-glow-pulse': 'text-glow-pulse 3s ease-in-out infinite',
+				'gradient-shift': 'gradient-shift 6s linear infinite',
+				'border-flow': 'border-flow 3s linear infinite',
+				'pulse-glow': 'pulse-glow 2s ease-in-out infinite',
 				'noise': 'noise-animation 0.2s infinite',
 				// Odyssey Cosmic Animations
 				'cosmic-pulse': 'cosmic-pulse 4s ease-in-out infinite',

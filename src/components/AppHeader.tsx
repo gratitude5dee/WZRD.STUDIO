@@ -10,7 +10,7 @@ import CreditsDisplay from '@/components/CreditsDisplay';
 import { supabaseService } from '@/services/supabaseService';
 import { Input } from '@/components/ui/input';
 import { z } from 'zod';
-import { ShareDialog } from '@/components/project/ShareDialog';
+import { ShareModal } from '@/components/share/ShareModal';
 
 type ViewMode = 'studio' | 'timeline' | 'editor';
 
@@ -34,7 +34,7 @@ export const AppHeader = ({
   // Inline editing state
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState('');
-  const [showShareDialog, setShowShareDialog] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Validation schema
@@ -117,6 +117,8 @@ export const AppHeader = ({
   const handleLogoClick = () => {
     navigate('/home');
   };
+
+  const resolvedProjectId = projectIdFromURL || activeProjectId;
 
   const startEditing = () => {
     setEditValue(activeProjectName || 'Untitled');
@@ -232,20 +234,26 @@ export const AppHeader = ({
         </Button>
         {showShareButton && (
           <>
-            <Button 
+            <Button
               className="bg-zinc-800 hover:bg-zinc-700 text-white"
-              onClick={() => setShowShareDialog(true)}
+              onClick={() => {
+                if (!resolvedProjectId) {
+                  toast.warning('Please select a project to share');
+                  return;
+                }
+                setShowShareModal(true);
+              }}
             >
               <Share className="h-4 w-4 mr-2" />
               Share
             </Button>
-            
-            {projectIdFromURL && (
-              <ShareDialog
-                open={showShareDialog}
-                onOpenChange={setShowShareDialog}
-                projectId={projectIdFromURL}
-                projectTitle={activeProjectName || 'Untitled'}
+
+            {resolvedProjectId && (
+              <ShareModal
+                isOpen={showShareModal}
+                onClose={() => setShowShareModal(false)}
+                projectId={resolvedProjectId}
+                projectName={activeProjectName || 'Untitled'}
               />
             )}
           </>

@@ -43,6 +43,37 @@
   }
 }
 
+@keyframes text-glow {
+  0%, 100% {
+    text-shadow: 0 0 4px rgba(139, 92, 246, 0.5),
+      0 0 8px rgba(139, 92, 246, 0.3);
+  }
+  50% {
+    text-shadow: 0 0 8px rgba(139, 92, 246, 0.8),
+      0 0 16px rgba(139, 92, 246, 0.5),
+      0 0 24px rgba(139, 92, 246, 0.3);
+  }
+}
+
+@keyframes gradient-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
+  }
+}
+
+@layer utilities {
+  .glow-text {
+    animation: text-glow 2s ease-in-out infinite, gradient-shift 3s linear infinite;
+    background: linear-gradient(90deg, #a78bfa, #c4b5fd, #a78bfa);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+}
+
 /* Studio-specific animations */
 @keyframes studio-pulse {
   0%, 100% {

@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import AppHeader from '@/components/AppHeader';
 import StoryboardSidebar from '@/components/storyboard/StoryboardSidebar';
 import ShotsRow from '@/components/storyboard/ShotsRow';
+import { AddSceneButton } from '@/components/timeline/AddSceneButton';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useAppStore } from '@/store/appStore';
@@ -344,17 +345,10 @@ const StoryboardPage = () => {
                 </p>
                 
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                  <Button 
-                    className={cn(
-                      "bg-gradient-to-br from-purple-600/90 to-blue-600/90",
-                      "border border-purple-500/30",
-                      "shadow-[0_4px_20px_rgba(139,92,246,0.3)]",
-                      "hover:shadow-[0_6px_28px_rgba(139,92,246,0.4)]"
-                    )}
-                    onClick={addScene}
-                  >
-                    <Plus className="w-4 h-4 mr-2" /> Add First Scene
-                  </Button>
+                  <div className="flex items-center justify-center gap-3">
+                    <AddSceneButton onClick={addScene} />
+                    <span className="text-sm font-medium text-white/80">Add First Scene</span>
+                  </div>
                 </motion.div>
               </motion.div>
             ) : (

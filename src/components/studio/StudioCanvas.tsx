@@ -26,7 +26,7 @@ import { ReactFlowImageNode } from './nodes/ReactFlowImageNode';
 import { ReactFlowVideoNode } from './nodes/ReactFlowVideoNode';
 import { ReactFlowUploadNode } from './nodes/ReactFlowUploadNode';
 import { ComputeNode } from './nodes/ComputeNode';
-import { EnhancedStudioEdge } from './edges/EnhancedStudioEdge';
+import { GlowingEdge } from './edges/GlowingEdge';
 import { ComputeEdge } from './edges/ComputeEdge';
 import { BezierConnection } from './connections/BezierConnection';
 import { CustomConnectionLine } from './ConnectionLine';
@@ -45,6 +45,8 @@ import { useComputeFlowStore } from '@/store/computeFlowStore';
 import { v4 as uuidv4 } from 'uuid';
 import EmptyCanvasState from './EmptyCanvasState';
 import { toast } from 'sonner';
+import { nanoid } from 'nanoid';
+import { AddBlockNode } from './nodes/AddBlockNode';
 
 interface Block {
   id: string;
@@ -82,19 +84,21 @@ const nodeTypes: NodeTypes = {
   video: ReactFlowVideoNode,
   upload: ReactFlowUploadNode,
   compute: ComputeNode,
+  addBlockNode: AddBlockNode,
 };
 
 // Edge types configuration
 const edgeTypes: EdgeTypes = {
   bezier: BezierConnection,
-  studio: EnhancedStudioEdge,
+  studio: GlowingEdge,
+  glow: GlowingEdge,
   compute: ComputeEdge,
   default: BezierConnection,
 };
 
 // Default edge options
 const defaultEdgeOptions = {
-  type: 'bezier',
+  type: 'glow',
   animated: false,
   data: {
     status: 'idle',
@@ -174,19 +178,24 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
   
   // Sync blocks to nodes when blocks change
   useEffect(() => {
-    setNodes(blocks.map(block => ({
-      id: block.id,
-      type: block.type,
-      position: block.position,
-      data: {
-        label: block.type,
-        initialData: block.initialData,
-        selectedModel: blockModels[block.id],
-        blockPosition: block.position,
-        onSpawnBlocks: handleSpawnBlocks,
-      },
-      selected: block.id === selectedBlockId,
-    })));
+    setNodes((currentNodes) => {
+      const addBlockNodes = currentNodes.filter((node) => node.type === 'addBlockNode');
+      const blockNodes = blocks.map((block) => ({
+        id: block.id,
+        type: block.type,
+        position: block.position,
+        data: {
+          label: block.type,
+          initialData: block.initialData,
+          selectedModel: blockModels[block.id],
+          blockPosition: block.position,
+          onSpawnBlocks: handleSpawnBlocks,
+        },
+        selected: block.id === selectedBlockId,
+      }));
+
+      return [...blockNodes, ...addBlockNodes];
+    });
   }, [blocks, blockModels, selectedBlockId, handleSpawnBlocks]);
 
   // Sync node positions back to blocks
@@ -407,15 +416,62 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
 
   const handleCanvasDoubleClick = useCallback(
     (event: React.MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (target.closest('.react-flow__node')) {
+        return;
+      }
+
+      setShowNodeSelector(false);
+      setActiveConnection(null);
+
       const position = screenToFlowPosition({
         x: event.clientX,
         y: event.clientY,
       });
-      setNodeSelectorPosition(position);
-      setShowNodeSelector(true);
+
+      const newNode: Node = {
+        id: `add-block-${nanoid(8)}`,
+        type: 'addBlockNode',
+        position,
+        data: {
+          label: 'Add Block',
+          isNew: true,
+        },
+      };
+
+      setNodes((nds) => [...nds, newNode]);
+
+      window.setTimeout(() => {
+        window.dispatchEvent(
+          new CustomEvent('openBlockSelector', {
+            detail: { nodeId: newNode.id, position },
+          })
+        );
+      }, 100);
     },
-    [screenToFlowPosition]
+    [screenToFlowPosition, setNodes]
   );
+
+  useEffect(() => {
+    const handler = (event: CustomEvent) => {
+      const { nodeId, blockType } = event.detail as { nodeId: string; blockType: Block['type'] };
+      const targetNode = nodes.find((node) => node.id === nodeId);
+      if (!targetNode) return;
+
+      const newBlock: Block = {
+        id: uuidv4(),
+        type: blockType,
+        position: targetNode.position,
+      };
+
+      onAddBlock(newBlock);
+      onSelectBlock(newBlock.id);
+      setNodes((current) => current.filter((node) => node.id !== nodeId));
+    };
+
+    window.addEventListener('transformNode', handler as EventListener);
+    return () => window.removeEventListener('transformNode', handler as EventListener);
+  }, [nodes, onAddBlock, onSelectBlock, setNodes]);
 
   const handleNodeClick = useCallback(
     (event: React.MouseEvent, node: Node) => {
