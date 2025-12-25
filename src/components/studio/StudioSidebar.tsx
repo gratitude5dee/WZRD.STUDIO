@@ -1,7 +1,18 @@
 import { useState, useRef, useEffect } from 'react';
 import {
-  Plus, History, Layers, Inbox, MessageCircle, Settings, HelpCircle,
-  Type, Image as ImageIcon, Video, Box
+  Plus,
+  History,
+  Layers,
+  Inbox,
+  MessageCircle,
+  Settings,
+  HelpCircle,
+  Type,
+  Image as ImageIcon,
+  Video,
+  Box,
+  ExternalLink,
+  Upload,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -9,6 +20,7 @@ import FlowSelector, { Flow } from './FlowSelector';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AssetLibrary, AssetUploader } from '@/components/assets';
 import type { ProjectAsset, AssetType } from '@/types/assets';
+import { ProfileButton } from '@/components/layout/ProfileButton';
 
 interface StudioSidebarProps {
   onAddBlock: (blockType: 'text' | 'image' | 'video' | 'upload') => void;
@@ -106,6 +118,11 @@ const StudioSidebar = ({ onAddBlock, projectId, onAssetSelect }: StudioSidebarPr
   };
 
   const hasProject = Boolean(projectId);
+  const distributionItem = {
+    icon: Upload,
+    label: 'Distribute via USync',
+    href: 'https://usync.lovable.app',
+  };
 
   return (
     <div className="h-full w-16 bg-black border-r border-zinc-800/50 flex flex-col">
@@ -315,10 +332,26 @@ const StudioSidebar = ({ onAddBlock, projectId, onAssetSelect }: StudioSidebarPr
         </button>
       </div>
       
-      {/* Bottom logo */}
-      <div className="p-3 flex justify-center mb-4">
-        <div className="w-10 h-10 rounded-full bg-zinc-900 flex items-center justify-center">
-          <img src="/lovable-uploads/075616c6-e4fc-4662-a4b8-68b746782b65.png" alt="Logo" className="w-8 h-8" />
+      <div className="flex flex-col items-center gap-4 pb-4">
+        <a
+          href={distributionItem.href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="group relative flex h-10 w-10 items-center justify-center rounded-lg transition-colors hover:bg-zinc-800"
+        >
+          <distributionItem.icon className="h-5 w-5 text-zinc-400 transition-colors group-hover:text-violet-400" />
+          <ExternalLink className="absolute -right-0.5 -top-0.5 h-3 w-3 text-zinc-600" />
+          <span className="pointer-events-none absolute left-full ml-3 whitespace-nowrap rounded bg-zinc-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
+            {distributionItem.label}
+          </span>
+        </a>
+
+        <ProfileButton />
+
+        <div className="flex justify-center">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-900">
+            <img src="/lovable-uploads/075616c6-e4fc-4662-a4b8-68b746782b65.png" alt="Logo" className="h-8 w-8" />
+          </div>
         </div>
       </div>
       

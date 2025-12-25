@@ -9,6 +9,7 @@ import { Settings, FileCode, Shirt, Mic, Music, Play, Trash2, ChevronDown } from
 import { SidebarData } from '@/types/storyboardTypes';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { SidebarLabel } from '@/components/timeline/SidebarLabel';
 
 interface StoryboardSidebarProps {
   data: SidebarData;
@@ -160,9 +161,7 @@ const StoryboardSidebar: React.FC<StoryboardSidebarProps> = ({ data, onUpdate })
                     shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
                     <Settings className="w-3.5 h-3.5 text-purple-400" />
                   </div>
-                  <h3 className="text-zinc-200 font-medium text-xs uppercase tracking-wider">
-                    Location
-                  </h3>
+                  <SidebarLabel label="Location" active={openSections.location} className="text-zinc-200" />
                 </div>
                 <motion.div
                   animate={{ rotate: openSections.location ? 180 : 0 }}
@@ -242,7 +241,7 @@ const StoryboardSidebar: React.FC<StoryboardSidebarProps> = ({ data, onUpdate })
                     shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
                     <FileCode className="w-3.5 h-3.5 text-purple-400" />
                   </div>
-                  <h3 className="text-zinc-200 font-medium text-xs uppercase tracking-wider">Style</h3>
+                  <SidebarLabel label="Style" active={openSections.style} className="text-zinc-200" />
                 </div>
                 <motion.div
                   animate={{ rotate: openSections.style ? 180 : 0 }}
@@ -293,7 +292,7 @@ const StoryboardSidebar: React.FC<StoryboardSidebarProps> = ({ data, onUpdate })
                     shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
                     <Shirt className="w-3.5 h-3.5 text-amber-400" />
                   </div>
-                  <h3 className="text-zinc-200 font-medium text-xs uppercase tracking-wider">Clothing</h3>
+                  <SidebarLabel label="Clothing" active={openSections.clothing} className="text-zinc-200" />
                 </div>
                 <motion.div
                   animate={{ rotate: openSections.clothing ? 180 : 0 }}
@@ -346,7 +345,7 @@ const StoryboardSidebar: React.FC<StoryboardSidebarProps> = ({ data, onUpdate })
                     shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
                     <Music className="w-3.5 h-3.5 text-green-400" />
                   </div>
-                  <h3 className="text-zinc-200 font-medium text-xs uppercase tracking-wider">Sound</h3>
+                  <SidebarLabel label="Sound" active={openSections.sound} className="text-zinc-200" />
                 </div>
                 <motion.div
                   animate={{ rotate: openSections.sound ? 180 : 0 }}
