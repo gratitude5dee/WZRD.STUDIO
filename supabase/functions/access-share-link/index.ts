@@ -225,6 +225,6 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('Access share link error:', error);
-    return errorResponse(error.message || 'Failed to access share link', 500);
+    return errorResponse(error instanceof Error ? error.message : 'Failed to access share link', 500);
   }
 });
