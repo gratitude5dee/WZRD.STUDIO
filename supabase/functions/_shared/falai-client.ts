@@ -62,7 +62,7 @@ export async function executeFalModel<T>(
     console.error('Fal.AI execution error:', error)
     return {
       success: false,
-      error: error.message || 'Unknown error occurred',
+      error: error instanceof Error ? error.message : 'Unknown error occurred',
     }
   }
 }
@@ -110,7 +110,7 @@ export async function pollFalStatus(requestId: string): Promise<FalResponse<any>
     console.error('Fal.AI status check error:', error)
     return {
       success: false,
-      error: error.message || 'Failed to poll fal.ai status',
+      error: error instanceof Error ? error.message : 'Failed to poll fal.ai status',
     }
   }
 }
@@ -417,12 +417,21 @@ export const FAL_MODELS_BY_CATEGORY = {
       outputs: { image: 'File' },
     },
   ],
+} as const;
+
+// Define the model type based on the structure
+type FalModelDefinition = {
+  id: string;
+  name: string;
+  description: string;
+  inputs: Record<string, string>;
+  outputs: Record<string, string>;
 };
 
 // Flatten all models for easy access (excluding 3D generation from general list)
-export const ALL_FAL_MODELS = Object.entries(FAL_MODELS_BY_CATEGORY)
+export const ALL_FAL_MODELS: FalModelDefinition[] = Object.entries(FAL_MODELS_BY_CATEGORY)
   .filter(([category]) => category !== '3d-generation')
-  .flatMap(([_, models]) => models);
+  .flatMap(([_, models]) => models as FalModelDefinition[]);
 
 // Legacy COMMON_MODELS for backward compatibility
 export const COMMON_MODELS: ModelInfo[] = [
@@ -477,13 +486,13 @@ export const COMMON_MODELS: ModelInfo[] = [
 ];
 
 // Helper function to get models by category
-export function getModelsByCategory(category: string) {
-  return FAL_MODELS_BY_CATEGORY[category] || [];
+export function getModelsByCategory(category: string): FalModelDefinition[] {
+  return (FAL_MODELS_BY_CATEGORY as Record<string, FalModelDefinition[]>)[category] || [];
 }
 
 // Helper function to find a model by ID
-export function getModelById(id: string) {
-  return ALL_FAL_MODELS.find(model => model.id === id);
+export function getModelById(id: string): FalModelDefinition | undefined {
+  return ALL_FAL_MODELS.find((model: FalModelDefinition) => model.id === id);
 }
 
 // Fal.ai Model Constants for easy reference
@@ -553,7 +562,7 @@ export async function submitToFalQueue<T>(
     const requestId = submitResponse.requestId;
     if (!requestId) {
       // If no request ID, it was processed synchronously
-      return submitResponse;
+      return submitResponse as FalResponse<T>;
     }
     
     console.log(`[Fal Queue] Request ID: ${requestId}, polling for result...`);
@@ -600,7 +609,7 @@ export async function submitToFalQueue<T>(
     console.error('[Fal Queue] Error:', error);
     return {
       success: false,
-      error: error.message || 'Unknown error in Fal queue processing',
+      error: error instanceof Error ? error.message : 'Unknown error in Fal queue processing',
     };
   }
 }

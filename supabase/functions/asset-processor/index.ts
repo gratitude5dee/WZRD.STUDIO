@@ -106,7 +106,7 @@ async function uploadFile(
 ) {
   const { error } = await supabaseAdmin.storage
     .from(bucket)
-    .upload(path, new Blob([bytes]), {
+    .upload(path, bytes, {
       contentType,
       upsert: true,
     });
@@ -397,21 +397,21 @@ serve(async (req) => {
 
         if (asset.asset_type === "image") {
           processingResult = await processImage(
-            supabaseAdmin,
+            supabaseAdmin as any,
             tempFilePath,
             asset.id,
             asset.mime_type ?? null,
           );
         } else if (asset.asset_type === "video") {
           processingResult = await processVideo(
-            supabaseAdmin,
+            supabaseAdmin as any,
             tempDir,
             tempFilePath,
             asset.id,
           );
         } else if (asset.asset_type === "audio") {
           processingResult = await processAudio(
-            supabaseAdmin,
+            supabaseAdmin as any,
             tempDir,
             tempFilePath,
             asset.id,
@@ -474,6 +474,7 @@ serve(async (req) => {
         results.push({ id: asset.id, status: "success" });
 
       } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         console.error(`Error processing asset ${asset.id}:`, error);
 
         // Update asset with error
@@ -481,7 +482,7 @@ serve(async (req) => {
           .from("project_assets")
           .update({
             processing_status: "failed",
-            processing_error: error.message,
+            processing_error: errorMessage,
           })
           .eq("id", asset.id);
 
@@ -490,12 +491,12 @@ serve(async (req) => {
           .from("processing_queue")
           .update({
             status: job.attempts + 1 >= 3 ? "failed" : "pending",
-            error_message: error.message,
+            error_message: errorMessage,
             completed_at: job.attempts + 1 >= 3 ? new Date().toISOString() : null,
           })
           .eq("id", job.id);
 
-        results.push({ id: asset.id, status: "failed", error: error.message });
+        results.push({ id: asset.id, status: "failed", error: errorMessage });
       }
     }
 

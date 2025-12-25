@@ -113,6 +113,6 @@ serve(async (req) => {
     if (error instanceof AuthError) {
       return errorResponse(error.message, 401);
     }
-    return errorResponse(error.message || 'Internal server error', 500);
+    return errorResponse(error instanceof Error ? error.message : 'Internal server error', 500);
   }
 });

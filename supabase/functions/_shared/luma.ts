@@ -90,7 +90,7 @@ export async function initiateLumaImageGeneration({
       message: "Image generation started successfully"
     };
   } catch (error) {
-    console.error(`[Luma Helper][Shot ${shotId}] Error: ${error.message}`);
+    console.error(`[Luma Helper][Shot ${shotId}] Error: ${error instanceof Error ? error.message : String(error)}`);
     throw error;
   }
 }
@@ -182,7 +182,7 @@ export async function initiateLumaVideoGeneration({
       message: "Video generation started successfully"
     };
   } catch (error) {
-    console.error(`[Luma Helper][Shot ${shotId}] Error in video generation: ${error.message}`);
+    console.error(`[Luma Helper][Shot ${shotId}] Error in video generation: ${error instanceof Error ? error.message : String(error)}`);
     throw error;
   }
 }
