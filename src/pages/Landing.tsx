@@ -349,12 +349,12 @@ const Landing = () => {
       />
 
       {/* Trust Indicators Section */}
-        <section className="py-16 px-4 border-y border-white/5 bg-black/40 backdrop-blur-sm">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
+      <section className="py-16 px-4 border-y border-white/5 bg-black/40 backdrop-blur-sm">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
             className="container mx-auto max-w-6xl"
           >
             <p className="text-center text-white/40 text-sm mb-8 uppercase tracking-wider">
@@ -418,10 +418,9 @@ const Landing = () => {
         {/* Gradient Divider */}
         <div className="h-px bg-gradient-to-r from-transparent via-[#8b5cf6]/30 to-transparent" />
           
-        {/* Sticky Footer */}
-        <div>
-          <StickyFooter />
-        </div>
+      {/* Sticky Footer */}
+      <div>
+        <StickyFooter />
       </div>
     </div>
   );
