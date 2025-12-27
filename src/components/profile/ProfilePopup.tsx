@@ -46,12 +46,16 @@ export const ProfilePopup = ({ isOpen, onClose, anchorEl }: ProfilePopupProps) =
       .single()
       .then(({ data }) => setProfile(data as ProfileData));
 
+    // Use user_credits table instead of credits
     supabase
-      .from('credits')
-      .select('balance')
+      .from('user_credits')
+      .select('total_credits, used_credits')
       .eq('user_id', user.id)
       .single()
-      .then(({ data }) => setCredits(data?.balance || 0));
+      .then(({ data }) => {
+        const available = (data?.total_credits ?? 0) - (data?.used_credits ?? 0);
+        setCredits(available);
+      });
   }, [user]);
 
   useEffect(() => {
@@ -129,71 +133,54 @@ export const ProfilePopup = ({ isOpen, onClose, anchorEl }: ProfilePopupProps) =
             )}
           </div>
 
-          <div className="border-b border-zinc-800 bg-gradient-to-r from-violet-500/10 to-purple-500/10 px-4 py-3">
+          {/* Credits Section */}
+          <div className="border-b border-zinc-800 p-4">
             <div className="flex items-center justify-between">
-              <span className="text-xs text-zinc-400">Credits</span>
-              <span className="text-sm font-semibold text-violet-400">
-                {credits.toLocaleString()}
-              </span>
+              <span className="text-xs text-zinc-400">Available Credits</span>
+              <span className="text-sm font-semibold text-white">{credits.toLocaleString()}</span>
             </div>
-            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-zinc-800">
-              <motion.div
-                className="h-full bg-gradient-to-r from-violet-500 to-purple-500"
-                initial={{ width: 0 }}
-                animate={{ width: `${Math.min((credits / 1000) * 100, 100)}%` }}
-                transition={{ duration: 0.5, delay: 0.2 }}
+            <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-zinc-800">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-violet-500 to-purple-500"
+                style={{ width: `${Math.min((credits / 10000) * 100, 100)}%` }}
               />
             </div>
           </div>
 
+          {/* Menu Items */}
           <div className="p-2">
             {menuItems.map((item) => (
               <a
                 key={item.label}
                 href={item.href}
-                className="group flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-zinc-800"
+                className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-zinc-300 transition-colors hover:bg-zinc-800 hover:text-white"
               >
-                <item.icon className="h-4 w-4 text-zinc-400 transition-colors group-hover:text-violet-400" />
-                <span className="flex-1 text-sm text-zinc-300">{item.label}</span>
-                <ChevronRight className="h-4 w-4 text-zinc-600 transition-colors group-hover:text-zinc-400" />
+                <item.icon className="h-4 w-4" />
+                <span className="flex-1">{item.label}</span>
+                <ChevronRight className="h-4 w-4 text-zinc-600" />
               </a>
             ))}
+          </div>
 
+          {/* Theme Toggle */}
+          <div className="border-t border-zinc-800 p-2">
             <button
               onClick={toggleTheme}
-              className="group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-zinc-800"
+              className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-zinc-300 transition-colors hover:bg-zinc-800 hover:text-white"
             >
-              {theme === 'dark' ? (
-                <Moon className="h-4 w-4 text-zinc-400 transition-colors group-hover:text-violet-400" />
-              ) : (
-                <Sun className="h-4 w-4 text-zinc-400 transition-colors group-hover:text-violet-400" />
-              )}
-              <span className="flex-1 text-sm text-zinc-300">
-                {theme === 'dark' ? 'Dark Mode' : 'Light Mode'}
-              </span>
-              <div
-                className={`h-5 w-8 rounded-full transition-colors ${
-                  theme === 'dark' ? 'bg-violet-600' : 'bg-zinc-600'
-                }`}
-              >
-                <motion.div
-                  className="mt-0.5 h-4 w-4 rounded-full bg-white"
-                  animate={{ x: theme === 'dark' ? 14 : 2 }}
-                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                />
-              </div>
+              {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              <span className="flex-1 text-left">{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
             </button>
           </div>
 
+          {/* Sign Out */}
           <div className="border-t border-zinc-800 p-2">
             <button
               onClick={handleSignOut}
-              className="group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-red-500/10"
+              className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-red-400 transition-colors hover:bg-red-500/10 hover:text-red-300"
             >
-              <LogOut className="h-4 w-4 text-zinc-400 transition-colors group-hover:text-red-400" />
-              <span className="text-sm text-zinc-300 transition-colors group-hover:text-red-400">
-                Sign Out
-              </span>
+              <LogOut className="h-4 w-4" />
+              <span>Sign Out</span>
             </button>
           </div>
         </motion.div>
