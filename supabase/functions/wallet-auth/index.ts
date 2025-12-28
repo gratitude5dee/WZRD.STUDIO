@@ -6,6 +6,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { hashMessage, recoverAddress } from "https://esm.sh/viem@2.21.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -20,6 +21,13 @@ interface WalletAuthRequest {
   timestamp: number;
 }
 
+function errorResponse(message: string, status: number) {
+  return new Response(
+    JSON.stringify({ error: message }),
+    { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+  );
+}
+
 serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -27,10 +35,7 @@ serve(async (req) => {
   }
 
   if (req.method !== 'POST') {
-    return new Response(
-      JSON.stringify({ error: 'Method not allowed' }),
-      { status: 405, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return errorResponse('Method not allowed', 405);
   }
 
   try {
@@ -38,29 +43,51 @@ serve(async (req) => {
 
     // Validate required fields
     if (!walletAddress || !message || !signature || !timestamp) {
-      return new Response(
-        JSON.stringify({ error: 'Missing required fields: walletAddress, message, signature, timestamp' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return errorResponse('Missing required fields: walletAddress, message, signature, timestamp', 400);
     }
 
     // Validate timestamp (message should be signed within last 5 minutes)
     const now = Date.now();
     const fiveMinutes = 5 * 60 * 1000;
     if (now - timestamp > fiveMinutes) {
-      return new Response(
-        JSON.stringify({ error: 'Signature expired. Please sign again.' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return errorResponse('Signature expired. Please sign again.', 400);
     }
 
     // Validate wallet address format
     const walletAddressLower = walletAddress.toLowerCase();
     if (!/^0x[a-f0-9]{40}$/i.test(walletAddress)) {
-      return new Response(
-        JSON.stringify({ error: 'Invalid wallet address format' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return errorResponse('Invalid wallet address format', 400);
+    }
+
+    // ========================================================================
+    // CRITICAL: Cryptographic signature verification
+    // Verify that the signature was actually created by the claimed wallet
+    // ========================================================================
+    try {
+      // Hash the message the same way wallets do (EIP-191)
+      const messageHash = hashMessage(message);
+      
+      // Recover the address that created this signature
+      const recoveredAddress = await recoverAddress({
+        hash: messageHash,
+        signature: signature as `0x${string}`,
+      });
+
+      // Compare recovered address with claimed address (case-insensitive)
+      if (recoveredAddress.toLowerCase() !== walletAddressLower) {
+        console.error(`Signature verification failed: recovered ${recoveredAddress}, claimed ${walletAddress}`);
+        return errorResponse('Invalid signature for wallet address', 401);
+      }
+
+      console.log(`Signature verified for wallet: ${walletAddressLower}`);
+    } catch (verifyError) {
+      console.error('Signature verification error:', verifyError);
+      return errorResponse('Invalid signature format or verification failed', 401);
+    }
+
+    // Validate that message contains expected format to prevent replay attacks
+    if (!message.includes(walletAddress) || !message.includes(timestamp.toString())) {
+      return errorResponse('Message format invalid or tampered', 400);
     }
 
     // Create Supabase admin client
@@ -156,10 +183,7 @@ serve(async (req) => {
 
     if (signInError || !signInData.session) {
       console.error('Error signing in:', signInError);
-      return new Response(
-        JSON.stringify({ error: 'Failed to authenticate wallet user' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return errorResponse('Failed to authenticate wallet user', 500);
     }
 
     console.log(`Successfully authenticated wallet: ${walletAddressLower}`);
@@ -174,9 +198,6 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Wallet auth error:', error);
-    return new Response(
-      JSON.stringify({ error: error.message || 'Internal server error' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return errorResponse('Internal server error', 500);
   }
 });
