@@ -208,7 +208,7 @@ const Landing = () => {
           <div className="absolute top-20 left-4 right-4 bg-black/95 backdrop-blur-md border border-white/10 rounded-2xl shadow-2xl p-6">
             <nav className="flex flex-col space-y-4">
               <button onClick={() => handleMobileNavClick("features")} className="text-left px-4 py-3 text-lg font-medium text-white/60 hover:text-white transition-colors rounded-lg hover:bg-white/10">
-                Features
+                Gemini 3.0 Pro, Nanobanana Pro 2, Veo 3.1           
               </button>
               <button onClick={() => handleMobileNavClick("pricing")} className="text-left px-4 py-3 text-lg font-medium text-white/60 hover:text-white transition-colors rounded-lg hover:bg-white/10">
                 Pricing
@@ -270,7 +270,7 @@ const Landing = () => {
             </p>
             <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-12 opacity-50 hover:opacity-70 transition-opacity">
               <div className="text-white/60 font-bold text-xl">Runway          </div>
-              <div className="text-white/60 font-bold text-xl">Kling</div>
+              <div className="text-white/60 font-bold text-xl">Supabase</div>
               <div className="text-white/60 font-bold text-xl">Vercel</div>
               <div className="text-white/60 font-bold text-xl">React</div>
               <div className="text-white/60 font-bold text-xl">TypeScript</div>
