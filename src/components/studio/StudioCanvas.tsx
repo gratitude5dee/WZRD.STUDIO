@@ -4,8 +4,6 @@ import { Plus, ZoomIn, ZoomOut, Maximize, Grid3x3 } from 'lucide-react';
 import {
   ReactFlow,
   Background,
-  Controls,
-  MiniMap,
   useNodesState,
   useEdgesState,
   addEdge,
@@ -604,25 +602,6 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
             variant={BackgroundVariant.Dots}
           />
         )}
-        <Controls
-          showInteractive={false}
-          className="bg-zinc-900 border-zinc-800"
-        />
-        <MiniMap
-          nodeColor={(node) => {
-            if (node.type === 'compute') {
-              const data = node.data as any;
-              const outputType = data?.outputs?.[0]?.datatype || 'any';
-              return HANDLE_COLORS[outputType as DataType] || HANDLE_COLORS.any;
-            }
-            if (node.type === 'text') return 'hsl(var(--chart-1))';
-            if (node.type === 'image') return 'hsl(var(--chart-2))';
-            if (node.type === 'video') return 'hsl(var(--chart-3))';
-            if (node.type === 'upload') return 'hsl(var(--chart-2))';
-            return 'hsl(var(--muted))';
-          }}
-          className="bg-zinc-900 border-zinc-800"
-        />
       </ReactFlow>
 
       {/* Empty state */}
