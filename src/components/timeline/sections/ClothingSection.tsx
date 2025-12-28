@@ -48,7 +48,8 @@ export function ClothingSection({
   useEffect(() => {
     const loadClothingData = async () => {
       try {
-        const { data, error } = await supabase
+        // Cast to any since character_scene_appearances table may not be in generated types
+        const { data, error } = await (supabase as any)
           .from('character_scene_appearances')
           .select('*')
           .eq('scene_id', sceneId);
@@ -56,7 +57,7 @@ export function ClothingSection({
         if (error) throw error;
 
         const dataMap: Record<string, ClothingData> = {};
-        data?.forEach(appearance => {
+        (data || []).forEach((appearance: any) => {
           dataMap[appearance.character_id] = {
             clothingPrompt: appearance.clothing_prompt || '',
             referenceImages: (appearance.clothing_reference_images || []).map((url: string, idx: number) => ({
@@ -103,7 +104,8 @@ export function ClothingSection({
 
     // Save to database
     try {
-      const { error } = await supabase
+      // Cast to any since character_scene_appearances table may not be in generated types
+      const { error } = await (supabase as any)
         .from('character_scene_appearances')
         .upsert({
           character_id: characterId,

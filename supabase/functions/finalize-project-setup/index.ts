@@ -264,7 +264,7 @@ async function processSingleScene(
       console.log(`[Scene ${scene.scene_number}] Processing all ${insertedShots.length} shots in parallel...`);
       
       await Promise.all(
-        insertedShots.map(shot => processSingleShot(shot, scene, projectData, styleReferenceUrl, supabaseClient))
+        insertedShots.map((shot: any) => processSingleShot(shot, scene, projectData, styleReferenceUrl, supabaseClient))
       );
       
       console.log(`[Scene ${scene.scene_number}] Finished processing all shots.`);
@@ -347,11 +347,11 @@ async function processProjectSetup(
     
     for (let i = 0; i < scenesData.length; i += SCENE_BATCH_SIZE) {
       const batch = scenesData.slice(i, i + SCENE_BATCH_SIZE);
-      console.log(`[Background Processing ${project_id}] Processing scene batch ${Math.floor(i / SCENE_BATCH_SIZE) + 1}: scenes ${batch.map(s => s.scene_number).join(', ')}`);
+      console.log(`[Background Processing ${project_id}] Processing scene batch ${Math.floor(i / SCENE_BATCH_SIZE) + 1}: scenes ${batch.map((s: any) => s.scene_number).join(', ')}`);
       
       // Process all scenes in this batch simultaneously
       const results = await Promise.all(
-        batch.map(scene => processSingleScene(
+        batch.map((scene: any) => processSingleScene(
             scene,
             projectData,
             project_id,
@@ -440,11 +440,12 @@ serve(async (req) => {
       status: 'processing'
     });
 
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('[Finalize Setup] Top-level error:', error);
     if (error instanceof AuthError) {
       return errorResponse(error.message, 401);
     }
-    return errorResponse(error.message || 'Internal server error', 500);
+    const message = error instanceof Error ? error.message : 'Internal server error';
+    return errorResponse(message, 500);
   }
 });

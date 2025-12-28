@@ -188,6 +188,7 @@ Deno.serve(async (req) => {
       return errorResponse(error.message, 401);
     }
 
-    return errorResponse(error.message || 'Failed to create share link', 500);
+    const message = error instanceof Error ? error.message : 'Failed to create share link';
+    return errorResponse(message, 500);
   }
 });

@@ -431,7 +431,7 @@ type FalModelDefinition = {
 // Flatten all models for easy access (excluding 3D generation from general list)
 export const ALL_FAL_MODELS: FalModelDefinition[] = Object.entries(FAL_MODELS_BY_CATEGORY)
   .filter(([category]) => category !== '3d-generation')
-  .flatMap(([_, models]) => models as FalModelDefinition[]);
+  .flatMap(([_, models]) => [...models] as FalModelDefinition[]);
 
 // Legacy COMMON_MODELS for backward compatibility
 export const COMMON_MODELS: ModelInfo[] = [
@@ -487,7 +487,8 @@ export const COMMON_MODELS: ModelInfo[] = [
 
 // Helper function to get models by category
 export function getModelsByCategory(category: string): FalModelDefinition[] {
-  return (FAL_MODELS_BY_CATEGORY as Record<string, FalModelDefinition[]>)[category] || [];
+  const models = (FAL_MODELS_BY_CATEGORY as unknown as Record<string, readonly FalModelDefinition[]>)[category];
+  return models ? [...models] : [];
 }
 
 // Helper function to find a model by ID

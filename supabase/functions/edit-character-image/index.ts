@@ -49,7 +49,7 @@ serve(async (req) => {
       logs: true,
     });
 
-    const editedImageUrl = result?.images?.[0]?.url;
+    const editedImageUrl = (result as any)?.images?.[0]?.url;
 
     if (!editedImageUrl) {
       throw new Error('No image returned from edit model');

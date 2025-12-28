@@ -106,7 +106,8 @@ export function LocationSection({
         camera_environment: newData.cameraEnvironment,
       };
 
-      const { error } = await supabase
+      // Cast to any since location_details column may not be in generated types
+      const { error } = await (supabase as any)
         .from('scenes')
         .update({
           location_details: locationDetails,

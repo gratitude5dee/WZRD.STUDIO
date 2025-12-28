@@ -37,10 +37,11 @@ async function fetchWithRetry(
       }
       
       return response;
-    } catch (error) {
+    } catch (error: unknown) {
       if (attempt < retries - 1) {
         const backoffMs = Math.min(1000 * Math.pow(2, attempt), 5000);
-        console.log(`Request error: ${error.message}, retrying in ${backoffMs}ms... (attempt ${attempt + 1}/${retries})`);
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        console.log(`Request error: ${message}, retrying in ${backoffMs}ms... (attempt ${attempt + 1}/${retries})`);
         await new Promise(resolve => setTimeout(resolve, backoffMs));
         continue;
       }
