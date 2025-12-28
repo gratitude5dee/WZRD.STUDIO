@@ -54,6 +54,7 @@ async function fetchWithRetry(
 interface RequestBody {
   character_id: string;
   project_id?: string;
+  style_reference_url?: string;
 }
 
 interface CharacterData {
@@ -64,6 +65,7 @@ interface CharacterData {
     tone?: string | null;
     video_style?: string | null;
     cinematic_inspiration?: string | null;
+    style_reference_asset_id?: string | null;
   }
 }
 
@@ -84,7 +86,7 @@ serve(async (req) => {
   fal.config({ credentials: FAL_KEY });
 
   try {
-    const { character_id, project_id }: RequestBody = await req.json();
+    const { character_id, project_id, style_reference_url }: RequestBody = await req.json();
     if (!character_id) return errorResponse('character_id is required', 400);
 
     console.log(`Generating image for character ID: ${character_id}`);
@@ -108,7 +110,8 @@ serve(async (req) => {
           genre,
           tone,
           video_style,
-          cinematic_inspiration
+          cinematic_inspiration,
+          style_reference_asset_id
         )
       `)
       .eq('id', character_id)
@@ -168,17 +171,41 @@ serve(async (req) => {
 
     console.log(`Generated visual prompt: ${visualPrompt}`);
 
+    let styleReferenceUrl = style_reference_url;
+    if (!styleReferenceUrl && charData.project?.style_reference_asset_id) {
+      const { data: mediaItem, error: mediaError } = await supabaseClient
+        .from('media_items')
+        .select('url, storage_bucket, storage_path')
+        .eq('id', charData.project.style_reference_asset_id)
+        .single();
+
+      if (!mediaError && mediaItem) {
+        styleReferenceUrl =
+          mediaItem.url ||
+          (mediaItem.storage_bucket && mediaItem.storage_path
+            ? `${Deno.env.get('SUPABASE_URL')}/storage/v1/object/public/${mediaItem.storage_bucket}/${mediaItem.storage_path}`
+            : undefined);
+      }
+    }
+
     // 3. Generate Image using FAL.AI FLUX
     console.log('Calling FAL.AI FLUX for image generation...');
-    
+
+    const falInput: Record<string, unknown> = {
+      prompt: visualPrompt,
+      image_size: "square_hd",
+      num_inference_steps: 4,
+      num_images: 1,
+      enable_safety_checker: true,
+    };
+
+    if (styleReferenceUrl) {
+      falInput.ip_adapter_style_reference = styleReferenceUrl;
+      falInput.style_strength = 0.6;
+    }
+
     const result = await fal.subscribe("fal-ai/flux/schnell", {
-      input: {
-        prompt: visualPrompt,
-        image_size: "square_hd",
-        num_inference_steps: 4,
-        num_images: 1,
-        enable_safety_checker: true,
-      },
+      input: falInput,
       logs: true,
     });
 

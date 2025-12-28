@@ -69,6 +69,7 @@ serve(async (req) => {
   try {
     const body = await req.json();
     shotId = body.shot_id;
+    const styleReferenceOverride = body.style_reference_url;
     
     if (!shotId) {
       console.error("[generate-shot-image] Missing shot_id in request");
@@ -126,7 +127,7 @@ serve(async (req) => {
     console.log(`[generate-shot-image][Shot ${shotId}] Fetching project data for aspect ratio...`);
     const { data: project, error: projectError } = await supabase
       .from("projects")
-      .select("aspect_ratio")
+      .select("aspect_ratio, style_reference_asset_id")
       .eq("id", shot.project_id)
       .single();
 
@@ -139,20 +140,44 @@ serve(async (req) => {
     const falImageSize = convertImageSizeToFalFormat(imageSize);
     console.log(`[generate-shot-image][Shot ${shotId}] Using aspect ratio: ${aspectRatio}, FAL image size:`, falImageSize);
 
+    let styleReferenceUrl: string | undefined = styleReferenceOverride || undefined;
+    if (!styleReferenceUrl && project?.style_reference_asset_id) {
+      const { data: mediaItem, error: mediaError } = await supabase
+        .from("media_items")
+        .select("url, storage_bucket, storage_path")
+        .eq("id", project.style_reference_asset_id)
+        .single();
+
+      if (!mediaError && mediaItem) {
+        styleReferenceUrl =
+          mediaItem.url ||
+          (mediaItem.storage_bucket && mediaItem.storage_path
+            ? `${supabaseUrl}/storage/v1/object/public/${mediaItem.storage_bucket}/${mediaItem.storage_path}`
+            : undefined);
+      }
+    }
+
     try {
       // Use FAL.AI subscribe with onQueueUpdate for real-time progress
       console.log(`[generate-shot-image][Shot ${shotId}] Starting FAL.AI generation with FLUX Schnell...`);
       
       let lastProgress = 0;
       
+      const falInput: Record<string, unknown> = {
+        prompt: shot.visual_prompt,
+        image_size: falImageSize,
+        num_inference_steps: 4,
+        num_images: 1,
+        enable_safety_checker: true,
+      };
+
+      if (styleReferenceUrl) {
+        falInput.ip_adapter_style_reference = styleReferenceUrl;
+        falInput.style_strength = 0.6;
+      }
+
       const result = await fal.subscribe("fal-ai/flux/schnell", {
-        input: {
-          prompt: shot.visual_prompt,
-          image_size: falImageSize,
-          num_inference_steps: 4,
-          num_images: 1,
-          enable_safety_checker: true,
-        },
+        input: falInput,
         logs: true,
         onQueueUpdate: async (update) => {
           console.log(`[generate-shot-image][Shot ${shotId}] Queue update: ${update.status}`);
@@ -196,7 +221,7 @@ serve(async (req) => {
       // Update progress to 90% before download/upload
       await supabase
         .from("shots")
-        .update({ image_progress: 90 })
+        .update({ image_progress: 90, style_reference_used: !!styleReferenceUrl })
         .eq("id", shotId);
 
       console.log(`[generate-shot-image][Shot ${shotId}] Image generated successfully, downloading and uploading to storage...`);

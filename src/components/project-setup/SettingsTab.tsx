@@ -5,14 +5,15 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Plus, ChevronRight, ImageIcon, HelpCircle, Loader2 } from 'lucide-react';
+import { Plus, ChevronRight, Loader2 } from 'lucide-react';
 import { useProjectContext } from './ProjectContext';
 import { supabase } from '@/integrations/supabase/client';
 import { supabaseService } from '@/services/supabaseService';
 import CharacterCard from './CharacterCard';
 import { toast } from 'sonner';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Card } from '@/components/ui/card';
+import { StyleReferenceUploader } from './StyleReferenceUploader';
+import { VoiceOverSelector } from './VoiceOverSelector';
 
 interface SettingsTabProps {
   projectData: ProjectData;
@@ -129,6 +130,22 @@ const SettingsTab = ({ projectData, updateProjectData }: SettingsTabProps) => {
     setSelectedVideoStyle(style);
   };
 
+  const handleStyleReferenceChange = (url: string | null, assetId: string | null) => {
+    updateProjectData({
+      styleReferenceUrl: url || undefined,
+      styleReferenceAssetId: assetId || undefined,
+    });
+  };
+
+  const handleClearVoiceover = () => {
+    updateProjectData({
+      addVoiceover: false,
+      voiceoverId: undefined,
+      voiceoverName: undefined,
+      voiceoverPreviewUrl: undefined,
+    });
+  };
+
   const handleAddCharacter = async () => {
     if (!projectId) {
       toast.error("Please save the project first");
@@ -161,11 +178,6 @@ const SettingsTab = ({ projectData, updateProjectData }: SettingsTabProps) => {
     } finally {
       setIsAddingCharacter(false);
     }
-  };
-
-  const handleEditCharacter = (character: Character) => {
-    // This would open an edit dialog in a complete implementation
-    toast.info(`Edit ${character.name} (functionality coming soon)`);
   };
 
   const handleDeleteCharacter = async (characterId: string) => {
@@ -272,24 +284,32 @@ const SettingsTab = ({ projectData, updateProjectData }: SettingsTabProps) => {
             </div>
           </div>
 
-          <div className="space-y-2">
-            <div className="flex items-center text-sm font-medium text-gray-400 uppercase">
-              <span>STYLE REFERENCE</span>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <HelpCircle className="ml-2 h-4 w-4 text-gray-500 cursor-help" />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Upload an image to guide the visual style.</p>
-                </TooltipContent>
-              </Tooltip>
-            </div>
-            
-            <div className="relative border border-zinc-700 rounded p-8 flex flex-col items-center justify-center gap-2 bg-[#18191E] cursor-pointer hover:border-gray-500 transition-colors">
-              <ImageIcon className="h-6 w-6 text-gray-500" />
-              <p className="text-gray-400 text-sm">Drag image here</p>
-              <p className="text-gray-500 text-xs">Or upload a file</p>
-            </div>
+          {projectId && (
+            <StyleReferenceUploader
+              projectId={projectId}
+              styleReferenceUrl={projectData.styleReferenceUrl}
+              onStyleReferenceChange={handleStyleReferenceChange}
+            />
+          )}
+
+          <div className="space-y-3">
+            <VoiceOverSelector
+              selectedVoiceId={projectData.voiceoverId}
+              selectedVoiceName={projectData.voiceoverName}
+              onVoiceSelect={(voiceId, voiceName, previewUrl) =>
+                updateProjectData({
+                  addVoiceover: true,
+                  voiceoverId: voiceId,
+                  voiceoverName: voiceName,
+                  voiceoverPreviewUrl: previewUrl,
+                })
+              }
+            />
+            {projectData.voiceoverId && (
+              <Button variant="outline" size="sm" onClick={handleClearVoiceover}>
+                Clear voice selection
+              </Button>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -324,8 +344,8 @@ const SettingsTab = ({ projectData, updateProjectData }: SettingsTabProps) => {
             <CharacterCard
               key={char.id}
               character={char}
-              onEdit={handleEditCharacter}
               onDelete={handleDeleteCharacter}
+              styleReferenceUrl={projectData.styleReferenceUrl}
             />
           ))}
 

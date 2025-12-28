@@ -332,9 +332,12 @@ const StorylineTab = ({ projectData, updateProjectData }: StorylineTabProps) => 
           <div className="flex gap-2 flex-wrap">
             {projectData.format && (
               <Badge className="bg-black text-white hover:bg-zinc-800">
-                {projectData.format === 'custom' 
-                  ? projectData.customFormat 
-                  : projectData.format.charAt(0).toUpperCase() + projectData.format.slice(1)}
+                {projectData.format === 'custom'
+                  ? projectData.customFormat || 'Custom'
+                  : projectData.format
+                      .split('_')
+                      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+                      .join(' ')}
               </Badge>
             )}
             {projectData.genre && (

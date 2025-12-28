@@ -119,7 +119,7 @@ serve(async (req) => {
     // Fetch project details
     const { data: project, error: projectError } = await supabaseClient
       .from('projects')
-      .select('title, concept_text, genre, tone, format, custom_format_description, special_requests, product_name, target_audience, main_message, call_to_action')
+      .select('title, concept_text, genre, tone, format, custom_format_description, special_requests, product_name, target_audience, main_message, call_to_action, ad_brief_data, music_video_data, infotainment_data')
       .eq('id', project_id)
       .eq('user_id', user.id)
       .single();
