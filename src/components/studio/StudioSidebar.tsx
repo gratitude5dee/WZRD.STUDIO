@@ -1,19 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import {
-  Plus,
-  History,
-  Layers,
-  Inbox,
-  MessageCircle,
-  Settings,
-  HelpCircle,
-  Type,
-  Image as ImageIcon,
-  Video,
-  Box,
-  ExternalLink,
-  Upload,
-} from 'lucide-react';
+import { Plus, History, Layers, Inbox, MessageCircle, Settings, HelpCircle, Type, Image as ImageIcon, Video, Box, ExternalLink, Upload } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import FlowSelector, { Flow } from './FlowSelector';
@@ -21,27 +7,12 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { AssetLibrary, AssetUploader } from '@/components/assets';
 import type { ProjectAsset, AssetType } from '@/types/assets';
 import { ProfileButton } from '@/components/layout/ProfileButton';
-
 interface StudioSidebarProps {
   onAddBlock: (blockType: 'text' | 'image' | 'video' | 'upload') => void;
   projectId?: string;
   onAssetSelect?: (asset: ProjectAsset) => void;
 }
-
-const ACCEPTED_STUDIO_FILE_TYPES = [
-  '.png',
-  '.jpg',
-  '.jpeg',
-  '.gif',
-  '.webp',
-  '.mp4',
-  '.mov',
-  '.webm',
-  '.mp3',
-  '.wav',
-  '.ogg'
-];
-
+const ACCEPTED_STUDIO_FILE_TYPES = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.mp4', '.mov', '.webm', '.mp3', '.wav', '.ogg'];
 const detectAssetTypeFromFile = (file: File): AssetType => {
   if (file.type.startsWith('image/')) return 'image';
   if (file.type.startsWith('video/')) return 'video';
@@ -51,44 +22,58 @@ const detectAssetTypeFromFile = (file: File): AssetType => {
 };
 
 // Mock flows
-const MOCK_FLOWS: Flow[] = [
-  { id: 'game-character', name: 'Game Character Generation', blocks: 139 },
-  { id: 'magic-frogs', name: 'magic frogs', blocks: 9 },
-  { id: 'cinematic', name: 'Cinematic Portrait', blocks: 9 },
-  { id: 'branching', name: 'Branching', blocks: 79 },
-  { id: 'aesthetic', name: 'Aesthetic Style Extraction', blocks: 39 },
-  { id: 'love-me', name: 'LOVE ME, LOVE ME NOT', blocks: 3 },
-];
-
-const StudioSidebar = ({ onAddBlock, projectId, onAssetSelect }: StudioSidebarProps) => {
+const MOCK_FLOWS: Flow[] = [{
+  id: 'game-character',
+  name: 'Game Character Generation',
+  blocks: 139
+}, {
+  id: 'magic-frogs',
+  name: 'magic frogs',
+  blocks: 9
+}, {
+  id: 'cinematic',
+  name: 'Cinematic Portrait',
+  blocks: 9
+}, {
+  id: 'branching',
+  name: 'Branching',
+  blocks: 79
+}, {
+  id: 'aesthetic',
+  name: 'Aesthetic Style Extraction',
+  blocks: 39
+}, {
+  id: 'love-me',
+  name: 'LOVE ME, LOVE ME NOT',
+  blocks: 3
+}];
+const StudioSidebar = ({
+  onAddBlock,
+  projectId,
+  onAssetSelect
+}: StudioSidebarProps) => {
   const [showAddMenu, setShowAddMenu] = useState(false);
   const [showFlowSelector, setShowFlowSelector] = useState(false);
   const [showAssetsModal, setShowAssetsModal] = useState(false);
   const [activeTool, setActiveTool] = useState<string | null>(null);
-  
   const addMenuRef = useRef<HTMLDivElement>(null);
   const flowSelectorRef = useRef<HTMLDivElement>(null);
-  
   const handleClickOutside = (event: MouseEvent) => {
     if (addMenuRef.current && !addMenuRef.current.contains(event.target as Node)) {
       setShowAddMenu(false);
     }
-    
     if (flowSelectorRef.current && !flowSelectorRef.current.contains(event.target as Node)) {
       setShowFlowSelector(false);
     }
   };
-  
   useEffect(() => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
-  
   const handleToolClick = (toolId: string) => {
     setActiveTool(activeTool === toolId ? null : toolId);
-    
     if (toolId === 'add') {
       setShowAddMenu(!showAddMenu);
       setShowFlowSelector(false);
@@ -104,62 +89,52 @@ const StudioSidebar = ({ onAddBlock, projectId, onAssetSelect }: StudioSidebarPr
       setShowFlowSelector(false);
     }
   };
-  
   const handleSelectFlow = (flowId: string) => {
     console.log(`Selected flow: ${flowId}`);
     setShowFlowSelector(false);
   };
-
   const handleAssetsSelected = (assets: ProjectAsset[]) => {
     if (!onAssetSelect || assets.length === 0) return;
     const selected = assets[assets.length - 1];
     onAssetSelect(selected);
     setShowAssetsModal(false);
   };
-
   const hasProject = Boolean(projectId);
   const distributionItem = {
     icon: Upload,
     label: 'Distribute via USync',
-    href: 'https://usync.lovable.app',
+    href: 'https://usync.lovable.app'
   };
-
-  return (
-    <div className="h-full w-16 bg-black border-r border-zinc-800/50 flex flex-col">
+  return <div className="h-full w-16 bg-black border-r border-zinc-800/50 flex flex-col">
       <div className="flex-1 flex flex-col items-center pt-4 gap-6">
         {/* Add Button with Dropdown */}
         <div className="relative" ref={addMenuRef}>
-          <button 
-            className={cn(
-              "w-10 h-10 rounded-full flex items-center justify-center transition-colors",
-              activeTool === 'add' ? "bg-white text-black" : "bg-zinc-900 hover:bg-zinc-800 text-white"
-            )}
-            onClick={() => handleToolClick('add')}
-          >
+          <button className={cn("w-10 h-10 rounded-full flex items-center justify-center transition-colors", activeTool === 'add' ? "bg-white text-black" : "bg-zinc-900 hover:bg-zinc-800 text-white")} onClick={() => handleToolClick('add')}>
             <Plus className="h-5 w-5" />
           </button>
           
           <AnimatePresence>
-            {showAddMenu && (
-              <motion.div
-                className="absolute left-14 top-0 w-64 bg-zinc-900 border border-zinc-800 rounded-lg shadow-xl z-50"
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -10 }}
-                transition={{ duration: 0.2 }}
-              >
+            {showAddMenu && <motion.div className="absolute left-14 top-0 w-64 bg-zinc-900 border border-zinc-800 rounded-lg shadow-xl z-50" initial={{
+            opacity: 0,
+            x: -10
+          }} animate={{
+            opacity: 1,
+            x: 0
+          }} exit={{
+            opacity: 0,
+            x: -10
+          }} transition={{
+            duration: 0.2
+          }}>
                 <div className="p-2">
                   <div className="px-3 py-2">
                     <h3 className="text-xs font-semibold text-zinc-400">Add Block</h3>
                   </div>
 
-                  <button
-                    className="w-full flex items-center justify-between px-3 py-2 hover:bg-zinc-800 rounded-md text-white text-sm"
-                    onClick={() => {
-                      onAddBlock('text');
-                      setShowAddMenu(false);
-                    }}
-                  >
+                  <button className="w-full flex items-center justify-between px-3 py-2 hover:bg-zinc-800 rounded-md text-white text-sm" onClick={() => {
+                onAddBlock('text');
+                setShowAddMenu(false);
+              }}>
                     <div className="flex items-center gap-3">
                       <div className="bg-zinc-800 w-7 h-7 rounded-full flex items-center justify-center">
                         <Type className="h-3.5 w-3.5 text-white" />
@@ -169,13 +144,10 @@ const StudioSidebar = ({ onAddBlock, projectId, onAssetSelect }: StudioSidebarPr
                     <span className="text-xs text-zinc-500">T</span>
                   </button>
 
-                  <button
-                    className="w-full flex items-center justify-between px-3 py-2 hover:bg-zinc-800 rounded-md text-white text-sm"
-                    onClick={() => {
-                      onAddBlock('image');
-                      setShowAddMenu(false);
-                    }}
-                  >
+                  <button className="w-full flex items-center justify-between px-3 py-2 hover:bg-zinc-800 rounded-md text-white text-sm" onClick={() => {
+                onAddBlock('image');
+                setShowAddMenu(false);
+              }}>
                     <div className="flex items-center gap-3">
                       <div className="bg-zinc-800 w-7 h-7 rounded-full flex items-center justify-center">
                         <ImageIcon className="h-3.5 w-3.5 text-white" />
@@ -185,13 +157,10 @@ const StudioSidebar = ({ onAddBlock, projectId, onAssetSelect }: StudioSidebarPr
                     <span className="text-xs text-zinc-500">I</span>
                   </button>
 
-                  <button
-                    className="w-full flex items-center justify-between px-3 py-2 hover:bg-zinc-800 rounded-md text-white text-sm"
-                    onClick={() => {
-                      onAddBlock('video');
-                      setShowAddMenu(false);
-                    }}
-                  >
+                  <button className="w-full flex items-center justify-between px-3 py-2 hover:bg-zinc-800 rounded-md text-white text-sm" onClick={() => {
+                onAddBlock('video');
+                setShowAddMenu(false);
+              }}>
                     <div className="flex items-center gap-3">
                       <div className="bg-zinc-800 w-7 h-7 rounded-full flex items-center justify-center">
                         <Video className="h-3.5 w-3.5 text-white" />
@@ -207,13 +176,10 @@ const StudioSidebar = ({ onAddBlock, projectId, onAssetSelect }: StudioSidebarPr
                     <h3 className="text-xs font-semibold text-zinc-400">Add Source</h3>
                   </div>
 
-                  <button
-                    className="w-full flex items-center justify-between px-3 py-2 hover:bg-zinc-800 rounded-md text-white text-sm"
-                    onClick={() => {
-                      onAddBlock('upload');
-                      setShowAddMenu(false);
-                    }}
-                  >
+                  <button className="w-full flex items-center justify-between px-3 py-2 hover:bg-zinc-800 rounded-md text-white text-sm" onClick={() => {
+                onAddBlock('upload');
+                setShowAddMenu(false);
+              }}>
                     <div className="flex items-center gap-3">
                       <div className="bg-zinc-800 w-7 h-7 rounded-full flex items-center justify-center">
                         <Inbox className="h-3.5 w-3.5 text-white" />
@@ -238,107 +204,59 @@ const StudioSidebar = ({ onAddBlock, projectId, onAssetSelect }: StudioSidebarPr
                     </button>
                   </div>
                 </div>
-              </motion.div>
-            )}
+              </motion.div>}
           </AnimatePresence>
         </div>
         
         {/* Templates/Flows Button with Dropdown */}
         <div className="relative" ref={flowSelectorRef}>
-          <button 
-            className={cn(
-              "w-10 h-10 flex items-center justify-center text-zinc-500 transition-colors",
-              activeTool === 'templates' ? "text-white" : "hover:text-zinc-300"
-            )}
-            onClick={() => handleToolClick('templates')}
-            title="Templates & Flows"
-          >
+          <button className={cn("w-10 h-10 flex items-center justify-center text-zinc-500 transition-colors", activeTool === 'templates' ? "text-white" : "hover:text-zinc-300")} onClick={() => handleToolClick('templates')} title="Templates & Flows">
             <Box className="h-5 w-5" />
           </button>
           
           <AnimatePresence>
-            {showFlowSelector && (
-              <motion.div 
-                className="absolute left-14 top-0 w-72 z-50"
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -10 }}
-                transition={{ duration: 0.2 }}
-              >
-                <FlowSelector 
-                  flows={MOCK_FLOWS}
-                  onFlowSelect={handleSelectFlow}
-                />
-              </motion.div>
-            )}
+            {showFlowSelector && <motion.div className="absolute left-14 top-0 w-72 z-50" initial={{
+            opacity: 0,
+            x: -10
+          }} animate={{
+            opacity: 1,
+            x: 0
+          }} exit={{
+            opacity: 0,
+            x: -10
+          }} transition={{
+            duration: 0.2
+          }}>
+                <FlowSelector flows={MOCK_FLOWS} onFlowSelect={handleSelectFlow} />
+              </motion.div>}
           </AnimatePresence>
         </div>
         
         {/* Assets Button */}
-        <button 
-          className={cn(
-            "w-10 h-10 flex items-center justify-center text-zinc-500 transition-colors",
-            activeTool === 'assets' ? "text-white" : "hover:text-zinc-300"
-          )}
-          onClick={() => handleToolClick('assets')}
-          title="Assets"
-        >
+        <button className={cn("w-10 h-10 flex items-center justify-center text-zinc-500 transition-colors", activeTool === 'assets' ? "text-white" : "hover:text-zinc-300")} onClick={() => handleToolClick('assets')} title="Assets">
           <Layers className="h-5 w-5" />
         </button>
         
         {/* Other sidebar icons */}
-        <button 
-          className={cn(
-            "w-10 h-10 flex items-center justify-center text-zinc-500 transition-colors",
-            activeTool === 'history' ? "text-white" : "hover:text-zinc-300"
-          )}
-          onClick={() => handleToolClick('history')}
-          title="History"
-        >
+        <button className={cn("w-10 h-10 flex items-center justify-center text-zinc-500 transition-colors", activeTool === 'history' ? "text-white" : "hover:text-zinc-300")} onClick={() => handleToolClick('history')} title="History">
           <History className="h-5 w-5" />
         </button>
         
-        <button 
-          className={cn(
-            "w-10 h-10 flex items-center justify-center text-zinc-500 transition-colors",
-            activeTool === 'inbox' ? "text-white" : "hover:text-zinc-300"
-          )}
-          onClick={() => handleToolClick('inbox')}
-          title="Inbox"
-        >
+        <button className={cn("w-10 h-10 flex items-center justify-center text-zinc-500 transition-colors", activeTool === 'inbox' ? "text-white" : "hover:text-zinc-300")} onClick={() => handleToolClick('inbox')} title="Inbox">
           <Inbox className="h-5 w-5" />
         </button>
         
-        <button 
-          className={cn(
-            "w-10 h-10 flex items-center justify-center text-zinc-500 transition-colors",
-            activeTool === 'chat' ? "text-white" : "hover:text-zinc-300"
-          )}
-          onClick={() => handleToolClick('chat')}
-          title="Chat"
-        >
+        <button className={cn("w-10 h-10 flex items-center justify-center text-zinc-500 transition-colors", activeTool === 'chat' ? "text-white" : "hover:text-zinc-300")} onClick={() => handleToolClick('chat')} title="Chat">
           <MessageCircle className="h-5 w-5" />
         </button>
         
-        <button 
-          className={cn(
-            "w-10 h-10 flex items-center justify-center text-zinc-500 transition-colors",
-            activeTool === 'settings' ? "text-white" : "hover:text-zinc-300"
-          )}
-          onClick={() => handleToolClick('settings')}
-          title="Settings"
-        >
+        <button className={cn("w-10 h-10 flex items-center justify-center text-zinc-500 transition-colors", activeTool === 'settings' ? "text-white" : "hover:text-zinc-300")} onClick={() => handleToolClick('settings')} title="Settings">
           <Settings className="h-5 w-5" />
         </button>
       </div>
       
       <div className="flex flex-col items-center gap-4 pb-4">
-        <a
-          href={distributionItem.href}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="group relative flex h-10 w-10 items-center justify-center rounded-lg transition-colors hover:bg-zinc-800"
-        >
+        <a href={distributionItem.href} target="_blank" rel="noopener noreferrer" className="group relative flex h-10 w-10 items-center justify-center rounded-lg transition-colors hover:bg-zinc-800">
           <distributionItem.icon className="h-5 w-5 text-zinc-400 transition-colors group-hover:text-violet-400" />
           <ExternalLink className="absolute -right-0.5 -top-0.5 h-3 w-3 text-zinc-600" />
           <span className="pointer-events-none absolute left-full ml-3 whitespace-nowrap rounded bg-zinc-800 px-2 py-1 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
@@ -349,9 +267,7 @@ const StudioSidebar = ({ onAddBlock, projectId, onAssetSelect }: StudioSidebarPr
         <ProfileButton />
 
         <div className="flex justify-center">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-900">
-            <img src="/lovable-uploads/075616c6-e4fc-4662-a4b8-68b746782b65.png" alt="Logo" className="h-8 w-8" />
-          </div>
+          
         </div>
       </div>
       
@@ -364,40 +280,19 @@ const StudioSidebar = ({ onAddBlock, projectId, onAssetSelect }: StudioSidebarPr
             </DialogDescription>
           </DialogHeader>
 
-          {hasProject ? (
-            <div className="grid gap-6 lg:grid-cols-[320px,1fr]">
+          {hasProject ? <div className="grid gap-6 lg:grid-cols-[320px,1fr]">
               <div className="space-y-4">
-                <AssetUploader
-                  projectId={projectId}
-                  assetType="image"
-                  label="Media"
-                  visibility="project"
-                  assetCategory="upload"
-                  maxFiles={20}
-                  maxSize={500 * 1024 * 1024}
-                  acceptedFileTypes={ACCEPTED_STUDIO_FILE_TYPES}
-                  getAssetTypeForFile={detectAssetTypeFromFile}
-                />
+                <AssetUploader projectId={projectId} assetType="image" label="Media" visibility="project" assetCategory="upload" maxFiles={20} maxSize={500 * 1024 * 1024} acceptedFileTypes={ACCEPTED_STUDIO_FILE_TYPES} getAssetTypeForFile={detectAssetTypeFromFile} />
                 <p className="text-xs text-zinc-500">
                   Uploaded assets will instantly appear in the library on the right.
                 </p>
               </div>
-              <AssetLibrary
-                projectId={projectId}
-                selectable
-                onSelect={handleAssetsSelected}
-                className="max-h-[70vh] overflow-y-auto"
-              />
-            </div>
-          ) : (
-            <div className="py-10 text-center text-sm text-zinc-400">
+              <AssetLibrary projectId={projectId} selectable onSelect={handleAssetsSelected} className="max-h-[70vh] overflow-y-auto" />
+            </div> : <div className="py-10 text-center text-sm text-zinc-400">
               Select a project to start managing assets.
-            </div>
-          )}
+            </div>}
         </DialogContent>
       </Dialog>
-    </div>
-  );
+    </div>;
 };
-
 export default StudioSidebar;
