@@ -599,13 +599,14 @@ async function executeImageNode(
 
     // Extract image URL(s) from result
     let imageUrl: string | string[];
+    const resultData = result as any;
     
-    if (result.images && Array.isArray(result.images)) {
-      imageUrl = result.images.length === 1 
-        ? result.images[0].url 
-        : result.images.map((img: any) => img.url);
-    } else if (result.image) {
-      imageUrl = result.image.url;
+    if (resultData.images && Array.isArray(resultData.images)) {
+      imageUrl = resultData.images.length === 1 
+        ? resultData.images[0].url 
+        : resultData.images.map((img: any) => img.url);
+    } else if (resultData.image) {
+      imageUrl = resultData.image.url;
     } else {
       throw new Error('No image in FAL response');
     }
@@ -692,11 +693,12 @@ async function executeVideoNode(
 
     // Extract video URL from result
     let videoUrl: string;
+    const resultData = result as any;
     
-    if (result.video) {
-      videoUrl = result.video.url;
-    } else if (result.url) {
-      videoUrl = result.url;
+    if (resultData.video) {
+      videoUrl = resultData.video.url;
+    } else if (resultData.url) {
+      videoUrl = resultData.url;
     } else {
       throw new Error('No video in FAL response');
     }

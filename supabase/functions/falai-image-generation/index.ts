@@ -208,6 +208,7 @@ serve(async (req) => {
       return errorResponse(error.message, 401);
     }
     
-    return errorResponse(error.message || 'Failed to generate image', 500);
+    const message = error instanceof Error ? error.message : 'Failed to generate image';
+    return errorResponse(message, 500);
   }
 });

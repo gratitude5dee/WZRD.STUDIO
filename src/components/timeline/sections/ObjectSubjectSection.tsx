@@ -42,7 +42,8 @@ export function ObjectSubjectSection({
   useEffect(() => {
     const loadObjects = async () => {
       try {
-        const { data, error } = await supabase
+        // Cast to any since scene_objects table may not be in generated types
+        const { data, error } = await (supabase as any)
           .from('scene_objects')
           .select('*')
           .eq('scene_id', sceneId)
@@ -51,7 +52,7 @@ export function ObjectSubjectSection({
         if (error) throw error;
 
         setObjects(
-          data.map(obj => ({
+          (data || []).map((obj: any) => ({
             id: obj.id,
             name: obj.name,
             description: obj.description || '',
@@ -69,7 +70,8 @@ export function ObjectSubjectSection({
     // Load enabled state from scene
     const loadEnabledState = async () => {
       try {
-        const { data, error } = await supabase
+        // Cast to any since enabled_sections column may not be in generated types
+        const { data, error } = await (supabase as any)
           .from('scenes')
           .select('enabled_sections')
           .eq('id', sceneId)
@@ -96,7 +98,8 @@ export function ObjectSubjectSection({
 
     // Update database
     try {
-      const { data: scene } = await supabase
+      // Cast to any since enabled_sections column may not be in generated types
+      const { data: scene } = await (supabase as any)
         .from('scenes')
         .select('enabled_sections')
         .eq('id', sceneId)
@@ -104,7 +107,7 @@ export function ObjectSubjectSection({
 
       const enabledSections = scene?.enabled_sections || {};
 
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('scenes')
         .update({
           enabled_sections: {
@@ -123,7 +126,8 @@ export function ObjectSubjectSection({
 
   const addNewObject = async () => {
     try {
-      const { data, error } = await supabase
+      // Cast to any since scene_objects table may not be in generated types
+      const { data, error } = await (supabase as any)
         .from('scene_objects')
         .insert({
           scene_id: sceneId,
@@ -161,7 +165,8 @@ export function ObjectSubjectSection({
 
     // Save to database
     try {
-      const { error } = await supabase
+      // Cast to any since scene_objects table may not be in generated types
+      const { error } = await (supabase as any)
         .from('scene_objects')
         .update({
           name: updates.name,
@@ -182,7 +187,8 @@ export function ObjectSubjectSection({
 
   const deleteObject = async (objectId: string) => {
     try {
-      const { error } = await supabase
+      // Cast to any since scene_objects table may not be in generated types
+      const { error } = await (supabase as any)
         .from('scene_objects')
         .delete()
         .eq('id', objectId);

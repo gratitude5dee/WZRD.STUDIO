@@ -96,6 +96,7 @@ serve(async (req) => {
     }
     
     // Handle other errors
-    return errorResponse(error.message || 'Failed to process fal.ai request', 500);
+    const message = error instanceof Error ? error.message : 'Failed to process fal.ai request';
+    return errorResponse(message, 500);
   }
 });

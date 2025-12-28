@@ -51,7 +51,8 @@ serve(async (req) => {
       logs: true,
     });
 
-    const aiResponse = result?.output || result?.response || result?.answer;
+    const resultData = result as any;
+    const aiResponse = resultData?.output || resultData?.response || resultData?.answer;
 
     if (!aiResponse) {
       console.error('No content in FAL.AI response:', result);

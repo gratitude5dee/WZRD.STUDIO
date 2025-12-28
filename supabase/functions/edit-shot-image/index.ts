@@ -113,12 +113,14 @@ serve(async (req) => {
       }
     );
 
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Edit shot image error:', error);
+    const message = error instanceof Error ? error.message : 'Failed to edit image';
+    const details = error instanceof Error ? error.toString() : String(error);
     return new Response(
       JSON.stringify({
-        error: error.message || 'Failed to edit image',
-        details: error.toString()
+        error: message,
+        details: details
       }),
       {
         status: 500,

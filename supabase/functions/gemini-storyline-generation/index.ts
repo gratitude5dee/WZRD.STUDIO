@@ -60,9 +60,9 @@ serve(async (req) => {
         signal: controller.signal
       });
       clearTimeout(timeoutId);
-    } catch (fetchError) {
+    } catch (fetchError: unknown) {
       clearTimeout(timeoutId);
-      if (fetchError.name === 'AbortError') {
+      if (fetchError instanceof Error && fetchError.name === 'AbortError') {
         console.error('Request timeout (120s exceeded)');
         return errorResponse("Request timeout (120s exceeded)", 504);
       }
@@ -98,16 +98,17 @@ serve(async (req) => {
     let parsedContent;
     try {
       parsedContent = JSON.parse(content);
-    } catch (parseError) {
+    } catch (parseError: unknown) {
+      const parseMessage = parseError instanceof Error ? parseError.message : 'Unknown parse error';
       console.error("Failed to parse JSON response:", {
-        error: parseError.message,
+        error: parseMessage,
         contentPreview: content.substring(0, 500),
         contentLength: content.length,
         model
       });
       return errorResponse("Invalid JSON response from AI", 500, { 
         contentPreview: content.substring(0, 200),
-        error: parseError.message,
+        error: parseMessage,
         model
       });
     }

@@ -93,6 +93,7 @@ Deno.serve(async (req) => {
     }
     
     // Handle other errors
-    return errorResponse(error.message || 'Failed to create project', 500);
+    const message = error instanceof Error ? error.message : 'Failed to create project';
+    return errorResponse(message, 500);
   }
 });
