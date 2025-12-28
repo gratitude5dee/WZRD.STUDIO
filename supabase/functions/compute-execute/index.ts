@@ -416,7 +416,8 @@ serve(async (req) => {
 
   } catch (error: any) {
     console.error('[ComputeExecute] Fatal error:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    // Return generic error to client, log details server-side only
+    return new Response(JSON.stringify({ error: 'An error occurred during compute execution' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
