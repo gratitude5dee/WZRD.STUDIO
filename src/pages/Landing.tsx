@@ -11,13 +11,13 @@ import { StickyFooter } from '@/components/landing/StickyFooter';
 import { useAuth } from '@/providers/AuthProvider';
 import { Logo } from '@/components/ui/logo';
 import wzrdLogo from '@/assets/wzrd-logo.png';
-
 const Landing = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const {
+    user
+  } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-
   useEffect(() => {
     const root = window.document.documentElement;
     root.classList.remove("light", "system");
@@ -32,26 +32,16 @@ const Landing = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-
-
-  const faqItems = [
-    {
-      question: 'How does WZRD handle collaboration?',
-      answer:
-        'Invite collaborators with granular permissions, leave comments on nodes, and keep every timeline change synced in realtime.',
-    },
-    {
-      question: 'Can I bring my own assets or models?',
-      answer:
-        'Yes. Upload existing media, connect external sources, or plug in your preferred AI models directly in the studio.',
-    },
-    {
-      question: 'What formats can I export?',
-      answer:
-        'Export ready-to-publish video in multiple resolutions, codecs, and aspect ratios tailored to every platform.',
-    },
-  ];
-
+  const faqItems = [{
+    question: 'How does WZRD handle collaboration?',
+    answer: 'Invite collaborators with granular permissions, leave comments on nodes, and keep every timeline change synced in realtime.'
+  }, {
+    question: 'Can I bring my own assets or models?',
+    answer: 'Yes. Upload existing media, connect external sources, or plug in your preferred AI models directly in the studio.'
+  }, {
+    question: 'What formats can I export?',
+    answer: 'Export ready-to-publish video in multiple resolutions, codecs, and aspect ratios tailored to every platform.'
+  }];
   const handleMobileNavClick = (elementId: string) => {
     setIsMobileMenuOpen(false);
     setTimeout(() => {
@@ -60,308 +50,226 @@ const Landing = () => {
         const headerOffset = 120;
         const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
         const offsetPosition = elementPosition - headerOffset;
-
         window.scrollTo({
           top: offsetPosition,
-          behavior: "smooth",
+          behavior: "smooth"
         });
       }
     }, 100);
   };
-
   const handleLogout = async () => {
-    const { supabase } = await import('@/integrations/supabase/client');
+    const {
+      supabase
+    } = await import('@/integrations/supabase/client');
     await supabase.auth.signOut();
     navigate('/');
   };
-
-  return (
-    <div className="min-h-screen w-full relative bg-black">
+  return <div className="min-h-screen w-full relative bg-black">
       {/* Pearl Mist Background with Top Glow */}
-      <div
-        className="absolute inset-0 z-0"
-        style={{
-          background: "radial-gradient(ellipse 50% 35% at 50% 0%, rgba(226, 232, 240, 0.12), transparent 60%), #000000",
-        }}
-      />
+      <div className="absolute inset-0 z-0" style={{
+      background: "radial-gradient(ellipse 50% 35% at 50% 0%, rgba(226, 232, 240, 0.12), transparent 60%), #000000"
+    }} />
 
       {/* Desktop Header */}
-      <header
-        className={`sticky top-4 z-[9999] mx-auto hidden w-full self-start rounded-full bg-black/80 md:flex backdrop-blur-sm border border-white/10 shadow-lg transition-all duration-300 ${
-          isScrolled ? "max-w-4xl px-3" : "max-w-6xl px-6"
-        } py-2.5`}
-        style={{
-          willChange: "transform",
-          transform: "translateZ(0)",
-          backfaceVisibility: "hidden",
-        }}
-      >
+      <header className={`sticky top-4 z-[9999] mx-auto hidden w-full self-start rounded-full bg-black/80 md:flex backdrop-blur-sm border border-white/10 shadow-lg transition-all duration-300 ${isScrolled ? "max-w-4xl px-3" : "max-w-6xl px-6"} py-2.5`} style={{
+      willChange: "transform",
+      transform: "translateZ(0)",
+      backfaceVisibility: "hidden"
+    }}>
         <div className="flex items-center justify-between w-full gap-4">
           {/* Logo */}
-          <Link
-            to="/"
-            onClick={(e) => {
-              // If already on home page, scroll to top
-              if (window.location.pathname === '/') {
-                e.preventDefault();
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }
-            }}
-            className="flex items-center justify-center gap-2 flex-shrink-0 z-50 cursor-pointer"
-          >
+          <Link to="/" onClick={e => {
+          // If already on home page, scroll to top
+          if (window.location.pathname === '/') {
+            e.preventDefault();
+            window.scrollTo({
+              top: 0,
+              behavior: 'smooth'
+            });
+          }
+        }} className="flex items-center justify-center gap-2 flex-shrink-0 z-50 cursor-pointer">
             <img src={wzrdLogo} alt="WZRD.tech" className="h-12 sm:h-15 w-auto" />
           </Link>
 
           {/* Navigation Links */}
           <nav className="hidden lg:flex flex-1 flex-row items-center justify-center gap-1 text-sm font-medium text-white/60">
-            <a
-              className="relative px-3 py-2 text-white/60 hover:text-white transition-colors cursor-pointer whitespace-nowrap"
-              onClick={(e) => {
-                e.preventDefault();
-                const element = document.getElementById("features");
-                if (element) {
-                  const headerOffset = 120;
-                  const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
-                  const offsetPosition = elementPosition - headerOffset;
-                  window.scrollTo({
-                    top: offsetPosition,
-                    behavior: "smooth",
-                  });
-                }
-              }}
-            >
+            <a className="relative px-3 py-2 text-white/60 hover:text-white transition-colors cursor-pointer whitespace-nowrap" onClick={e => {
+            e.preventDefault();
+            const element = document.getElementById("features");
+            if (element) {
+              const headerOffset = 120;
+              const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
+              const offsetPosition = elementPosition - headerOffset;
+              window.scrollTo({
+                top: offsetPosition,
+                behavior: "smooth"
+              });
+            }
+          }}>
               Features
             </a>
-            <a
-              className="relative px-3 py-2 text-white/60 hover:text-white transition-colors cursor-pointer whitespace-nowrap"
-              onClick={(e) => {
-                e.preventDefault();
-                const element = document.getElementById("pricing");
-                if (element) {
-                  const headerOffset = 120;
-                  const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
-                  const offsetPosition = elementPosition - headerOffset;
-                  window.scrollTo({
-                    top: offsetPosition,
-                    behavior: "smooth",
-                  });
-                }
-              }}
-            >
+            <a className="relative px-3 py-2 text-white/60 hover:text-white transition-colors cursor-pointer whitespace-nowrap" onClick={e => {
+            e.preventDefault();
+            const element = document.getElementById("pricing");
+            if (element) {
+              const headerOffset = 120;
+              const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
+              const offsetPosition = elementPosition - headerOffset;
+              window.scrollTo({
+                top: offsetPosition,
+                behavior: "smooth"
+              });
+            }
+          }}>
               Pricing
             </a>
-            <a
-              className="relative px-3 py-2 text-white/60 hover:text-white transition-colors cursor-pointer whitespace-nowrap"
-              onClick={(e) => {
-                e.preventDefault();
-                const element = document.getElementById("testimonials");
-                if (element) {
-                  const headerOffset = 120;
-                  const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
-                  const offsetPosition = elementPosition - headerOffset;
-                  window.scrollTo({
-                    top: offsetPosition,
-                    behavior: "smooth",
-                  });
-                }
-              }}
-            >
+            <a className="relative px-3 py-2 text-white/60 hover:text-white transition-colors cursor-pointer whitespace-nowrap" onClick={e => {
+            e.preventDefault();
+            const element = document.getElementById("testimonials");
+            if (element) {
+              const headerOffset = 120;
+              const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
+              const offsetPosition = elementPosition - headerOffset;
+              window.scrollTo({
+                top: offsetPosition,
+                behavior: "smooth"
+              });
+            }
+          }}>
               Testimonials
             </a>
-            <a
-              className="relative px-3 py-2 text-white/60 hover:text-white transition-colors cursor-pointer whitespace-nowrap"
-              onClick={(e) => {
-                e.preventDefault();
-                const element = document.getElementById("faq");
-                if (element) {
-                  const headerOffset = 120;
-                  const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
-                  const offsetPosition = elementPosition - headerOffset;
-                  window.scrollTo({
-                    top: offsetPosition,
-                    behavior: "smooth",
-                  });
-                }
-              }}
-            >
+            <a className="relative px-3 py-2 text-white/60 hover:text-white transition-colors cursor-pointer whitespace-nowrap" onClick={e => {
+            e.preventDefault();
+            const element = document.getElementById("faq");
+            if (element) {
+              const headerOffset = 120;
+              const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
+              const offsetPosition = elementPosition - headerOffset;
+              window.scrollTo({
+                top: offsetPosition,
+                behavior: "smooth"
+              });
+            }
+          }}>
               FAQ
             </a>
           </nav>
 
           {/* Action Buttons */}
           <div className="flex items-center gap-3 flex-shrink-0">
-            <Link
-              to="/demo"
-              className="rounded-md font-medium relative cursor-pointer hover:-translate-y-0.5 transition duration-200 inline-block text-center bg-gradient-to-b from-[#8b5cf6] to-[#8b5cf6]/80 text-white shadow-[0px_2px_0px_0px_rgba(255,255,255,0.3)_inset] px-3 py-1.5 text-xs sm:text-sm whitespace-nowrap"
-            >
+            <Link to="/demo" className="rounded-md font-medium relative cursor-pointer hover:-translate-y-0.5 transition duration-200 inline-block text-center bg-gradient-to-b from-[#8b5cf6] to-[#8b5cf6]/80 text-white shadow-[0px_2px_0px_0px_rgba(255,255,255,0.3)_inset] px-3 py-1.5 text-xs sm:text-sm whitespace-nowrap">
               Demo
             </Link>
-            {user ? (
-              <>
-                <Link
-                  to="/home"
-                  className="font-medium transition-colors hover:text-white text-white/60 text-xs sm:text-sm cursor-pointer whitespace-nowrap"
-                >
+            {user ? <>
+                <Link to="/home" className="font-medium transition-colors hover:text-white text-white/60 text-xs sm:text-sm cursor-pointer whitespace-nowrap">
                   Dashboard
                 </Link>
-                <button
-                  onClick={handleLogout}
-                  className="rounded-md font-bold relative cursor-pointer hover:-translate-y-0.5 transition duration-200 inline-block text-center bg-gradient-to-b from-[#8b5cf6] to-[#8b5cf6]/80 text-white shadow-[0px_2px_0px_0px_rgba(255,255,255,0.3)_inset] px-3 py-1.5 text-xs sm:text-sm whitespace-nowrap"
-                >
+                <button onClick={handleLogout} className="rounded-md font-bold relative cursor-pointer hover:-translate-y-0.5 transition duration-200 inline-block text-center bg-gradient-to-b from-[#8b5cf6] to-[#8b5cf6]/80 text-white shadow-[0px_2px_0px_0px_rgba(255,255,255,0.3)_inset] px-3 py-1.5 text-xs sm:text-sm whitespace-nowrap">
                   Log Out
                 </button>
-              </>
-            ) : (
-              <>
-                <Link
-                  to="/login"
-                  className="font-medium transition-colors hover:text-white text-white/60 text-xs sm:text-sm cursor-pointer whitespace-nowrap"
-                >
+              </> : <>
+                <Link to="/login" className="font-medium transition-colors hover:text-white text-white/60 text-xs sm:text-sm cursor-pointer whitespace-nowrap">
                   Log In
                 </Link>
-                <Link
-                  to="/login?mode=signup"
-                  className="rounded-md font-bold relative cursor-pointer hover:-translate-y-0.5 transition duration-200 inline-block text-center bg-gradient-to-b from-[#8b5cf6] to-[#8b5cf6]/80 text-white shadow-[0px_2px_0px_0px_rgba(255,255,255,0.3)_inset] px-3 py-1.5 text-xs sm:text-sm whitespace-nowrap"
-                >
+                <Link to="/login?mode=signup" className="rounded-md font-bold relative cursor-pointer hover:-translate-y-0.5 transition duration-200 inline-block text-center bg-gradient-to-b from-[#8b5cf6] to-[#8b5cf6]/80 text-white shadow-[0px_2px_0px_0px_rgba(255,255,255,0.3)_inset] px-3 py-1.5 text-xs sm:text-sm whitespace-nowrap">
                   Sign Up
                 </Link>
-              </>
-            )}
+              </>}
           </div>
         </div>
       </header>
 
       {/* Mobile Header */}
       <header className="sticky top-4 z-[9999] mx-4 flex w-auto flex-row items-center justify-between rounded-full bg-black/80 backdrop-blur-sm border border-white/10 shadow-lg md:hidden px-4 py-3">
-        <Link
-          to="/"
-          onClick={(e) => {
-            // If already on home page, scroll to top
-            if (window.location.pathname === '/') {
-              e.preventDefault();
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }
-          }}
-          className="flex items-center justify-center gap-2 cursor-pointer"
-        >
+        <Link to="/" onClick={e => {
+        // If already on home page, scroll to top
+        if (window.location.pathname === '/') {
+          e.preventDefault();
+          window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+          });
+        }
+      }} className="flex items-center justify-center gap-2 cursor-pointer">
           <img src={wzrdLogo} alt="WZRD.tech" className="h-7 w-auto" />
         </Link>
 
-        <button
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className="flex items-center justify-center w-10 h-10 rounded-full bg-black/50 border border-white/10 transition-colors hover:bg-black/80"
-          aria-label="Toggle menu"
-        >
+        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="flex items-center justify-center w-10 h-10 rounded-full bg-black/50 border border-white/10 transition-colors hover:bg-black/80" aria-label="Toggle menu">
           <div className="flex flex-col items-center justify-center w-5 h-5 space-y-1">
-            <span
-              className={`block w-4 h-0.5 bg-white transition-all duration-300 ${isMobileMenuOpen ? "rotate-45 translate-y-1.5" : ""}`}
-            ></span>
-            <span
-              className={`block w-4 h-0.5 bg-white transition-all duration-300 ${isMobileMenuOpen ? "opacity-0" : ""}`}
-            ></span>
-            <span
-              className={`block w-4 h-0.5 bg-white transition-all duration-300 ${isMobileMenuOpen ? "-rotate-45 -translate-y-1.5" : ""}`}
-            ></span>
+            <span className={`block w-4 h-0.5 bg-white transition-all duration-300 ${isMobileMenuOpen ? "rotate-45 translate-y-1.5" : ""}`}></span>
+            <span className={`block w-4 h-0.5 bg-white transition-all duration-300 ${isMobileMenuOpen ? "opacity-0" : ""}`}></span>
+            <span className={`block w-4 h-0.5 bg-white transition-all duration-300 ${isMobileMenuOpen ? "-rotate-45 -translate-y-1.5" : ""}`}></span>
           </div>
         </button>
       </header>
 
       {/* Mobile Menu Overlay */}
-      {isMobileMenuOpen && (
-        <div className="fixed inset-0 z-[9998] bg-black/50 backdrop-blur-sm md:hidden">
+      {isMobileMenuOpen && <div className="fixed inset-0 z-[9998] bg-black/50 backdrop-blur-sm md:hidden">
           <div className="absolute top-20 left-4 right-4 bg-black/95 backdrop-blur-md border border-white/10 rounded-2xl shadow-2xl p-6">
             <nav className="flex flex-col space-y-4">
-              <button
-                onClick={() => handleMobileNavClick("features")}
-                className="text-left px-4 py-3 text-lg font-medium text-white/60 hover:text-white transition-colors rounded-lg hover:bg-white/10"
-              >
+              <button onClick={() => handleMobileNavClick("features")} className="text-left px-4 py-3 text-lg font-medium text-white/60 hover:text-white transition-colors rounded-lg hover:bg-white/10">
                 Features
               </button>
-              <button
-                onClick={() => handleMobileNavClick("pricing")}
-                className="text-left px-4 py-3 text-lg font-medium text-white/60 hover:text-white transition-colors rounded-lg hover:bg-white/10"
-              >
+              <button onClick={() => handleMobileNavClick("pricing")} className="text-left px-4 py-3 text-lg font-medium text-white/60 hover:text-white transition-colors rounded-lg hover:bg-white/10">
                 Pricing
               </button>
-              <button
-                onClick={() => handleMobileNavClick("testimonials")}
-                className="text-left px-4 py-3 text-lg font-medium text-white/60 hover:text-white transition-colors rounded-lg hover:bg-white/10"
-              >
+              <button onClick={() => handleMobileNavClick("testimonials")} className="text-left px-4 py-3 text-lg font-medium text-white/60 hover:text-white transition-colors rounded-lg hover:bg-white/10">
                 Testimonials
               </button>
-              <button
-                onClick={() => handleMobileNavClick("faq")}
-                className="text-left px-4 py-3 text-lg font-medium text-white/60 hover:text-white transition-colors rounded-lg hover:bg-white/10"
-              >
+              <button onClick={() => handleMobileNavClick("faq")} className="text-left px-4 py-3 text-lg font-medium text-white/60 hover:text-white transition-colors rounded-lg hover:bg-white/10">
                 FAQ
               </button>
               <div className="border-t border-white/10 pt-4 mt-4 flex flex-col space-y-3">
-                <Link
-                  to="/demo"
-                  className="px-4 py-3 text-lg font-bold text-center bg-gradient-to-b from-[#8b5cf6] to-[#8b5cf6]/80 text-white rounded-lg shadow-lg hover:-translate-y-0.5 transition-all duration-200"
-                >
+                <Link to="/demo" className="px-4 py-3 text-lg font-bold text-center bg-gradient-to-b from-[#8b5cf6] to-[#8b5cf6]/80 text-white rounded-lg shadow-lg hover:-translate-y-0.5 transition-all duration-200">
                   Demo
                 </Link>
-                {user ? (
-                  <>
-                    <Link
-                      to="/home"
-                      className="px-4 py-3 text-lg font-medium text-white/60 hover:text-white transition-colors rounded-lg hover:bg-white/10 cursor-pointer"
-                    >
+                {user ? <>
+                    <Link to="/home" className="px-4 py-3 text-lg font-medium text-white/60 hover:text-white transition-colors rounded-lg hover:bg-white/10 cursor-pointer">
                       Dashboard
                     </Link>
-                    <button
-                      onClick={handleLogout}
-                      className="px-4 py-3 text-lg font-bold text-center bg-gradient-to-b from-[#8b5cf6] to-[#8b5cf6]/80 text-white rounded-lg shadow-lg hover:-translate-y-0.5 transition-all duration-200"
-                    >
+                    <button onClick={handleLogout} className="px-4 py-3 text-lg font-bold text-center bg-gradient-to-b from-[#8b5cf6] to-[#8b5cf6]/80 text-white rounded-lg shadow-lg hover:-translate-y-0.5 transition-all duration-200">
                       Log Out
                     </button>
-                  </>
-                ) : (
-                  <>
-                    <Link
-                      to="/login"
-                      className="px-4 py-3 text-lg font-medium text-white/60 hover:text-white transition-colors rounded-lg hover:bg-white/10 cursor-pointer"
-                    >
+                  </> : <>
+                    <Link to="/login" className="px-4 py-3 text-lg font-medium text-white/60 hover:text-white transition-colors rounded-lg hover:bg-white/10 cursor-pointer">
                       Log In
                     </Link>
-                    <Link
-                      to="/login?mode=signup"
-                      className="px-4 py-3 text-lg font-bold text-center bg-gradient-to-b from-[#8b5cf6] to-[#8b5cf6]/80 text-white rounded-lg shadow-lg hover:-translate-y-0.5 transition-all duration-200"
-                    >
+                    <Link to="/login?mode=signup" className="px-4 py-3 text-lg font-bold text-center bg-gradient-to-b from-[#8b5cf6] to-[#8b5cf6]/80 text-white rounded-lg shadow-lg hover:-translate-y-0.5 transition-all duration-200">
                       Sign Up
                     </Link>
-                  </>
-                )}
+                  </>}
               </div>
             </nav>
           </div>
-        </div>
-      )}
+        </div>}
 
       {/* Hero Content from Wizard Web App - Always visible */}
-      <HeroSection
-        headline="Your AI production studio, orchestrated end-to-end"
-        subheadline="Plan, generate, and polish every frame with realtime collaboration, AI tooling, and cinematic presets."
-        ctaPrimary={{ text: 'Start Creating', href: '/login?mode=signup' }}
-        ctaSecondary={{ text: 'Watch the Demo', href: '/demo' }}
-        demoVideoUrl="/wzrdstudiointro1.mp4"
-      />
+      <HeroSection headline="Your AI production studio, orchestrated end-to-end" subheadline="Plan, generate, and polish every frame with realtime collaboration, AI tooling, and cinematic presets." ctaPrimary={{
+      text: 'Start Creating',
+      href: '/login?mode=signup'
+    }} ctaSecondary={{
+      text: 'Watch the Demo',
+      href: '/demo'
+    }} demoVideoUrl="/wzrdstudiointro1.mp4" />
 
       {/* Trust Indicators Section */}
       <section className="py-16 px-4 border-y border-white/5 bg-black/40 backdrop-blur-sm">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-            className="container mx-auto max-w-6xl"
-          >
+        <motion.div initial={{
+        opacity: 0,
+        y: 20
+      }} whileInView={{
+        opacity: 1,
+        y: 0
+      }} viewport={{
+        once: true
+      }} transition={{
+        duration: 0.5
+      }} className="container mx-auto max-w-6xl">
             <p className="text-center text-white/40 text-sm mb-8 uppercase tracking-wider">
               Powered by Industry Leaders
             </p>
             <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-12 opacity-50 hover:opacity-70 transition-opacity">
-              <div className="text-white/60 font-bold text-xl">FAL.AI</div>
+              <div className="text-white/60 font-bold text-xl">Runway          </div>
               <div className="text-white/60 font-bold text-xl">Supabase</div>
               <div className="text-white/60 font-bold text-xl">Vercel</div>
               <div className="text-white/60 font-bold text-xl">React</div>
@@ -422,8 +330,6 @@ const Landing = () => {
       <div>
         <StickyFooter />
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default Landing;
