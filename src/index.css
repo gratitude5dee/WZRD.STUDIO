@@ -477,8 +477,38 @@ body::after {
 
 /* Purple scene badge glow */
 .scene-badge-glow-purple {
-  box-shadow: 
+  box-shadow:
     0 0 20px rgba(139, 92, 246, 0.3),
     0 0 40px rgba(139, 92, 246, 0.15),
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* Timeline title glow animation */
+.animate-glow {
+  animation: title-glow 2.5s ease-in-out infinite;
+}
+
+@keyframes title-glow {
+  0%, 100% {
+    text-shadow:
+      0 0 4px rgba(0, 217, 255, 0.4),
+      0 0 8px rgba(0, 217, 255, 0.3),
+      0 0 12px rgba(0, 217, 255, 0.2);
+  }
+  50% {
+    text-shadow:
+      0 0 8px rgba(0, 217, 255, 0.6),
+      0 0 16px rgba(0, 217, 255, 0.5),
+      0 0 24px rgba(0, 217, 255, 0.3),
+      0 0 32px rgba(0, 217, 255, 0.2);
+  }
+}
+
+/* Sidebar section glow on hover */
+.sidebar-content-glow {
+  transition: all 0.2s ease;
+}
+
+.sidebar-content-glow:hover {
+  background: rgba(139, 92, 246, 0.02);
 }
