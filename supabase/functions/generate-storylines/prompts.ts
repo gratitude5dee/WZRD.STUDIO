@@ -64,6 +64,44 @@ ${isAlternative ? 'Generate a DIFFERENT creative take on the same concept - expl
 }
 
 export function getStorylineUserPrompt(project: any, isAlternative: boolean, existingStorylines: any[] = []): string {
+  const adBrief = project.ad_brief_data || {};
+  const musicVideo = project.music_video_data || {};
+  const infotainment = project.infotainment_data || {};
+
+  const formatGuidance = (() => {
+    switch (project.format) {
+      case 'commercial':
+        return `
+FORMAT GUIDANCE (Commercial):
+- Craft a concise, persuasive narrative suitable for advertising.
+- Emphasize the product benefits, target audience, and call to action.
+- Keep scenes tight and aligned with the ad duration.
+- Ad Brief: Product="${adBrief.product || project.product_name || ''}", Audience="${adBrief.targetAudience || project.target_audience || ''}", Key Message="${adBrief.mainMessage || project.main_message || ''}", CTA="${adBrief.callToAction || project.call_to_action || ''}", Duration="${adBrief.adDuration || ''}", Platform="${adBrief.platform || ''}".
+${adBrief.brandGuidelines ? `- Brand Guidelines: ${adBrief.brandGuidelines}` : ''}`;
+      case 'music_video':
+        return `
+FORMAT GUIDANCE (Music Video):
+- Align visuals tightly to the track and performance/narrative balance.
+- Use imagery that mirrors the song's energy, genre, and lyrical themes.
+- Music Video Data: Artist="${musicVideo.artistName || ''}", Track="${musicVideo.trackTitle || ''}", Genre="${musicVideo.genre || ''}", PerformanceRatio="${musicVideo.performanceRatio ?? ''}%".
+${musicVideo.lyrics ? `- Lyrics Excerpt: ${musicVideo.lyrics.substring(0, 600)}` : ''}`;
+      case 'infotainment':
+        return `
+FORMAT GUIDANCE (Infotainment):
+- Combine educational clarity with engaging storytelling.
+- Structure scenes as segments with a clear learning progression.
+- Infotainment Data: Topic="${infotainment.topic || ''}", Goals="${(infotainment.educationalGoals || []).join(', ')}", Demographic="${infotainment.targetDemographic || ''}", HostStyle="${infotainment.hostStyle || ''}".`;
+      case 'short_film':
+        return `
+FORMAT GUIDANCE (Short Film):
+- Focus on a tight narrative arc with cinematic pacing.
+- Prioritize character-driven storytelling and visual symbolism.`;
+      case 'custom':
+      default:
+        return '';
+    }
+  })();
+
   const projectContext = `
 PROJECT DETAILS:
 ==============
@@ -85,6 +123,7 @@ ${project.main_message ? `
 Key Message: ${project.main_message}` : ''}
 ${project.call_to_action ? `
 Call to Action: ${project.call_to_action}` : ''}
+${formatGuidance}
 `;
 
   if (isAlternative) {

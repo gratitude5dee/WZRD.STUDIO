@@ -65,6 +65,7 @@ async function processSingleShot(
   shot: any,
   scene: any,
   projectData: any,
+  styleReferenceUrl: string | null,
   supabaseClient: any
 ) {
   try {
@@ -133,7 +134,7 @@ async function processSingleShot(
     
     // Trigger image generation asynchronously (no await - fire and forget)
     supabaseClient.functions.invoke('generate-shot-image', {
-      body: { shot_id: shot.id }
+      body: { shot_id: shot.id, style_reference_url: styleReferenceUrl }
     }).catch((invokeError: any) => {
       console.error(`[Shot ${shot.id}] Error invoking generate-shot-image:`, invokeError);
     });
@@ -157,6 +158,7 @@ async function processSingleScene(
   scene: any,
   projectData: any,
   project_id: string,
+  styleReferenceUrl: string | null,
   supabaseClient: any
 ) {
   try {
@@ -262,7 +264,7 @@ async function processSingleScene(
       console.log(`[Scene ${scene.scene_number}] Processing all ${insertedShots.length} shots in parallel...`);
       
       await Promise.all(
-        insertedShots.map(shot => processSingleShot(shot, scene, projectData, supabaseClient))
+        insertedShots.map(shot => processSingleShot(shot, scene, projectData, styleReferenceUrl, supabaseClient))
       );
       
       console.log(`[Scene ${scene.scene_number}] Finished processing all shots.`);
@@ -274,6 +276,29 @@ async function processSingleScene(
     console.error(`[Scene ${scene.scene_number}] Error processing scene: ${sceneError.message}`);
     return 0;
   }
+}
+
+async function getStyleReferenceUrl(
+  supabaseClient: any,
+  styleReferenceAssetId: string | null
+): Promise<string | null> {
+  if (!styleReferenceAssetId) return null;
+
+  const { data: mediaItem, error: mediaError } = await supabaseClient
+    .from('media_items')
+    .select('url, storage_bucket, storage_path')
+    .eq('id', styleReferenceAssetId)
+    .single();
+
+  if (mediaError || !mediaItem) return null;
+
+  if (mediaItem.url) return mediaItem.url;
+
+  if (mediaItem.storage_bucket && mediaItem.storage_path) {
+    return `${Deno.env.get('SUPABASE_URL')}/storage/v1/object/public/${mediaItem.storage_bucket}/${mediaItem.storage_path}`;
+  }
+
+  return null;
 }
 
 // Main processing function that runs in background
@@ -288,7 +313,7 @@ async function processProjectSetup(
     // Fetch project and scenes
     const { data: projectData, error: projectErr } = await supabaseClient
       .from('projects')
-      .select('id, title, description, genre, tone, video_style, cinematic_inspiration, aspect_ratio')
+      .select('id, title, description, genre, tone, video_style, cinematic_inspiration, aspect_ratio, style_reference_asset_id')
       .eq('id', project_id)
       .eq('user_id', user_id)
       .single();
@@ -297,6 +322,11 @@ async function processProjectSetup(
       console.error(`[Background Processing ${project_id}] Project not found:`, projectErr?.message);
       return;
     }
+
+    const styleReferenceUrl = await getStyleReferenceUrl(
+      supabaseClient,
+      projectData.style_reference_asset_id || null
+    );
 
     const { data: scenesData, error: scenesErr } = await supabaseClient
       .from('scenes')
@@ -322,10 +352,11 @@ async function processProjectSetup(
       // Process all scenes in this batch simultaneously
       const results = await Promise.all(
         batch.map(scene => processSingleScene(
-          scene,
-          projectData,
-          project_id,
-          supabaseClient
+            scene,
+            projectData,
+            project_id,
+            styleReferenceUrl,
+            supabaseClient
         ))
       );
       
