@@ -83,8 +83,9 @@ serve(async (req) => {
       usage: data.usage
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in groq-chat function:', error);
-    return errorResponse(error.message || 'Internal server error', 500);
+    // Return generic error to client, log details server-side only
+    return errorResponse('An error occurred during text generation', 500);
   }
 });

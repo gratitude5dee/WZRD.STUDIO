@@ -28,9 +28,23 @@ const AuthContext = createContext<AuthContextType>({
   walletAuthError: null,
 });
 
-const bypassAuthForTests =
-  (typeof import.meta !== 'undefined' && import.meta.env?.VITE_BYPASS_AUTH_FOR_TESTS === 'true') ||
-  (typeof process !== 'undefined' && process.env?.VITE_BYPASS_AUTH_FOR_TESTS === 'true');
+// SECURITY: Auth bypass is ONLY allowed in development/test environments
+// This flag should NEVER be enabled in production - it completely bypasses authentication
+const isProductionDomain = typeof window !== 'undefined' && 
+  (window.location.hostname.includes('lovable.app') || 
+   window.location.hostname.includes('lovableproject.com') ||
+   !window.location.hostname.includes('localhost'));
+
+const bypassAuthForTests = 
+  !isProductionDomain && // CRITICAL: Never bypass in production
+  ((typeof import.meta !== 'undefined' && import.meta.env?.VITE_BYPASS_AUTH_FOR_TESTS === 'true') ||
+   (typeof process !== 'undefined' && process.env?.VITE_BYPASS_AUTH_FOR_TESTS === 'true'));
+
+// Runtime safety check - throw error if bypass somehow enabled in production
+if (bypassAuthForTests && isProductionDomain) {
+  console.error('SECURITY ERROR: Auth bypass attempted in production environment');
+  throw new Error('Authentication bypass is not allowed in production');
+}
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);

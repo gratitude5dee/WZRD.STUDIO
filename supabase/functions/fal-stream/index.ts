@@ -61,9 +61,10 @@ serve(async (req) => {
           controller.enqueue(encoder.encode(finalData));
           
           controller.close();
-        } catch (error) {
+        } catch (error: any) {
           console.error('❌ Streaming error:', error);
-          const errorData = `data: ${JSON.stringify({ type: 'error', error: error.message })}\n\n`;
+          // Return generic error to client, log details server-side only
+          const errorData = `data: ${JSON.stringify({ type: 'error', error: 'Media generation failed. Please try again.' })}\n\n`;
           controller.enqueue(encoder.encode(errorData));
           controller.close();
         }
@@ -78,10 +79,11 @@ serve(async (req) => {
         'Connection': 'keep-alive'
       }
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in fal-stream:', error);
+    // Return generic error to client, log details server-side only
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: 'An error occurred during media streaming' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
