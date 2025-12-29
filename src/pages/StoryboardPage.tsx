@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Plus, Loader2, AlertCircle } from 'lucide-react';
+import { Plus, Loader2, AlertCircle, Image, Film, Sparkles } from 'lucide-react';
 import { ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 import { motion, AnimatePresence } from 'framer-motion';
 import AppHeader from '@/components/AppHeader';
@@ -14,6 +14,8 @@ import { toast } from 'sonner';
 import { useAppStore } from '@/store/appStore';
 import { ProjectDetails, SceneDetails, CharacterDetails, SidebarData } from '@/types/storyboardTypes';
 import { cn } from '@/lib/utils';
+import { useProjectAutoGenerate } from '@/hooks/useProjectAutoGenerate';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 const StoryboardPage = () => {
   const { projectId } = useParams<{ projectId?: string }>();
@@ -26,6 +28,15 @@ const StoryboardPage = () => {
   const [selectedScene, setSelectedScene] = useState<SceneDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [sidebarData, setSidebarData] = useState<SidebarData | null>(null);
+
+  // Project-level auto-generate for all shots across all scenes
+  const {
+    state: projectAutoGenState,
+    startAutoGenerate: startProjectAutoGenerate,
+    nextPhase: projectNextPhase,
+    isProcessing: isProjectAutoGenerating,
+    fetchAllProjectShots
+  } = useProjectAutoGenerate(projectId || '');
   
   // Validate that we have a projectId
   useEffect(() => {
@@ -127,6 +138,13 @@ const StoryboardPage = () => {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // Fetch all project shots for the auto-generate hook when scenes are loaded
+  useEffect(() => {
+    if (scenes.length > 0 && projectId) {
+      fetchAllProjectShots();
+    }
+  }, [scenes.length, projectId, fetchAllProjectShots]);
 
   // Set up realtime subscriptions to scenes and shots
   useEffect(() => {
@@ -322,10 +340,62 @@ const StoryboardPage = () => {
         {/* Main content area */}
         <ResizablePanel defaultSize={80}>
           <div className="p-6 h-full overflow-y-auto relative">
-            {/* Project Title with Glowing Effect */}
+            {/* Project Title with Glowing Effect + Global Auto-Generate */}
             {projectDetails && (
-              <div className="mb-6">
+              <div className="mb-6 flex items-center justify-between">
                 <GlowingTitle title={projectDetails.title} />
+                
+                {/* Global Auto-Generate Button for ALL scenes */}
+                {scenes.length > 0 && (
+                  <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          onClick={startProjectAutoGenerate}
+                          disabled={isProjectAutoGenerating}
+                          className={cn(
+                            'relative overflow-hidden backdrop-blur-sm px-6 py-2',
+                            projectNextPhase === 'images'
+                              ? 'bg-gradient-to-br from-emerald-500/90 to-teal-500/90 border border-emerald-400/50'
+                              : 'bg-gradient-to-br from-purple-500/90 to-pink-500/90 border border-purple-400/50',
+                            'shadow-[0_4px_24px_rgba(16,185,129,0.4),inset_0_1px_0_rgba(255,255,255,0.15)]',
+                            'hover:shadow-[0_8px_32px_rgba(16,185,129,0.5),inset_0_1px_0_rgba(255,255,255,0.2)]',
+                            'transition-all duration-300'
+                          )}
+                        >
+                          <div className="absolute inset-0 bg-gradient-to-t from-transparent to-white/10" />
+                          {isProjectAutoGenerating ? (
+                            <>
+                              <Loader2 className="relative z-10 h-4 w-4 animate-spin" />
+                              <span className="relative z-10 ml-2">
+                                {projectAutoGenState.phase === 'images' ? 'Images' : 'Videos'}{' '}
+                                {projectAutoGenState.progress.completed}/{projectAutoGenState.progress.total}
+                                {projectAutoGenState.progress.active > 0 && ` (${projectAutoGenState.progress.active} active)`}
+                              </span>
+                            </>
+                          ) : projectNextPhase === 'images' ? (
+                            <>
+                              <Sparkles className="relative z-10 h-4 w-4" />
+                              <span className="relative z-10 ml-2">Generate All Images</span>
+                            </>
+                          ) : (
+                            <>
+                              <Film className="relative z-10 h-4 w-4" />
+                              <span className="relative z-10 ml-2">Generate All Videos</span>
+                            </>
+                          )}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent className="glass-panel border-zinc-700 max-w-xs">
+                        <p className="text-xs">
+                          {projectNextPhase === 'images'
+                            ? 'Generate images for ALL shots across ALL scenes in parallel'
+                            : 'Generate videos from ALL images across ALL scenes in parallel'}
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </motion.div>
+                )}
               </div>
             )}
             {scenes.length === 0 ? (
