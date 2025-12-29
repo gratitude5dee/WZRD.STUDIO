@@ -59,7 +59,7 @@ export function useAutoGenerate(sceneId: string) {
   // Determine current phase based on shot states
   const determinePhase = useCallback((shotsData: ShotData[]): 'images' | 'videos' => {
     const allHaveImages = shotsData.every(shot =>
-      shot.image_status === 'ready' && shot.image_url
+      shot.image_status === 'completed' && shot.image_url
     );
     return allHaveImages ? 'videos' : 'images';
   }, []);
@@ -67,14 +67,16 @@ export function useAutoGenerate(sceneId: string) {
   // Get shots that need processing
   const getShotsToProcess = useCallback((phase: 'images' | 'videos', shotsData: ShotData[]): ShotData[] => {
     if (phase === 'images') {
+      // Shots that need image generation: not completed, or missing URL
       return shotsData.filter(shot =>
-        shot.image_status !== 'ready' || !shot.image_url
+        shot.image_status !== 'completed' || !shot.image_url
       );
     } else {
+      // Shots that have images and need videos: completed images, but video not completed
       return shotsData.filter(shot =>
-        shot.image_status === 'ready' &&
+        shot.image_status === 'completed' &&
         shot.image_url &&
-        shot.video_status !== 'ready'
+        shot.video_status !== 'completed'
       );
     }
   }, []);

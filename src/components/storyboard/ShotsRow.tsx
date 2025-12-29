@@ -4,7 +4,7 @@ import { SortableContext, arrayMove, horizontalListSortingStrategy } from '@dnd-
 import { AnimatePresence, motion } from 'framer-motion';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import { Plus, Trash2, AlertCircle, Sparkles, Loader2, CircleStop } from 'lucide-react';
+import { Plus, Trash2, AlertCircle, Sparkles, Loader2, CircleStop, Image, Film } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { ShotCard } from './shot';
 import ShotConnectionLines from './shot/ShotConnectionLines';
@@ -15,6 +15,8 @@ import { ShotDetails } from '@/types/storyboardTypes';
 import { cn } from '@/lib/utils';
 import { useShotStream, ShotStreamStatus } from '@/hooks/useShotStream';
 import ShotStreamProgress from './shot/ShotStreamProgress';
+import { useAutoGenerate } from '@/hooks/useAutoGenerate';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ShotConnection {
   id: string;
@@ -84,6 +86,14 @@ const ShotsRow = ({ sceneId, sceneNumber, projectId, onSceneDelete, isSelected =
   const containerRef = useRef<HTMLDivElement>(null);
   const autoStartRef = useRef(false);
   const lastMetaRequestRef = useRef<string | null>(null);
+
+  // Auto-generate hook for two-phase image/video generation
+  const { 
+    state: autoGenState, 
+    startAutoGenerate, 
+    nextPhase, 
+    isProcessing: isAutoGenerating 
+  } = useAutoGenerate(sceneId);
 
   const streamingEnabled = (import.meta.env.VITE_ENABLE_SHOT_STREAM ?? 'true') !== 'false';
   const streamTelemetryEnabled = (import.meta.env.VITE_ENABLE_STREAM_TELEMETRY ?? 'true') !== 'false';
@@ -384,6 +394,34 @@ const ShotsRow = ({ sceneId, sceneNumber, projectId, onSceneDelete, isSelected =
     return () => clearTimeout(timer);
   }, [shots]);
 
+  // Real-time subscription for shot updates (image/video status changes)
+  useEffect(() => {
+    const channel = supabase
+      .channel(`shots-realtime-${sceneId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'shots',
+          filter: `scene_id=eq.${sceneId}`
+        },
+        (payload) => {
+          const updatedShot = payload.new as ShotDetails;
+          startTransition(() => {
+            setShots(prev => prev.map(shot =>
+              shot.id === updatedShot.id ? { ...shot, ...updatedShot } : shot
+            ));
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [sceneId]);
+
   return (
     <motion.div
       layout
@@ -508,6 +546,57 @@ const ShotsRow = ({ sceneId, sceneNumber, projectId, onSceneDelete, isSelected =
                   <CircleStop className="relative z-10 h-4 w-4" />
                   <span className="relative z-10 ml-2">Cancel</span>
                 </Button>
+              </motion.div>
+            )}
+
+            {/* Two-phase Auto-generate button for Images/Videos */}
+            {hasShots && !isStreaming && (
+              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      onClick={startAutoGenerate}
+                      size="sm"
+                      disabled={isAutoGenerating}
+                      className={cn(
+                        'relative overflow-hidden backdrop-blur-sm',
+                        nextPhase === 'images' 
+                          ? 'bg-gradient-to-br from-emerald-500/80 to-teal-500/80 border border-emerald-400/40'
+                          : 'bg-gradient-to-br from-purple-500/80 to-pink-500/80 border border-purple-400/40',
+                        'shadow-[0_4px_20px_rgba(16,185,129,0.35),inset_0_1px_0_rgba(255,255,255,0.1)]',
+                        'hover:shadow-[0_8px_28px_rgba(16,185,129,0.45),inset_0_1px_0_rgba(255,255,255,0.15)]',
+                        'transition-all duration-300'
+                      )}
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-t from-transparent to-white/10" />
+                      {isAutoGenerating ? (
+                        <>
+                          <Loader2 className="relative z-10 h-4 w-4 animate-spin" />
+                          <span className="relative z-10 ml-2">
+                            {autoGenState.phase === 'images' ? 'Images' : 'Videos'} {autoGenState.progress.completed}/{autoGenState.progress.total}
+                          </span>
+                        </>
+                      ) : nextPhase === 'images' ? (
+                        <>
+                          <Image className="relative z-10 h-4 w-4" />
+                          <span className="relative z-10 ml-2">Generate Images</span>
+                        </>
+                      ) : (
+                        <>
+                          <Film className="relative z-10 h-4 w-4" />
+                          <span className="relative z-10 ml-2">Generate Videos</span>
+                        </>
+                      )}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent className="glass-panel border-zinc-700">
+                    <p className="text-xs">
+                      {nextPhase === 'images' 
+                        ? 'Generate images for all shots in parallel'
+                        : 'Generate videos from all images in parallel'}
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
               </motion.div>
             )}
 

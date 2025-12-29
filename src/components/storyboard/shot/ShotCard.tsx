@@ -254,6 +254,8 @@ export const ShotCard: React.FC<ShotCardProps> = ({
           imageProgress={localImageProgress}
           isGenerating={isGeneratingPrompt || isGeneratingImage}
           hasVisualPrompt={!!localVisualPrompt}
+          visualPrompt={localVisualPrompt}
+          upscaleStatus={shot.upscale_status}
           onGenerateImage={handleGenerateImage}
           onGenerateVisualPrompt={handleGenerateVisualPrompt}
           onUpdate={(updates) => onUpdate(updates)}

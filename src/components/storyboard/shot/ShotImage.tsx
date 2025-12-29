@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Loader2, Wand2, Play, ImageOff, AlertTriangle, RefreshCw, Download } from 'lucide-react';
 import { toast } from 'sonner';
@@ -7,6 +6,7 @@ import { ImageStatus } from '@/types/storyboardTypes';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
+import { ShotImageActions } from './ShotImageActions';
 
 interface ShotImageProps {
   shotId: string;
@@ -17,9 +17,11 @@ interface ShotImageProps {
   imageProgress?: number;
   isGenerating: boolean;
   hasVisualPrompt: boolean;
+  visualPrompt?: string;
+  upscaleStatus?: string;
   onGenerateImage: () => void;
   onGenerateVisualPrompt: () => void;
-  onUpdate?: (updates: { video_url?: string; video_status?: 'pending' | 'generating' | 'completed' | 'failed' }) => void;
+  onUpdate?: (updates: { video_url?: string; video_status?: 'pending' | 'generating' | 'completed' | 'failed'; image_url?: string }) => void;
 }
 
 const ShotImage: React.FC<ShotImageProps> = ({
@@ -31,6 +33,8 @@ const ShotImage: React.FC<ShotImageProps> = ({
   imageProgress = 0,
   isGenerating,
   hasVisualPrompt,
+  visualPrompt,
+  upscaleStatus,
   onGenerateImage,
   onGenerateVisualPrompt,
   onUpdate
@@ -224,33 +228,29 @@ const ShotImage: React.FC<ShotImageProps> = ({
     );
   }
 
-  // Completed Image State - Show image with video generation option
+  // Handle image update from ShotImageActions (edit/upscale)
+  const handleImageUpdate = (newImageUrl: string, type: 'edited' | 'upscaled') => {
+    onUpdate?.({ image_url: newImageUrl });
+  };
+
+  // Completed Image State - Show image with Edit, Upscale, and Generate Video options
   if (imageUrl && status === 'completed') {
     return (
-      <div className="w-full aspect-video relative group/image overflow-hidden">
+      <div className="w-full aspect-video relative group overflow-hidden">
         <img 
           src={imageUrl} 
           alt="Shot visualization" 
           className="w-full h-full object-cover transition-transform duration-200 hover:scale-105"
         />
-        <div 
-          className={cn(overlayBaseClass, "opacity-0 group-hover/image:opacity-100 transition-opacity duration-200")}
-        >
-          <Button
-            variant="outline"
-            size="sm"
-            className={buttonClass}
-            onClick={handleGenerateVideo}
-            disabled={isGeneratingVideo}
-          >
-            {isGeneratingVideo ? (
-              <Loader2 className={cn(iconClass, "animate-spin")} />
-            ) : (
-              <Play className={cn(iconClass, "fill-current")} />
-            )}
-            Generate Video
-          </Button>
-        </div>
+        {/* ShotImageActions provides Edit, Upscale, and Video buttons */}
+        <ShotImageActions
+          shotId={shotId}
+          imageUrl={imageUrl}
+          visualPrompt={visualPrompt}
+          upscaleStatus={upscaleStatus}
+          onImageUpdate={handleImageUpdate}
+          onVideoGenerate={handleGenerateVideo}
+        />
       </div>
     );
   }

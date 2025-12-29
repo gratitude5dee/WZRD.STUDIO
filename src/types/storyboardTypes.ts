@@ -23,6 +23,9 @@ export interface ShotDetails {
   sound_effects: string | null;
   image_url: string | null;
   image_status: ImageStatus;
+  image_history?: any[];
+  upscale_status?: string | null;
+  upscaled_image_url?: string | null;
   video_url: string | null;
   video_status: 'pending' | 'generating' | 'completed' | 'failed';
   audio_url: string | null;
