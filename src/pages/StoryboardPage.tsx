@@ -322,6 +322,12 @@ const StoryboardPage = () => {
         {/* Main content area */}
         <ResizablePanel defaultSize={80}>
           <div className="p-6 h-full overflow-y-auto relative">
+            {/* Project Title with Glowing Effect */}
+            {projectDetails && (
+              <div className="mb-6">
+                <GlowingTitle title={projectDetails.title} />
+              </div>
+            )}
             {scenes.length === 0 ? (
               <motion.div 
                 initial={{ opacity: 0, scale: 0.95 }} 

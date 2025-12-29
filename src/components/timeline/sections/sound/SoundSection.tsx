@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Music, ChevronDown, Mic, Volume2, Loader2, Play, Pause, Trash2, Sparkles } from 'lucide-react';
+import { Music, ChevronDown, Mic, Volume2, Plus, Loader2, Play, Pause, RefreshCw, Sparkles, Trash2 } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
@@ -10,6 +10,7 @@ import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 interface SoundSectionProps {
   sceneId: string;
@@ -25,22 +26,36 @@ interface GeneratedAudio {
   type: 'voiceover' | 'sfx' | 'music';
 }
 
-const SFX_PRESETS = [
-  { label: 'Rain', prompt: 'Heavy rain falling on window' },
-  { label: 'Thunder', prompt: 'Distant thunder rumbling' },
-  { label: 'Footsteps', prompt: 'Footsteps on wooden floor' },
-  { label: 'Door', prompt: 'Wooden door creaking open' },
-  { label: 'Whoosh', prompt: 'Quick whoosh transition sound' },
-  { label: 'Impact', prompt: 'Heavy cinematic impact hit' },
-];
+const SFX_PRESETS = {
+  environment: [
+    { label: 'Rain', prompt: 'Heavy rain falling on window' },
+    { label: 'Thunder', prompt: 'Distant thunder rumbling' },
+    { label: 'Wind', prompt: 'Wind howling through trees' },
+    { label: 'Birds', prompt: 'Morning birds chirping in forest' },
+    { label: 'City', prompt: 'Busy city street with traffic' },
+  ],
+  actions: [
+    { label: 'Footsteps', prompt: 'Footsteps on wooden floor' },
+    { label: 'Door', prompt: 'Wooden door creaking open' },
+    { label: 'Glass Break', prompt: 'Glass shattering' },
+    { label: 'Car Engine', prompt: 'Sports car engine revving' },
+  ],
+  transitions: [
+    { label: 'Whoosh', prompt: 'Quick whoosh transition sound' },
+    { label: 'Impact', prompt: 'Heavy cinematic impact hit' },
+    { label: 'Rise', prompt: 'Tension building riser sound' },
+  ],
+};
 
 const MUSIC_MOODS = [
   'Epic & Cinematic', 'Tense & Suspenseful', 'Happy & Uplifting',
-  'Sad & Melancholic', 'Mysterious & Eerie', 'Action & Intense',
+  'Sad & Melancholic', 'Mysterious & Eerie', 'Romantic & Emotional',
+  'Action & Intense', 'Calm & Peaceful', 'Dark & Ominous',
 ];
 
 const MUSIC_GENRES = [
-  'Orchestral', 'Electronic', 'Ambient', 'Rock', 'Synthwave', 'Acoustic',
+  'Orchestral', 'Electronic', 'Ambient', 'Rock', 'Jazz',
+  'Hip-Hop', 'Classical', 'Synthwave', 'Acoustic',
 ];
 
 export function SoundSection({
@@ -88,7 +103,7 @@ export function SoundSection({
           },
           body: JSON.stringify({
             text: voiceoverText,
-            voiceId: 'JBFqnCBsd6RMkjVDRZzb'
+            voiceId: 'JBFqnCBsd6RMkjVDRZzb' // George voice
           }),
         }
       );
@@ -284,7 +299,7 @@ export function SoundSection({
                 <TabsList className="grid w-full grid-cols-3 bg-zinc-900/50 h-8">
                   <TabsTrigger value="voiceover" className="text-xs data-[state=active]:bg-green-600/20">
                     <Mic className="w-3 h-3 mr-1" />
-                    Voice
+                    Voiceover
                   </TabsTrigger>
                   <TabsTrigger value="sfx" className="text-xs data-[state=active]:bg-green-600/20">
                     <Volume2 className="w-3 h-3 mr-1" />
@@ -312,7 +327,7 @@ export function SoundSection({
                   <Button
                     onClick={generateVoiceover}
                     disabled={isGenerating || !voiceoverText.trim()}
-                    className="w-full h-9 text-xs bg-green-600/20 hover:bg-green-600/30 text-green-400 border border-green-500/30"
+                    className="w-full h-9 text-xs bg-green-600/20 hover:bg-green-600/30 text-green-400"
                   >
                     {isGenerating ? (
                       <Loader2 className="w-3 h-3 mr-1 animate-spin" />
@@ -322,9 +337,10 @@ export function SoundSection({
                     Generate Voiceover
                   </Button>
 
+                  {/* Generated Voiceovers */}
                   {filteredAudios('voiceover').length > 0 && (
                     <div className="space-y-2">
-                      <Label className="text-xs text-zinc-500">Generated</Label>
+                      <Label className="text-xs text-zinc-500">Generated Voiceovers</Label>
                       {filteredAudios('voiceover').map(audio => (
                         <AudioItem
                           key={audio.id}
@@ -340,26 +356,29 @@ export function SoundSection({
 
                 {/* SFX Tab */}
                 <TabsContent value="sfx" className="space-y-3 mt-2">
+                  {/* Quick Presets */}
                   <div className="space-y-2">
                     <Label className="text-xs text-zinc-500">Quick Presets</Label>
                     <div className="flex flex-wrap gap-1">
-                      {SFX_PRESETS.map(preset => (
-                        <Button
-                          key={preset.label}
-                          size="sm"
-                          variant="outline"
-                          className="text-xs h-6 px-2"
-                          onClick={() => generateSfx(preset.prompt, 5)}
-                          disabled={isGenerating}
-                        >
-                          {preset.label}
-                        </Button>
+                      {Object.entries(SFX_PRESETS).map(([category, presets]) => (
+                        presets.slice(0, 3).map(preset => (
+                          <Button
+                            key={preset.label}
+                            size="sm"
+                            variant="outline"
+                            className="text-xs h-6 px-2"
+                            onClick={() => generateSfx(preset.prompt, 5)}
+                            disabled={isGenerating}
+                          >
+                            {preset.label}
+                          </Button>
+                        ))
                       ))}
                     </div>
                   </div>
 
                   <div className="p-3 bg-zinc-900/30 rounded-lg border border-zinc-800/50">
-                    <Label className="text-xs text-zinc-400 mb-2 block">Custom SFX</Label>
+                    <Label className="text-xs text-zinc-400 mb-2 block">Custom Sound Effect</Label>
                     <Textarea
                       value={sfxPrompt}
                       onChange={(e) => setSfxPrompt(e.target.value)}
@@ -383,19 +402,20 @@ export function SoundSection({
                   <Button
                     onClick={() => generateSfx(sfxPrompt, sfxDuration)}
                     disabled={isGenerating || !sfxPrompt.trim()}
-                    className="w-full h-9 text-xs bg-green-600/20 hover:bg-green-600/30 text-green-400 border border-green-500/30"
+                    className="w-full h-9 text-xs bg-green-600/20 hover:bg-green-600/30 text-green-400"
                   >
                     {isGenerating ? (
                       <Loader2 className="w-3 h-3 mr-1 animate-spin" />
                     ) : (
                       <Sparkles className="w-3 h-3 mr-1" />
                     )}
-                    Generate SFX
+                    Generate Sound Effect
                   </Button>
 
+                  {/* Generated SFX */}
                   {filteredAudios('sfx').length > 0 && (
                     <div className="space-y-2">
-                      <Label className="text-xs text-zinc-500">Generated</Label>
+                      <Label className="text-xs text-zinc-500">Generated Effects</Label>
                       {filteredAudios('sfx').map(audio => (
                         <AudioItem
                           key={audio.id}
@@ -416,7 +436,7 @@ export function SoundSection({
                       <Label className="text-xs text-zinc-400">Mood</Label>
                       <Select value={musicMood} onValueChange={setMusicMood}>
                         <SelectTrigger className="h-8 text-xs bg-zinc-900/50">
-                          <SelectValue placeholder="Select..." />
+                          <SelectValue placeholder="Select mood..." />
                         </SelectTrigger>
                         <SelectContent>
                           {MUSIC_MOODS.map(m => (
@@ -429,7 +449,7 @@ export function SoundSection({
                       <Label className="text-xs text-zinc-400">Genre</Label>
                       <Select value={musicGenre} onValueChange={setMusicGenre}>
                         <SelectTrigger className="h-8 text-xs bg-zinc-900/50">
-                          <SelectValue placeholder="Select..." />
+                          <SelectValue placeholder="Select genre..." />
                         </SelectTrigger>
                         <SelectContent>
                           {MUSIC_GENRES.map(g => (
@@ -441,11 +461,11 @@ export function SoundSection({
                   </div>
 
                   <div className="p-3 bg-zinc-900/30 rounded-lg border border-zinc-800/50">
-                    <Label className="text-xs text-zinc-400 mb-2 block">Details</Label>
+                    <Label className="text-xs text-zinc-400 mb-2 block">Additional Details</Label>
                     <Textarea
                       value={musicCustom}
                       onChange={(e) => setMusicCustom(e.target.value)}
-                      placeholder="Instruments, tempo..."
+                      placeholder="Add instruments, tempo, or style..."
                       className="text-sm min-h-[50px] bg-zinc-900/50 border-zinc-800/50"
                       rows={2}
                     />
@@ -465,7 +485,7 @@ export function SoundSection({
                   <Button
                     onClick={generateMusic}
                     disabled={isGenerating}
-                    className="w-full h-9 text-xs bg-green-600/20 hover:bg-green-600/30 text-green-400 border border-green-500/30"
+                    className="w-full h-9 text-xs bg-green-600/20 hover:bg-green-600/30 text-green-400"
                   >
                     {isGenerating ? (
                       <Loader2 className="w-3 h-3 mr-1 animate-spin" />
@@ -475,9 +495,10 @@ export function SoundSection({
                     Generate Music
                   </Button>
 
+                  {/* Generated Music */}
                   {filteredAudios('music').length > 0 && (
                     <div className="space-y-2">
-                      <Label className="text-xs text-zinc-500">Generated</Label>
+                      <Label className="text-xs text-zinc-500">Generated Tracks</Label>
                       {filteredAudios('music').map(audio => (
                         <AudioItem
                           key={audio.id}
@@ -494,7 +515,7 @@ export function SoundSection({
 
               <div className="mt-3 p-2 bg-blue-950/20 border border-blue-500/20 rounded-md">
                 <p className="text-xs text-blue-400">
-                  🎵 Powered by ElevenLabs
+                  🎵 Audio generation powered by ElevenLabs
                 </p>
               </div>
             </motion.div>
@@ -528,7 +549,7 @@ function AudioItem({
         {audio.status === 'generating' ? (
           <Loader2 className="w-3 h-3 animate-spin" />
         ) : audio.status === 'failed' ? (
-          <span className="text-red-400 text-xs">!</span>
+          <RefreshCw className="w-3 h-3 text-red-400" />
         ) : isPlaying ? (
           <Pause className="w-3 h-3" />
         ) : (
