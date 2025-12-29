@@ -126,7 +126,7 @@ serve(async (req) => {
     console.log(`[generate-shot-image][Shot ${shotId}] Fetching project data for aspect ratio...`);
     const { data: project, error: projectError } = await supabase
       .from("projects")
-      .select("aspect_ratio")
+      .select("aspect_ratio, style_reference_asset_id")
       .eq("id", shot.project_id)
       .single();
 
@@ -139,20 +139,45 @@ serve(async (req) => {
     const falImageSize = convertImageSizeToFalFormat(imageSize);
     console.log(`[generate-shot-image][Shot ${shotId}] Using aspect ratio: ${aspectRatio}, FAL image size:`, falImageSize);
 
+    let styleReferenceUrl: string | null = null;
+    if (project?.style_reference_asset_id) {
+      const { data: mediaItem, error: mediaError } = await supabase
+        .from('media_items')
+        .select('storage_bucket, storage_path')
+        .eq('id', project.style_reference_asset_id)
+        .single();
+
+      if (mediaError) {
+        console.warn(`[generate-shot-image][Shot ${shotId}] Failed to load style reference: ${mediaError.message}`);
+      } else if (mediaItem?.storage_bucket && mediaItem?.storage_path) {
+        const { data: { publicUrl } } = supabase.storage
+          .from(mediaItem.storage_bucket)
+          .getPublicUrl(mediaItem.storage_path);
+        styleReferenceUrl = publicUrl;
+      }
+    }
+
     try {
       // Use FAL.AI subscribe with onQueueUpdate for real-time progress
       console.log(`[generate-shot-image][Shot ${shotId}] Starting FAL.AI generation with FLUX Schnell...`);
       
       let lastProgress = 0;
       
+      const falInput: Record<string, unknown> = {
+        prompt: shot.visual_prompt,
+        image_size: falImageSize,
+        num_inference_steps: 4,
+        num_images: 1,
+        enable_safety_checker: true,
+      };
+
+      if (styleReferenceUrl) {
+        falInput.ip_adapter_style_reference = styleReferenceUrl;
+        falInput.style_strength = 0.6;
+      }
+
       const result = await fal.subscribe("fal-ai/flux/schnell", {
-        input: {
-          prompt: shot.visual_prompt,
-          image_size: falImageSize,
-          num_inference_steps: 4,
-          num_images: 1,
-          enable_safety_checker: true,
-        },
+        input: falInput,
         logs: true,
         onQueueUpdate: async (update) => {
           console.log(`[generate-shot-image][Shot ${shotId}] Queue update: ${update.status}`);

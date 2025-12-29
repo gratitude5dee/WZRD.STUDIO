@@ -54,6 +54,7 @@ async function fetchWithRetry(
 interface RequestBody {
   character_id: string;
   project_id?: string;
+  style_reference_url?: string;
 }
 
 interface CharacterData {
@@ -84,7 +85,7 @@ serve(async (req) => {
   fal.config({ credentials: FAL_KEY });
 
   try {
-    const { character_id, project_id }: RequestBody = await req.json();
+    const { character_id, project_id, style_reference_url }: RequestBody = await req.json();
     if (!character_id) return errorResponse('character_id is required', 400);
 
     console.log(`Generating image for character ID: ${character_id}`);
@@ -171,14 +172,21 @@ serve(async (req) => {
     // 3. Generate Image using FAL.AI FLUX
     console.log('Calling FAL.AI FLUX for image generation...');
     
+    const falInput: Record<string, unknown> = {
+      prompt: visualPrompt,
+      image_size: "square_hd",
+      num_inference_steps: 4,
+      num_images: 1,
+      enable_safety_checker: true,
+    };
+
+    if (style_reference_url) {
+      falInput.ip_adapter_style_reference = style_reference_url;
+      falInput.style_strength = 0.6;
+    }
+
     const result = await fal.subscribe("fal-ai/flux/schnell", {
-      input: {
-        prompt: visualPrompt,
-        image_size: "square_hd",
-        num_inference_steps: 4,
-        num_images: 1,
-        enable_safety_checker: true,
-      },
+      input: falInput,
       logs: true,
     });
 

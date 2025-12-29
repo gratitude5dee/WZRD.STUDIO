@@ -40,7 +40,30 @@ const defaultProjectData: ProjectData = {
   callToAction: '',
   conceptOption: 'ai',
   aspectRatio: '16:9',
-  videoStyle: 'cinematic'
+  videoStyle: 'cinematic',
+  adBrief: {
+    product: '',
+    targetAudience: '',
+    mainMessage: '',
+    callToAction: '',
+    adDuration: '30s',
+    platform: 'all',
+    brandGuidelines: '',
+  },
+  musicVideoData: {
+    artistName: '',
+    trackTitle: '',
+    genre: '',
+    lyrics: '',
+    performanceRatio: 50,
+  },
+  infotainmentData: {
+    topic: '',
+    educationalGoals: [],
+    targetDemographic: '',
+    hostStyle: 'casual',
+    segments: [],
+  },
 };
 
 const ProjectContext = createContext<ProjectContextProps | undefined>(undefined);
@@ -98,6 +121,13 @@ export const ProjectProvider = ({ children }: { children: ReactNode }) => {
         target_audience: projectData.targetAudience,
         main_message: projectData.mainMessage,
         call_to_action: projectData.callToAction,
+        ad_brief_data: projectData.adBrief,
+        music_video_data: projectData.musicVideoData,
+        infotainment_data: projectData.infotainmentData,
+        voiceover_id: projectData.voiceoverId,
+        voiceover_name: projectData.voiceoverName,
+        voiceover_preview_url: projectData.voiceoverPreviewUrl,
+        style_reference_asset_id: projectData.styleReferenceAssetId,
         // Add settings fields
         aspect_ratio: projectData.aspectRatio,
         video_style: projectData.videoStyle,

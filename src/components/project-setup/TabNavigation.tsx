@@ -36,7 +36,7 @@ const TabNavigation = () => {
       "bg-gradient-to-r from-[rgba(15,15,20,0.8)] via-[rgba(12,12,18,0.6)] to-[rgba(15,15,20,0.8)]",
       "backdrop-blur-xl border-white/[0.05]"
     )}>
-      <div className="container mx-auto">
+      <div className="container mx-auto flex justify-center">
         <div className="flex items-center gap-3">
           {visibleTabs.map((tab, index) => {
             const isActive = activeTab === tab;

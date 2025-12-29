@@ -1,12 +1,47 @@
-
 export type ProjectSetupTab = 'concept' | 'storyline' | 'settings' | 'breakdown';
+
+export type ProjectFormat =
+  | 'custom'
+  | 'short_film'
+  | 'commercial'
+  | 'music_video'
+  | 'infotainment';
+
+export interface AdBriefData {
+  product: string;
+  targetAudience: string;
+  mainMessage: string;
+  callToAction: string;
+  adDuration: '15s' | '30s' | '60s' | '90s';
+  platform: 'tv' | 'social' | 'youtube' | 'streaming' | 'all';
+  brandGuidelines?: string;
+  competitorAnalysis?: string;
+  kpis?: string[];
+}
+
+export interface MusicVideoData {
+  artistName: string;
+  trackTitle: string;
+  genre: string;
+  lyrics?: string;
+  moodBoard?: string[];
+  performanceRatio: number;
+}
+
+export interface InfotainmentData {
+  topic: string;
+  educationalGoals: string[];
+  targetDemographic: string;
+  hostStyle: 'casual' | 'professional' | 'documentary';
+  segments?: string[];
+}
 
 export interface ProjectData {
   title: string;
   concept: string;
   genre: string;
   tone: string;
-  format: string;
+  format: ProjectFormat;
   customFormat?: string;
   specialRequests?: string;
   addVoiceover: boolean;
@@ -18,11 +53,20 @@ export interface ProjectData {
   // Additional field to track AI or manual mode
   conceptOption: 'ai' | 'manual';
 
+  adBrief?: AdBriefData;
+  musicVideoData?: MusicVideoData;
+  infotainmentData?: InfotainmentData;
+
+  voiceoverId?: string;
+  voiceoverName?: string;
+  voiceoverPreviewUrl?: string;
+
   // Settings fields
   aspectRatio?: string;
   videoStyle?: string;
   cinematicInspiration?: string;
   styleReferenceUrl?: string;
+  styleReferenceAssetId?: string;
 }
 
 // Character type definition for reuse across components

@@ -64,6 +64,10 @@ ${isAlternative ? 'Generate a DIFFERENT creative take on the same concept - expl
 }
 
 export function getStorylineUserPrompt(project: any, isAlternative: boolean, existingStorylines: any[] = []): string {
+  const adBriefData = project.ad_brief_data || {};
+  const musicVideoData = project.music_video_data || {};
+  const infotainmentData = project.infotainment_data || {};
+
   const projectContext = `
 PROJECT DETAILS:
 ==============
@@ -85,6 +89,31 @@ ${project.main_message ? `
 Key Message: ${project.main_message}` : ''}
 ${project.call_to_action ? `
 Call to Action: ${project.call_to_action}` : ''}
+${project.format === 'commercial' ? `
+
+COMMERCIAL BRIEF:
+Product/Service: ${adBriefData.product || project.product_name || 'Not specified'}
+Target Audience: ${adBriefData.targetAudience || project.target_audience || 'Not specified'}
+Key Message: ${adBriefData.mainMessage || project.main_message || 'Not specified'}
+Call to Action: ${adBriefData.callToAction || project.call_to_action || 'Not specified'}
+Ad Duration: ${adBriefData.adDuration || 'Not specified'}
+Platform: ${adBriefData.platform || 'Not specified'}
+Brand Guidelines: ${adBriefData.brandGuidelines || 'Not specified'}` : ''}
+${project.format === 'music_video' ? `
+
+MUSIC VIDEO BRIEF:
+Artist Name: ${musicVideoData.artistName || 'Not specified'}
+Track Title: ${musicVideoData.trackTitle || 'Not specified'}
+Genre: ${musicVideoData.genre || 'Not specified'}
+Lyrics: ${musicVideoData.lyrics || 'Not specified'}
+Performance vs Narrative: ${musicVideoData.performanceRatio !== undefined ? `${musicVideoData.performanceRatio}% performance / ${100 - Number(musicVideoData.performanceRatio)}% narrative` : 'Not specified'}` : ''}
+${project.format === 'infotainment' ? `
+
+INFOTAINMENT BRIEF:
+Topic: ${infotainmentData.topic || 'Not specified'}
+Educational Goals: ${(infotainmentData.educationalGoals || []).join(', ') || 'Not specified'}
+Target Demographic: ${infotainmentData.targetDemographic || 'Not specified'}
+Host Style: ${infotainmentData.hostStyle || 'Not specified'}` : ''}
 `;
 
   if (isAlternative) {
@@ -107,6 +136,36 @@ REQUIREMENTS:
 
 Focus on creating a compelling alternative vision that stands COMPLETELY APART from any previous storylines.`;
   }
+
+  const formatGuidance = (() => {
+    switch (project.format) {
+      case 'commercial':
+        return `
+FORMAT GUIDANCE:
+- Treat this as a commercial/ad brief.
+- Emphasize the product benefits, target audience, and a clear CTA.
+- Keep pacing concise and message-forward.`;
+      case 'music_video':
+        return `
+FORMAT GUIDANCE:
+- Treat this as a music video with strong visual rhythm.
+- Emphasize performance vs narrative balance.
+- Use the lyrics/mood to drive scene progression.`;
+      case 'infotainment':
+        return `
+FORMAT GUIDANCE:
+- Treat this as infotainment: educational yet entertaining.
+- Highlight learning goals and the host style.
+- Structure scenes around clear topic segments.`;
+      case 'short_film':
+        return `
+FORMAT GUIDANCE:
+- Treat this as a cinematic short film with a complete narrative arc.
+- Prioritize character-driven beats and visual storytelling.`;
+      default:
+        return '';
+    }
+  })();
 
   return `${projectContext}
 
@@ -143,7 +202,8 @@ VISUAL PROMPT QUALITY EXAMPLES:
 ❌ Poor: "Wide shot of city at night"
 ✅ Excellent: "aerial wide angle establishing shot, cyberpunk city at night, neon lights reflecting on wet streets, blue and purple color palette, volumetric fog, cinematic composition, leading lines from roads, 8K ultra detailed, blade runner aesthetic"
 
-Remember: Every visual prompt should be optimized for AI image generation while maintaining narrative coherence.`;
+Remember: Every visual prompt should be optimized for AI image generation while maintaining narrative coherence.
+${formatGuidance}`;
 }
 
 export function getAnalysisSystemPrompt(): string {

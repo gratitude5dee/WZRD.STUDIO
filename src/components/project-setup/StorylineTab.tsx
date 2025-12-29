@@ -323,6 +323,12 @@ const StorylineTab = ({ projectData, updateProjectData }: StorylineTabProps) => 
     // Note: isGenerating is set to false via realtime subscription when complete/failed
   };
 
+  const formatDisplay = (format?: string) => {
+    if (!format) return '';
+    if (format === 'custom') return projectData.customFormat || 'Custom';
+    return format.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
+  };
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl">
       <div className="space-y-8">
@@ -332,9 +338,7 @@ const StorylineTab = ({ projectData, updateProjectData }: StorylineTabProps) => 
           <div className="flex gap-2 flex-wrap">
             {projectData.format && (
               <Badge className="bg-black text-white hover:bg-zinc-800">
-                {projectData.format === 'custom' 
-                  ? projectData.customFormat 
-                  : projectData.format.charAt(0).toUpperCase() + projectData.format.slice(1)}
+                {formatDisplay(projectData.format)}
               </Badge>
             )}
             {projectData.genre && (
