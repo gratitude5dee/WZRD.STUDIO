@@ -5,7 +5,8 @@ import { Plus, Loader2, AlertCircle } from 'lucide-react';
 import { ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 import { motion, AnimatePresence } from 'framer-motion';
 import AppHeader from '@/components/AppHeader';
-import StoryboardSidebar from '@/components/storyboard/StoryboardSidebar';
+import EnhancedStoryboardSidebar from '@/components/storyboard/EnhancedStoryboardSidebar';
+import { GlowingTitle } from '@/components/timeline/GlowingTitle';
 import ShotsRow from '@/components/storyboard/ShotsRow';
 import { AddSceneButton } from '@/components/timeline/AddSceneButton';
 import { supabase } from '@/integrations/supabase/client';
@@ -307,9 +308,10 @@ const StoryboardPage = () => {
         {/* Sidebar */}
         <ResizablePanel defaultSize={20} minSize={15} maxSize={30} className="h-full">
           {sidebarData ? (
-            <StoryboardSidebar
+            <EnhancedStoryboardSidebar
               key={selectedScene?.id || 'no-scene'}
               data={sidebarData}
+              sceneId={selectedScene?.id || ''}
               onUpdate={(updates) => handleSceneUpdate(selectedScene?.id, updates)}
             />
           ) : (
