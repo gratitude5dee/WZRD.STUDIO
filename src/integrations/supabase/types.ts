@@ -4889,6 +4889,7 @@ export type Database = {
       }
       projects: {
         Row: {
+          ad_brief_data: Json | null
           add_voiceover: boolean | null
           aspect_ratio: string | null
           call_to_action: string | null
@@ -4901,7 +4902,9 @@ export type Database = {
           format: string | null
           genre: string | null
           id: string
+          infotainment_data: Json | null
           main_message: string | null
+          music_video_data: Json | null
           product_name: string | null
           selected_storyline_id: string | null
           special_requests: string | null
@@ -4912,8 +4915,12 @@ export type Database = {
           updated_at: string | null
           user_id: string
           video_style: string | null
+          voiceover_id: string | null
+          voiceover_name: string | null
+          voiceover_preview_url: string | null
         }
         Insert: {
+          ad_brief_data?: Json | null
           add_voiceover?: boolean | null
           aspect_ratio?: string | null
           call_to_action?: string | null
@@ -4926,7 +4933,9 @@ export type Database = {
           format?: string | null
           genre?: string | null
           id?: string
+          infotainment_data?: Json | null
           main_message?: string | null
+          music_video_data?: Json | null
           product_name?: string | null
           selected_storyline_id?: string | null
           special_requests?: string | null
@@ -4937,8 +4946,12 @@ export type Database = {
           updated_at?: string | null
           user_id: string
           video_style?: string | null
+          voiceover_id?: string | null
+          voiceover_name?: string | null
+          voiceover_preview_url?: string | null
         }
         Update: {
+          ad_brief_data?: Json | null
           add_voiceover?: boolean | null
           aspect_ratio?: string | null
           call_to_action?: string | null
@@ -4951,7 +4964,9 @@ export type Database = {
           format?: string | null
           genre?: string | null
           id?: string
+          infotainment_data?: Json | null
           main_message?: string | null
+          music_video_data?: Json | null
           product_name?: string | null
           selected_storyline_id?: string | null
           special_requests?: string | null
@@ -4962,6 +4977,9 @@ export type Database = {
           updated_at?: string | null
           user_id?: string
           video_style?: string | null
+          voiceover_id?: string | null
+          voiceover_name?: string | null
+          voiceover_preview_url?: string | null
         }
         Relationships: [
           {
