@@ -6,6 +6,13 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// UUID validation regex
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function isValidUuid(id: string): boolean {
+  return typeof id === 'string' && UUID_REGEX.test(id);
+}
+
 interface SaveGraphRequest {
   projectId: string;
   nodes: any[];
@@ -19,10 +26,12 @@ serve(async (req) => {
   }
 
   try {
+    const authHeader = req.headers.get('Authorization') ?? '';
+    
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
+      { global: { headers: { Authorization: authHeader } } }
     );
 
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
@@ -36,6 +45,31 @@ serve(async (req) => {
 
     const { projectId, nodes, edges, viewState }: SaveGraphRequest = await req.json();
     console.log('Saving compute graph for project:', projectId, { nodeCount: nodes?.length, edgeCount: edges?.length });
+
+    // Validate all IDs are valid UUIDs before attempting to save
+    const invalidNodeIds = (nodes || []).filter((n: any) => !isValidUuid(n.id)).map((n: any) => n.id);
+    const invalidEdgeIds = (edges || []).filter((e: any) => !isValidUuid(e.id)).map((e: any) => e.id);
+    const invalidEdgeRefs = (edges || []).filter((e: any) => {
+      const sourceNodeId = e.source?.nodeId || e.sourceNodeId;
+      const targetNodeId = e.target?.nodeId || e.targetNodeId;
+      return !isValidUuid(sourceNodeId) || !isValidUuid(targetNodeId);
+    }).map((e: any) => e.id);
+
+    if (invalidNodeIds.length > 0 || invalidEdgeIds.length > 0 || invalidEdgeRefs.length > 0) {
+      console.error('Invalid UUIDs detected:', { invalidNodeIds, invalidEdgeIds, invalidEdgeRefs });
+      return new Response(JSON.stringify({ 
+        error: 'Invalid UUID format in graph data',
+        details: {
+          invalidNodeIds,
+          invalidEdgeIds,
+          invalidEdgeRefs,
+          hint: 'Please refresh the page and try again. If the issue persists, regenerate the workflow.'
+        }
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
 
     // Verify project ownership
     const { data: project, error: projectError } = await supabaseClient

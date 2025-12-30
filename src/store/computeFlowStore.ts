@@ -10,6 +10,87 @@ import type {
 } from '@/types/computeFlow';
 import { NODE_TYPE_CONFIGS } from '@/types/computeFlow';
 import { v4 as uuidv4 } from 'uuid';
+import { toast } from 'sonner';
+
+// UUID validation regex
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function isValidUuid(id: string): boolean {
+  return typeof id === 'string' && UUID_REGEX.test(id);
+}
+
+/**
+ * Normalize graph IDs to ensure all node/edge IDs are valid UUIDs.
+ * This repairs any legacy IDs (e.g., "node-1234567890-0") that may exist.
+ */
+function normalizeGraphIds(
+  nodes: NodeDefinition[],
+  edges: EdgeDefinition[]
+): { nodes: NodeDefinition[]; edges: EdgeDefinition[]; changed: boolean } {
+  const nodeIdMap = new Map<string, string>();
+  const portIdMap = new Map<string, string>();
+  let changed = false;
+
+  // First pass: map old node IDs to new UUIDs
+  const normalizedNodes = nodes.map(node => {
+    if (!isValidUuid(node.id)) {
+      const newId = uuidv4();
+      nodeIdMap.set(node.id, newId);
+      changed = true;
+      
+      // Regenerate ports with new node ID
+      const inputs = (node.inputs || []).map((port, i) => {
+        const oldPortId = port.id;
+        const newPortId = `${newId}-input-${i}`;
+        portIdMap.set(oldPortId, newPortId);
+        return { ...port, id: newPortId };
+      });
+      
+      const outputs = (node.outputs || []).map((port, i) => {
+        const oldPortId = port.id;
+        const newPortId = `${newId}-output-${i}`;
+        portIdMap.set(oldPortId, newPortId);
+        return { ...port, id: newPortId };
+      });
+      
+      return { ...node, id: newId, inputs, outputs };
+    }
+    return node;
+  });
+
+  // Second pass: remap edge references
+  const normalizedEdges = edges.map(edge => {
+    let edgeChanged = false;
+    let newEdge = { ...edge };
+    
+    // Fix edge ID if invalid
+    if (!isValidUuid(edge.id)) {
+      newEdge.id = uuidv4();
+      edgeChanged = true;
+    }
+    
+    // Remap source node/port
+    const newSourceNodeId = nodeIdMap.get(edge.source.nodeId) || edge.source.nodeId;
+    const newSourcePortId = portIdMap.get(edge.source.portId) || edge.source.portId;
+    if (newSourceNodeId !== edge.source.nodeId || newSourcePortId !== edge.source.portId) {
+      newEdge.source = { nodeId: newSourceNodeId, portId: newSourcePortId };
+      edgeChanged = true;
+    }
+    
+    // Remap target node/port
+    const newTargetNodeId = nodeIdMap.get(edge.target.nodeId) || edge.target.nodeId;
+    const newTargetPortId = portIdMap.get(edge.target.portId) || edge.target.portId;
+    if (newTargetNodeId !== edge.target.nodeId || newTargetPortId !== edge.target.portId) {
+      newEdge.target = { nodeId: newTargetNodeId, portId: newTargetPortId };
+      edgeChanged = true;
+    }
+    
+    if (edgeChanged) changed = true;
+    return newEdge;
+  });
+
+  return { nodes: normalizedNodes, edges: normalizedEdges, changed };
+}
 
 interface ExecutionProgress {
   runId: string | null;
@@ -120,10 +201,25 @@ export const useComputeFlowStore = create<ComputeFlowState>((set, get) => ({
   },
 
   saveGraph: async (projectId: string) => {
-    const { nodeDefinitions, edgeDefinitions } = get();
+    let { nodeDefinitions, edgeDefinitions } = get();
     set({ isSaving: true });
 
     try {
+      // Normalize IDs before saving to ensure all are valid UUIDs
+      const { nodes: normalizedNodes, edges: normalizedEdges, changed } = normalizeGraphIds(
+        nodeDefinitions,
+        edgeDefinitions
+      );
+      
+      if (changed) {
+        console.log('🔧 Normalized legacy node/edge IDs to UUIDs');
+        toast.info('Repaired legacy node IDs for compatibility');
+        // Update store with normalized IDs
+        set({ nodeDefinitions: normalizedNodes, edgeDefinitions: normalizedEdges });
+        nodeDefinitions = normalizedNodes;
+        edgeDefinitions = normalizedEdges;
+      }
+
       const { error } = await supabase.functions.invoke('compute-save-graph', {
         body: {
           projectId,
@@ -431,9 +527,16 @@ export const useComputeFlowStore = create<ComputeFlowState>((set, get) => ({
   addGeneratedWorkflow: (nodes: NodeDefinition[], edges: EdgeDefinition[]) => {
     console.log('🎨 Adding generated workflow:', { nodes: nodes.length, edges: edges.length });
     
+    // Normalize incoming workflow IDs to ensure they're valid UUIDs
+    const { nodes: normalizedNodes, edges: normalizedEdges, changed } = normalizeGraphIds(nodes, edges);
+    
+    if (changed) {
+      console.log('🔧 Normalized incoming workflow IDs to UUIDs');
+    }
+    
     set(state => ({
-      nodeDefinitions: [...state.nodeDefinitions, ...nodes],
-      edgeDefinitions: [...state.edgeDefinitions, ...edges],
+      nodeDefinitions: [...state.nodeDefinitions, ...normalizedNodes],
+      edgeDefinitions: [...state.edgeDefinitions, ...normalizedEdges],
     }));
   },
 }));
