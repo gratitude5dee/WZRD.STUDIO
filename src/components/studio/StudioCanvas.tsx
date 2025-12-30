@@ -205,8 +205,44 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
     []
   );
 
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [nodes, setNodes, onNodesChangeBase] = useNodesState(initialNodes);
+  const [edges, setEdges, onEdgesChangeBase] = useEdgesState([]);
+  
+  // Track when nodes are being added (to prevent race condition deletions)
+  const [isAddingNodes, setIsAddingNodes] = useState(false);
+  const prevNodeCount = useRef(nodeDefinitions.length);
+  
+  // Detect when new nodes are being added and set a brief protection window
+  useEffect(() => {
+    if (nodeDefinitions.length > prevNodeCount.current) {
+      setIsAddingNodes(true);
+      // Clear protection after nodes are fully initialized
+      const timeout = setTimeout(() => setIsAddingNodes(false), 300);
+      return () => clearTimeout(timeout);
+    }
+    prevNodeCount.current = nodeDefinitions.length;
+  }, [nodeDefinitions.length]);
+  
+  // Wrapped onNodesChange to prevent unexpected deletions during node addition
+  const onNodesChange = useCallback((changes: any[]) => {
+    // Filter out remove events during the protection window
+    const safeChanges = isAddingNodes
+      ? changes.filter(change => {
+          if (change.type === 'remove') {
+            console.warn('🛡️ Blocked node removal during add operation:', change.id);
+            return false;
+          }
+          return true;
+        })
+      : changes;
+    
+    onNodesChangeBase(safeChanges);
+  }, [onNodesChangeBase, isAddingNodes]);
+  
+  // Wrapped onEdgesChange (no special handling needed, just for consistency)
+  const onEdgesChange = useCallback((changes: any[]) => {
+    onEdgesChangeBase(changes);
+  }, [onEdgesChangeBase]);
   
   // Sync blocks to nodes when blocks change
   useEffect(() => {
@@ -303,31 +339,64 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
       
       return [...computeNodes, ...blockNodes, ...addBlockNodes];
     });
-  }, [nodeDefinitions, useComputeFlow, getNodeTypeFromKind, handleSpawnBlocks, setNodes]);
+    
+    // Fit view when new workflow nodes are added
+    if (isAddingNodes && nodeDefinitions.length > 0) {
+      setTimeout(() => {
+        fitView({ padding: 0.3, duration: 400 });
+      }, 150);
+    }
+  }, [nodeDefinitions, useComputeFlow, getNodeTypeFromKind, handleSpawnBlocks, setNodes, isAddingNodes, fitView]);
 
   // Sync edgeDefinitions from compute flow store to React Flow edges
   useEffect(() => {
     if (!useComputeFlow) return;
     
-    const computeEdges: Edge[] = edgeDefinitions.map(edgeDef => ({
-      id: edgeDef.id,
-      source: edgeDef.source.nodeId,
-      target: edgeDef.target.nodeId,
-      sourceHandle: edgeDef.source.portId,
-      targetHandle: edgeDef.target.portId,
-      type: 'compute',
-      data: {
-        dataType: edgeDef.dataType,
-        status: edgeDef.status,
-      },
-      style: {
-        stroke: HANDLE_COLORS[edgeDef.dataType as DataType] || HANDLE_COLORS.any,
-        strokeWidth: 2,
-      },
-    }));
+    console.log('🔗 Syncing edges to React Flow:', edgeDefinitions.length);
+    
+    const computeEdges: Edge[] = edgeDefinitions.map(edgeDef => {
+      // Verify source and target nodes exist
+      const sourceNode = nodeDefinitions.find(n => n.id === edgeDef.source.nodeId);
+      const targetNode = nodeDefinitions.find(n => n.id === edgeDef.target.nodeId);
+      
+      if (!sourceNode || !targetNode) {
+        console.warn('⚠️ Edge references missing node:', {
+          edgeId: edgeDef.id,
+          sourceNodeId: edgeDef.source.nodeId,
+          targetNodeId: edgeDef.target.nodeId,
+          sourceExists: !!sourceNode,
+          targetExists: !!targetNode,
+        });
+      }
+      
+      return {
+        id: edgeDef.id,
+        source: edgeDef.source.nodeId,
+        target: edgeDef.target.nodeId,
+        sourceHandle: edgeDef.source.portId,
+        targetHandle: edgeDef.target.portId,
+        type: 'compute',
+        data: {
+          dataType: edgeDef.dataType,
+          status: edgeDef.status,
+        },
+        style: {
+          stroke: HANDLE_COLORS[edgeDef.dataType as DataType] || HANDLE_COLORS.any,
+          strokeWidth: 2,
+        },
+      };
+    });
+    
+    console.log('✅ Setting React Flow edges:', computeEdges.map(e => ({
+      id: e.id,
+      source: e.source,
+      target: e.target,
+      sourceHandle: e.sourceHandle,
+      targetHandle: e.targetHandle,
+    })));
     
     setEdges(computeEdges);
-  }, [edgeDefinitions, useComputeFlow, setEdges]);
+  }, [edgeDefinitions, nodeDefinitions, useComputeFlow, setEdges]);
 
   // Load existing graph on mount when in compute flow mode
   useEffect(() => {
