@@ -523,21 +523,79 @@ export const useComputeFlowStore = create<ComputeFlowState>((set, get) => ({
 
   /**
    * Add AI-generated workflow nodes and edges to the canvas
+   * Uses phased approach: add nodes first, then edges after React Flow initializes
    */
   addGeneratedWorkflow: (nodes: NodeDefinition[], edges: EdgeDefinition[]) => {
     console.log('🎨 Adding generated workflow:', { nodes: nodes.length, edges: edges.length });
+    
+    // Log incoming data for debugging
+    console.log('📦 Incoming nodes:', nodes.map(n => ({ id: n.id, kind: n.kind, outputs: n.outputs?.map(o => o.id) })));
+    console.log('📦 Incoming edges:', edges.map(e => ({ id: e.id, source: e.source, target: e.target })));
     
     // Normalize incoming workflow IDs to ensure they're valid UUIDs
     const { nodes: normalizedNodes, edges: normalizedEdges, changed } = normalizeGraphIds(nodes, edges);
     
     if (changed) {
       console.log('🔧 Normalized incoming workflow IDs to UUIDs');
+      console.log('📦 Normalized edges:', normalizedEdges.map(e => ({ id: e.id, source: e.source, target: e.target })));
     }
     
+    // Verify edge port IDs match actual node port IDs
+    const validatedEdges = normalizedEdges.filter(edge => {
+      const sourceNode = normalizedNodes.find(n => n.id === edge.source.nodeId);
+      const targetNode = normalizedNodes.find(n => n.id === edge.target.nodeId);
+      
+      if (!sourceNode || !targetNode) {
+        console.warn('⚠️ Edge references non-existent node:', edge);
+        return false;
+      }
+      
+      const sourcePort = sourceNode.outputs?.find(p => p.id === edge.source.portId);
+      const targetPort = targetNode.inputs?.find(p => p.id === edge.target.portId);
+      
+      if (!sourcePort) {
+        // Try to find any matching output port
+        const fallbackPort = sourceNode.outputs?.[0];
+        if (fallbackPort) {
+          console.log('🔧 Fixing source port ID:', edge.source.portId, '->', fallbackPort.id);
+          edge.source.portId = fallbackPort.id;
+        } else {
+          console.warn('⚠️ No output ports on source node:', sourceNode.id);
+          return false;
+        }
+      }
+      
+      if (!targetPort) {
+        // Try to find any matching input port
+        const fallbackPort = targetNode.inputs?.[0];
+        if (fallbackPort) {
+          console.log('🔧 Fixing target port ID:', edge.target.portId, '->', fallbackPort.id);
+          edge.target.portId = fallbackPort.id;
+        } else {
+          console.warn('⚠️ No input ports on target node:', targetNode.id);
+          return false;
+        }
+      }
+      
+      return true;
+    });
+    
+    console.log('✅ Validated edges:', validatedEdges.length, 'of', normalizedEdges.length);
+    
+    // Phase 1: Add nodes first
     set(state => ({
       nodeDefinitions: [...state.nodeDefinitions, ...normalizedNodes],
-      edgeDefinitions: [...state.edgeDefinitions, ...normalizedEdges],
     }));
+    
+    // Phase 2: Add edges after a short delay to allow React Flow to initialize nodes
+    if (validatedEdges.length > 0) {
+      setTimeout(() => {
+        set(state => ({
+          edgeDefinitions: [...state.edgeDefinitions, ...validatedEdges],
+        }));
+        console.log('✅ Edges added after node initialization delay');
+      }, 100);
+    }
   },
 }));
 
