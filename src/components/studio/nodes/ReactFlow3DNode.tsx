@@ -129,7 +129,7 @@ export const ReactFlow3DNode = memo(({ id, data, selected }: NodeProps) => {
   }, [id]);
 
   return (
-    <BaseNode handles={handles}>
+    <BaseNode handles={handles} nodeType="3d" isSelected={selected}>
       <NodeStatusBadge status={status} progress={progress} error={error} />
       <div className={cn(
         "w-80 bg-[#1a1a1a] border border-zinc-800 rounded-lg overflow-hidden",

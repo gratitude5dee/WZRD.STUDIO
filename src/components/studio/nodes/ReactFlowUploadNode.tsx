@@ -20,7 +20,7 @@ export const ReactFlowUploadNode = memo(({ id, data, selected }: NodeProps) => {
   ];
 
   return (
-    <BaseNode handles={handles}>
+    <BaseNode handles={handles} nodeType="image" isSelected={selected}>
       <NodeStatusBadge status={status} progress={progress} error={error} />
       <div className="w-80 bg-[#1a1a1a] border border-zinc-800">
         <div className="flex items-center justify-between px-4 py-3 bg-[#0f0f0f] border-b border-zinc-800">
