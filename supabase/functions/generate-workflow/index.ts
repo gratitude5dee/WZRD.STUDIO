@@ -87,7 +87,24 @@ Return a JSON object with this exact structure:
   }
 }
 
-Rules:
+CRITICAL RULES FOR IMAGE NODES:
+- For Image nodes: The "prompt" field MUST be a detailed VISUAL DESCRIPTION suitable for AI image generation.
+- DO NOT use task instructions like "Create a content calendar" or "Generate ideas".
+- Instead, describe what the image should VISUALLY depict.
+- Example of WRONG prompt: "Create marketing content for coffee shop"
+- Example of CORRECT prompt: "A cozy artisan coffee shop interior with warm lighting, latte art on a marble counter, steam rising from cups, rustic wooden tables, plants in the background, professional photography, warm color palette"
+- Transform every Image node's purpose into a rich visual scene description with details about: setting, lighting, colors, composition, style, and mood.
+
+CRITICAL RULES FOR VIDEO NODES:
+- For Video nodes: The prompt should describe visual motion and cinematic elements.
+- Include camera movement, action, and dynamic elements.
+- Example: "Smooth dolly shot through a bustling coffee shop, customers chatting, barista pouring latte art, steam rising, warm ambient lighting, cinematic 4K quality"
+
+RULES FOR TEXT NODES:
+- For Text nodes: Use clear task instructions for content generation.
+- These can be task-oriented prompts like "Write compelling marketing copy..." or "Generate social media captions..."
+
+General Rules:
 - For single node requests (like "add a text node"), use text-processing or image-generation
 - For multi-step requests, use marketing, content-creation, or video-production
 - Always return valid JSON only, no explanation text`;

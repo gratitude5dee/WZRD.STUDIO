@@ -534,11 +534,12 @@ async function executeImageNode(
   const FAL_KEY = Deno.env.get('FAL_KEY');
   
   if (!FAL_KEY) {
-    console.log('[ImageNode] No FAL_KEY, returning placeholder');
+    console.log('[ImageNode] No FAL_KEY configured, returning placeholder');
     return { 
       type: 'image', 
-      url: node.params?.imageUrl || 'https://placehold.co/512x512/1a1a2e/purple?text=Generated',
-      data: node.params 
+      url: node.params?.imageUrl || 'https://placehold.co/512x512/1a1a2e/purple?text=No+FAL+Key',
+      data: node.params,
+      error: 'FAL_KEY not configured - please add your FAL.ai API key to secrets'
     };
   }
 
@@ -546,14 +547,27 @@ async function executeImageNode(
 
   const rawModel = node.params?.model ?? 'flux-dev';
   const model = mapModelToFalId(rawModel);
-  const prompt = node.params?.prompt ?? inputs.prompt ?? '';
+  let prompt = node.params?.prompt ?? inputs.prompt ?? '';
   const negativePrompt = node.params?.negativePrompt ?? '';
 
   // Substitute input variables
-  const finalPrompt = substituteVariables(prompt, inputs);
+  prompt = substituteVariables(prompt, inputs);
+
+  // Check if prompt is empty
+  if (!prompt || prompt.trim().length === 0) {
+    console.error('[ImageNode] Empty prompt provided');
+    throw new Error('Image generation requires a prompt. Please add a visual description.');
+  }
+
+  // Detect and enhance non-visual prompts (task descriptions)
+  const enhancedPrompt = enhancePromptForImageGeneration(prompt);
+  
+  if (enhancedPrompt !== prompt) {
+    console.log(`[ImageNode] Enhanced non-visual prompt: "${prompt.substring(0, 50)}..." -> "${enhancedPrompt.substring(0, 80)}..."`);
+  }
 
   const falInputs: Record<string, any> = {
-    prompt: finalPrompt,
+    prompt: enhancedPrompt,
     image_size: node.params?.imageSize ?? 'landscape_16_9',
     num_inference_steps: node.params?.steps ?? 28,
     guidance_scale: node.params?.guidanceScale ?? 3.5,
@@ -572,7 +586,7 @@ async function executeImageNode(
       : inputs.image.url ?? inputs.image;
   }
 
-  console.log(`[ImageNode] Running ${model} with prompt: ${finalPrompt.substring(0, 100)}...`);
+  console.log(`[ImageNode] Running ${model} with prompt: ${enhancedPrompt.substring(0, 150)}...`);
 
   send('node_progress', { 
     node_id: node.id, 
@@ -601,14 +615,19 @@ async function executeImageNode(
     let imageUrl: string | string[];
     const resultData = result as any;
     
-    if (resultData.images && Array.isArray(resultData.images)) {
+    console.log('[ImageNode] FAL response keys:', Object.keys(resultData));
+    
+    if (resultData.images && Array.isArray(resultData.images) && resultData.images.length > 0) {
       imageUrl = resultData.images.length === 1 
         ? resultData.images[0].url 
         : resultData.images.map((img: any) => img.url);
-    } else if (resultData.image) {
+    } else if (resultData.image && resultData.image.url) {
       imageUrl = resultData.image.url;
+    } else if (resultData.output && typeof resultData.output === 'string') {
+      imageUrl = resultData.output;
     } else {
-      throw new Error('No image in FAL response');
+      console.error('[ImageNode] Unexpected FAL response structure:', JSON.stringify(resultData).substring(0, 500));
+      throw new Error(`Image generation returned no image. Response structure: ${Object.keys(resultData).join(', ')}`);
     }
 
     console.log(`[ImageNode] Generated image(s):`, Array.isArray(imageUrl) ? imageUrl.length : 1);
@@ -618,13 +637,94 @@ async function executeImageNode(
       url: Array.isArray(imageUrl) ? imageUrl[0] : imageUrl,
       urls: Array.isArray(imageUrl) ? imageUrl : [imageUrl],
       model,
-      prompt: finalPrompt
+      prompt: enhancedPrompt
     };
 
   } catch (error: any) {
-    console.error('[ImageNode] FAL error:', error);
-    throw new Error(`Image generation failed: ${error.message}`);
+    console.error('[ImageNode] FAL error details:', error);
+    
+    // Provide more helpful error messages
+    let errorMessage = error.message || 'Unknown error';
+    
+    if (errorMessage.includes('No image')) {
+      errorMessage = `Image generation failed - no image was returned. This usually means the prompt was rejected or the model encountered an issue. Try a more descriptive visual prompt.`;
+    } else if (errorMessage.includes('401') || errorMessage.includes('unauthorized')) {
+      errorMessage = 'FAL.ai authentication failed. Please verify your FAL_KEY is correct.';
+    } else if (errorMessage.includes('rate limit') || errorMessage.includes('429')) {
+      errorMessage = 'FAL.ai rate limit reached. Please wait a moment and try again.';
+    }
+    
+    throw new Error(`Image generation failed: ${errorMessage}`);
   }
+}
+
+// Helper function to detect and enhance non-visual prompts
+function enhancePromptForImageGeneration(prompt: string): string {
+  // Patterns that indicate a task description rather than a visual prompt
+  const taskPatterns = [
+    /^(create|generate|make|build|develop|write|design|produce|craft)\s+(a\s+)?(content|marketing|social|brand|campaign|strategy|plan|calendar|schedule|ideas?)/i,
+    /^(determine|analyze|identify|find|discover|research|explore)\s+/i,
+    /^(for|based on|using)\s+(the|a|an)?\s*(audience|customer|user|market)/i,
+    /content\s+(ideas?|calendar|strategy|plan)/i,
+    /marketing\s+(content|strategy|plan|ideas?)/i,
+    /social\s+media\s+(content|post|strategy)/i,
+  ];
+  
+  const isTaskPrompt = taskPatterns.some(pattern => pattern.test(prompt));
+  
+  if (!isTaskPrompt) {
+    return prompt; // Already a visual prompt
+  }
+  
+  // Extract key themes from the task description
+  const themes = extractThemesFromTask(prompt);
+  
+  // Build a visual prompt from the themes
+  const visualPrompt = buildVisualPromptFromThemes(themes, prompt);
+  
+  return visualPrompt;
+}
+
+function extractThemesFromTask(prompt: string): string[] {
+  const themes: string[] = [];
+  
+  // Extract specific subjects
+  const subjectMatches = prompt.match(/(?:for|about|featuring|showing|depicting)\s+([^,.]+)/gi);
+  if (subjectMatches) {
+    themes.push(...subjectMatches.map(m => m.replace(/^(for|about|featuring|showing|depicting)\s+/i, '').trim()));
+  }
+  
+  // Extract common business/marketing terms and convert to visual concepts
+  if (/coffee/i.test(prompt)) themes.push('artisan coffee shop, latte art, warm lighting');
+  if (/restaurant|food/i.test(prompt)) themes.push('gourmet food presentation, fine dining');
+  if (/tech|software|app/i.test(prompt)) themes.push('modern tech workspace, clean design');
+  if (/fashion|clothing/i.test(prompt)) themes.push('stylish fashion photography, elegant models');
+  if (/fitness|gym|health/i.test(prompt)) themes.push('athletic person working out, energetic motion');
+  if (/travel|vacation/i.test(prompt)) themes.push('scenic travel destination, wanderlust adventure');
+  if (/marketing|brand/i.test(prompt)) themes.push('professional business setting, modern office');
+  
+  return themes;
+}
+
+function buildVisualPromptFromThemes(themes: string[], originalPrompt: string): string {
+  const baseElements = themes.length > 0 
+    ? themes.slice(0, 3).join(', ')
+    : 'professional business concept illustration';
+  
+  // Add style modifiers for better image generation
+  const styleModifiers = [
+    'high quality',
+    'professional photography',
+    'vibrant colors',
+    'excellent composition',
+    'sharp focus'
+  ];
+  
+  const visualPrompt = `${baseElements}, ${styleModifiers.slice(0, 3).join(', ')}`;
+  
+  console.log(`[ImageNode] Converted task prompt to visual: "${originalPrompt.substring(0, 40)}..." -> "${visualPrompt}"`);
+  
+  return visualPrompt;
 }
 
 async function executeVideoNode(
