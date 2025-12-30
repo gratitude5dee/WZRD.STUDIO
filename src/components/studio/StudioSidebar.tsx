@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect } from 'react';
-import { Plus, History, Layers, Inbox, MessageCircle, Settings, HelpCircle, Type, Image as ImageIcon, Video, Box, ExternalLink, Upload } from 'lucide-react';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { Plus, History, Layers, Inbox, Wand2, Settings, HelpCircle, Type, Image as ImageIcon, Video, Box, ExternalLink, Upload } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import FlowSelector, { Flow } from './FlowSelector';
@@ -7,6 +7,10 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { AssetLibrary, AssetUploader } from '@/components/assets';
 import type { ProjectAsset, AssetType } from '@/types/assets';
 import { ProfileButton } from '@/components/layout/ProfileButton';
+import { WorkflowGeneratorTab } from './WorkflowGeneratorTab';
+import type { NodeDefinition, EdgeDefinition } from '@/types/computeFlow';
+import { useComputeFlowStore } from '@/store/computeFlowStore';
+
 interface StudioSidebarProps {
   onAddBlock: (blockType: 'text' | 'image' | 'video' | 'upload') => void;
   projectId?: string;
@@ -52,18 +56,32 @@ const StudioSidebar = ({
   projectId,
   onAssetSelect
 }: StudioSidebarProps) => {
+  const { addGeneratedWorkflow, saveGraph } = useComputeFlowStore();
   const [showAddMenu, setShowAddMenu] = useState(false);
   const [showFlowSelector, setShowFlowSelector] = useState(false);
   const [showAssetsModal, setShowAssetsModal] = useState(false);
+  const [showWorkflowPanel, setShowWorkflowPanel] = useState(false);
   const [activeTool, setActiveTool] = useState<string | null>(null);
   const addMenuRef = useRef<HTMLDivElement>(null);
   const flowSelectorRef = useRef<HTMLDivElement>(null);
+  const workflowPanelRef = useRef<HTMLDivElement>(null);
+
+  const handleWorkflowGenerated = useCallback((nodes: NodeDefinition[], edges: EdgeDefinition[]) => {
+    addGeneratedWorkflow(nodes, edges);
+    if (projectId) {
+      setTimeout(() => saveGraph(projectId), 500);
+    }
+    setShowWorkflowPanel(false);
+  }, [addGeneratedWorkflow, saveGraph, projectId]);
   const handleClickOutside = (event: MouseEvent) => {
     if (addMenuRef.current && !addMenuRef.current.contains(event.target as Node)) {
       setShowAddMenu(false);
     }
     if (flowSelectorRef.current && !flowSelectorRef.current.contains(event.target as Node)) {
       setShowFlowSelector(false);
+    }
+    if (workflowPanelRef.current && !workflowPanelRef.current.contains(event.target as Node)) {
+      setShowWorkflowPanel(false);
     }
   };
   useEffect(() => {
@@ -77,16 +95,24 @@ const StudioSidebar = ({
     if (toolId === 'add') {
       setShowAddMenu(!showAddMenu);
       setShowFlowSelector(false);
+      setShowWorkflowPanel(false);
     } else if (toolId === 'templates') {
       setShowFlowSelector(!showFlowSelector);
       setShowAddMenu(false);
+      setShowWorkflowPanel(false);
     } else if (toolId === 'assets') {
       setShowAssetsModal(true);
+      setShowAddMenu(false);
+      setShowFlowSelector(false);
+      setShowWorkflowPanel(false);
+    } else if (toolId === 'workflow') {
+      setShowWorkflowPanel(!showWorkflowPanel);
       setShowAddMenu(false);
       setShowFlowSelector(false);
     } else {
       setShowAddMenu(false);
       setShowFlowSelector(false);
+      setShowWorkflowPanel(false);
     }
   };
   const handleSelectFlow = (flowId: string) => {
@@ -246,9 +272,35 @@ const StudioSidebar = ({
           <Inbox className="h-5 w-5" />
         </button>
         
-        <button className={cn("w-10 h-10 flex items-center justify-center text-zinc-500 transition-colors", activeTool === 'chat' ? "text-white" : "hover:text-zinc-300")} onClick={() => handleToolClick('chat')} title="Chat">
-          <MessageCircle className="h-5 w-5" />
-        </button>
+        {/* AI Workflow Button with Panel */}
+        <div className="relative" ref={workflowPanelRef}>
+          <button 
+            className={cn(
+              "w-10 h-10 flex items-center justify-center transition-colors",
+              activeTool === 'workflow' ? "text-purple-400" : "text-zinc-500 hover:text-zinc-300"
+            )} 
+            onClick={() => handleToolClick('workflow')} 
+            title="AI Workflow"
+          >
+            <Wand2 className="h-5 w-5" />
+          </button>
+          
+          <AnimatePresence>
+            {showWorkflowPanel && (
+              <motion.div 
+                className="absolute left-14 bottom-0 w-80 h-[400px] bg-zinc-950 border border-zinc-800 rounded-xl shadow-2xl z-50 overflow-hidden"
+                initial={{ opacity: 0, x: -10, scale: 0.95 }}
+                animate={{ opacity: 1, x: 0, scale: 1 }}
+                exit={{ opacity: 0, x: -10, scale: 0.95 }}
+                transition={{ duration: 0.2 }}
+              >
+                <WorkflowGeneratorTab 
+                  onWorkflowGenerated={handleWorkflowGenerated} 
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
         
         <button className={cn("w-10 h-10 flex items-center justify-center text-zinc-500 transition-colors", activeTool === 'settings' ? "text-white" : "hover:text-zinc-300")} onClick={() => handleToolClick('settings')} title="Settings">
           <Settings className="h-5 w-5" />

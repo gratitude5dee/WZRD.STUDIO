@@ -7,13 +7,10 @@ import {
   Download, 
   Plus,
   Clock,
-  Sparkles,
-  Wand2
+  Sparkles
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useComputeFlowStore } from '@/store/computeFlowStore';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { WorkflowGeneratorTab } from './WorkflowGeneratorTab';
 
 interface GalleryItem {
   id: string;
@@ -27,7 +24,6 @@ interface StudioGalleryPanelProps {
   isOpen: boolean;
   onToggle: () => void;
   onAddToCanvas?: (item: GalleryItem) => void;
-  onWorkflowGenerated?: (nodes: any[], edges: any[]) => void;
   className?: string;
 }
 
@@ -35,11 +31,9 @@ export const StudioGalleryPanel: React.FC<StudioGalleryPanelProps> = ({
   isOpen,
   onToggle,
   onAddToCanvas,
-  onWorkflowGenerated,
   className,
 }) => {
   const [selectedItem, setSelectedItem] = useState<GalleryItem | null>(null);
-  const [activeTab, setActiveTab] = useState<'gallery' | 'workflows'>('gallery');
   const { nodeDefinitions } = useComputeFlowStore();
 
   // Extract gallery items from node previews
@@ -86,45 +80,32 @@ export const StudioGalleryPanel: React.FC<StudioGalleryPanelProps> = ({
               className
             )}
           >
-            {/* Header with Tabs */}
+            {/* Header */}
             <div className="border-b border-zinc-800/80">
-              <div className="flex items-center justify-between px-3 py-2">
-                <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'gallery' | 'workflows')} className="flex-1">
-                  <TabsList className="bg-zinc-900/50 h-8">
-                    <TabsTrigger value="gallery" className="text-xs h-7 px-3 gap-1.5">
-                      <Images className="w-3.5 h-3.5" />
-                      Gallery
-                      {galleryItems.length > 0 && (
-                        <span className="text-[10px] text-zinc-500">({galleryItems.length})</span>
-                      )}
-                    </TabsTrigger>
-                    <TabsTrigger value="workflows" className="text-xs h-7 px-3 gap-1.5">
-                      <Wand2 className="w-3.5 h-3.5" />
-                      Workflows
-                    </TabsTrigger>
-                  </TabsList>
-                </Tabs>
+              <div className="flex items-center justify-between px-4 py-3">
+                <div className="flex items-center gap-2">
+                  <Images className="w-4 h-4 text-zinc-400" />
+                  <h3 className="text-sm font-medium text-zinc-200">Gallery</h3>
+                  {galleryItems.length > 0 && (
+                    <span className="text-xs text-zinc-500">({galleryItems.length})</span>
+                  )}
+                </div>
                 <button
                   onClick={onToggle}
-                  className="p-1.5 hover:bg-zinc-800 rounded-lg transition-colors ml-2"
+                  className="p-1.5 hover:bg-zinc-800 rounded-lg transition-colors"
                 >
                   <ChevronRight className="w-4 h-4 text-zinc-500" />
                 </button>
               </div>
             </div>
 
-            {/* Tab Content */}
+            {/* Gallery Content */}
             <div className="flex-1 overflow-hidden">
-              {activeTab === 'gallery' && (
-                <GalleryTabContent 
-                  galleryItems={galleryItems}
-                  onAddToCanvas={onAddToCanvas}
-                  onSelectItem={setSelectedItem}
-                />
-              )}
-              {activeTab === 'workflows' && (
-                <WorkflowGeneratorTab onWorkflowGenerated={onWorkflowGenerated} />
-              )}
+              <GalleryTabContent 
+                galleryItems={galleryItems}
+                onAddToCanvas={onAddToCanvas}
+                onSelectItem={setSelectedItem}
+              />
             </div>
           </motion.div>
         )}
