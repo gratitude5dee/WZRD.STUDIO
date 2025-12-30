@@ -162,7 +162,7 @@ serve(async (req) => {
     const START = { x: 100, y: 100 };
 
     const nodes = template.nodes.map((node, index) => {
-      const nodeId = `node-${Date.now()}-${index}`;
+      const nodeId = crypto.randomUUID();
       
       // Calculate position based on layout
       let position;
@@ -225,7 +225,7 @@ serve(async (req) => {
       const targetPort = targetNode.inputs.find((p: any) => p.name === edge.targetHandle);
 
       return {
-        id: `edge-${Date.now()}-${index}`,
+        id: crypto.randomUUID(),
         source: { nodeId: sourceNode.id, portId: sourcePort?.id || `${sourceNode.id}-output-0` },
         target: { nodeId: targetNode.id, portId: targetPort?.id || `${targetNode.id}-input-0` },
         dataType: sourcePort?.datatype || 'text',
@@ -283,7 +283,7 @@ function getPortsForKind(kind: string, nodeId: string) {
 
 function generateFallbackWorkflow(prompt: string) {
   // Simple fallback - create a single text node
-  const nodeId = `node-${Date.now()}-0`;
+  const nodeId = crypto.randomUUID();
   
   const nodes = [{
     id: nodeId,
