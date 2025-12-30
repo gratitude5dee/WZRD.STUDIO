@@ -5,14 +5,15 @@ import {
   ChevronLeft, 
   ChevronRight, 
   Download, 
-  Maximize2,
-  Trash2,
   Plus,
   Clock,
-  Sparkles
+  Sparkles,
+  Wand2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useComputeFlowStore } from '@/store/computeFlowStore';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { WorkflowGeneratorTab } from './WorkflowGeneratorTab';
 
 interface GalleryItem {
   id: string;
@@ -26,6 +27,7 @@ interface StudioGalleryPanelProps {
   isOpen: boolean;
   onToggle: () => void;
   onAddToCanvas?: (item: GalleryItem) => void;
+  onWorkflowGenerated?: (nodes: any[], edges: any[]) => void;
   className?: string;
 }
 
@@ -33,9 +35,11 @@ export const StudioGalleryPanel: React.FC<StudioGalleryPanelProps> = ({
   isOpen,
   onToggle,
   onAddToCanvas,
+  onWorkflowGenerated,
   className,
 }) => {
   const [selectedItem, setSelectedItem] = useState<GalleryItem | null>(null);
+  const [activeTab, setActiveTab] = useState<'gallery' | 'workflows'>('gallery');
   const { nodeDefinitions } = useComputeFlowStore();
 
   // Extract gallery items from node previews
@@ -49,7 +53,7 @@ export const StudioGalleryPanel: React.FC<StudioGalleryPanelProps> = ({
         timestamp: new Date(),
         nodeLabel: node.label,
       }))
-      .slice(0, 20); // Limit to 20 most recent
+      .slice(0, 20);
   }, [nodeDefinitions]);
 
   return (
@@ -74,7 +78,7 @@ export const StudioGalleryPanel: React.FC<StudioGalleryPanelProps> = ({
         {isOpen && (
           <motion.div
             initial={{ width: 0, opacity: 0 }}
-            animate={{ width: 280, opacity: 1 }}
+            animate={{ width: 320, opacity: 1 }}
             exit={{ width: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
             className={cn(
@@ -82,107 +86,46 @@ export const StudioGalleryPanel: React.FC<StudioGalleryPanelProps> = ({
               className
             )}
           >
-            {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800/80">
-              <div className="flex items-center gap-2">
-                <Images className="w-4 h-4 text-purple-400" />
-                <span className="text-sm font-medium text-zinc-200">Gallery</span>
-                <span className="text-xs text-zinc-600">({galleryItems.length})</span>
+            {/* Header with Tabs */}
+            <div className="border-b border-zinc-800/80">
+              <div className="flex items-center justify-between px-3 py-2">
+                <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'gallery' | 'workflows')} className="flex-1">
+                  <TabsList className="bg-zinc-900/50 h-8">
+                    <TabsTrigger value="gallery" className="text-xs h-7 px-3 gap-1.5">
+                      <Images className="w-3.5 h-3.5" />
+                      Gallery
+                      {galleryItems.length > 0 && (
+                        <span className="text-[10px] text-zinc-500">({galleryItems.length})</span>
+                      )}
+                    </TabsTrigger>
+                    <TabsTrigger value="workflows" className="text-xs h-7 px-3 gap-1.5">
+                      <Wand2 className="w-3.5 h-3.5" />
+                      Workflows
+                    </TabsTrigger>
+                  </TabsList>
+                </Tabs>
+                <button
+                  onClick={onToggle}
+                  className="p-1.5 hover:bg-zinc-800 rounded-lg transition-colors ml-2"
+                >
+                  <ChevronRight className="w-4 h-4 text-zinc-500" />
+                </button>
               </div>
-              <button
-                onClick={onToggle}
-                className="p-1.5 hover:bg-zinc-800 rounded-lg transition-colors"
-              >
-                <ChevronRight className="w-4 h-4 text-zinc-500" />
-              </button>
             </div>
 
-            {/* Gallery Grid */}
-            <div className="flex-1 overflow-y-auto p-3">
-              {galleryItems.length === 0 ? (
-                <div className="h-full flex flex-col items-center justify-center text-center px-4">
-                  <div className="w-16 h-16 rounded-2xl bg-zinc-900 flex items-center justify-center mb-3">
-                    <Sparkles className="w-7 h-7 text-zinc-700" />
-                  </div>
-                  <p className="text-sm text-zinc-500 mb-1">No generations yet</p>
-                  <p className="text-xs text-zinc-600">
-                    Generated content will appear here
-                  </p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 gap-2">
-                  {galleryItems.map((item) => (
-                    <motion.div
-                      key={item.id}
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      className="group relative aspect-square rounded-xl overflow-hidden bg-zinc-900 border border-zinc-800/60 hover:border-purple-500/50 transition-all cursor-pointer"
-                      onClick={() => setSelectedItem(item)}
-                    >
-                      {item.type === 'image' && item.url ? (
-                        <img
-                          src={item.url}
-                          alt="Generated"
-                          className="w-full h-full object-cover"
-                        />
-                      ) : item.type === 'text' ? (
-                        <div className="w-full h-full p-2 text-[8px] text-zinc-500 overflow-hidden">
-                          {item.url}
-                        </div>
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <Images className="w-6 h-6 text-zinc-700" />
-                        </div>
-                      )}
-
-                      {/* Hover overlay */}
-                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onAddToCanvas?.(item);
-                          }}
-                          className="p-2 bg-purple-500/80 hover:bg-purple-500 rounded-lg transition-colors"
-                          title="Add to canvas"
-                        >
-                          <Plus className="w-4 h-4 text-white" />
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            // Download logic
-                          }}
-                          className="p-2 bg-zinc-700/80 hover:bg-zinc-600 rounded-lg transition-colors"
-                          title="Download"
-                        >
-                          <Download className="w-4 h-4 text-white" />
-                        </button>
-                      </div>
-
-                      {/* Label */}
-                      {item.nodeLabel && (
-                        <div className="absolute bottom-0 left-0 right-0 p-1.5 bg-gradient-to-t from-black/80 to-transparent">
-                          <p className="text-[9px] text-zinc-400 truncate">
-                            {item.nodeLabel}
-                          </p>
-                        </div>
-                      )}
-                    </motion.div>
-                  ))}
-                </div>
+            {/* Tab Content */}
+            <div className="flex-1 overflow-hidden">
+              {activeTab === 'gallery' && (
+                <GalleryTabContent 
+                  galleryItems={galleryItems}
+                  onAddToCanvas={onAddToCanvas}
+                  onSelectItem={setSelectedItem}
+                />
+              )}
+              {activeTab === 'workflows' && (
+                <WorkflowGeneratorTab onWorkflowGenerated={onWorkflowGenerated} />
               )}
             </div>
-
-            {/* Footer stats */}
-            {galleryItems.length > 0 && (
-              <div className="px-4 py-2 border-t border-zinc-800/80 flex items-center justify-between text-xs text-zinc-600">
-                <span className="flex items-center gap-1">
-                  <Clock className="w-3 h-3" />
-                  Recent outputs
-                </span>
-                <span>{galleryItems.length} items</span>
-              </div>
-            )}
           </motion.div>
         )}
       </AnimatePresence>
@@ -245,6 +188,108 @@ export const StudioGalleryPanel: React.FC<StudioGalleryPanelProps> = ({
         )}
       </AnimatePresence>
     </>
+  );
+};
+
+// Gallery Tab Content Component
+interface GalleryTabContentProps {
+  galleryItems: GalleryItem[];
+  onAddToCanvas?: (item: GalleryItem) => void;
+  onSelectItem: (item: GalleryItem) => void;
+}
+
+const GalleryTabContent: React.FC<GalleryTabContentProps> = ({
+  galleryItems,
+  onAddToCanvas,
+  onSelectItem,
+}) => {
+  return (
+    <div className="h-full flex flex-col">
+      <div className="flex-1 overflow-y-auto p-3">
+        {galleryItems.length === 0 ? (
+          <div className="h-full flex flex-col items-center justify-center text-center px-4">
+            <div className="w-16 h-16 rounded-2xl bg-zinc-900 flex items-center justify-center mb-3">
+              <Sparkles className="w-7 h-7 text-zinc-700" />
+            </div>
+            <p className="text-sm text-zinc-500 mb-1">No generations yet</p>
+            <p className="text-xs text-zinc-600">
+              Generated content will appear here
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-2">
+            {galleryItems.map((item) => (
+              <motion.div
+                key={item.id}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="group relative aspect-square rounded-xl overflow-hidden bg-zinc-900 border border-zinc-800/60 hover:border-purple-500/50 transition-all cursor-pointer"
+                onClick={() => onSelectItem(item)}
+              >
+                {item.type === 'image' && item.url ? (
+                  <img
+                    src={item.url}
+                    alt="Generated"
+                    className="w-full h-full object-cover"
+                  />
+                ) : item.type === 'text' ? (
+                  <div className="w-full h-full p-2 text-[8px] text-zinc-500 overflow-hidden">
+                    {item.url}
+                  </div>
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <Images className="w-6 h-6 text-zinc-700" />
+                  </div>
+                )}
+
+                {/* Hover overlay */}
+                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onAddToCanvas?.(item);
+                    }}
+                    className="p-2 bg-purple-500/80 hover:bg-purple-500 rounded-lg transition-colors"
+                    title="Add to canvas"
+                  >
+                    <Plus className="w-4 h-4 text-white" />
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                    }}
+                    className="p-2 bg-zinc-700/80 hover:bg-zinc-600 rounded-lg transition-colors"
+                    title="Download"
+                  >
+                    <Download className="w-4 h-4 text-white" />
+                  </button>
+                </div>
+
+                {/* Label */}
+                {item.nodeLabel && (
+                  <div className="absolute bottom-0 left-0 right-0 p-1.5 bg-gradient-to-t from-black/80 to-transparent">
+                    <p className="text-[9px] text-zinc-400 truncate">
+                      {item.nodeLabel}
+                    </p>
+                  </div>
+                )}
+              </motion.div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Footer stats */}
+      {galleryItems.length > 0 && (
+        <div className="px-4 py-2 border-t border-zinc-800/80 flex items-center justify-between text-xs text-zinc-600">
+          <span className="flex items-center gap-1">
+            <Clock className="w-3 h-3" />
+            Recent outputs
+          </span>
+          <span>{galleryItems.length} items</span>
+        </div>
+      )}
+    </div>
   );
 };
 

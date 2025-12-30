@@ -42,11 +42,24 @@ import { HANDLE_COLORS, DataType, ConnectionValidator, isTypeCompatible } from '
 import { useComputeFlowStore } from '@/store/computeFlowStore';
 import { v4 as uuidv4 } from 'uuid';
 import EmptyCanvasState from './EmptyCanvasState';
-import { AIWorkflowGenerator } from './AIWorkflowGenerator';
 import { toast } from 'sonner';
 import { nanoid } from 'nanoid';
 import { AddBlockNode } from './nodes/AddBlockNode';
 import type { NodeDefinition, EdgeDefinition } from '@/types/computeFlow';
+
+// New upload nodes
+import { UploadImageNode } from './nodes/UploadImageNode';
+import { UploadVideoNode } from './nodes/UploadVideoNode';
+import { UploadAudioNode } from './nodes/UploadAudioNode';
+import { UploadDocumentNode } from './nodes/UploadDocumentNode';
+import { Upload3DNode } from './nodes/Upload3DNode';
+
+// New generation nodes
+import { ReactFlowAudioNode } from './nodes/ReactFlowAudioNode';
+import { ReactFlow3DNode } from './nodes/ReactFlow3DNode';
+
+// Output node
+import { OutputNode } from './nodes/OutputNode';
 
 interface Block {
   id: string;
@@ -79,12 +92,27 @@ interface StudioCanvasProps {
 
 // Node types configuration (outside component for React Flow optimization)
 const nodeTypes: NodeTypes = {
+  // Core nodes
   text: ReactFlowTextNode,
   image: ReactFlowImageNode,
   video: ReactFlowVideoNode,
   upload: ReactFlowUploadNode,
   compute: ComputeNode,
   addBlockNode: AddBlockNode,
+  
+  // Specialized upload nodes
+  uploadImage: UploadImageNode,
+  uploadVideo: UploadVideoNode,
+  uploadAudio: UploadAudioNode,
+  uploadDocument: UploadDocumentNode,
+  upload3D: Upload3DNode,
+  
+  // Generation nodes
+  audio: ReactFlowAudioNode,
+  '3d': ReactFlow3DNode,
+  
+  // Output node
+  output: OutputNode,
 };
 
 // Edge types configuration
@@ -145,8 +173,8 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
     addGeneratedWorkflow,
   } = useComputeFlowStore();
   
-  // AI Workflow Generator state
-  const [showWorkflowGenerator, setShowWorkflowGenerator] = useState(false);
+  // Gallery open by default
+  const [showGallery, setShowGallery] = useState(true);
   
   // Track dragging data type for handle highlighting
   const [draggingDataType, setDraggingDataType] = useState<DataType | null>(null);
@@ -216,7 +244,6 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
   const [nodeSelectorPosition, setNodeSelectorPosition] = useState({ x: 0, y: 0 });
   const [activeConnection, setActiveConnection] = useState<any>(null);
   const [showGrid, setShowGrid] = useState(true);
-  const [showGallery, setShowGallery] = useState(false);
   
   // Get selected nodes count
   const selectedNodes = useMemo(() => nodes.filter(n => n.selected), [nodes]);
@@ -615,22 +642,10 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
         <div className="absolute inset-0 pointer-events-none">
           <EmptyCanvasState 
             onAddBlock={(type) => onAddBlock({ id: uuidv4(), type, position: { x: 400, y: 300 } })} 
-            onExploreFlows={() => setShowWorkflowGenerator(true)}
+            onExploreFlows={() => setShowGallery(true)}
           />
         </div>
       )}
-      
-      {/* AI Workflow Generator Modal */}
-      <AIWorkflowGenerator
-        open={showWorkflowGenerator}
-        onOpenChange={setShowWorkflowGenerator}
-        onWorkflowGenerated={(nodes, edges) => {
-          addGeneratedWorkflow(nodes as NodeDefinition[], edges as EdgeDefinition[]);
-          if (projectId) {
-            setTimeout(() => saveGraph(projectId), 500);
-          }
-        }}
-      />
       
       {/* Selection Box */}
       {selectionBox && (
@@ -705,6 +720,12 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
             };
             onAddBlock(newBlock);
             toast.success('Added to canvas');
+          }}
+          onWorkflowGenerated={(nodes, edges) => {
+            addGeneratedWorkflow(nodes as NodeDefinition[], edges as EdgeDefinition[]);
+            if (projectId) {
+              setTimeout(() => saveGraph(projectId), 500);
+            }
           }}
         />
       )}

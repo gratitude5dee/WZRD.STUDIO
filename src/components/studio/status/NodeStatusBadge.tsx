@@ -4,7 +4,7 @@ import { Loader2, CheckCircle2, XCircle, Clock, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 
-export type NodeStatus = 'idle' | 'queued' | 'running' | 'succeeded' | 'failed' | 'warning';
+export type NodeStatus = 'idle' | 'queued' | 'running' | 'succeeded' | 'failed' | 'warning' | 'canceled' | 'dirty';
 
 interface NodeStatusBadgeProps {
   status: NodeStatus;
@@ -61,6 +61,14 @@ export const NodeStatusBadge: React.FC<NodeStatusBadgeProps> = ({
           label: 'Warning',
           color: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20',
           ringColor: 'ring-yellow-500/20',
+          pulse: false
+        };
+      case 'canceled':
+        return {
+          icon: <XCircle className="w-3 h-3" />,
+          label: 'Canceled',
+          color: 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20',
+          ringColor: 'ring-zinc-500/20',
           pulse: false
         };
       default:
