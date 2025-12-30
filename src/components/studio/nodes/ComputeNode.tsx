@@ -20,7 +20,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { HANDLE_COLORS, Port, DataType, isTypeCompatible } from '@/types/computeFlow';
+import { HANDLE_COLORS, HANDLE_GLOW_COLORS, Port, DataType, isTypeCompatible } from '@/types/computeFlow';
 
 export interface ComputeNodeData {
   kind: string;
@@ -84,14 +84,39 @@ export const ComputeNode = memo(({ id, data, selected }: NodeProps) => {
     return HANDLE_COLORS[outputType as DataType] || HANDLE_COLORS.any;
   }, [nodeData.outputs]);
 
-  // Status indicator styles
+  // Status indicator styles with premium glow effects
   const statusStyles = useMemo(() => {
     switch (nodeData.status) {
-      case 'running': return { ring: 'ring-2 ring-blue-500/50', dot: 'bg-blue-500' };
-      case 'succeeded': return { ring: 'ring-2 ring-green-500/50', dot: 'bg-green-500' };
-      case 'failed': return { ring: 'ring-2 ring-red-500/50', dot: 'bg-red-500' };
-      case 'queued': return { ring: 'ring-2 ring-amber-500/50', dot: 'bg-amber-500' };
-      default: return { ring: selected ? 'ring-2 ring-purple-500/40' : '', dot: 'bg-zinc-600' };
+      case 'running': return { 
+        ring: 'ring-2 ring-blue-500/60', 
+        dot: 'bg-blue-500',
+        glow: '0 0 20px rgba(59, 130, 246, 0.4)',
+        animate: true,
+      };
+      case 'succeeded': return { 
+        ring: 'ring-2 ring-emerald-500/60', 
+        dot: 'bg-emerald-500',
+        glow: '0 0 16px rgba(16, 185, 129, 0.3)',
+        animate: false,
+      };
+      case 'failed': return { 
+        ring: 'ring-2 ring-red-500/60', 
+        dot: 'bg-red-500',
+        glow: '0 0 16px rgba(239, 68, 68, 0.3)',
+        animate: false,
+      };
+      case 'queued': return { 
+        ring: 'ring-2 ring-amber-500/50', 
+        dot: 'bg-amber-500',
+        glow: '0 0 12px rgba(245, 158, 11, 0.2)',
+        animate: true,
+      };
+      default: return { 
+        ring: selected ? 'ring-2 ring-purple-500/50' : '', 
+        dot: 'bg-zinc-600',
+        glow: selected ? '0 0 24px rgba(139, 92, 246, 0.25)' : undefined,
+        animate: false,
+      };
     }
   }, [nodeData.status, selected]);
 
@@ -103,18 +128,32 @@ export const ComputeNode = memo(({ id, data, selected }: NodeProps) => {
     return true;
   }, [nodeData.inputs, getEdges]);
 
+  // Hover state for node
+  const [isNodeHovered, setIsNodeHovered] = useState(false);
+
   return (
-    <div
+    <motion.div
+      initial={{ scale: 0.95, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{ duration: 0.2, ease: 'easeOut' }}
+      onMouseEnter={() => setIsNodeHovered(true)}
+      onMouseLeave={() => setIsNodeHovered(false)}
       className={cn(
-        'relative flex flex-col rounded-2xl border border-zinc-800/80 backdrop-blur-md',
+        'relative flex flex-col rounded-2xl border backdrop-blur-md',
         'min-w-[280px] max-w-[320px] transition-all duration-200',
-        'bg-zinc-900/90 shadow-xl',
-        statusStyles.ring
+        'bg-zinc-900/95',
+        statusStyles.ring,
+        isNodeHovered && !selected && 'border-zinc-700/80',
+        !isNodeHovered && !selected && 'border-zinc-800/80',
+        selected && 'border-purple-500/50'
       )}
       style={{ 
-        boxShadow: selected 
-          ? `0 0 40px ${primaryColor}20, 0 8px 32px rgba(0, 0, 0, 0.6)` 
-          : '0 8px 32px rgba(0, 0, 0, 0.4)'
+        boxShadow: statusStyles.glow 
+          ? `${statusStyles.glow}, 0 8px 32px rgba(0, 0, 0, 0.5)`
+          : isNodeHovered 
+            ? `0 0 24px ${primaryColor}15, 0 12px 40px rgba(0, 0, 0, 0.5)`
+            : '0 8px 32px rgba(0, 0, 0, 0.4)',
+        transform: isNodeHovered && !selected ? 'translateY(-2px)' : undefined,
       }}
     >
       {/* Compact Header */}
@@ -242,81 +281,172 @@ export const ComputeNode = memo(({ id, data, selected }: NodeProps) => {
         )}
       </AnimatePresence>
 
-      {/* Input Handles (Left side) - Small circular */}
+      {/* Input Handles (Left side) - Premium double-ring design */}
       {nodeData.inputs?.map((port, index) => {
-        const top = collapsed ? 24 : 60 + index * 40;
+        const totalInputs = nodeData.inputs?.length || 1;
+        const baseOffset = collapsed ? 24 : 56;
+        const spacing = collapsed ? 0 : 44;
+        const top = baseOffset + index * spacing;
         const color = HANDLE_COLORS[port.datatype as DataType] || HANDLE_COLORS.any;
+        const glowColor = HANDLE_GLOW_COLORS[port.datatype as DataType] || HANDLE_GLOW_COLORS.any;
         const isHovered = hoveredHandle === port.id;
 
         return (
           <React.Fragment key={port.id}>
+            {/* Outer glow ring on hover */}
+            {isHovered && (
+              <div
+                className="absolute rounded-full pointer-events-none animate-pulse"
+                style={{
+                  width: 24,
+                  height: 24,
+                  left: -12,
+                  top: top - 12,
+                  background: `radial-gradient(circle, ${glowColor} 0%, transparent 70%)`,
+                }}
+              />
+            )}
             <Handle
               type="target"
               position={Position.Left}
               id={port.id}
-              className="!rounded-full !border-2 transition-all duration-150"
+              className="!rounded-full transition-all duration-200 ease-out"
               style={{
-                width: isHovered ? 12 : 10,
-                height: isHovered ? 12 : 10,
-                background: color,
-                borderColor: 'rgb(24 24 27)',
+                width: isHovered ? 16 : 14,
+                height: isHovered ? 16 : 14,
+                background: '#09090b',
+                border: `2.5px solid ${color}`,
                 top,
-                boxShadow: isHovered ? `0 0 12px ${color}` : 'none',
+                left: isHovered ? -8 : -7,
+                boxShadow: isHovered 
+                  ? `0 0 16px ${color}, 0 0 8px ${glowColor}, inset 0 0 4px ${color}40`
+                  : `0 0 6px ${color}40`,
+                transform: isHovered ? 'scale(1.15)' : 'scale(1)',
               }}
               onMouseEnter={() => setHoveredHandle(port.id)}
               onMouseLeave={() => setHoveredHandle(null)}
               isValidConnection={isValidConnection}
             />
-            {/* Tooltip label on hover */}
-            {isHovered && !collapsed && (
-              <div
-                className="absolute left-0 -translate-x-full pr-2 text-[10px] text-zinc-400 whitespace-nowrap pointer-events-none"
-                style={{ top: top - 5 }}
-              >
-                {port.name}
-              </div>
-            )}
+            {/* Inner dot */}
+            <div
+              className="absolute rounded-full pointer-events-none transition-all duration-200"
+              style={{
+                width: isHovered ? 6 : 5,
+                height: isHovered ? 6 : 5,
+                background: color,
+                left: isHovered ? -3 : -2.5,
+                top: top - (isHovered ? 3 : 2.5),
+              }}
+            />
+            {/* Label tooltip */}
+            <AnimatePresence>
+              {isHovered && !collapsed && (
+                <motion.div
+                  initial={{ opacity: 0, x: 5 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 5 }}
+                  className="absolute left-0 -translate-x-full pr-3 pointer-events-none z-50"
+                  style={{ top: top - 10 }}
+                >
+                  <div 
+                    className="px-2 py-1 rounded-md text-[10px] font-medium whitespace-nowrap"
+                    style={{ 
+                      background: `${color}15`,
+                      color: color,
+                      border: `1px solid ${color}30`,
+                    }}
+                  >
+                    {port.name}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </React.Fragment>
         );
       })}
 
-      {/* Output Handles (Right side) - Small circular */}
+      {/* Output Handles (Right side) - Premium double-ring design */}
       {nodeData.outputs?.map((port, index) => {
-        const top = collapsed ? 24 : 60 + index * 40;
+        const baseOffset = collapsed ? 24 : 56;
+        const spacing = collapsed ? 0 : 44;
+        const top = baseOffset + index * spacing;
         const color = HANDLE_COLORS[port.datatype as DataType] || HANDLE_COLORS.any;
+        const glowColor = HANDLE_GLOW_COLORS[port.datatype as DataType] || HANDLE_GLOW_COLORS.any;
         const isHovered = hoveredHandle === port.id;
 
         return (
           <React.Fragment key={port.id}>
+            {/* Outer glow ring on hover */}
+            {isHovered && (
+              <div
+                className="absolute rounded-full pointer-events-none animate-pulse"
+                style={{
+                  width: 24,
+                  height: 24,
+                  right: -12,
+                  top: top - 12,
+                  background: `radial-gradient(circle, ${glowColor} 0%, transparent 70%)`,
+                }}
+              />
+            )}
             <Handle
               type="source"
               position={Position.Right}
               id={port.id}
-              className="!rounded-full !border-2 transition-all duration-150"
+              className="!rounded-full transition-all duration-200 ease-out"
               style={{
-                width: isHovered ? 12 : 10,
-                height: isHovered ? 12 : 10,
-                background: color,
-                borderColor: 'rgb(24 24 27)',
+                width: isHovered ? 16 : 14,
+                height: isHovered ? 16 : 14,
+                background: '#09090b',
+                border: `2.5px solid ${color}`,
                 top,
-                boxShadow: isHovered ? `0 0 12px ${color}` : 'none',
+                right: isHovered ? -8 : -7,
+                boxShadow: isHovered 
+                  ? `0 0 16px ${color}, 0 0 8px ${glowColor}, inset 0 0 4px ${color}40`
+                  : `0 0 6px ${color}40`,
+                transform: isHovered ? 'scale(1.15)' : 'scale(1)',
               }}
               onMouseEnter={() => setHoveredHandle(port.id)}
               onMouseLeave={() => setHoveredHandle(null)}
             />
-            {/* Tooltip label on hover */}
-            {isHovered && !collapsed && (
-              <div
-                className="absolute right-0 translate-x-full pl-2 text-[10px] text-zinc-400 whitespace-nowrap pointer-events-none"
-                style={{ top: top - 5 }}
-              >
-                {port.name}
-              </div>
-            )}
+            {/* Inner dot */}
+            <div
+              className="absolute rounded-full pointer-events-none transition-all duration-200"
+              style={{
+                width: isHovered ? 6 : 5,
+                height: isHovered ? 6 : 5,
+                background: color,
+                right: isHovered ? -3 : -2.5,
+                top: top - (isHovered ? 3 : 2.5),
+              }}
+            />
+            {/* Label tooltip */}
+            <AnimatePresence>
+              {isHovered && !collapsed && (
+                <motion.div
+                  initial={{ opacity: 0, x: -5 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -5 }}
+                  className="absolute right-0 translate-x-full pl-3 pointer-events-none z-50"
+                  style={{ top: top - 10 }}
+                >
+                  <div 
+                    className="px-2 py-1 rounded-md text-[10px] font-medium whitespace-nowrap"
+                    style={{ 
+                      background: `${color}15`,
+                      color: color,
+                      border: `1px solid ${color}30`,
+                    }}
+                  >
+                    {port.name}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </React.Fragment>
         );
       })}
-    </div>
+    </motion.div>
   );
 });
 
