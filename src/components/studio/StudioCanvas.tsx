@@ -233,6 +233,7 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
   // Helper to map node kind to React Flow node type
   const getNodeTypeFromKind = useCallback((kind: string): string => {
     const kindToType: Record<string, string> = {
+      // Legacy/existing mappings (snake_case)
       'upload': 'upload',
       'upload_image': 'uploadImage',
       'upload_video': 'uploadVideo',
@@ -246,6 +247,16 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
       'audio_generate': 'audio',
       '3d_generate': '3d',
       'output': 'output',
+      
+      // AI-generated workflow kinds (capitalized from generate-workflow)
+      'Text': 'text',
+      'Image': 'image',
+      'Video': 'video',
+      'Prompt': 'text',
+      'Model': 'compute',
+      'Transform': 'compute',
+      'Output': 'output',
+      'Gateway': 'compute',
     };
     return kindToType[kind] || 'compute';
   }, []);
@@ -259,14 +270,24 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
       type: getNodeTypeFromKind(nodeDef.kind),
       position: nodeDef.position,
       data: {
+        // Core compute flow data
         nodeDefinition: nodeDef,
         label: nodeDef.label,
         kind: nodeDef.kind,
         inputs: nodeDef.inputs,
         outputs: nodeDef.outputs,
         params: nodeDef.params,
-        status: nodeDef.status,
+        status: nodeDef.status || 'idle',
+        progress: nodeDef.progress || 0,
         preview: nodeDef.preview,
+        error: nodeDef.error,
+        
+        // For specialized nodes (ImageBlock, VideoBlock, TextBlock)
+        selectedModel: nodeDef.params?.model || nodeDef.metadata?.model,
+        initialData: nodeDef.params,
+        blockPosition: nodeDef.position,
+        
+        // Callbacks
         onSpawnBlocks: handleSpawnBlocks,
       },
     }));
