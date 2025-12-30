@@ -297,6 +297,17 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
     return kindToType[kind] || 'compute';
   }, []);
 
+  // Handler for executing individual nodes
+  const handleNodeExecute = useCallback((nodeId: string) => {
+    if (!projectId) {
+      toast.error('No project selected');
+      return;
+    }
+    console.log('🎯 [StudioCanvas] Executing single node:', nodeId);
+    // For now, execute the full graph - the backend will handle running only what's needed
+    executeGraphStreaming(projectId);
+  }, [projectId, executeGraphStreaming]);
+
   // Sync nodeDefinitions from compute flow store to React Flow nodes
   useEffect(() => {
     if (!useComputeFlow) return;
@@ -323,8 +334,9 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
         initialData: nodeDef.params,
         blockPosition: nodeDef.position,
         
-        // Callbacks
+        // Callbacks - wire up onExecute for per-node generation
         onSpawnBlocks: handleSpawnBlocks,
+        onExecute: () => handleNodeExecute(nodeDef.id),
       },
     }));
     
@@ -346,7 +358,7 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
         fitView({ padding: 0.3, duration: 400 });
       }, 150);
     }
-  }, [nodeDefinitions, useComputeFlow, getNodeTypeFromKind, handleSpawnBlocks, setNodes, isAddingNodes, fitView]);
+  }, [nodeDefinitions, useComputeFlow, getNodeTypeFromKind, handleSpawnBlocks, handleNodeExecute, setNodes, isAddingNodes, fitView]);
 
   // Sync edgeDefinitions from compute flow store to React Flow edges
   useEffect(() => {
