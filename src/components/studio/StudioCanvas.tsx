@@ -827,12 +827,6 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
             onAddBlock(newBlock);
             toast.success('Added to canvas');
           }}
-          onWorkflowGenerated={(nodes, edges) => {
-            addGeneratedWorkflow(nodes as NodeDefinition[], edges as EdgeDefinition[]);
-            if (projectId) {
-              setTimeout(() => saveGraph(projectId), 500);
-            }
-          }}
         />
       )}
     </div>
