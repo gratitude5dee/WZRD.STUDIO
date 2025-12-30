@@ -8,7 +8,7 @@ interface BaseNodeProps extends HTMLAttributes<HTMLDivElement> {
     id: string;
     type: 'source' | 'target';
     position: Position;
-    dataType?: 'text' | 'image' | 'video' | 'any';
+    dataType?: 'text' | 'image' | 'video' | 'audio' | 'tensor' | 'any';
     label?: string;
     maxConnections?: number;
   }[];
@@ -19,8 +19,10 @@ export const BaseNode = forwardRef<HTMLDivElement, BaseNodeProps>(
     const getDataTypeColor = (dataType?: string) => {
       switch (dataType) {
         case 'text': return 'hsl(217 91% 60%)';
-        case 'image': return 'hsl(258 90% 66%)';
-        case 'video': return 'hsl(45 90% 60%)';
+        case 'image': return 'hsl(142 76% 36%)';
+        case 'video': return 'hsl(258 90% 66%)';
+        case 'audio': return 'hsl(330 80% 60%)';
+        case 'tensor': return 'hsl(186 94% 41%)';
         default: return 'hsl(var(--muted-foreground))';
       }
     };
