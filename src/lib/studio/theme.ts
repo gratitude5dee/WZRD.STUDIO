@@ -116,18 +116,21 @@ export const studioLayout = {
     defaultWidth: 280,
     minHeight: 120,
     padding: 12,
-    borderRadius: 8,
+    borderRadius: 16, // More rounded for premium feel
     headerHeight: 32,
-    portSize: 12,
+    portSize: 14,      // Larger handles
+    portSizeHover: 18, // Even larger on hover
     portGap: 8,
   },
   
   // Connections
   connection: {
-    strokeWidth: 2,
-    strokeWidthHover: 3,
+    strokeWidth: 2.5,
+    strokeWidthHover: 3.5,
     strokeWidthSelected: 4,
-    curveStrength: 0.5, // Bezier curve strength
+    curveStrength: 0.4, // Smoother bezier curve
+    glowRadius: 8,
+    glowRadiusHover: 12,
   },
   
   // Canvas
