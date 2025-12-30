@@ -44,6 +44,9 @@ interface ComputeFlowState {
   cancelExecution: () => void;
   clearGraph: () => void;
   resetNodeStatuses: () => void;
+  
+  // AI Workflow Generation
+  addGeneratedWorkflow: (nodes: NodeDefinition[], edges: EdgeDefinition[]) => void;
 }
 
 // Abort controller for cancellation
@@ -420,6 +423,18 @@ export const useComputeFlowStore = create<ComputeFlowState>((set, get) => ({
         error: null,
       },
     });
+  },
+
+  /**
+   * Add AI-generated workflow nodes and edges to the canvas
+   */
+  addGeneratedWorkflow: (nodes: NodeDefinition[], edges: EdgeDefinition[]) => {
+    console.log('🎨 Adding generated workflow:', { nodes: nodes.length, edges: edges.length });
+    
+    set(state => ({
+      nodeDefinitions: [...state.nodeDefinitions, ...nodes],
+      edgeDefinitions: [...state.edgeDefinitions, ...edges],
+    }));
   },
 }));
 

@@ -56,3 +56,6 @@ verify_jwt = false
 
 [functions.compute-save-graph]
 verify_jwt = false
+
+[functions.generate-workflow]
+verify_jwt = false

@@ -3,9 +3,10 @@ import { Button } from '@/components/ui/button';
 
 interface EmptyCanvasStateProps {
   onAddBlock: (type: 'text' | 'image' | 'video') => void;
+  onExploreFlows?: () => void;
 }
 
-const EmptyCanvasState = ({ onAddBlock }: EmptyCanvasStateProps) => {
+const EmptyCanvasState = ({ onAddBlock, onExploreFlows }: EmptyCanvasStateProps) => {
   return (
     <div className="absolute inset-0 flex items-center justify-center pointer-events-none animate-in fade-in-0 duration-500">
       <div className="text-center pointer-events-auto space-y-4">
@@ -45,10 +46,10 @@ const EmptyCanvasState = ({ onAddBlock }: EmptyCanvasStateProps) => {
           </Button>
           
           <Button
+            onClick={onExploreFlows}
             variant="outline"
             size="sm"
-            className="bg-black border-zinc-800 hover:bg-zinc-900 hover:border-zinc-700 text-zinc-300 transition-all duration-200"
-            disabled
+            className="bg-black border-zinc-800 hover:bg-zinc-900 hover:border-zinc-700 text-zinc-300 transition-all duration-200 hover:border-purple-500/50 hover:text-purple-300"
           >
             <Workflow className="h-3.5 w-3.5 mr-1.5" />
             Explore Flows
