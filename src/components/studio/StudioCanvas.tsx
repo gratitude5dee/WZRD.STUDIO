@@ -230,6 +230,91 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
     });
   }, [blocks, blockModels, selectedBlockId, handleSpawnBlocks]);
 
+  // Helper to map node kind to React Flow node type
+  const getNodeTypeFromKind = useCallback((kind: string): string => {
+    const kindToType: Record<string, string> = {
+      'upload': 'upload',
+      'upload_image': 'uploadImage',
+      'upload_video': 'uploadVideo',
+      'upload_audio': 'uploadAudio',
+      'upload_document': 'uploadDocument',
+      'upload_3d': 'upload3D',
+      'text_to_image': 'image',
+      'text_to_video': 'video',
+      'text_to_text': 'text',
+      'image_to_video': 'video',
+      'audio_generate': 'audio',
+      '3d_generate': '3d',
+      'output': 'output',
+    };
+    return kindToType[kind] || 'compute';
+  }, []);
+
+  // Sync nodeDefinitions from compute flow store to React Flow nodes
+  useEffect(() => {
+    if (!useComputeFlow) return;
+    
+    const computeNodes: Node[] = nodeDefinitions.map(nodeDef => ({
+      id: nodeDef.id,
+      type: getNodeTypeFromKind(nodeDef.kind),
+      position: nodeDef.position,
+      data: {
+        nodeDefinition: nodeDef,
+        label: nodeDef.label,
+        kind: nodeDef.kind,
+        inputs: nodeDef.inputs,
+        outputs: nodeDef.outputs,
+        params: nodeDef.params,
+        status: nodeDef.status,
+        preview: nodeDef.preview,
+        onSpawnBlocks: handleSpawnBlocks,
+      },
+    }));
+    
+    setNodes(currentNodes => {
+      // Keep addBlockNodes
+      const addBlockNodes = currentNodes.filter(n => n.type === 'addBlockNode');
+      // Keep legacy block nodes that aren't in compute flow
+      const blockNodes = currentNodes.filter(n => 
+        n.type !== 'addBlockNode' && 
+        !nodeDefinitions.some(nd => nd.id === n.id)
+      );
+      
+      return [...computeNodes, ...blockNodes, ...addBlockNodes];
+    });
+  }, [nodeDefinitions, useComputeFlow, getNodeTypeFromKind, handleSpawnBlocks, setNodes]);
+
+  // Sync edgeDefinitions from compute flow store to React Flow edges
+  useEffect(() => {
+    if (!useComputeFlow) return;
+    
+    const computeEdges: Edge[] = edgeDefinitions.map(edgeDef => ({
+      id: edgeDef.id,
+      source: edgeDef.source.nodeId,
+      target: edgeDef.target.nodeId,
+      sourceHandle: edgeDef.source.portId,
+      targetHandle: edgeDef.target.portId,
+      type: 'compute',
+      data: {
+        dataType: edgeDef.dataType,
+        status: edgeDef.status,
+      },
+      style: {
+        stroke: HANDLE_COLORS[edgeDef.dataType as DataType] || HANDLE_COLORS.any,
+        strokeWidth: 2,
+      },
+    }));
+    
+    setEdges(computeEdges);
+  }, [edgeDefinitions, useComputeFlow, setEdges]);
+
+  // Load existing graph on mount when in compute flow mode
+  useEffect(() => {
+    if (useComputeFlow && projectId) {
+      loadGraph(projectId);
+    }
+  }, [useComputeFlow, projectId, loadGraph]);
+
   // Sync node positions back to blocks
   useEffect(() => {
     nodes.forEach(node => {
