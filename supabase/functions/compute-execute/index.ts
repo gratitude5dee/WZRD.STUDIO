@@ -617,12 +617,17 @@ async function executeImageNode(
     
     console.log('[ImageNode] FAL response keys:', Object.keys(resultData));
     
-    if (resultData.images && Array.isArray(resultData.images) && resultData.images.length > 0) {
-      imageUrl = resultData.images.length === 1 
-        ? resultData.images[0].url 
-        : resultData.images.map((img: any) => img.url);
-    } else if (resultData.image && resultData.image.url) {
-      imageUrl = resultData.image.url;
+    // Handle wrapped response (data.images) - FAL v2 format
+    const imageData = resultData.data || resultData;
+    
+    console.log('[ImageNode] Image data keys:', Object.keys(imageData));
+    
+    if (imageData.images && Array.isArray(imageData.images) && imageData.images.length > 0) {
+      imageUrl = imageData.images.length === 1 
+        ? imageData.images[0].url 
+        : imageData.images.map((img: any) => img.url);
+    } else if (imageData.image && imageData.image.url) {
+      imageUrl = imageData.image.url;
     } else if (resultData.output && typeof resultData.output === 'string') {
       imageUrl = resultData.output;
     } else {
