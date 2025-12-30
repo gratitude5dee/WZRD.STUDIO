@@ -36,7 +36,7 @@ export const ReactFlowTextNode = memo(({ id, data, selected }: NodeProps) => {
   ];
 
   return (
-    <BaseNode handles={handles}>
+    <BaseNode handles={handles} nodeType="text" isSelected={selected}>
       {/* Status indicator */}
       <NodeStatusBadge 
         status={status}

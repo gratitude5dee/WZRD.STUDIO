@@ -1,128 +1,101 @@
-import { forwardRef, HTMLAttributes, ReactNode } from 'react';
-import { Handle, Position } from '@xyflow/react';
+import { CSSProperties, forwardRef, HTMLAttributes, ReactNode } from 'react';
+import { Position } from '@xyflow/react';
 import { cn } from '@/lib/utils';
+import { NodeHandle } from './NodeHandle';
+import { DataType, HANDLE_COLORS, HANDLE_GLOW_COLORS } from '@/types/computeFlow';
 
 interface BaseNodeProps extends HTMLAttributes<HTMLDivElement> {
   children: ReactNode;
+  nodeType?: 'text' | 'image' | 'video' | 'audio' | '3d' | 'compute' | 'output';
+  isSelected?: boolean;
   handles?: {
     id: string;
     type: 'source' | 'target';
     position: Position;
-    dataType?: 'text' | 'image' | 'video' | 'audio' | 'tensor' | 'any';
+    dataType?: DataType;
     label?: string;
     maxConnections?: number;
   }[];
 }
 
 export const BaseNode = forwardRef<HTMLDivElement, BaseNodeProps>(
-  ({ className, children, handles = [], ...props }, ref) => {
-    const getDataTypeColor = (dataType?: string) => {
-      switch (dataType) {
-        case 'text': return 'hsl(217 91% 60%)';
-        case 'image': return 'hsl(142 76% 36%)';
-        case 'video': return 'hsl(258 90% 66%)';
-        case 'audio': return 'hsl(330 80% 60%)';
-        case 'tensor': return 'hsl(186 94% 41%)';
-        default: return 'hsl(var(--muted-foreground))';
-      }
-    };
+  ({ className, children, handles = [], nodeType, isSelected = false, ...props }, ref) => {
+    const inferredType = (() => {
+      if (nodeType) return nodeType;
+      if (handles.some(handle => handle.dataType === 'image')) return 'image';
+      if (handles.some(handle => handle.dataType === 'video')) return 'video';
+      if (handles.some(handle => handle.dataType === 'audio')) return 'audio';
+      if (handles.some(handle => handle.dataType === 'text')) return 'text';
+      if (handles.some(handle => handle.dataType === 'tensor')) return '3d';
+      return 'compute';
+    })();
 
-    const getNodeGradient = () => {
-      // Check if any handle has a specific type to determine node type
-      const hasText = handles.some(h => h.dataType === 'text');
-      const hasImage = handles.some(h => h.dataType === 'image');
-      const hasVideo = handles.some(h => h.dataType === 'video');
-      
-      if (hasText && !hasImage && !hasVideo) {
-        return 'from-blue-500/30 to-purple-500/30';
+    const nodeColor = (() => {
+      switch (inferredType) {
+        case 'text':
+          return HANDLE_COLORS.text;
+        case 'image':
+          return HANDLE_COLORS.image;
+        case 'video':
+          return HANDLE_COLORS.video;
+        case 'audio':
+          return HANDLE_COLORS.audio;
+        case '3d':
+          return '#F59E0B';
+        case 'output':
+          return HANDLE_COLORS.any;
+        default:
+          return HANDLE_COLORS.any;
       }
-      if (hasImage) {
-        return 'from-purple-500/30 to-pink-500/30';
+    })();
+
+    const nodeGlow = (() => {
+      if (inferredType === '3d') {
+        return 'rgba(245, 158, 11, 0.4)';
       }
-      if (hasVideo) {
-        return 'from-amber-500/30 to-orange-500/30';
+      if (inferredType === 'output') {
+        return HANDLE_GLOW_COLORS.any;
       }
-      return 'from-zinc-500/20 to-zinc-600/20';
-    };
+      return HANDLE_GLOW_COLORS[inferredType as keyof typeof HANDLE_GLOW_COLORS] || HANDLE_GLOW_COLORS.any;
+    })();
+
+    const style = {
+      '--node-accent': nodeColor,
+      '--node-accent-glow': nodeGlow,
+      borderColor: `${nodeColor}40`,
+    } as CSSProperties;
 
     return (
       <div
         ref={ref}
         className={cn(
-          'relative rounded-xl border bg-card text-card-foreground',
-          // Sophisticated shadow system
-          'shadow-[0_4px_16px_rgba(0,0,0,0.25)]',
-          'hover:shadow-[0_8px_32px_rgba(0,0,0,0.35)]',
-          'transition-all duration-300 ease-out',
-          // Selected state with blue glow
-          '[.react-flow__node.selected_&]:shadow-[0_12px_48px_rgba(59,130,246,0.25)]',
-          '[.react-flow__node.selected_&]:ring-2 [.react-flow__node.selected_&]:ring-blue-500/50',
+          'group/node relative rounded-2xl border bg-zinc-900/95 text-card-foreground backdrop-blur-xl',
+          'min-w-[320px] max-w-[400px]',
+          'shadow-[0_2px_4px_rgba(0,0,0,0.3),0_8px_16px_rgba(0,0,0,0.2),0_16px_32px_rgba(0,0,0,0.1)]',
+          'transition-all duration-200 ease-out',
+          'hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(0,0,0,0.35),0_16px_32px_rgba(0,0,0,0.25),0_32px_48px_rgba(0,0,0,0.12)]',
+          '[.react-flow__node.selected_&]:ring-2',
+          '[.react-flow__node.selected_&]:ring-[var(--node-accent)]',
+          '[.react-flow__node.selected_&]:shadow-[0_0_0_2px_var(--node-accent),0_0_24px_var(--node-accent-glow)]',
           className
         )}
+        style={style}
         {...props}
       >
-        {/* Gradient border overlay */}
-        <div 
-          className={cn(
-            'absolute inset-0 rounded-xl bg-gradient-to-br opacity-20 pointer-events-none',
-            'transition-opacity duration-300',
-            '[.react-flow__node.selected_&]:opacity-40',
-            getNodeGradient()
-          )}
-          style={{ maskImage: 'linear-gradient(black, black) content-box, linear-gradient(black, black)', WebkitMaskComposite: 'xor' }}
-        />
-        
         {/* Corner indicators for selected state */}
-        <div className="[.react-flow__node.selected_&]:block hidden">
-          <div className="absolute top-1 left-1 w-2 h-2 bg-blue-500 rounded-full shadow-[0_0_8px_rgba(59,130,246,0.6)]" />
-          <div className="absolute top-1 right-1 w-2 h-2 bg-blue-500 rounded-full shadow-[0_0_8px_rgba(59,130,246,0.6)]" />
-          <div className="absolute bottom-1 left-1 w-2 h-2 bg-blue-500 rounded-full shadow-[0_0_8px_rgba(59,130,246,0.6)]" />
-          <div className="absolute bottom-1 right-1 w-2 h-2 bg-blue-500 rounded-full shadow-[0_0_8px_rgba(59,130,246,0.6)]" />
-        </div>
+        {isSelected && (
+          <>
+            <div className="absolute top-1.5 left-1.5 h-2 w-2 rounded-full bg-[var(--node-accent)] shadow-[0_0_8px_var(--node-accent-glow)]" />
+            <div className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-[var(--node-accent)] shadow-[0_0_8px_var(--node-accent-glow)]" />
+            <div className="absolute bottom-1.5 left-1.5 h-2 w-2 rounded-full bg-[var(--node-accent)] shadow-[0_0_8px_var(--node-accent-glow)]" />
+            <div className="absolute bottom-1.5 right-1.5 h-2 w-2 rounded-full bg-[var(--node-accent)] shadow-[0_0_8px_var(--node-accent-glow)]" />
+          </>
+        )}
+
         {/* Enhanced handles with labels */}
         {handles.map((handle) => {
-          const color = getDataTypeColor(handle.dataType);
           return (
-            <div key={handle.id} className="group/handle relative">
-              <Handle
-                id={handle.id}
-                type={handle.type}
-                position={handle.position}
-                className={cn(
-                  'w-5 h-5 border-[3px] bg-background transition-all cursor-pointer',
-                  'hover:scale-[2] hover:shadow-2xl hover:z-50',
-                  'active:scale-[1.8]',
-                  // Pulse animation on hover
-                  'hover:animate-pulse'
-                )}
-                style={{
-                  borderColor: color,
-                  boxShadow: `0 0 12px ${color}60, 0 0 4px ${color}40`,
-                }}
-              />
-              
-              {/* Handle label tooltip */}
-              {handle.label && (
-                <div 
-                  className={cn(
-                    'absolute opacity-0 group-hover/handle:opacity-100 transition-opacity',
-                    'pointer-events-none z-50 whitespace-nowrap',
-                    'px-2 py-1 text-[10px] font-medium rounded-md',
-                    'bg-zinc-900 border border-zinc-700 shadow-xl',
-                    handle.position === 'left' && 'left-full ml-2 top-1/2 -translate-y-1/2',
-                    handle.position === 'right' && 'right-full mr-2 top-1/2 -translate-y-1/2',
-                    handle.position === 'top' && 'top-full mt-2 left-1/2 -translate-x-1/2',
-                    handle.position === 'bottom' && 'bottom-full mb-2 left-1/2 -translate-x-1/2'
-                  )}
-                  style={{ color }}
-                >
-                  {handle.label}
-                  {handle.dataType && (
-                    <span className="ml-1 text-zinc-500">({handle.dataType})</span>
-                  )}
-                </div>
-              )}
-            </div>
+            <NodeHandle key={handle.id} {...handle} />
           );
         })}
         
@@ -140,7 +113,8 @@ export const BaseNodeHeader = forwardRef<HTMLElement, HTMLAttributes<HTMLElement
       ref={ref}
       {...props}
       className={cn(
-        'flex flex-row items-center justify-between gap-2 px-3 py-2 border-b',
+        'flex min-h-[44px] flex-row items-center justify-between gap-2 border-b border-white/5 bg-zinc-800/80 px-4 py-2',
+        'cursor-grab select-none active:cursor-grabbing',
         className
       )}
     />
@@ -154,7 +128,7 @@ export const BaseNodeHeaderTitle = forwardRef<
 >(({ className, ...props }, ref) => (
   <h3
     ref={ref}
-    className={cn('select-none flex-1 font-semibold text-sm', className)}
+    className={cn('flex-1 select-none text-sm font-semibold text-zinc-100', className)}
     {...props}
   />
 ));
@@ -164,7 +138,7 @@ export const BaseNodeContent = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDiv
   ({ className, ...props }, ref) => (
     <div
       ref={ref}
-      className={cn('flex flex-col gap-y-2 p-3', className)}
+      className={cn('flex flex-col gap-y-3 p-4', className)}
       {...props}
     />
   )
@@ -176,7 +150,7 @@ export const BaseNodeFooter = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivE
     <div
       ref={ref}
       className={cn(
-        'flex flex-row items-center gap-2 border-t px-3 py-2',
+        'flex min-h-[36px] flex-row items-center gap-2 border-t border-white/5 bg-zinc-800/50 px-4 py-2',
         className
       )}
       {...props}

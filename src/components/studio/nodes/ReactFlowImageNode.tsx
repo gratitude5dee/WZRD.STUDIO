@@ -30,7 +30,7 @@ export const ReactFlowImageNode = memo(({ id, data, selected }: NodeProps) => {
   ];
 
   return (
-    <BaseNode handles={handles}>
+    <BaseNode handles={handles} nodeType="image" isSelected={selected}>
       <NodeStatusBadge 
         status={status}
         progress={progress}

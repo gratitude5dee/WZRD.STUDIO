@@ -36,7 +36,7 @@ export const ReactFlowVideoNode = memo(({ id, data, selected }: NodeProps) => {
   ];
 
   return (
-    <BaseNode handles={handles}>
+    <BaseNode handles={handles} nodeType="video" isSelected={selected}>
       <NodeStatusBadge 
         status={status}
         progress={progress}

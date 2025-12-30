@@ -1,12 +1,14 @@
-import { FC, useState } from 'react';
+import { FC, useMemo, useState } from 'react';
 import {
   BaseEdge,
   EdgeLabelRenderer,
   getBezierPath,
   EdgeProps,
-  Edge,
+  Position,
 } from '@xyflow/react';
 import { motion } from 'framer-motion';
+import { HANDLE_COLORS, HANDLE_GLOW_COLORS, DataType } from '@/types/computeFlow';
+import { cn } from '@/lib/utils';
 
 export type EdgeStatus = 'idle' | 'running' | 'succeeded' | 'error';
 
@@ -23,70 +25,74 @@ export const StudioEdge: FC<EdgeProps> = ({
 }) => {
   const [isHovered, setIsHovered] = useState(false);
   const status = data?.status || 'idle';
+  const dataType = (data?.dataType as DataType) || 'any';
 
-  const [edgePath, labelX, labelY] = getBezierPath({
-    sourceX,
-    sourceY,
-    sourcePosition,
-    targetX,
-    targetY,
-    targetPosition,
-  });
+  const [edgePath, labelX, labelY] = useMemo(() => {
+    const distance = Math.abs(targetX - sourceX);
+    const curveIntensity = Math.min(distance * 0.5, 150);
+    const sourceControlX = sourceX + curveIntensity;
+    const targetControlX = targetX - curveIntensity;
+    const verticalOffset = (targetY - sourceY) * 0.1;
+    const path = [
+      `M ${sourceX} ${sourceY}`,
+      `C ${sourceControlX} ${sourceY + verticalOffset},`,
+      `${targetControlX} ${targetY - verticalOffset},`,
+      `${targetX} ${targetY}`,
+    ].join(' ');
 
-  const getStrokeColor = () => {
-    if (selected) return 'hsl(var(--primary))';
-    switch (status) {
-      case 'running': return 'hsl(var(--chart-1))';
-      case 'succeeded': return 'hsl(var(--chart-4))';
-      case 'error': return 'hsl(var(--destructive))';
-      default: return 'hsl(var(--border))';
-    }
-  };
+    const [fallbackPath, fallbackLabelX, fallbackLabelY] = getBezierPath({
+      sourceX,
+      sourceY,
+      sourcePosition: sourcePosition as Position,
+      targetX,
+      targetY,
+      targetPosition: targetPosition as Position,
+    });
+
+    return [path || fallbackPath, fallbackLabelX, fallbackLabelY] as const;
+  }, [sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition]);
+
+  const strokeColor = HANDLE_COLORS[dataType] || HANDLE_COLORS.any;
+  const glowColor = HANDLE_GLOW_COLORS[dataType] || HANDLE_GLOW_COLORS.any;
+  const isExecuting = status === 'running';
+  const isSelected = selected;
 
   return (
     <>
-      {/* Glow effect */}
       <BaseEdge
         id={`${id}-glow`}
         path={edgePath}
         style={{
-          stroke: getStrokeColor(),
-          strokeWidth: isHovered || selected ? 6 : 5,
-          opacity: 0.3,
-          filter: 'blur(4px)',
+          stroke: strokeColor,
+          strokeWidth: isHovered || isSelected ? 6 : 4,
+          opacity: 0.35,
+          filter: 'blur(6px)',
         }}
       />
 
-      {/* Main edge */}
       <BaseEdge
         id={id}
         path={edgePath}
         style={{
-          stroke: getStrokeColor(),
-          strokeWidth: isHovered || selected ? 3 : 2,
+          stroke: strokeColor,
+          strokeWidth: isHovered || isSelected ? 3 : 2,
           strokeLinecap: 'round',
+          strokeDasharray: isExecuting ? '8 4' : undefined,
+          animation: isExecuting ? 'dash 0.6s linear infinite' : undefined,
+          filter: isHovered || isSelected ? `drop-shadow(0 0 8px ${glowColor})` : 'none',
         }}
+        className={cn('transition-all duration-150', isHovered && 'cursor-pointer')}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       />
 
-      {/* Running animation */}
-      {status === 'running' && (
+      {isExecuting && (
         <g>
-          <circle r="4" fill={getStrokeColor()}>
-            <animateMotion
-              dur="2s"
-              repeatCount="indefinite"
-              path={edgePath}
-            />
+          <circle r="4" fill={strokeColor} filter={`drop-shadow(0 0 4px ${glowColor})`}>
+            <animateMotion dur="1.2s" repeatCount="indefinite" path={edgePath} />
           </circle>
-          <circle r="4" fill={getStrokeColor()} opacity="0.5">
-            <animateMotion
-              dur="2s"
-              repeatCount="indefinite"
-              path={edgePath}
-              begin="1s"
-            />
+          <circle r="3" fill={strokeColor} opacity="0.6">
+            <animateMotion dur="1.6s" repeatCount="indefinite" path={edgePath} begin="0.4s" />
           </circle>
         </g>
       )}
@@ -108,7 +114,20 @@ export const StudioEdge: FC<EdgeProps> = ({
         </EdgeLabelRenderer>
       )}
 
-      {/* Label */}
+      {isHovered && (
+        <EdgeLabelRenderer>
+          <div
+            className="absolute rounded-md border border-zinc-700 bg-zinc-900 px-2 py-1 text-xs text-zinc-200 shadow-lg"
+            style={{
+              transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
+              pointerEvents: 'none',
+            }}
+          >
+            <span style={{ color: strokeColor }}>{dataType}</span>
+          </div>
+        </EdgeLabelRenderer>
+      )}
+
       {data?.label && (
         <EdgeLabelRenderer>
           <div

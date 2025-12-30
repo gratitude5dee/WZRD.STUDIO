@@ -90,7 +90,7 @@ export const UploadVideoNode = memo(({ id, data, selected }: NodeProps) => {
   }, []);
 
   return (
-    <BaseNode handles={handles}>
+    <BaseNode handles={handles} nodeType="video" isSelected={selected}>
       <NodeStatusBadge status={status} progress={progress} error={error} />
       <div className={cn(
         "w-72 bg-[#1a1a1a] border border-zinc-800 rounded-lg overflow-hidden",
