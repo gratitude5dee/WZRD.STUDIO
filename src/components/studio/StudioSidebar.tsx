@@ -10,6 +10,7 @@ import { ProfileButton } from '@/components/layout/ProfileButton';
 import { WorkflowGeneratorTab } from './WorkflowGeneratorTab';
 import type { NodeDefinition, EdgeDefinition } from '@/types/computeFlow';
 import { useComputeFlowStore } from '@/store/computeFlowStore';
+import { toast } from 'sonner';
 
 interface StudioSidebarProps {
   onAddBlock: (blockType: 'text' | 'image' | 'video' | 'upload') => void;
@@ -56,7 +57,7 @@ const StudioSidebar = ({
   projectId,
   onAssetSelect
 }: StudioSidebarProps) => {
-  const { addGeneratedWorkflow, saveGraph } = useComputeFlowStore();
+  const { addGeneratedWorkflow, saveGraph, executeGraphStreaming } = useComputeFlowStore();
   const [showAddMenu, setShowAddMenu] = useState(false);
   const [showFlowSelector, setShowFlowSelector] = useState(false);
   const [showAssetsModal, setShowAssetsModal] = useState(false);
@@ -69,10 +70,19 @@ const StudioSidebar = ({
   const handleWorkflowGenerated = useCallback((nodes: NodeDefinition[], edges: EdgeDefinition[]) => {
     addGeneratedWorkflow(nodes, edges);
     if (projectId) {
-      setTimeout(() => saveGraph(projectId), 500);
+      // Save graph first, then auto-execute
+      setTimeout(() => {
+        saveGraph(projectId);
+        toast.info('Workflow saved! Starting generation...');
+        
+        // Auto-execute after save completes
+        setTimeout(() => {
+          executeGraphStreaming(projectId);
+        }, 600);
+      }, 500);
     }
     setShowWorkflowPanel(false);
-  }, [addGeneratedWorkflow, saveGraph, projectId]);
+  }, [addGeneratedWorkflow, saveGraph, projectId, executeGraphStreaming]);
   const handleClickOutside = (event: MouseEvent) => {
     if (addMenuRef.current && !addMenuRef.current.contains(event.target as Node)) {
       setShowAddMenu(false);
