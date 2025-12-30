@@ -1,15 +1,18 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Port, DataType } from '@/types/computeFlow';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Port, DataType, HANDLE_COLORS } from '@/types/computeFlow';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Plus } from 'lucide-react';
 
 interface ConnectionHandleProps {
   port: Port;
   nodeId: string;
   isConnected: boolean;
   isValidTarget?: boolean;
+  showAddButton?: boolean;
   onStartConnection?: (nodeId: string, portId: string, e: React.MouseEvent) => void;
   onFinishConnection?: (nodeId: string, portId: string) => void;
+  onAddClick?: () => void;
 }
 
 export const ConnectionHandle: React.FC<ConnectionHandleProps> = ({
@@ -17,27 +20,18 @@ export const ConnectionHandle: React.FC<ConnectionHandleProps> = ({
   nodeId,
   isConnected,
   isValidTarget = false,
+  showAddButton = false,
   onStartConnection,
-  onFinishConnection
+  onFinishConnection,
+  onAddClick
 }) => {
   const [isHovered, setIsHovered] = useState(false);
   
   const isInput = port.position === 'left' || port.position === 'top';
   const isOutput = port.position === 'right' || port.position === 'bottom';
 
-  const getDataTypeColor = (datatype: DataType) => {
-    switch (datatype) {
-      case 'image': return '#8b5cf6'; // purple
-      case 'text': return '#3b82f6'; // blue
-      case 'video': return '#f59e0b'; // amber
-      case 'tensor': return '#10b981'; // green
-      case 'json': return '#6366f1'; // indigo
-      case 'any': return '#6b7280'; // gray
-      default: return '#6b7280';
-    }
-  };
-
-  const color = getDataTypeColor(port.datatype);
+  // Use HANDLE_COLORS from computeFlow types for consistency
+  const color = HANDLE_COLORS[port.datatype] || HANDLE_COLORS.any;
 
   const handleSize = isHovered || isConnected ? 12 : 8;
   const handlePosition = {
@@ -125,11 +119,36 @@ export const ConnectionHandle: React.FC<ConnectionHandleProps> = ({
                 ∞
               </motion.div>
             )}
+            
+            {/* Add Node Button (shown on hover for unconnected outputs) */}
+            <AnimatePresence>
+              {showAddButton && !isConnected && isHovered && isOutput && (
+                <motion.button
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  transition={{ duration: 0.15 }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onAddClick?.();
+                  }}
+                  className="absolute z-50 w-5 h-5 rounded-full bg-purple-500 hover:bg-purple-400 text-white flex items-center justify-center shadow-lg transition-colors duration-150"
+                  style={{
+                    ...(port.position === 'right' ? { left: handleSize + 4, top: '50%', transform: 'translateY(-50%)' } : {}),
+                    ...(port.position === 'left' ? { right: handleSize + 4, top: '50%', transform: 'translateY(-50%)' } : {}),
+                    ...(port.position === 'bottom' ? { top: handleSize + 4, left: '50%', transform: 'translateX(-50%)' } : {}),
+                    ...(port.position === 'top' ? { bottom: handleSize + 4, left: '50%', transform: 'translateX(-50%)' } : {}),
+                  }}
+                >
+                  <Plus className="w-3 h-3" />
+                </motion.button>
+              )}
+            </AnimatePresence>
           </motion.div>
         </TooltipTrigger>
         <TooltipContent 
           side={port.position === 'left' ? 'left' : port.position === 'right' ? 'right' : 'top'}
-          className="text-xs"
+          className="text-xs bg-zinc-900 border-zinc-700/50"
         >
           <div className="space-y-1">
             <div className="font-semibold">{port.name}</div>
@@ -138,7 +157,7 @@ export const ConnectionHandle: React.FC<ConnectionHandleProps> = ({
                 className="w-2 h-2 rounded-full"
                 style={{ backgroundColor: color }}
               />
-              <span>{port.datatype}</span>
+              <span className="capitalize">{port.datatype}</span>
               {port.cardinality === 'n' && <span>(multiple)</span>}
               {port.optional && <span>(optional)</span>}
             </div>

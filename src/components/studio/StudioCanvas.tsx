@@ -42,9 +42,11 @@ import { HANDLE_COLORS, DataType, ConnectionValidator, isTypeCompatible } from '
 import { useComputeFlowStore } from '@/store/computeFlowStore';
 import { v4 as uuidv4 } from 'uuid';
 import EmptyCanvasState from './EmptyCanvasState';
+import { AIWorkflowGenerator } from './AIWorkflowGenerator';
 import { toast } from 'sonner';
 import { nanoid } from 'nanoid';
 import { AddBlockNode } from './nodes/AddBlockNode';
+import type { NodeDefinition, EdgeDefinition } from '@/types/computeFlow';
 
 interface Block {
   id: string;
@@ -140,7 +142,11 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
     cancelExecution,
     execution,
     isSaving,
+    addGeneratedWorkflow,
   } = useComputeFlowStore();
+  
+  // AI Workflow Generator state
+  const [showWorkflowGenerator, setShowWorkflowGenerator] = useState(false);
   
   // Track dragging data type for handle highlighting
   const [draggingDataType, setDraggingDataType] = useState<DataType | null>(null);
@@ -607,9 +613,24 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
       {/* Empty state */}
       {nodes.length === 0 && (
         <div className="absolute inset-0 pointer-events-none">
-          <EmptyCanvasState onAddBlock={(type) => onAddBlock({ id: uuidv4(), type, position: { x: 400, y: 300 } })} />
+          <EmptyCanvasState 
+            onAddBlock={(type) => onAddBlock({ id: uuidv4(), type, position: { x: 400, y: 300 } })} 
+            onExploreFlows={() => setShowWorkflowGenerator(true)}
+          />
         </div>
       )}
+      
+      {/* AI Workflow Generator Modal */}
+      <AIWorkflowGenerator
+        open={showWorkflowGenerator}
+        onOpenChange={setShowWorkflowGenerator}
+        onWorkflowGenerated={(nodes, edges) => {
+          addGeneratedWorkflow(nodes as NodeDefinition[], edges as EdgeDefinition[]);
+          if (projectId) {
+            setTimeout(() => saveGraph(projectId), 500);
+          }
+        }}
+      />
       
       {/* Selection Box */}
       {selectionBox && (
