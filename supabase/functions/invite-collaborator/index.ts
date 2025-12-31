@@ -176,8 +176,163 @@ Deno.serve(async (req) => {
     const appUrl = Deno.env.get('APP_URL') ?? 'http://localhost:5173';
     const inviteUrl = `${appUrl}/invite/${token}`;
 
-    // TODO: Send email via Resend or similar service
-    // For now, return the invite URL for testing
+    // Send email via Resend
+    const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
+    let emailSent = false;
+
+    if (RESEND_API_KEY) {
+      try {
+        const inviterName = user.email?.split('@')[0] || 'Someone';
+
+        const emailResponse = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${RESEND_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            from: 'WZRD Studio <noreply@wzrd.studio>',
+            to: [email],
+            subject: `${inviterName} invited you to collaborate on a project`,
+            html: `
+              <!DOCTYPE html>
+              <html>
+              <head>
+                <meta charset="utf-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Project Invitation</title>
+                <style>
+                  body {
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+                    line-height: 1.6;
+                    color: #333;
+                    margin: 0;
+                    padding: 0;
+                    background-color: #f5f5f5;
+                  }
+                  .container {
+                    max-width: 600px;
+                    margin: 0 auto;
+                    padding: 40px 20px;
+                  }
+                  .card {
+                    background: #ffffff;
+                    border-radius: 12px;
+                    padding: 40px;
+                    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                  }
+                  .logo {
+                    text-align: center;
+                    margin-bottom: 30px;
+                  }
+                  .logo span {
+                    font-size: 24px;
+                    font-weight: bold;
+                    background: linear-gradient(135deg, #8B5CF6, #6366F1);
+                    -webkit-background-clip: text;
+                    -webkit-text-fill-color: transparent;
+                  }
+                  h1 {
+                    color: #1a1a1a;
+                    font-size: 24px;
+                    margin-bottom: 20px;
+                    text-align: center;
+                  }
+                  .role-badge {
+                    display: inline-block;
+                    padding: 4px 12px;
+                    background: linear-gradient(135deg, #8B5CF6, #6366F1);
+                    color: white;
+                    border-radius: 20px;
+                    font-size: 14px;
+                    font-weight: 500;
+                  }
+                  .button {
+                    display: inline-block;
+                    padding: 14px 32px;
+                    background: linear-gradient(135deg, #8B5CF6, #6366F1);
+                    color: white !important;
+                    text-decoration: none;
+                    border-radius: 8px;
+                    font-weight: 600;
+                    font-size: 16px;
+                    margin: 20px 0;
+                  }
+                  .button:hover {
+                    opacity: 0.9;
+                  }
+                  .message-box {
+                    background: #f8f8f8;
+                    border-left: 4px solid #8B5CF6;
+                    padding: 16px;
+                    margin: 20px 0;
+                    border-radius: 0 8px 8px 0;
+                  }
+                  .footer {
+                    margin-top: 30px;
+                    padding-top: 20px;
+                    border-top: 1px solid #eee;
+                    color: #666;
+                    font-size: 13px;
+                    text-align: center;
+                  }
+                  .link-text {
+                    color: #666;
+                    font-size: 12px;
+                    word-break: break-all;
+                    margin-top: 10px;
+                  }
+                </style>
+              </head>
+              <body>
+                <div class="container">
+                  <div class="card">
+                    <div class="logo">
+                      <span>WZRD Studio</span>
+                    </div>
+                    <h1>You're invited to collaborate!</h1>
+                    <p style="text-align: center;">
+                      <strong>${inviterName}</strong> has invited you to join their project as a
+                      <span class="role-badge">${role}</span>
+                    </p>
+                    ${message ? `
+                      <div class="message-box">
+                        <p style="margin: 0; font-style: italic;">"${message}"</p>
+                      </div>
+                    ` : ''}
+                    <p style="text-align: center;">
+                      <a href="${inviteUrl}" class="button">Accept Invitation</a>
+                    </p>
+                    <p class="link-text">Or copy this link: ${inviteUrl}</p>
+                    <div class="footer">
+                      <p>This invitation expires in 7 days.</p>
+                      <p>If you didn't expect this email, you can safely ignore it.</p>
+                      <p style="margin-top: 20px;">
+                        <a href="${appUrl}" style="color: #8B5CF6;">Visit WZRD Studio</a>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </body>
+              </html>
+            `,
+          }),
+        });
+
+        if (emailResponse.ok) {
+          emailSent = true;
+          console.log(`Email sent successfully to ${email}`);
+        } else {
+          const errorText = await emailResponse.text();
+          console.error('Email send failed:', errorText);
+        }
+      } catch (emailError) {
+        console.error('Error sending email:', emailError);
+      }
+    } else {
+      console.log('RESEND_API_KEY not configured, skipping email');
+    }
+
     console.log(`Invitation created: ${inviteUrl}`);
 
     return successResponse({
@@ -188,7 +343,8 @@ Deno.serve(async (req) => {
         role: invitation.role,
         expiresAt: invitation.invitation_expires_at,
       },
-      inviteUrl, // Return for testing
+      inviteUrl,
+      emailSent,
     });
 
   } catch (error) {

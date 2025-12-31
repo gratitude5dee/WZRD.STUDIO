@@ -124,7 +124,7 @@ export function ExportDialog({
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="gif" id="gif" />
                 <Label htmlFor="gif" className="font-normal cursor-pointer">
-                  GIF (Coming Soon)
+                  GIF (Animated)
                 </Label>
               </div>
             </RadioGroup>

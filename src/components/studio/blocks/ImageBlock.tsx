@@ -1,16 +1,17 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import BlockBase from './BlockBase';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useGeminiImage } from '@/hooks/useGeminiImage';
 import { falAI, FalStreamEvent } from '@/lib/falai-client';
-import { Download, Copy, Maximize2, Sparkles, Info, Upload, Video, MessageSquare, Send, Plus, Loader2 } from 'lucide-react';
+import { Download, Copy, Maximize2, Sparkles, Info, Upload, Video, MessageSquare, Send, Plus, Loader2, HelpCircle, Film } from 'lucide-react';
 import { toast } from 'sonner';
 import { BlockFloatingToolbar } from './BlockFloatingToolbar';
 import { v4 as uuidv4 } from 'uuid';
 import { motion } from 'framer-motion';
 import { Progress } from '@/components/ui/progress';
+import { supabase } from '@/integrations/supabase/client';
 
 interface StreamProgress {
   status: string;
@@ -79,7 +80,163 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
   const [timeRemaining, setTimeRemaining] = useState(30);
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamProgress, setStreamProgress] = useState<StreamProgress | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [isCreatingVariation, setIsCreatingVariation] = useState(false);
+  const [isConvertingToVideo, setIsConvertingToVideo] = useState(false);
   const { isGenerating, generateImage } = useGeminiImage();
+
+  // Handle variation generation
+  const handleVariation = useCallback(async () => {
+    if (!generatedImage?.url) {
+      toast.error('No image to create variation from');
+      return;
+    }
+
+    setIsCreatingVariation(true);
+    try {
+      const session = await supabase.auth.getSession();
+      const result = await falAI.execute('fal-ai/flux/dev/image-to-image', {
+        image_url: generatedImage.url,
+        prompt: prompt || 'Create a variation of this image with subtle changes',
+        strength: 0.65,
+        num_images: 1,
+      });
+
+      if (result?.images?.[0]?.url) {
+        setGeneratedImage({
+          url: result.images[0].url,
+          generationTime: result.generationTime
+        });
+        toast.success('Variation created!');
+      } else {
+        toast.error('Failed to create variation');
+      }
+    } catch (error) {
+      console.error('Variation error:', error);
+      toast.error('Failed to create variation');
+    } finally {
+      setIsCreatingVariation(false);
+    }
+  }, [generatedImage?.url, prompt]);
+
+  // Handle file upload
+  const handleUpload = useCallback(() => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+
+      // Validate file size (max 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error('Image must be under 10MB');
+        return;
+      }
+
+      setIsUploading(true);
+      try {
+        const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+        const { data, error } = await supabase.storage
+          .from('user-uploads')
+          .upload(`images/${fileName}`, file);
+
+        if (error) throw error;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('user-uploads')
+          .getPublicUrl(`images/${fileName}`);
+
+        setGeneratedImage({ url: publicUrl });
+        setDisplayMode('display');
+        toast.success('Image uploaded!');
+      } catch (error) {
+        console.error('Upload error:', error);
+        toast.error('Failed to upload image');
+      } finally {
+        setIsUploading(false);
+      }
+    };
+    input.click();
+  }, []);
+
+  // Handle image to video conversion
+  const handleImageToVideo = useCallback(async () => {
+    if (!generatedImage?.url) {
+      toast.error('No image to convert to video');
+      return;
+    }
+
+    setIsConvertingToVideo(true);
+    try {
+      const result = await falAI.generateVideo(prompt || 'Animate this image with subtle motion', {
+        image_url: generatedImage.url,
+        modelId: 'fal-ai/magi/image-to-video',
+        duration: 5,
+      });
+
+      if (result?.video?.url) {
+        // Spawn a video node with the result
+        if (onSpawnBlocks) {
+          onSpawnBlocks([{
+            id: uuidv4(),
+            type: 'video',
+            position: { x: blockPosition.x + 400, y: blockPosition.y },
+            initialData: {
+              videoUrl: result.video.url,
+              prompt: prompt,
+            },
+          }]);
+          toast.success('Video generated from image!');
+        } else {
+          // Open video in new tab if can't spawn blocks
+          window.open(result.video.url, '_blank');
+          toast.success('Video generated! Opening in new tab.');
+        }
+      } else {
+        toast.error('Failed to generate video');
+      }
+    } catch (error) {
+      console.error('Image to video error:', error);
+      toast.error('Failed to generate video from image');
+    } finally {
+      setIsConvertingToVideo(false);
+    }
+  }, [generatedImage?.url, prompt, blockPosition, onSpawnBlocks]);
+
+  // Handle video combination (navigate to video editor with image)
+  const handleVideoCombination = useCallback(() => {
+    if (!generatedImage?.url) {
+      toast.error('No image available');
+      return;
+    }
+    // Store images in session for video editor
+    const existingImages = JSON.parse(sessionStorage.getItem('videoEditorImages') || '[]');
+    existingImages.push({
+      url: generatedImage.url,
+      prompt: prompt,
+      timestamp: Date.now(),
+    });
+    sessionStorage.setItem('videoEditorImages', JSON.stringify(existingImages));
+    toast.success('Image added to video editor queue');
+  }, [generatedImage?.url, prompt]);
+
+  // Handle documentation/help
+  const handleDocumentation = useCallback(() => {
+    // Open inline help or documentation
+    toast.info(
+      <div className="space-y-2">
+        <p className="font-medium">Image Block Help</p>
+        <ul className="text-sm space-y-1 list-disc pl-4">
+          <li>Enter a prompt and click Generate to create an image</li>
+          <li>Use the sparkle button to enhance your prompt with AI</li>
+          <li>Click the variation button to create similar images</li>
+          <li>Upload existing images to use as a starting point</li>
+        </ul>
+      </div>,
+      { duration: 8000 }
+    );
+  }, []);
 
   // Handle streaming progress
   const handleStreamProgress = (event: FalStreamEvent) => {
@@ -392,11 +549,12 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
             className="bg-white/90 hover:bg-white text-black shadow-lg transform hover:scale-110 transition-transform"
             onClick={(e) => {
               e.stopPropagation();
-              toast.info('Variation feature coming soon');
+              handleVariation();
             }}
             onMouseDown={(e) => e.stopPropagation()}
+            disabled={isCreatingVariation}
           >
-            <Sparkles className="w-4 h-4" />
+            {isCreatingVariation ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
           </Button>
         </div>
 
@@ -445,9 +603,9 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
           {/* Empty State - Enhanced Suggestion Menu */}
           {!prompt && !generatedImage && !isGenerating && (
             <div className="space-y-1.5 mb-3">
-              <button 
+              <button
                 className="w-full flex items-center gap-3 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50 p-3 rounded-lg transition-all text-left text-xs group border border-transparent hover:border-zinc-700/50"
-                onClick={() => toast.info('Documentation coming soon')}
+                onClick={handleDocumentation}
                 onMouseDown={(e) => e.stopPropagation()}
               >
                 <div className="w-7 h-7 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-500/20 transition-colors">
@@ -456,37 +614,39 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
                 <span className="flex-1">Learn about Image Blocks</span>
                 <span className="text-zinc-600 group-hover:text-zinc-400 transition-colors">→</span>
               </button>
-              <button 
+              <button
                 className="w-full flex items-center gap-3 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50 p-3 rounded-lg transition-all text-left text-xs group border border-transparent hover:border-zinc-700/50"
-                onClick={() => toast.info('Upload feature coming soon')}
+                onClick={handleUpload}
                 onMouseDown={(e) => e.stopPropagation()}
+                disabled={isUploading}
               >
                 <div className="w-7 h-7 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center flex-shrink-0 group-hover:bg-purple-500/20 transition-colors">
-                  <Upload className="w-3.5 h-3.5 text-purple-400" />
+                  {isUploading ? <Loader2 className="w-3.5 h-3.5 text-purple-400 animate-spin" /> : <Upload className="w-3.5 h-3.5 text-purple-400" />}
                 </div>
-                <span className="flex-1">Upload an Image</span>
+                <span className="flex-1">{isUploading ? 'Uploading...' : 'Upload an Image'}</span>
                 <span className="text-zinc-600 group-hover:text-zinc-400 transition-colors">→</span>
               </button>
-              <button 
+              <button
                 className="w-full flex items-center gap-3 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50 p-3 rounded-lg transition-all text-left text-xs group border border-transparent hover:border-zinc-700/50"
-                onClick={() => toast.info('Video combination coming soon')}
+                onClick={handleVideoCombination}
                 onMouseDown={(e) => e.stopPropagation()}
               >
                 <div className="w-7 h-7 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center flex-shrink-0 group-hover:bg-amber-500/20 transition-colors">
-                  <Video className="w-3.5 h-3.5 text-amber-400" />
+                  <Film className="w-3.5 h-3.5 text-amber-400" />
                 </div>
-                <span className="flex-1">Combine images into a video</span>
+                <span className="flex-1">Add to video editor queue</span>
                 <span className="text-zinc-600 group-hover:text-zinc-400 transition-colors">→</span>
               </button>
-              <button 
+              <button
                 className="w-full flex items-center gap-3 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50 p-3 rounded-lg transition-all text-left text-xs group border border-transparent hover:border-zinc-700/50"
-                onClick={() => toast.info('Image to video coming soon')}
+                onClick={handleImageToVideo}
                 onMouseDown={(e) => e.stopPropagation()}
+                disabled={isConvertingToVideo}
               >
                 <div className="w-7 h-7 rounded-lg bg-green-500/10 border border-green-500/20 flex items-center justify-center flex-shrink-0 group-hover:bg-green-500/20 transition-colors">
-                  <Video className="w-3.5 h-3.5 text-green-400" />
+                  {isConvertingToVideo ? <Loader2 className="w-3.5 h-3.5 text-green-400 animate-spin" /> : <Video className="w-3.5 h-3.5 text-green-400" />}
                 </div>
-                <span className="flex-1">Turn an image into a video</span>
+                <span className="flex-1">{isConvertingToVideo ? 'Converting to video...' : 'Turn an image into a video'}</span>
                 <span className="text-zinc-600 group-hover:text-zinc-400 transition-colors">→</span>
               </button>
               <button 

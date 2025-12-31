@@ -35,7 +35,7 @@ const LeftSidebar = () => {
         { name: 'Text to Image' },
         { name: 'Text to Text' },
         { name: 'Text to Video' },
-        { name: 'Text to Audio', isUpcoming: true },
+        { name: 'Text to Audio' },
       ],
     },
     {
@@ -70,7 +70,7 @@ const LeftSidebar = () => {
       isExpanded: false,
       items: [
         { name: 'Flora Out' },
-        { name: 'Video Editor', isUpcoming: true },
+        { name: 'Video Editor' },
         { name: 'Relight', isUpcoming: true },
       ],
     },
