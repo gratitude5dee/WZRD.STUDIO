@@ -38,11 +38,11 @@ Deno.serve(async (req) => {
 
     const { data: project } = await supabaseClient
       .from('projects')
-      .select('id, owner_id')
+      .select('id, user_id')
       .eq('id', body.projectId)
       .single();
 
-    if (!project || project.owner_id !== user.id) {
+    if (!project || project.user_id !== user.id) {
       return errorResponse('Not authorized to share this project', 403);
     }
 
