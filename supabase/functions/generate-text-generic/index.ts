@@ -98,8 +98,9 @@ Focus on being helpful, clear, and concise. If there is current text provided, i
       generated_text: groqResponse.text.trim()
     });
 
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error in generate-text-generic:', error);
-    return errorResponse(error.message || 'Internal server error', 500);
+    const errorMsg = error instanceof Error ? error.message : 'Internal server error';
+    return errorResponse(errorMsg, 500);
   }
 });

@@ -32,30 +32,20 @@ export const NewsletterForm: React.FC<NewsletterFormProps> = ({
 
       setIsLoading(true);
       try {
-        // Try to subscribe via edge function
+        // Subscribe via edge function (recommended approach)
         const { data, error } = await supabase.functions.invoke('newsletter-subscribe', {
           body: { email, source: 'landing_page' },
         });
 
         if (error) {
-          // Fallback: try direct database insert
-          const { error: insertError } = await supabase
-            .from('newsletter_subscribers')
-            .insert({
-              email: email.toLowerCase(),
-              source: 'landing_page',
-              subscribed_at: new Date().toISOString(),
-            });
+          // Edge function failed - show user-friendly error
+          throw new Error('Subscription service temporarily unavailable');
+        }
 
-          if (insertError) {
-            if (insertError.code === '23505') {
-              // Unique constraint violation - already subscribed
-              toast.info("You're already subscribed!");
-              setIsSubscribed(true);
-              return;
-            }
-            throw insertError;
-          }
+        if (data?.already_subscribed) {
+          toast.info("You're already subscribed!");
+          setIsSubscribed(true);
+          return;
         }
 
         setIsSubscribed(true);

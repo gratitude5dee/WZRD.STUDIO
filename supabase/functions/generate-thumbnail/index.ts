@@ -77,7 +77,7 @@ Deno.serve(async (req) => {
 
     // Return the thumbnail URL
     return successResponse({ thumbnailUrl });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Generate thumbnail error:', error);
     
     // Handle authentication errors specifically
@@ -86,6 +86,7 @@ Deno.serve(async (req) => {
     }
     
     // Handle other errors
-    return errorResponse(error.message || 'Failed to generate thumbnail', 500);
+    const errorMsg = error instanceof Error ? error.message : 'Failed to generate thumbnail';
+    return errorResponse(errorMsg, 500);
   }
 });

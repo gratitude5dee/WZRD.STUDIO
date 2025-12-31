@@ -100,7 +100,7 @@ export async function saveStorylineData(
       // Continue anyway, as the main operation succeeded
     } else if (insertedScenes) {
       // Map the inserted scenes back with their shot_ideas
-      scenes = insertedScenes.map((scene, index) => ({
+      scenes = insertedScenes.map((scene: { id: string; scene_number: number; description: string; title: string }, index: number) => ({
         ...scene,
         shot_ideas: storylineData.scene_breakdown?.[index]?.shot_ideas || []
       }));
@@ -166,7 +166,7 @@ export async function saveStorylineData(
           if (shotsError) {
             console.error('Error inserting shots:', shotsError);
           } else if (newShots) {
-            results.inserted_shot_ids = newShots.map(s => s.id);
+            results.inserted_shot_ids = newShots.map((s: { id: string }) => s.id);
             console.log(`Created ${results.inserted_shot_ids.length} enhanced shots with visual prompts.`);
           }
         }
@@ -292,7 +292,8 @@ export async function triggerCharacterImageGeneration(
         // Invoke function (fire-and-forget)
         supabaseClient.functions.invoke('generate-character-image', {
           body: { character_id: char.id, project_id: project_id }
-        }).catch(async (err) => {
+        }).catch(async (err: unknown) => {
+          const errMsg = err instanceof Error ? err.message : 'Failed to invoke image generation';
           console.error(`Failed to start image generation for ${char.name}:`, err);
           
           // Update status to failed on invocation error
@@ -300,11 +301,11 @@ export async function triggerCharacterImageGeneration(
             .from('characters')
             .update({ 
               image_status: 'failed',
-              image_generation_error: err.message || 'Failed to invoke image generation'
+              image_generation_error: errMsg
             })
             .eq('id', char.id);
         });
-      } catch (error) {
+      } catch (error: unknown) {
         console.error(`Error setting up image generation for ${char.name}:`, error);
       }
     }
@@ -331,8 +332,9 @@ export async function triggerShotVisualPromptGeneration(
         } else {
           console.log(`Visual prompt generation successfully invoked for shot ${shotId}.`);
         }
-      } catch (invokeError) {
-        console.error(`Caught error during visual prompt invocation for shot ${shotId}:`, invokeError.message);
+      } catch (invokeError: unknown) {
+        const msg = invokeError instanceof Error ? invokeError.message : 'Unknown error';
+        console.error(`Caught error during visual prompt invocation for shot ${shotId}:`, msg);
       }
     }
   }

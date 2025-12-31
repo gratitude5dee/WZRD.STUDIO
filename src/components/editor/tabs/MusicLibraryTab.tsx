@@ -37,9 +37,8 @@ export const MusicLibraryTab: React.FC<MusicLibraryTabProps> = ({ onSelectTrack 
     setIsLoading(true);
     try {
       const { data, error } = await supabase
-        .from('media_items')
+        .from('audio_tracks')
         .select('*')
-        .eq('type', 'audio')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -47,14 +46,16 @@ export const MusicLibraryTab: React.FC<MusicLibraryTabProps> = ({ onSelectTrack 
       setTracks(
         data?.map((item) => ({
           id: item.id,
-          url: item.url,
+          url: item.storage_path ? `${supabase.storage.from(item.storage_bucket).getPublicUrl(item.storage_path).data.publicUrl}` : '',
           name: item.name || 'Untitled Track',
-          duration: item.duration || 0,
-          artist: item.metadata?.artist,
+          duration: item.duration_ms || 0,
+          artist: (item.metadata as { artist?: string })?.artist,
         })) || []
       );
     } catch (error) {
       console.error('Failed to load tracks:', error);
+      // Set empty array on error to allow the UI to render
+      setTracks([]);
     } finally {
       setIsLoading(false);
     }
@@ -109,17 +110,8 @@ export const MusicLibraryTab: React.FC<MusicLibraryTabProps> = ({ onSelectTrack 
           duration: audio.duration * 1000,
         };
 
-        try {
-          await supabase.from('media_items').insert({
-            url: publicUrl,
-            name: file.name,
-            type: 'audio',
-            duration: audio.duration * 1000,
-          });
-        } catch (dbError) {
-          console.warn('Could not save to database:', dbError);
-        }
-
+        // Try to save track info to local state only (audio_tracks table requires project_id)
+        // The track is already uploaded to storage, so we can use it from there
         setTracks((prev) => [newTrack, ...prev]);
         toast.success('Audio uploaded!');
       } catch (error) {

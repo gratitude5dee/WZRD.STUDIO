@@ -58,16 +58,25 @@ interface RequestBody {
   style_reference_url?: string;
 }
 
+interface ProjectData {
+  genre?: string | null;
+  tone?: string | null;
+  video_style?: string | null;
+  cinematic_inspiration?: string | null;
+  style_reference_asset_id?: string | null;
+}
+
 interface CharacterData {
   name: string;
   description: string | null;
-  project?: {
-    genre?: string | null;
-    tone?: string | null;
-    video_style?: string | null;
-    cinematic_inspiration?: string | null;
-    style_reference_asset_id?: string | null;
-  }
+  project?: ProjectData | ProjectData[];
+}
+
+// Helper to get error message from unknown error
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (typeof error === 'string') return error;
+  return 'Unknown error';
 }
 
 serve(async (req) => {
@@ -133,11 +142,16 @@ serve(async (req) => {
       return errorResponse('GROQ_API_KEY not configured', 500);
     }
 
+    // Handle project data which may be array from join query
+    const projectData: ProjectData | undefined = Array.isArray(charData.project) 
+      ? charData.project[0] 
+      : charData.project;
+
     const visualPromptSystem = getCharacterVisualSystemPrompt();
     const visualPromptUser = getCharacterVisualUserPrompt(
       charData.name,
       charData.description,
-      charData.project
+      projectData
     );
 
     const promptResponse = await fetchWithRetry('https://api.groq.com/openai/v1/chat/completions', {
@@ -173,11 +187,11 @@ serve(async (req) => {
     console.log(`Generated visual prompt: ${visualPrompt}`);
 
     let styleReferenceUrl = style_reference_url;
-    if (!styleReferenceUrl && charData.project?.style_reference_asset_id) {
+    if (!styleReferenceUrl && projectData?.style_reference_asset_id) {
       const { data: mediaItem, error: mediaError } = await supabaseClient
         .from('media_items')
         .select('url, storage_bucket, storage_path')
-        .eq('id', charData.project.style_reference_asset_id)
+        .eq('id', projectData.style_reference_asset_id)
         .single();
 
       if (!mediaError && mediaItem) {
@@ -210,7 +224,9 @@ serve(async (req) => {
       logs: true,
     });
 
-    const imageUrl = result?.images?.[0]?.url;
+    // Cast result to handle FAL response structure
+    const resultData = result as { images?: Array<{ url: string }> };
+    const imageUrl = resultData?.images?.[0]?.url;
 
     if (!imageUrl) {
       console.error('No image URL returned from FAL.AI');
@@ -266,8 +282,9 @@ serve(async (req) => {
 
     return successResponse(successResponseData);
 
-  } catch (error) {
+  } catch (error: unknown) {
     console.error(`Error in generate-character-image:`, error);
+    const errorMsg = getErrorMessage(error);
     
     // Update character status to failed
     try {
@@ -277,7 +294,7 @@ serve(async (req) => {
           .from('characters')
           .update({ 
             image_status: 'failed',
-            image_generation_error: error.message || 'Unknown error'
+            image_generation_error: errorMsg
           })
           .eq('id', character_id);
       }
@@ -285,6 +302,6 @@ serve(async (req) => {
       console.error('Failed to update character error status:', updateError);
     }
     
-    return errorResponse(error.message || 'Failed to generate character image', 500);
+    return errorResponse(errorMsg, 500);
   }
 });

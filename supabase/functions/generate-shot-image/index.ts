@@ -163,7 +163,7 @@ serve(async (req) => {
       
       let lastProgress = 0;
       
-      const falInput: Record<string, unknown> = {
+      const falInput: { prompt: string; image_size: typeof falImageSize; num_inference_steps: number; num_images: number; enable_safety_checker: boolean; ip_adapter_style_reference?: string; style_strength?: number } = {
         prompt: shot.visual_prompt,
         image_size: falImageSize,
         num_inference_steps: 4,
@@ -177,7 +177,7 @@ serve(async (req) => {
       }
 
       const result = await fal.subscribe("fal-ai/flux/schnell", {
-        input: falInput,
+        input: falInput as any,
         logs: true,
         onQueueUpdate: async (update) => {
           console.log(`[generate-shot-image][Shot ${shotId}] Queue update: ${update.status}`);
@@ -213,7 +213,8 @@ serve(async (req) => {
       console.log(`[generate-shot-image][Shot ${shotId}] Generation completed, result received`);
 
       // Access image URL from result (fal.subscribe returns the result directly)
-      const imageUrl = result?.images?.[0]?.url || (result as any)?.data?.images?.[0]?.url;
+      const resultData = result as { images?: Array<{ url: string }>; data?: { images?: Array<{ url: string }> } };
+      const imageUrl = resultData?.images?.[0]?.url || resultData?.data?.images?.[0]?.url;
       if (!imageUrl) {
         throw new Error('No image URL returned from FAL.AI');
       }
@@ -277,8 +278,10 @@ serve(async (req) => {
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
 
-    } catch (error) {
-      console.error(`[generate-shot-image][Shot ${shotId}] Error in image generation: ${error.message}`);
+    } catch (error: unknown) {
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+      const errorStack = error instanceof Error ? error.stack : undefined;
+      console.error(`[generate-shot-image][Shot ${shotId}] Error in image generation: ${errorMsg}`);
       
       // Update shot status to failed
       console.log(`[generate-shot-image][Shot ${shotId}] Updating status to 'failed' due to error.`);
@@ -287,21 +290,23 @@ serve(async (req) => {
         .update({ 
           image_status: "failed",
           image_progress: 0,
-          failure_reason: error.message
+          failure_reason: errorMsg
         })
         .eq("id", shotId);
         
-      console.log(`[generate-shot-image][Shot ${shotId}] Status updated to 'failed' with reason: ${error.message}`);
+      console.log(`[generate-shot-image][Shot ${shotId}] Status updated to 'failed' with reason: ${errorMsg}`);
 
       return new Response(
-        JSON.stringify({ success: false, error: error.message }),
+        JSON.stringify({ success: false, error: errorMsg }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
-  } catch (error) {
-    console.error(`[generate-shot-image][Shot ${shotId || 'UNKNOWN'}] Unexpected error: ${error.message}`, error.stack);
+  } catch (error: unknown) {
+    const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    console.error(`[generate-shot-image][Shot ${shotId || 'UNKNOWN'}] Unexpected error: ${errorMsg}`, errorStack);
     return new Response(
-      JSON.stringify({ success: false, error: error.message }),
+      JSON.stringify({ success: false, error: errorMsg }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

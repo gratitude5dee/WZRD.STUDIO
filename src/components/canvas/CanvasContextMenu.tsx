@@ -26,15 +26,18 @@ export function CanvasContextMenu({ x, y, onClose, onAiTransform }: CanvasContex
       toast.loading('Exporting selection...', { id: 'export-selection' });
 
       const dataURL = await ExportService.exportToPNG(
-        selectedObjects.map(obj => ({
-          id: obj.id,
-          x: obj.x,
-          y: obj.y,
-          width: obj.width || 200,
-          height: obj.height || 200,
-          rotation: obj.rotation || 0,
-          data: obj.data || { url: obj.src }
-        })),
+        selectedObjects.map(obj => {
+          const objData = obj.data as { url?: string; width?: number; height?: number };
+          return {
+            id: obj.id,
+            x: obj.transform.x,
+            y: obj.transform.y,
+            width: objData.width || 200,
+            height: objData.height || 200,
+            rotation: obj.transform.rotation || 0,
+            data: obj.data
+          };
+        }),
         viewport,
         { format: 'png', quality: 1, scale: 2, transparent: true }
       );
