@@ -56,7 +56,16 @@ export interface Port {
 
 export interface NodeDefinition {
   id: string;
-  kind: 'Image' | 'Prompt' | 'Model' | 'Transform' | 'Output' | 'Gateway' | 'Text' | 'Video';
+  kind:
+    | 'Image'
+    | 'Prompt'
+    | 'Model'
+    | 'Transform'
+    | 'Output'
+    | 'Gateway'
+    | 'Text'
+    | 'Video'
+    | 'comment';
   version: string;
   label: string;
   position: { x: number; y: number };

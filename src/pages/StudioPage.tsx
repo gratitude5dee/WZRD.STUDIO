@@ -10,7 +10,8 @@ import BlockSettingsModal from '@/components/studio/BlockSettingsModal';
 import { CreditsCorner } from '@/components/studio/CreditsCorner';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import type { AssetType, ProjectAsset } from '@/types/assets';
+import type { AssetType } from '@/types/assets';
+import type { Asset } from '@/components/studio/panels/AssetsGalleryPanel';
 export interface Block {
   id: string;
   type: 'text' | 'image' | 'video' | 'upload';
@@ -172,8 +173,8 @@ const StudioPage = () => {
     setBlocks(prev => [...prev, newBlock]);
     setSelectedBlockId(newBlock.id);
   }, []);
-  const handleAssetInsert = useCallback((asset: ProjectAsset) => {
-    const assetUrl = asset.cdn_url || asset.preview_url || asset.thumbnail_url;
+  const handleAssetInsert = useCallback((asset: Asset) => {
+    const assetUrl = asset.url;
     if (!assetUrl) {
       toast.error('Asset is still processing. Try again in a moment.');
       return;
@@ -181,12 +182,11 @@ const StudioPage = () => {
 
     let blockType: 'image' | 'video' | 'text' | 'upload' = 'upload';
 
-    if (asset.asset_type === 'image') {
+    if (asset.type === 'image') {
       blockType = 'image';
-    } else if (asset.asset_type === 'video') {
+    } else if (asset.type === 'video') {
       blockType = 'video';
-    } else if (asset.asset_type === 'audio') {
-      // Audio assets can be represented as upload blocks with audio data
+    } else if (asset.type === 'audio') {
       blockType = 'upload';
     }
 
@@ -198,15 +198,15 @@ const StudioPage = () => {
         y: 300 + Math.random() * 200
       },
       initialData: {
-        imageUrl: asset.asset_type === 'image' ? assetUrl : undefined,
-        prompt: asset.original_file_name,
+        imageUrl: asset.type === 'image' ? assetUrl : undefined,
+        prompt: asset.name,
         assetId: asset.id,
-        assetType: asset.asset_type,
+        assetType: asset.type as AssetType,
         assetUrl
       }
     };
     handleAddBlock(newBlock);
-    toast.success(`${asset.asset_type.charAt(0).toUpperCase() + asset.asset_type.slice(1)} asset added to the canvas.`);
+    toast.success(`${asset.type.charAt(0).toUpperCase() + asset.type.slice(1)} asset added to the canvas.`);
   }, [handleAddBlock]);
   const handleDeleteBlock = useCallback((blockId: string) => {
     setBlocks(prev => prev.filter(b => b.id !== blockId));

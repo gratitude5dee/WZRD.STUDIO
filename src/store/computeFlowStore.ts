@@ -21,12 +21,36 @@ import {
   validateConnection,
   type ValidationResult as EdgeValidationResult,
 } from '@/utils/edgeValidation';
+import { useHistoryStore, type HistoryEntry } from '@/store/historyStore';
 
 // UUID validation regex
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function isValidUuid(id: string): boolean {
   return typeof id === 'string' && UUID_REGEX.test(id);
+}
+
+function deriveHistoryType(description?: string): HistoryEntry['type'] {
+  if (!description) return 'batch';
+  if (description.startsWith('Added')) return 'add_node';
+  if (description.startsWith('Updated')) return 'edit_node';
+  if (description.startsWith('Connected')) return 'add_edge';
+  if (description.includes('Removed node')) return 'delete_node';
+  if (description.includes('Removed edge')) return 'delete_edge';
+  if (description.includes('Loaded graph') || description.includes('Graph replaced')) return 'load_flow';
+  return 'batch';
+}
+
+function pushHistoryEntry(
+  description: string | undefined,
+  nodes: NodeDefinition[],
+  edges: EdgeDefinition[]
+): void {
+  useHistoryStore.getState().pushEntry(
+    description ?? 'Updated graph',
+    deriveHistoryType(description),
+    { nodes, edges }
+  );
 }
 
 /**
@@ -266,6 +290,7 @@ export const useComputeFlowStore = create<ComputeFlowState>((set, get) => ({
       const historyManager = get().historyManager;
       historyManager.clear();
       historyManager.pushSnapshot(nodeDefinitions, edgeDefinitions, 'Loaded graph');
+      pushHistoryEntry('Loaded graph', nodeDefinitions, edgeDefinitions);
       const historyState = historyManager.getState();
       set({
         nodeDefinitions,
@@ -370,6 +395,11 @@ export const useComputeFlowStore = create<ComputeFlowState>((set, get) => ({
       get().edgeDefinitions,
       `Added ${node.label}`
     );
+    pushHistoryEntry(
+      `Added ${node.label}`,
+      get().nodeDefinitions,
+      get().edgeDefinitions
+    );
     const historyState = get().historyManager.getState();
     set({ canUndo: historyState.canUndo, canRedo: historyState.canRedo });
   },
@@ -390,11 +420,13 @@ export const useComputeFlowStore = create<ComputeFlowState>((set, get) => ({
     get().markNodeDirty(nodeId);
     const nextNodes = get().nodeDefinitions;
     if (nodesMeaningfullyChanged(previousNodes, nextNodes)) {
+      const description = `Updated ${get().nodeDefinitions.find(n => n.id === nodeId)?.label ?? 'node'}`;
       get().historyManager.pushSnapshot(
         nextNodes,
         get().edgeDefinitions,
-        `Updated ${get().nodeDefinitions.find(n => n.id === nodeId)?.label ?? 'node'}`
+        description
       );
+      pushHistoryEntry(description, nextNodes, get().edgeDefinitions);
       const historyState = get().historyManager.getState();
       set({ canUndo: historyState.canUndo, canRedo: historyState.canRedo });
     }
@@ -438,6 +470,7 @@ export const useComputeFlowStore = create<ComputeFlowState>((set, get) => ({
         nextEdges,
         'Removed node'
       );
+      pushHistoryEntry('Removed node', nextNodes, nextEdges);
       const historyState = get().historyManager.getState();
       set({ canUndo: historyState.canUndo, canRedo: historyState.canRedo });
     }
@@ -490,6 +523,11 @@ export const useComputeFlowStore = create<ComputeFlowState>((set, get) => ({
       get().edgeDefinitions,
       `Connected ${sourceNode.label} to ${targetNode.label}`
     );
+    pushHistoryEntry(
+      `Connected ${sourceNode.label} to ${targetNode.label}`,
+      get().nodeDefinitions,
+      get().edgeDefinitions
+    );
     const historyState = get().historyManager.getState();
     set({ canUndo: historyState.canUndo, canRedo: historyState.canRedo });
 
@@ -515,6 +553,7 @@ export const useComputeFlowStore = create<ComputeFlowState>((set, get) => ({
         nextEdges,
         'Removed edge'
       );
+      pushHistoryEntry('Removed edge', get().nodeDefinitions, nextEdges);
       const historyState = get().historyManager.getState();
       set({ canUndo: historyState.canUndo, canRedo: historyState.canRedo });
     }
@@ -608,6 +647,7 @@ export const useComputeFlowStore = create<ComputeFlowState>((set, get) => ({
         nextEdges,
         description ?? 'Batch update'
       );
+      pushHistoryEntry(description ?? 'Batch update', nextNodes, nextEdges);
       const historyState = get().historyManager.getState();
       set({ canUndo: historyState.canUndo, canRedo: historyState.canRedo });
     }
@@ -630,6 +670,11 @@ export const useComputeFlowStore = create<ComputeFlowState>((set, get) => ({
       get().nodeDefinitions,
       get().edgeDefinitions,
       description ?? `Added ${nodes.length} nodes and ${edges.length} edges`
+    );
+    pushHistoryEntry(
+      description ?? `Added ${nodes.length} nodes and ${edges.length} edges`,
+      get().nodeDefinitions,
+      get().edgeDefinitions
     );
     const historyState = get().historyManager.getState();
     set({ canUndo: historyState.canUndo, canRedo: historyState.canRedo });
@@ -656,6 +701,7 @@ export const useComputeFlowStore = create<ComputeFlowState>((set, get) => ({
         edgesMeaningfullyChanged(previousEdges, edges)
       ) {
         get().historyManager.pushSnapshot(nodes, edges, 'Graph replaced');
+        pushHistoryEntry('Graph replaced', nodes, edges);
         const historyState = get().historyManager.getState();
         set({ canUndo: historyState.canUndo, canRedo: historyState.canRedo });
       }
@@ -1003,6 +1049,11 @@ export const useComputeFlowStore = create<ComputeFlowState>((set, get) => ({
             get().edgeDefinitions,
             `Added ${normalizedNodes.length} nodes and ${validatedEdges.length} edges`
           );
+          pushHistoryEntry(
+            `Added ${normalizedNodes.length} nodes and ${validatedEdges.length} edges`,
+            get().nodeDefinitions,
+            get().edgeDefinitions
+          );
           const historyState = get().historyManager.getState();
           set({ canUndo: historyState.canUndo, canRedo: historyState.canRedo });
           
@@ -1019,6 +1070,11 @@ export const useComputeFlowStore = create<ComputeFlowState>((set, get) => ({
         get().nodeDefinitions,
         get().edgeDefinitions,
         `Added ${normalizedNodes.length} nodes`
+      );
+      pushHistoryEntry(
+        `Added ${normalizedNodes.length} nodes`,
+        get().nodeDefinitions,
+        get().edgeDefinitions
       );
       const historyState = get().historyManager.getState();
       set({ canUndo: historyState.canUndo, canRedo: historyState.canRedo });

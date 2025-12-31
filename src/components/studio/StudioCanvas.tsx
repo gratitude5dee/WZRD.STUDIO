@@ -59,6 +59,7 @@ import { Upload3DNode } from './nodes/Upload3DNode';
 // New generation nodes
 import { ReactFlowAudioNode } from './nodes/ReactFlowAudioNode';
 import { ReactFlow3DNode } from './nodes/ReactFlow3DNode';
+import CommentNode from './nodes/CommentNode';
 
 // Output node
 import { OutputNode } from './nodes/OutputNode';
@@ -115,6 +116,9 @@ const nodeTypes: NodeTypes = {
   
   // Output node
   output: OutputNode,
+
+  // Comment node
+  comment: CommentNode,
 };
 
 // Edge types configuration
@@ -322,6 +326,8 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
       'Transform': 'compute',
       'Output': 'output',
       'Gateway': 'compute',
+      'Comment': 'comment',
+      'comment': 'comment',
     };
     return kindToType[kind] || 'compute';
   }, []);
@@ -789,7 +795,7 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
   }, []);
 
   return (
-    <div className="relative w-full h-full bg-surface-0">
+    <div className="relative w-full h-full bg-surface-0" data-walkthrough="canvas">
       <div
         className="absolute inset-0 opacity-[0.03] pointer-events-none"
         style={{
