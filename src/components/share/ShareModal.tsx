@@ -70,12 +70,15 @@ export const ShareModal = ({ projectId, projectName, isOpen, onClose }: ShareMod
 
       if (error) throw error;
 
-      if (data?.shareLink) {
-        setShareLink(data.shareLink);
+      const link = data?.shareLink || data?.shareUrl;
+      if (link) {
+        setShareLink(link);
         toast({
           title: 'Share link created',
           description: 'Your share link has been generated.',
         });
+      } else {
+        throw new Error('No share link returned');
       }
     } catch (error: any) {
       toast({

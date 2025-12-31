@@ -4887,6 +4887,50 @@ export type Database = {
           },
         ]
       }
+      project_shares: {
+        Row: {
+          created_at: string
+          expires_at: string | null
+          id: string
+          is_public: boolean
+          permission_level: string
+          project_id: string
+          share_token: string
+          shared_by: string
+          shared_with: string | null
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_public?: boolean
+          permission_level?: string
+          project_id: string
+          share_token: string
+          shared_by: string
+          shared_with?: string | null
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_public?: boolean
+          permission_level?: string
+          project_id?: string
+          share_token?: string
+          shared_by?: string
+          shared_with?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_shares_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       projects: {
         Row: {
           ad_brief_data: Json | null
