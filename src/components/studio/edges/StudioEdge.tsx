@@ -64,7 +64,7 @@ export const StudioEdge: FC<EdgeProps> = ({
         path={edgePath}
         style={{
           stroke: strokeColor,
-          strokeWidth: isHovered || isSelected ? 6 : 4,
+          strokeWidth: isHovered || isSelected ? 5 : 3,
           opacity: 0.35,
           filter: 'blur(6px)',
         }}
@@ -78,7 +78,7 @@ export const StudioEdge: FC<EdgeProps> = ({
           strokeWidth: isHovered || isSelected ? 3 : 2,
           strokeLinecap: 'round',
           strokeDasharray: isExecuting ? '8 4' : undefined,
-          animation: isExecuting ? 'dash 0.6s linear infinite' : undefined,
+          animation: isExecuting ? 'dash 0.5s linear infinite' : undefined,
           filter: isHovered || isSelected ? `drop-shadow(0 0 8px ${glowColor})` : 'none',
         }}
         className={cn('transition-all duration-150', isHovered && 'cursor-pointer')}
