@@ -39,17 +39,18 @@ export const Sidebar = ({ activeView, onViewChange }: SidebarProps) => {
 
   return (
     <aside className={cn(
-      "w-64 h-screen flex flex-col fixed left-0 top-0 z-50",
-      "glass-sidebar border-r border-white/[0.04]"
+      "w-64 h-screen flex flex-col fixed left-0 top-0 z-50 border-r",
+      "bg-surface-1 border-border-default",
+      "dark:glass-sidebar dark:border-white/[0.04]"
     )}>
       {/* Subtle gradient overlay for depth */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[rgba(139,92,246,0.04)] via-transparent to-[rgba(245,158,11,0.02)] pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 via-transparent to-amber-400/5 pointer-events-none dark:from-[rgba(139,92,246,0.04)] dark:to-[rgba(245,158,11,0.02)]" />
       
       {/* Top highlight line */}
       <div className="absolute top-0 left-4 right-4 h-px bg-gradient-to-r from-transparent via-white/[0.08] to-transparent" />
       
       {/* Workspace Switcher */}
-      <div className="relative z-10 p-4 border-b border-white/[0.05]">
+      <div className="relative z-10 p-4 border-b border-border-default dark:border-white/[0.05]">
         <WorkspaceSwitcher />
       </div>
 
@@ -58,8 +59,8 @@ export const Sidebar = ({ activeView, onViewChange }: SidebarProps) => {
         {/* Main Menu Section */}
         <div>
           <div className="flex items-center gap-2 px-3 mb-3">
-            <Sparkles className="w-3.5 h-3.5 text-[#A78BFA]" />
-            <span className="text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-[0.15em]">Main Menu</span>
+            <Sparkles className="w-3.5 h-3.5 text-accent-purple" />
+            <span className="text-[10px] font-semibold text-text-tertiary uppercase tracking-[0.15em]">Main Menu</span>
           </div>
           <div className="space-y-1">
             {mainNavItems.map((item) => {
@@ -79,21 +80,21 @@ export const Sidebar = ({ activeView, onViewChange }: SidebarProps) => {
                   className={cn(
                     "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200",
                     isActive
-                      ? "bg-[rgba(139,92,246,0.15)] text-[#A78BFA] border border-[rgba(139,92,246,0.3)] shadow-[0_0_20px_rgba(139,92,246,0.2),inset_0_1px_0_rgba(255,255,255,0.05)]"
-                      : "text-muted-foreground hover:text-foreground hover:bg-white/[0.04]"
+                      ? "bg-[hsl(var(--interactive-selected))] text-accent-purple border border-accent-purple/20 shadow-sm"
+                      : "text-text-secondary hover:text-text-primary hover:bg-[hsl(var(--interactive-hover))] dark:text-muted-foreground dark:hover:text-foreground dark:hover:bg-white/[0.04]"
                   )}
                 >
                   <div className={cn(
                     "w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200",
                     isActive 
-                      ? "bg-[rgba(139,92,246,0.25)] shadow-[0_0_16px_rgba(139,92,246,0.4)]" 
-                      : "bg-white/[0.04]"
+                      ? "bg-accent-purple/15 shadow-sm" 
+                      : "bg-surface-2 dark:bg-white/[0.04]"
                   )}>
-                    <Icon className={cn("w-4 h-4", isActive && "text-[#A78BFA]")} />
+                    <Icon className={cn("w-4 h-4", isActive && "text-accent-purple")} />
                   </div>
                   <span className="flex-1 text-left">{item.label}</span>
                   {item.showBadge && (
-                    <Badge variant="secondary" className="text-[9px] bg-[rgba(139,92,246,0.2)] text-[#A78BFA] border-[rgba(139,92,246,0.3)] px-1.5 py-0.5 font-semibold">
+                    <Badge variant="secondary" className="text-[9px] bg-accent-purple/15 text-accent-purple border-accent-purple/20 px-1.5 py-0.5 font-semibold">
                       New
                     </Badge>
                   )}
@@ -106,8 +107,8 @@ export const Sidebar = ({ activeView, onViewChange }: SidebarProps) => {
         {/* Secondary Navigation */}
         <div>
           <div className="flex items-center gap-2 px-3 mb-3">
-            <Users className="w-3.5 h-3.5 text-muted-foreground/50" />
-            <span className="text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-[0.15em]">Collaborate</span>
+            <Users className="w-3.5 h-3.5 text-text-tertiary" />
+            <span className="text-[10px] font-semibold text-text-tertiary uppercase tracking-[0.15em]">Collaborate</span>
           </div>
           <div className="space-y-1">
             {secondaryNavItems.map((item) => {
@@ -121,15 +122,15 @@ export const Sidebar = ({ activeView, onViewChange }: SidebarProps) => {
                   className={cn(
                     "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200",
                     isActive
-                      ? "bg-[rgba(139,92,246,0.15)] text-[#A78BFA] border border-[rgba(139,92,246,0.3)]"
-                      : "text-muted-foreground hover:text-foreground hover:bg-white/[0.04]"
+                      ? "bg-[hsl(var(--interactive-selected))] text-accent-purple border border-accent-purple/20"
+                      : "text-text-secondary hover:text-text-primary hover:bg-[hsl(var(--interactive-hover))] dark:text-muted-foreground dark:hover:text-foreground dark:hover:bg-white/[0.04]"
                   )}
                 >
                   <div className={cn(
                     "w-8 h-8 rounded-lg flex items-center justify-center",
-                    isActive ? "bg-[rgba(139,92,246,0.25)]" : "bg-white/[0.04]"
+                    isActive ? "bg-accent-purple/15" : "bg-surface-2 dark:bg-white/[0.04]"
                   )}>
-                    <Icon className={cn("w-4 h-4", isActive && "text-[#A78BFA]")} />
+                    <Icon className={cn("w-4 h-4", isActive && "text-accent-purple")} />
                   </div>
                   <span>{item.label}</span>
                 </button>
@@ -142,10 +143,10 @@ export const Sidebar = ({ activeView, onViewChange }: SidebarProps) => {
         <div>
           <button
             onClick={() => setFavoritesOpen(!favoritesOpen)}
-            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-text-secondary hover:text-text-primary transition-colors dark:text-muted-foreground dark:hover:text-foreground"
           >
-            <div className="w-8 h-8 rounded-lg bg-amber/10 flex items-center justify-center">
-              <Star className="w-4 h-4 text-amber" />
+            <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center dark:bg-amber/10">
+              <Star className="w-4 h-4 text-amber-500" />
             </div>
             <span className="flex-1 text-left font-medium">Favorites</span>
             <ChevronDown
@@ -157,17 +158,17 @@ export const Sidebar = ({ activeView, onViewChange }: SidebarProps) => {
           </button>
           
           {favoritesOpen && (
-            <div className="mt-2 ml-6 pl-3 border-l border-white/[0.06] space-y-1">
-              <p className="text-xs text-muted-foreground/50 py-2 italic">No favorites yet</p>
+            <div className="mt-2 ml-6 pl-3 border-l border-border-default space-y-1 dark:border-white/[0.06]">
+              <p className="text-xs text-text-tertiary py-2 italic dark:text-muted-foreground/50">No favorites yet</p>
             </div>
           )}
         </div>
       </nav>
 
       {/* Bottom Section */}
-      <div className="relative z-10 p-4 border-t border-white/[0.05] space-y-4">
+      <div className="relative z-10 p-4 border-t border-border-default space-y-4 dark:border-white/[0.05]">
         {/* Credits Display */}
-        <div className="p-3 rounded-xl bg-gradient-to-br from-[rgba(139,92,246,0.1)] to-[rgba(245,158,11,0.05)] border border-[rgba(139,92,246,0.2)] backdrop-blur-sm">
+        <div className="p-3 rounded-xl bg-gradient-to-br from-purple-500/10 to-amber-200/30 border border-purple-500/15 backdrop-blur-sm dark:from-[rgba(139,92,246,0.1)] dark:to-[rgba(245,158,11,0.05)] dark:border-[rgba(139,92,246,0.2)]">
           <CreditsDisplay showTooltip={false} />
         </div>
         
@@ -176,15 +177,17 @@ export const Sidebar = ({ activeView, onViewChange }: SidebarProps) => {
           <div className="flex items-center gap-1">
             <button className={cn(
               "flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-200",
-              "text-muted-foreground hover:text-foreground hover:bg-white/[0.06]",
-              "border border-transparent hover:border-white/[0.08]"
+              "text-text-secondary hover:text-text-primary hover:bg-[hsl(var(--interactive-hover))]",
+              "border border-transparent hover:border-border-default",
+              "dark:text-muted-foreground dark:hover:text-foreground dark:hover:bg-white/[0.06] dark:hover:border-white/[0.08]"
             )}>
               <Settings className="w-4 h-4" />
             </button>
             <button className={cn(
               "flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-200",
-              "text-muted-foreground hover:text-foreground hover:bg-white/[0.06]",
-              "border border-transparent hover:border-white/[0.08]"
+              "text-text-secondary hover:text-text-primary hover:bg-[hsl(var(--interactive-hover))]",
+              "border border-transparent hover:border-border-default",
+              "dark:text-muted-foreground dark:hover:text-foreground dark:hover:bg-white/[0.06] dark:hover:border-white/[0.08]"
             )}>
               <HelpCircle className="w-4 h-4" />
             </button>
@@ -193,8 +196,9 @@ export const Sidebar = ({ activeView, onViewChange }: SidebarProps) => {
             onClick={handleLogout}
             className={cn(
               "flex items-center gap-2 px-3 py-2 rounded-xl text-sm transition-all duration-200",
-              "text-muted-foreground hover:text-rose-400 hover:bg-rose-500/10 hover:border-rose-500/20",
-              "border border-transparent"
+              "text-text-secondary hover:text-rose-500 hover:bg-rose-500/10 hover:border-rose-500/20",
+              "border border-transparent",
+              "dark:text-muted-foreground dark:hover:text-rose-400"
             )}
             title="Log out"
           >
