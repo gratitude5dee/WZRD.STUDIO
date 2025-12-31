@@ -1,6 +1,5 @@
 import React, { useCallback, useRef, useState, useEffect, useMemo } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Plus, ZoomIn, ZoomOut, Maximize, Grid3x3 } from 'lucide-react';
 import {
   ReactFlow,
   Background,
@@ -765,7 +764,16 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
   }, []);
 
   return (
-    <div className="relative w-full h-full bg-black">
+    <div className="relative w-full h-full bg-surface-0">
+      <div
+        className="absolute inset-0 opacity-[0.03] pointer-events-none"
+        style={{
+          backgroundImage:
+            'radial-gradient(circle at center, hsl(var(--text-tertiary)) 1px, transparent 1px)',
+          backgroundSize: '24px 24px',
+        }}
+      />
+      <div className="absolute inset-0 bg-gradient-radial from-transparent via-transparent to-black/40 pointer-events-none" />
       {/* Node Selector */}
       <AnimatePresence>
         {showNodeSelector && (
@@ -813,12 +821,12 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
         minZoom={0.1}
         maxZoom={2}
         deleteKeyCode={null}
-        className="bg-black"
+        className="bg-transparent"
       >
         {showGrid && (
           <Background
-            color="hsl(var(--border))"
-            gap={20}
+            color="hsl(var(--border-subtle))"
+            gap={24}
             variant={BackgroundVariant.Dots}
           />
         )}

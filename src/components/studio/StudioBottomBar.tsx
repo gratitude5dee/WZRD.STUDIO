@@ -1,112 +1,67 @@
+import { useEffect, useRef, useState } from 'react';
+import { AlertCircle, ChevronUp, Loader2 } from 'lucide-react';
+import { useComputeFlowStore } from '@/store/computeFlowStore';
+import { useCredits } from '@/hooks/useCredits';
 
-import { useState } from 'react';
-import { Minus, Plus, Maximize, ChevronRight, CircleDashed } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
-
-interface Task {
-  id: string;
-  name: string;
-  status: 'pending' | 'active' | 'completed' | 'failed';
-  progress?: number;
-}
+const formatRelativeTime = (date: Date) => {
+  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (seconds < 60) return 'just now';
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+};
 
 const StudioBottomBar = () => {
-  const [zoom, setZoom] = useState(100);
-  const [tasks, setTasks] = useState<Task[]>([]); // No active tasks initially
-  const [isTasksExpanded, setIsTasksExpanded] = useState(false);
-  
-  const activeTaskCount = tasks.filter(task => task.status === 'active').length;
-  
-  const handleZoomIn = () => {
-    if (zoom < 200) setZoom(zoom + 25);
-  };
-  
-  const handleZoomOut = () => {
-    if (zoom > 25) setZoom(zoom - 25);
-  };
-  
-  const handleResetZoom = () => {
-    setZoom(100);
-  };
+  const { isSaving, execution } = useComputeFlowStore();
+  const { availableCredits } = useCredits();
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const prevSaving = useRef(isSaving);
+
+  useEffect(() => {
+    if (prevSaving.current && !isSaving) {
+      setLastSaved(new Date());
+    }
+    prevSaving.current = isSaving;
+  }, [isSaving]);
+
+  const lowCredits = availableCredits !== null && availableCredits < 25;
+  const activeJobs = execution.isRunning
+    ? Math.max(1, execution.total - execution.completed)
+    : 0;
 
   return (
-    <div className="w-full bg-black border-t border-zinc-800/50 px-6 py-2 flex items-center justify-between">
-      <div className="flex items-center gap-2">
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="h-8 w-8 text-zinc-400 hover:text-white"
-          onClick={handleZoomOut}
-          disabled={zoom <= 25}
-        >
-          <Minus className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="ghost"
-          className="h-8 text-zinc-400 hover:text-white px-2 py-0"
-          onClick={handleResetZoom}
-        >
-          <span className="text-sm">{zoom}%</span>
-        </Button>
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="h-8 w-8 text-zinc-400 hover:text-white"
-          onClick={handleZoomIn}
-          disabled={zoom >= 200}
-        >
-          <Plus className="h-4 w-4" />
-        </Button>
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="h-8 w-8 text-zinc-400 hover:text-white ml-1"
-        >
-          <Maximize className="h-4 w-4" />
-        </Button>
-        <span className="text-zinc-600 text-xs ml-2">2K</span>
-      </div>
-      
-      <div className="flex items-center gap-2">
-        <Button 
-          variant="ghost" 
-          className={cn(
-            "text-zinc-400 hover:text-white",
-            activeTaskCount > 0 && "text-zinc-300"
-          )}
-          onClick={() => setIsTasksExpanded(!isTasksExpanded)}
-        >
-          Tasks <span className={cn("ml-1", activeTaskCount > 0 ? "text-blue-400" : "text-zinc-600")}>{activeTaskCount} active</span>
-        </Button>
-        <ChevronRight className={cn(
-          "h-4 w-4 text-zinc-600 transition-transform", 
-          isTasksExpanded && "rotate-90"
-        )} />
-        
-        {isTasksExpanded && activeTaskCount > 0 && (
-          <div className="absolute bottom-12 right-6 bg-zinc-900 border border-zinc-800 rounded-lg p-4 shadow-xl w-80">
-            <h3 className="text-sm font-medium text-zinc-300 mb-3">Active Tasks</h3>
-            <div className="space-y-3">
-              {tasks.filter(task => task.status === 'active').map(task => (
-                <div key={task.id} className="flex items-center">
-                  <CircleDashed className="h-4 w-4 text-blue-400 animate-spin mr-2" />
-                  <div className="flex-1">
-                    <div className="text-xs text-zinc-300">{task.name}</div>
-                    <div className="h-1.5 bg-zinc-800 rounded-full mt-1.5 overflow-hidden">
-                      <div 
-                        className="h-full bg-blue-500 rounded-full"
-                        style={{ width: `${task.progress || 0}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+    <footer className="h-10 bg-surface-1 border-t border-border-subtle px-4 flex items-center justify-between">
+      <div className="flex items-center gap-4 text-xs text-text-tertiary">
+        {lowCredits && (
+          <div className="flex items-center gap-2 px-2 py-1 rounded-lg bg-accent-amber/10 border border-accent-amber/20 text-accent-amber">
+            <AlertCircle className="w-3.5 h-3.5" />
+            <span>Low credits</span>
+            <button className="ml-1 underline hover:no-underline">Upgrade</button>
           </div>
         )}
+        {isSaving && (
+          <div className="flex items-center gap-2">
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            <span>Saving...</span>
+          </div>
+        )}
+        {!isSaving && lastSaved && <span>Saved {formatRelativeTime(lastSaved)}</span>}
       </div>
-    </div>
+
+      <button className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-2 hover:bg-surface-3 border border-border-subtle transition-colors">
+        <div className="flex items-center gap-1.5">
+          <Loader2 className="w-3.5 h-3.5 animate-spin text-accent-teal" />
+          <span className="text-xs font-medium text-text-primary">Queue</span>
+        </div>
+        <span className="px-1.5 py-0.5 rounded bg-accent-teal/20 text-[10px] font-semibold text-accent-teal">
+          {activeJobs} active
+        </span>
+        <ChevronUp className="w-3.5 h-3.5 text-text-tertiary" />
+      </button>
+    </footer>
   );
 };
 

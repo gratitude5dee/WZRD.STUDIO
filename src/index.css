@@ -138,6 +138,19 @@
  
 @layer base {
   :root {
+    /* Font families */
+    --font-display: 'Cal Sans', 'Inter', system-ui, sans-serif;
+    --font-body: 'Inter', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+    /* Type scale */
+    --text-xs: 0.6875rem;
+    --text-sm: 0.8125rem;
+    --text-base: 0.875rem;
+    --text-lg: 1rem;
+    --text-xl: 1.125rem;
+    --text-2xl: 1.5rem;
+
     /* Cyberpunk Primary Palette */
     --cyber-void: 0 0% 4%;
     --cyber-neon-cyan: 180 100% 50%;
@@ -247,61 +260,74 @@
   }
 
   .dark {
-    /* Odyssey Dark Mode - Deep Space */
-    --background: 220 25% 6%;
-    --foreground: 240 20% 92%;
+    /* Surface hierarchy (warmth added to pure blacks) */
+    --background: 228 12% 5%;
+    --surface-0: 228 12% 7%;
+    --surface-1: 228 12% 9%;
+    --surface-2: 228 12% 12%;
+    --surface-3: 228 12% 15%;
+    --surface-4: 228 12% 18%;
 
-    --card: 220 30% 8%;
-    --card-foreground: 240 20% 92%;
+    /* Borders (subtle, not harsh) */
+    --border-subtle: 228 10% 15%;
+    --border-default: 228 10% 20%;
+    --border-strong: 228 10% 28%;
 
-    --popover: 220 30% 10%;
-    --popover-foreground: 240 20% 92%;
+    /* Text hierarchy */
+    --text-primary: 220 20% 95%;
+    --text-secondary: 220 10% 65%;
+    --text-tertiary: 220 10% 45%;
+    --text-disabled: 220 10% 30%;
 
-    /* NEW: Purple & Amber Accent System for Dark Mode */
-    --purple: 258 90% 66%;
+    /* Accent colors (vibrant but refined) */
+    --accent-teal: 168 76% 47%;
+    --accent-purple: 258 80% 62%;
+    --accent-amber: 38 92% 55%;
+    --accent-emerald: 160 84% 45%;
+    --accent-rose: 350 80% 60%;
+
+    /* Glow effects (for active/running states) */
+    --glow-teal: 168 100% 50% / 0.3;
+    --glow-purple: 258 100% 60% / 0.25;
+    --glow-amber: 38 100% 55% / 0.3;
+
+    --foreground: 220 20% 95%;
+    --card: 228 12% 9%;
+    --card-foreground: 220 20% 95%;
+    --popover: 228 12% 9%;
+    --popover-foreground: 220 20% 95%;
+
+    --primary: 168 76% 47%;
+    --primary-foreground: 220 20% 95%;
+
+    --secondary: 228 12% 12%;
+    --secondary-foreground: 220 20% 95%;
+
+    --muted: 228 12% 12%;
+    --muted-foreground: 220 10% 65%;
+
+    --accent: 258 80% 62%;
+    --accent-foreground: 220 20% 95%;
+
+    --destructive: 350 80% 60%;
+    --destructive-foreground: 220 20% 95%;
+
+    --border: 228 10% 20%;
+    --input: 228 12% 12%;
+    --ring: 168 76% 47%;
+
+    --purple: 258 80% 62%;
     --purple-foreground: 0 0% 100%;
-    --amber: 38 92% 50%;
+    --amber: 38 92% 55%;
     --amber-foreground: 38 92% 10%;
     --gold: 43 96% 56%;
 
-    /* Primary - Vibrant Purple #8B5CF6 */
-    --primary: 258 90% 66%;
-    --primary-foreground: 0 0% 100%;
-
-    /* Nebula Secondary - Deep Purple */
-    --secondary: 270 40% 15%;
-    --secondary-foreground: 270 60% 85%;
-
-    /* Muted Space Dust */
-    --muted: 220 20% 12%;
-    --muted-foreground: 240 15% 65%;
-
-    /* Accent - Amber/Gold */
-    --accent: 38 92% 50%;
-    --accent-foreground: 220 25% 8%;
-
-    --destructive: 0 70% 60%;
-    --destructive-foreground: 240 20% 92%;
-
-    --border: 220 30% 18%;
-    --input: 220 30% 12%;
-    --ring: 258 90% 66%;
-
-    /* Enhanced Glass Effects for Dark Mode - Purple */
-    --glass-primary: 258 90% 66% / 0.15;
-    --glass-secondary: 270 60% 50% / 0.12;
-    --glass-accent: 38 92% 50% / 0.18;
-    --glass-backdrop: 220 25% 6% / 0.6;
-    
     /* AI Canvas Design Tokens (Dark Mode Optimized) */
-    --canvas-bg: 0 0% 7%;           /* #121212 - Very dark grey canvas */
-    --block-bg: 0 0% 12%;           /* #1E1E1E - Floating dark grey blocks */
-    --text-primary: 0 0% 96%;       /* #F5F5F5 - Off-white text */
-    --text-secondary: 0 0% 53%;     /* #888888 - Medium grey hints */
-    --accent-blue: 217 91% 60%;     /* #3B82F6 - Neutral blue */
-    --accent-purple: 258 90% 66%;   /* #8B5CF6 - Purple alternative */
-    --connector-default: 0 0% 27%;  /* #444444 - Subtle grey */
-    --connector-active: 168 76% 42%; /* Teal - Active connector */
+    --canvas-bg: 228 12% 7%;
+    --block-bg: 228 12% 12%;
+    --accent-blue: 217 91% 60%;
+    --connector-default: 228 10% 28%;
+    --connector-active: 168 76% 47%;
     
     /* Purple Scale for UI Components */
     --purple-400: 258 90% 66%;      /* #A78BFA - Light purple */
@@ -322,7 +348,20 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-color: hsl(var(--background));
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
   min-height: 100vh;
+}
+
+h1, h2, h3, .font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+}
+
+code, kbd, .font-mono {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
 }
 
 body::after {
@@ -511,4 +550,75 @@ body::after {
 
 .sidebar-content-glow:hover {
   background: rgba(139, 92, 246, 0.02);
+}
+
+/* Smooth transitions */
+.transition-std {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Subtle pulse for running states */
+@keyframes pulse-subtle {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 2s ease-in-out infinite;
+}
+
+/* Flowing dash animation for edges */
+@keyframes dash-flow {
+  to {
+    stroke-dashoffset: -24;
+  }
+}
+
+.animate-dash {
+  animation: dash-flow 0.8s linear infinite;
+}
+
+/* Entrance animations */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.3s ease-out forwards;
+}
+
+/* Scale-in for modals/panels */
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-scale-in {
+  animation: scale-in 0.2s ease-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-pulse-subtle,
+  .animate-dash,
+  .animate-fade-in-up,
+  .animate-scale-in {
+    animation: none;
+  }
 }

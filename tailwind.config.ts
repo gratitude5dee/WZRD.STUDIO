@@ -19,6 +19,25 @@ export default {
 		},
 		extend: {
 			colors: {
+				surface: {
+					0: 'hsl(var(--surface-0))',
+					1: 'hsl(var(--surface-1))',
+					2: 'hsl(var(--surface-2))',
+					3: 'hsl(var(--surface-3))',
+					4: 'hsl(var(--surface-4))'
+				},
+				'border-subtle': 'hsl(var(--border-subtle))',
+				'border-default': 'hsl(var(--border-default))',
+				'border-strong': 'hsl(var(--border-strong))',
+				'text-primary': 'hsl(var(--text-primary))',
+				'text-secondary': 'hsl(var(--text-secondary))',
+				'text-tertiary': 'hsl(var(--text-tertiary))',
+				'text-disabled': 'hsl(var(--text-disabled))',
+				'accent-teal': 'hsl(var(--accent-teal))',
+				'accent-purple': 'hsl(var(--accent-purple))',
+				'accent-amber': 'hsl(var(--accent-amber))',
+				'accent-emerald': 'hsl(var(--accent-emerald))',
+				'accent-rose': 'hsl(var(--accent-rose))',
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
 				ring: 'hsl(var(--ring))',
@@ -111,8 +130,9 @@ export default {
 				}
 			},
 			fontFamily: {
-				display: ['Orbitron', 'sans-serif'],
-				body: ['JetBrains Mono', 'monospace'],
+				display: ['var(--font-display)', 'Inter', 'system-ui', 'sans-serif'],
+				body: ['var(--font-body)', 'Inter', 'system-ui', 'sans-serif'],
+				mono: ['var(--font-mono)', 'JetBrains Mono', 'Fira Code', 'monospace'],
 				tech: ['Rajdhani', 'sans-serif'],
 				serif: ['Cinzel', 'serif'],
 				cyber: ['Orbitron', 'monospace'],
@@ -128,9 +148,15 @@ export default {
 				'glow-purple-md': '0 0 15px rgba(147, 51, 234, 0.5), 0 0 25px rgba(147, 51, 234, 0.2)',
 				'glow-blue-md': '0 0 15px rgba(47, 123, 188, 0.5), 0 0 25px rgba(47, 123, 188, 0.2)',
 				'glow-teal-md': '0 0 15px rgba(20, 184, 166, 0.5), 0 0 25px rgba(20, 184, 166, 0.2)',
+				'glow-teal': '0 0 20px hsl(var(--glow-teal)), 0 0 40px hsl(var(--glow-teal))',
+				'glow-purple': '0 0 20px hsl(var(--glow-purple)), 0 0 40px hsl(var(--glow-purple))',
+				'glow-amber': '0 0 20px hsl(var(--glow-amber)), 0 0 40px hsl(var(--glow-amber))',
 			},
 			transitionDuration: {
 				'std': '300ms',
+			},
+			transitionTimingFunction: {
+				'std': 'cubic-bezier(0.4, 0, 0.2, 1)',
 			},
 			keyframes: {
 				'accordion-down': {
