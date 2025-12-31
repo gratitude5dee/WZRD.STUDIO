@@ -247,6 +247,9 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
   useEffect(() => {
     setNodes((currentNodes) => {
       const addBlockNodes = currentNodes.filter((node) => node.type === 'addBlockNode');
+      const computeFlowNodes = currentNodes.filter((node) =>
+        nodeDefinitions.some((nodeDefinition) => nodeDefinition.id === node.id)
+      );
       const blockNodes = blocks.map((block) => ({
         id: block.id,
         type: block.type,
@@ -261,9 +264,23 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
         selected: block.id === selectedBlockId,
       }));
 
-      return [...blockNodes, ...addBlockNodes];
+      const nodeMap = new Map<string, Node>();
+
+      computeFlowNodes.forEach((node) => nodeMap.set(node.id, node));
+      blockNodes.forEach((node) => {
+        if (!nodeMap.has(node.id)) {
+          nodeMap.set(node.id, node);
+        }
+      });
+      addBlockNodes.forEach((node) => {
+        if (!nodeMap.has(node.id)) {
+          nodeMap.set(node.id, node);
+        }
+      });
+
+      return Array.from(nodeMap.values());
     });
-  }, [blocks, blockModels, selectedBlockId, handleSpawnBlocks]);
+  }, [blocks, blockModels, selectedBlockId, handleSpawnBlocks, nodeDefinitions]);
 
   // Helper to map node kind to React Flow node type
   const getNodeTypeFromKind = useCallback((kind: string): string => {
