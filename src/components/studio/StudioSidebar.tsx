@@ -13,6 +13,8 @@ import {
   Upload,
   FolderOpen,
   Workflow,
+  MessageCircle,
+  Sparkles,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -20,7 +22,6 @@ import FlowSelector, { Flow } from './FlowSelector';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AssetLibrary, AssetUploader } from '@/components/assets';
 import type { ProjectAsset, AssetType } from '@/types/assets';
-import { ProfileButton } from '@/components/layout/ProfileButton';
 import { WorkflowGeneratorTab } from './WorkflowGeneratorTab';
 import type { NodeDefinition, EdgeDefinition } from '@/types/computeFlow';
 import { useComputeFlowStore } from '@/store/computeFlowStore';
@@ -57,39 +58,15 @@ const detectAssetTypeFromFile = (file: File): AssetType => {
 };
 
 const MOCK_FLOWS: Flow[] = [
-  {
-    id: 'game-character',
-    name: 'Game Character Generation',
-    blocks: 139,
-  },
-  {
-    id: 'magic-frogs',
-    name: 'magic frogs',
-    blocks: 9,
-  },
-  {
-    id: 'cinematic',
-    name: 'Cinematic Portrait',
-    blocks: 9,
-  },
-  {
-    id: 'branching',
-    name: 'Branching',
-    blocks: 79,
-  },
-  {
-    id: 'aesthetic',
-    name: 'Aesthetic Style Extraction',
-    blocks: 39,
-  },
-  {
-    id: 'love-me',
-    name: 'LOVE ME, LOVE ME NOT',
-    blocks: 3,
-  },
+  { id: 'game-character', name: 'Game Character Generation', blocks: 139 },
+  { id: 'magic-frogs', name: 'magic frogs', blocks: 9 },
+  { id: 'cinematic', name: 'Cinematic Portrait', blocks: 9 },
+  { id: 'branching', name: 'Branching', blocks: 79 },
+  { id: 'aesthetic', name: 'Aesthetic Style Extraction', blocks: 39 },
+  { id: 'love-me', name: 'LOVE ME, LOVE ME NOT', blocks: 3 },
 ];
 
-const SidebarButton = ({
+const FloatingSidebarButton = ({
   icon: Icon,
   label,
   active,
@@ -109,15 +86,15 @@ const SidebarButton = ({
   const content = (
     <div
       className={cn(
-        'relative w-10 h-10 rounded-xl flex items-center justify-center transition-all',
-        'text-text-secondary hover:text-text-primary',
-        active && 'bg-surface-3 text-text-primary shadow-inner',
-        primary && !active && 'bg-accent-teal/10 text-accent-teal hover:bg-accent-teal/20'
+        'relative w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200',
+        'text-zinc-400 hover:text-white hover:bg-white/10',
+        active && 'bg-white/15 text-white',
+        primary && !active && 'text-accent-teal hover:text-accent-teal hover:bg-accent-teal/10'
       )}
     >
-      <Icon className="w-5 h-5" />
+      <Icon className="w-[18px] h-[18px]" strokeWidth={1.5} />
       {badge ? (
-        <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-accent-rose text-[10px] font-bold text-white flex items-center justify-center">
+        <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-accent-rose text-[9px] font-bold text-white flex items-center justify-center">
           {badge}
         </span>
       ) : null}
@@ -231,229 +208,179 @@ const StudioSidebar = ({ onAddBlock, projectId, onAssetSelect }: StudioSidebarPr
   };
 
   const hasProject = Boolean(projectId);
-  const distributionItem = {
-    icon: Upload,
-    label: 'Distribute via USync',
-    href: 'https://usync.lovable.app',
-  };
-  const inboxCount = 3;
 
   return (
-    <aside className="h-full w-16 bg-surface-1 border-r border-border-subtle flex flex-col">
-      <div className="h-16 flex items-center justify-center border-b border-border-subtle">
-        <Logo size="sm" showVersion={false} />
-      </div>
+    <>
+      {/* Floating Pill Sidebar */}
+      <aside className="fixed left-4 top-1/2 -translate-y-1/2 z-40 bg-zinc-900/90 backdrop-blur-xl border border-zinc-800/50 rounded-2xl p-2 flex flex-col gap-1 shadow-2xl">
+        <TooltipProvider delayDuration={200}>
+          {/* Primary Actions */}
+          <div className="flex flex-col gap-1">
+            <div className="relative" ref={addMenuRef}>
+              <FloatingSidebarButton
+                icon={Plus}
+                label="Add Block"
+                active={activeTool === 'add'}
+                primary
+                onClick={() => handleToolClick('add')}
+              />
 
-      <TooltipProvider delayDuration={200}>
-        <nav className="flex-1 py-4 flex flex-col items-center gap-2">
-          <div className="relative" ref={addMenuRef}>
-            <SidebarButton
-              icon={Plus}
-              label="Add"
-              active={activeTool === 'add'}
-              primary
-              onClick={() => handleToolClick('add')}
-            />
-
-            <AnimatePresence>
-              {showAddMenu && (
-                <motion.div
-                  className="absolute left-14 top-0 w-64 bg-surface-2 border border-border-default rounded-xl shadow-xl z-50"
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -10 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <div className="p-2">
-                    <div className="px-3 py-2">
-                      <h3 className="text-xs font-semibold text-text-tertiary">Add Block</h3>
-                    </div>
-
-                    <button
-                      className="w-full flex items-center justify-between px-3 py-2 hover:bg-surface-3 rounded-md text-text-primary text-sm"
-                      onClick={() => {
-                        onAddBlock('text');
-                        setShowAddMenu(false);
-                      }}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="bg-surface-3 w-7 h-7 rounded-full flex items-center justify-center">
-                          <Type className="h-3.5 w-3.5 text-text-primary" />
-                        </div>
-                        <span>Text</span>
+              <AnimatePresence>
+                {showAddMenu && (
+                  <motion.div
+                    className="absolute left-12 top-0 w-64 bg-zinc-900/95 backdrop-blur-xl border border-zinc-800/50 rounded-xl shadow-2xl z-50"
+                    initial={{ opacity: 0, x: -10, scale: 0.95 }}
+                    animate={{ opacity: 1, x: 0, scale: 1 }}
+                    exit={{ opacity: 0, x: -10, scale: 0.95 }}
+                    transition={{ duration: 0.15 }}
+                  >
+                    <div className="p-2">
+                      <div className="px-3 py-2">
+                        <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">Add Block</h3>
                       </div>
-                      <span className="text-xs text-text-disabled">T</span>
-                    </button>
 
-                    <button
-                      className="w-full flex items-center justify-between px-3 py-2 hover:bg-surface-3 rounded-md text-text-primary text-sm"
-                      onClick={() => {
-                        onAddBlock('image');
-                        setShowAddMenu(false);
-                      }}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="bg-surface-3 w-7 h-7 rounded-full flex items-center justify-center">
-                          <ImageIcon className="h-3.5 w-3.5 text-text-primary" />
-                        </div>
-                        <span>Image</span>
+                      {[
+                        { type: 'text' as const, icon: Type, label: 'Text', shortcut: 'T' },
+                        { type: 'image' as const, icon: ImageIcon, label: 'Image', shortcut: 'I' },
+                        { type: 'video' as const, icon: Video, label: 'Video', shortcut: 'V' },
+                      ].map((item) => (
+                        <button
+                          key={item.type}
+                          className="w-full flex items-center justify-between px-3 py-2 hover:bg-white/5 rounded-lg text-zinc-300 text-sm transition-colors"
+                          onClick={() => {
+                            onAddBlock(item.type);
+                            setShowAddMenu(false);
+                          }}
+                        >
+                          <div className="flex items-center gap-3">
+                            <item.icon className="h-4 w-4 text-zinc-400" />
+                            <span>{item.label}</span>
+                          </div>
+                          <span className="text-xs text-zinc-600">{item.shortcut}</span>
+                        </button>
+                      ))}
+
+                      <div className="border-t border-zinc-800/50 my-2" />
+
+                      <div className="px-3 py-2">
+                        <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">Add Source</h3>
                       </div>
-                      <span className="text-xs text-text-disabled">I</span>
-                    </button>
 
-                    <button
-                      className="w-full flex items-center justify-between px-3 py-2 hover:bg-surface-3 rounded-md text-text-primary text-sm"
-                      onClick={() => {
-                        onAddBlock('video');
-                        setShowAddMenu(false);
-                      }}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="bg-surface-3 w-7 h-7 rounded-full flex items-center justify-center">
-                          <Video className="h-3.5 w-3.5 text-text-primary" />
-                        </div>
-                        <span>Video</span>
-                      </div>
-                      <span className="text-xs text-text-disabled">V</span>
-                    </button>
-
-                    <div className="border-t border-border-subtle my-2" />
-
-                    <div className="px-3 py-2">
-                      <h3 className="text-xs font-semibold text-text-tertiary">Add Source</h3>
-                    </div>
-
-                    <button
-                      className="w-full flex items-center justify-between px-3 py-2 hover:bg-surface-3 rounded-md text-text-primary text-sm"
-                      onClick={() => {
-                        onAddBlock('upload');
-                        setShowAddMenu(false);
-                      }}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="bg-surface-3 w-7 h-7 rounded-full flex items-center justify-center">
-                          <Inbox className="h-3.5 w-3.5 text-text-primary" />
-                        </div>
-                        <span>Upload</span>
-                      </div>
-                      <span className="text-xs text-text-disabled">U</span>
-                    </button>
-
-                    <div className="border-t border-border-subtle my-2" />
-
-                    <div className="px-3 py-2 space-y-2">
-                      <div className="flex items-center justify-between text-xs text-text-tertiary">
-                        <span>↑↓ Navigate</span>
-                        <span>↵ Select</span>
-                      </div>
-                      <button className="w-full flex items-center justify-between px-2 py-2 hover:bg-surface-3 rounded-md text-text-primary text-sm">
+                      <button
+                        className="w-full flex items-center justify-between px-3 py-2 hover:bg-white/5 rounded-lg text-zinc-300 text-sm transition-colors"
+                        onClick={() => {
+                          onAddBlock('upload');
+                          setShowAddMenu(false);
+                        }}
+                      >
                         <div className="flex items-center gap-3">
-                          <HelpCircle className="h-3.5 w-3.5 text-text-tertiary" />
-                          <span>Learn about Blocks</span>
+                          <Inbox className="h-4 w-4 text-zinc-400" />
+                          <span>Upload</span>
                         </div>
+                        <span className="text-xs text-zinc-600">U</span>
                       </button>
                     </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
 
-          <div className="relative" ref={flowSelectorRef}>
-            <SidebarButton
-              icon={Workflow}
-              label="Flows"
-              active={activeTool === 'templates'}
-              onClick={() => handleToolClick('templates')}
+            <div className="relative" ref={flowSelectorRef}>
+              <FloatingSidebarButton
+                icon={Workflow}
+                label="Flows"
+                active={activeTool === 'templates'}
+                onClick={() => handleToolClick('templates')}
+              />
+
+              <AnimatePresence>
+                {showFlowSelector && (
+                  <motion.div
+                    className="absolute left-12 top-0 w-72 z-50"
+                    initial={{ opacity: 0, x: -10, scale: 0.95 }}
+                    animate={{ opacity: 1, x: 0, scale: 1 }}
+                    exit={{ opacity: 0, x: -10, scale: 0.95 }}
+                    transition={{ duration: 0.15 }}
+                  >
+                    <FlowSelector flows={MOCK_FLOWS} onFlowSelect={handleSelectFlow} />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            <FloatingSidebarButton
+              icon={History}
+              label="History"
+              active={activeTool === 'history'}
+              onClick={() => handleToolClick('history')}
             />
 
-            <AnimatePresence>
-              {showFlowSelector && (
-                <motion.div
-                  className="absolute left-14 top-0 w-72 z-50"
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -10 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <FlowSelector flows={MOCK_FLOWS} onFlowSelect={handleSelectFlow} />
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+            <div className="relative" ref={workflowPanelRef}>
+              <FloatingSidebarButton
+                icon={Sparkles}
+                label="AI Workflow"
+                active={activeTool === 'workflow'}
+                onClick={() => handleToolClick('workflow')}
+              />
 
-          <SidebarButton
-            icon={Layers}
-            label="Layers"
-            active={activeTool === 'layers'}
-            onClick={() => handleToolClick('layers')}
-          />
-          <SidebarButton
-            icon={FolderOpen}
-            label="Assets"
-            active={activeTool === 'assets'}
-            onClick={() => handleToolClick('assets')}
-          />
-          <SidebarButton
-            icon={History}
-            label="History"
-            active={activeTool === 'history'}
-            onClick={() => handleToolClick('history')}
-          />
-          <SidebarButton
-            icon={Inbox}
-            label="Inbox"
-            active={activeTool === 'inbox'}
-            badge={inboxCount}
-            onClick={() => handleToolClick('inbox')}
-          />
-        </nav>
+              <AnimatePresence>
+                {showWorkflowPanel && (
+                  <motion.div
+                    className="absolute left-12 bottom-0 w-80 bg-zinc-900/95 backdrop-blur-xl border border-zinc-800/50 rounded-2xl shadow-2xl z-50 overflow-hidden"
+                    initial={{ opacity: 0, x: -10, scale: 0.95 }}
+                    animate={{ opacity: 1, x: 0, scale: 1 }}
+                    exit={{ opacity: 0, x: -10, scale: 0.95 }}
+                    transition={{ duration: 0.15 }}
+                  >
+                    <WorkflowGeneratorTab onWorkflowGenerated={handleWorkflowGenerated} />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
 
-        <div className="mx-3 h-px bg-border-subtle" />
-
-        <nav className="py-4 flex flex-col items-center gap-2">
-          <div className="relative" ref={workflowPanelRef}>
-            <SidebarButton
-              icon={Wand2}
-              label="AI"
-              active={activeTool === 'workflow'}
-              onClick={() => handleToolClick('workflow')}
+            <FloatingSidebarButton
+              icon={FolderOpen}
+              label="Assets"
+              active={activeTool === 'assets'}
+              onClick={() => handleToolClick('assets')}
             />
 
-            <AnimatePresence>
-              {showWorkflowPanel && (
-                <motion.div
-                  className="absolute left-14 bottom-[68px] w-80 bg-surface-2/95 backdrop-blur-md border border-border-default rounded-2xl shadow-2xl z-50 overflow-hidden"
-                  initial={{ opacity: 0, x: -10, scale: 0.95 }}
-                  animate={{ opacity: 1, x: 0, scale: 1 }}
-                  exit={{ opacity: 0, x: -10, scale: 0.95 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <WorkflowGeneratorTab onWorkflowGenerated={handleWorkflowGenerated} />
-                </motion.div>
-              )}
-            </AnimatePresence>
+            <FloatingSidebarButton
+              icon={MessageCircle}
+              label="Chat"
+              active={activeTool === 'chat'}
+              onClick={() => handleToolClick('chat')}
+            />
           </div>
 
-          <SidebarButton
-            icon={Settings}
-            label="Settings"
-            active={activeTool === 'settings'}
-            onClick={() => handleToolClick('settings')}
-          />
-        </nav>
+          {/* Divider */}
+          <div className="my-1 h-px bg-zinc-800/50" />
 
-        <div className="p-3 border-t border-border-subtle flex flex-col items-center gap-3">
-          <SidebarButton icon={distributionItem.icon} label={distributionItem.label} href={distributionItem.href} />
-          <ProfileButton />
-        </div>
-      </TooltipProvider>
+          {/* Secondary Actions */}
+          <div className="flex flex-col gap-1">
+            <FloatingSidebarButton
+              icon={HelpCircle}
+              label="Help"
+              active={activeTool === 'help'}
+              onClick={() => handleToolClick('help')}
+            />
+          </div>
 
+          {/* Bottom Logo */}
+          <div className="mt-1 pt-1 border-t border-zinc-800/50 flex justify-center">
+            <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+              <span className="text-white text-xs font-bold">W</span>
+            </div>
+          </div>
+        </TooltipProvider>
+      </aside>
+
+      {/* Assets Modal */}
       <Dialog open={showAssetsModal} onOpenChange={setShowAssetsModal}>
-        <DialogContent className="max-w-5xl bg-surface-2 border border-border-default text-text-primary">
+        <DialogContent className="max-w-5xl bg-zinc-900/95 backdrop-blur-xl border border-zinc-800/50 text-white">
           <DialogHeader>
             <DialogTitle>Project assets</DialogTitle>
-            <DialogDescription className="text-text-tertiary">
+            <DialogDescription className="text-zinc-400">
               Upload media and reuse it across Studio, Editor, and Kanvas.
             </DialogDescription>
           </DialogHeader>
@@ -472,7 +399,7 @@ const StudioSidebar = ({ onAddBlock, projectId, onAssetSelect }: StudioSidebarPr
                   acceptedFileTypes={ACCEPTED_STUDIO_FILE_TYPES}
                   getAssetTypeForFile={detectAssetTypeFromFile}
                 />
-                <p className="text-xs text-text-tertiary">
+                <p className="text-xs text-zinc-500">
                   Uploaded assets will instantly appear in the library on the right.
                 </p>
               </div>
@@ -484,13 +411,13 @@ const StudioSidebar = ({ onAddBlock, projectId, onAssetSelect }: StudioSidebarPr
               />
             </div>
           ) : (
-            <div className="py-10 text-center text-sm text-text-tertiary">
+            <div className="py-10 text-center text-sm text-zinc-500">
               Select a project to start managing assets.
             </div>
           )}
         </DialogContent>
       </Dialog>
-    </aside>
+    </>
   );
 };
 

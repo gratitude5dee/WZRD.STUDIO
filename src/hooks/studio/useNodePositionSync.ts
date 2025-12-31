@@ -19,8 +19,11 @@
 
 import { useCallback, useRef, useMemo } from 'react';
 import { useComputeFlowStore } from '@/store/computeFlowStore';
-import type { Node, NodeDragHandler, OnNodesChange } from '@xyflow/react';
+import type { Node, OnNodesChange } from '@xyflow/react';
 import { debounce } from '@/lib/utils';
+
+// Define NodeDragHandler type locally since it's not exported from @xyflow/react
+type NodeDragHandler = (event: React.MouseEvent, node: Node, nodes: Node[]) => void;
 
 interface Position {
   x: number;
@@ -41,8 +44,8 @@ interface UseNodePositionSyncOptions {
 interface NodePositionSyncResult {
   /** Handler for node drag end - triggers position save */
   onNodeDragStop: NodeDragHandler;
-  /** Handler for node changes (position, selection, etc.) */
-  onNodesChange: OnNodesChange;
+  /** Filter function for node changes - returns filtered changes */
+  filterNodeChanges: (changes: any[]) => any[];
   /** Whether a save is pending */
   isSavePending: boolean;
 }
@@ -143,14 +146,13 @@ export function useNodePositionSync({
   );
   
   /**
-   * Handle node changes (position during drag, selection, etc.)
-   * This updates the local React Flow state but does NOT trigger saves.
-   * Saves only happen on drag end.
+   * Filter node changes (position during drag, selection, etc.)
+   * This is a pure function that returns filtered changes.
    */
-  const onNodesChange: OnNodesChange = useCallback(
-    (changes) => {
+  const filterNodeChanges = useCallback(
+    (changes: any[]): any[] => {
       // Filter out any changes we want to ignore
-      const filteredChanges = changes.filter((change) => {
+      return changes.filter((change) => {
         // Always allow non-position changes
         if (change.type !== 'position') return true;
         
@@ -158,15 +160,13 @@ export function useNodePositionSync({
         // The save happens in onNodeDragStop
         return true;
       });
-      
-      return filteredChanges;
     },
     []
   );
   
   return {
     onNodeDragStop,
-    onNodesChange,
+    filterNodeChanges,
     isSavePending: savePendingRef.current,
   };
 }

@@ -2,11 +2,10 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/ui/logo';
-import { Share, User, MoreVertical } from 'lucide-react';
+import { Share } from 'lucide-react';
 import { useAppStore } from '@/store/appStore';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import CreditsDisplay from '@/components/CreditsDisplay';
 import { supabaseService } from '@/services/supabaseService';
 import { Input } from '@/components/ui/input';
 import { z } from 'zod';
@@ -15,7 +14,6 @@ import { ShareModal } from '@/components/share/ShareModal';
 type ViewMode = 'studio' | 'timeline' | 'editor';
 
 interface AppHeaderProps {
-  // Optional customizations
   className?: string;
   showShareButton?: boolean;
 }
@@ -31,30 +29,26 @@ export const AppHeader = ({
   
   const { activeProjectId, activeProjectName, setActiveProject, fetchMostRecentProject } = useAppStore();
   
-  // Inline editing state
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState('');
   const [showShareModal, setShowShareModal] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Validation schema
   const titleSchema = z.string()
     .trim()
     .min(1, 'Title cannot be empty')
     .max(100, 'Title must be less than 100 characters');
 
-  // Determine current view from the URL path
   const getCurrentView = (): ViewMode => {
     const path = location.pathname;
     if (path.includes('/studio')) return 'studio';
     if (path.includes('/timeline')) return 'timeline';
     if (path.includes('/editor')) return 'editor';
-    return 'studio'; // Default
+    return 'studio';
   };
 
   const currentView = getCurrentView();
 
-  // When URL projectId changes, update the store
   useEffect(() => {
     if (projectIdFromURL && projectIdFromURL !== activeProjectId) {
       const fetchProjectName = async () => {
@@ -71,12 +65,9 @@ export const AppHeader = ({
   }, [projectIdFromURL, activeProjectId, setActiveProject]);
 
   const handleNavigate = async (viewMode: ViewMode) => {
-    // Determine the projectId to use (URL takes priority, then store)
     const projectId = projectIdFromURL || activeProjectId;
     
-    // Case 1: User wants to go to studio
     if (viewMode === 'studio') {
-      // If we have a projectId, preserve it in the studio URL
       if (projectId) {
         navigate(`/studio/${projectId}`);
       } else {
@@ -85,10 +76,7 @@ export const AppHeader = ({
       return;
     }
     
-    // Case 2: User wants to go to timeline or editor
-    // Both require a project ID
     if (!projectId) {
-      // If we don't have an active project, try to fetch the most recent one
       const recentProjectId = await fetchMostRecentProject();
       
       if (recentProjectId) {
@@ -98,19 +86,16 @@ export const AppHeader = ({
         navigate('/home');
       }
     } else {
-      // We have a project, navigate to the view with this project
       navigate(`/${viewMode}/${projectId}`);
     }
   };
 
-  // Helper for button styling based on active state
   const getButtonClass = (viewMode: ViewMode) => {
-    const baseClass = "text-sm px-3 py-1.5 rounded-md transition-colors duration-200";
     return cn(
-      baseClass,
+      'text-xs px-2.5 py-1 rounded-md transition-colors duration-200',
       currentView === viewMode
-        ? "bg-purple-600 text-white" 
-        : "text-zinc-400 hover:text-white hover:bg-zinc-800"
+        ? 'bg-white/10 text-white' 
+        : 'text-zinc-500 hover:text-white hover:bg-white/5'
     );
   };
 
@@ -169,13 +154,17 @@ export const AppHeader = ({
 
   return (
     <header className={cn(
-      "w-full bg-[rgba(10,10,15,0.9)] backdrop-blur-xl border-b border-white/[0.06] px-6 py-3 flex items-center justify-between relative z-20",
+      'w-full bg-zinc-950/80 backdrop-blur-xl border-b border-zinc-800/50 px-4 py-2.5 flex items-center justify-between relative z-20',
       className
     )}>
-      <div className="flex items-center gap-4">
+      {/* Left: Logo + Project Name */}
+      <div className="flex items-center gap-3">
         <div onClick={handleLogoClick} className="cursor-pointer">
           <Logo size="sm" showVersion={false} />
         </div>
+        
+        <div className="h-4 w-px bg-zinc-800" />
+        
         {isEditing ? (
           <Input
             ref={inputRef}
@@ -183,59 +172,56 @@ export const AppHeader = ({
             onChange={(e) => setEditValue(e.target.value)}
             onBlur={saveTitle}
             onKeyDown={handleKeyDown}
-            className="h-8 text-lg font-medium bg-zinc-900 border-zinc-700 text-white max-w-xs"
+            className="h-7 text-sm font-medium bg-zinc-900 border-zinc-700 text-white max-w-[200px]"
           />
         ) : (
-          <h1 
-            className="text-lg font-medium text-white cursor-text hover:text-purple-400 transition-colors"
+          <span 
+            className="text-sm font-medium text-zinc-300 cursor-text hover:text-white transition-colors"
             onClick={startEditing}
             title="Click to edit project name"
           >
             {activeProjectName || 'Untitled'}
-          </h1>
+          </span>
         )}
-        <Button variant="ghost" size="icon" className="text-zinc-400 hover:text-white">
-          <MoreVertical className="h-5 w-5" />
+      </div>
+
+      {/* Center: View Mode Tabs (minimal) */}
+      <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-0.5 bg-zinc-900/50 rounded-lg p-0.5">
+        <Button
+          variant="ghost"
+          size="sm"
+          className={getButtonClass('studio')}
+          onClick={() => handleNavigate('studio')}
+        >
+          Studio
+        </Button>
+        
+        <Button
+          variant="ghost"
+          size="sm"
+          className={getButtonClass('timeline')}
+          onClick={() => handleNavigate('timeline')}
+        >
+          Timeline
+        </Button>
+        
+        <Button
+          variant="ghost"
+          size="sm"
+          className={getButtonClass('editor')}
+          onClick={() => handleNavigate('editor')}
+        >
+          Editor
         </Button>
       </div>
 
-      <div className="flex-1 flex justify-center">
-        <div className="flex items-center space-x-1 bg-zinc-900/80 rounded-lg p-1">
-          <Button
-            variant="ghost"
-            className={getButtonClass('studio')}
-            onClick={() => handleNavigate('studio')}
-          >
-            Studio
-          </Button>
-          
-          <Button
-            variant="ghost" 
-            className={getButtonClass('timeline')}
-            onClick={() => handleNavigate('timeline')}
-          >
-            Timeline
-          </Button>
-          
-          <Button
-            variant="ghost"
-            className={getButtonClass('editor')}
-            onClick={() => handleNavigate('editor')}
-          >
-            Editor
-          </Button>
-        </div>
-      </div>
-
-      <div className="flex items-center gap-3">
-        <CreditsDisplay showTooltip={true} />
-        <Button variant="ghost" className="text-white hover:bg-zinc-800">
-          <User className="h-5 w-5" />
-        </Button>
+      {/* Right: Share Button Only */}
+      <div className="flex items-center gap-2">
         {showShareButton && (
           <>
             <Button
-              className="bg-zinc-800 hover:bg-zinc-700 text-white"
+              size="sm"
+              className="bg-white/10 hover:bg-white/20 text-white border-0 text-xs px-3"
               onClick={() => {
                 if (!resolvedProjectId) {
                   toast.warning('Please select a project to share');
@@ -244,7 +230,7 @@ export const AppHeader = ({
                 setShowShareModal(true);
               }}
             >
-              <Share className="h-4 w-4 mr-2" />
+              <Share className="h-3.5 w-3.5 mr-1.5" />
               Share
             </Button>
 
