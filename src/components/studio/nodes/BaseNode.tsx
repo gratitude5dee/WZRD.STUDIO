@@ -85,6 +85,7 @@ export const BaseNode = forwardRef<HTMLDivElement, BaseNodeProps>(
         {/* Corner indicators for selected state */}
         {isSelected && (
           <>
+            <div className="pointer-events-none absolute inset-0 rounded-2xl border border-[var(--node-accent)]/40 shadow-[0_0_24px_var(--node-accent-glow)] animate-pulse" />
             <div className="absolute top-1.5 left-1.5 h-2 w-2 rounded-full bg-[var(--node-accent)] shadow-[0_0_8px_var(--node-accent-glow)]" />
             <div className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-[var(--node-accent)] shadow-[0_0_8px_var(--node-accent-glow)]" />
             <div className="absolute bottom-1.5 left-1.5 h-2 w-2 rounded-full bg-[var(--node-accent)] shadow-[0_0_8px_var(--node-accent-glow)]" />

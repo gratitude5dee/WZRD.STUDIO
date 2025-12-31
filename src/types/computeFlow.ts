@@ -8,24 +8,24 @@ export type PortPosition = 'top' | 'right' | 'bottom' | 'left';
 
 // Color mapping for data types - Premium vivid palette
 export const HANDLE_COLORS: Record<DataType, string> = {
-  image: '#10B981',      // Emerald - bright, vivid green
-  text: '#F59E0B',       // Amber - warm gold
-  video: '#8B5CF6',      // Violet - rich purple
-  audio: '#EC4899',      // Pink - vibrant magenta
-  tensor: '#06B6D4',     // Cyan - electric blue
-  json: '#6366F1',       // Indigo - deep blue (not gray!)
-  any: '#9CA3AF',        // Cool gray
+  text: '#3B82F6',       // Blue - text
+  image: '#10B981',      // Emerald - image
+  video: '#8B5CF6',      // Violet - video
+  audio: '#EC4899',      // Pink - audio
+  tensor: '#F59E0B',     // Amber - 3d/tensor
+  json: '#6366F1',       // Indigo - json
+  any: '#6B7280',        // Gray - any
 };
 
 // Glow variants for handles (20% opacity)
 export const HANDLE_GLOW_COLORS: Record<DataType, string> = {
+  text: 'rgba(59, 130, 246, 0.4)',
   image: 'rgba(16, 185, 129, 0.4)',
-  text: 'rgba(245, 158, 11, 0.4)',
   video: 'rgba(139, 92, 246, 0.4)',
   audio: 'rgba(236, 72, 153, 0.4)',
-  tensor: 'rgba(6, 182, 212, 0.4)',
+  tensor: 'rgba(245, 158, 11, 0.4)',
   json: 'rgba(99, 102, 241, 0.4)',
-  any: 'rgba(156, 163, 175, 0.4)',
+  any: 'rgba(107, 114, 128, 0.3)',
 };
 
 // Type compatibility matrix

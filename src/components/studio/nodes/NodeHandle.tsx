@@ -53,7 +53,7 @@ export const NodeHandle = ({
         <div
           className={cn(
             'absolute z-50 whitespace-nowrap rounded-md border border-zinc-800 bg-zinc-950/90 px-2 py-1 text-[10px] font-medium text-zinc-200 shadow-lg',
-            'opacity-0 transition-opacity duration-150 group-hover/handle:opacity-100',
+            'opacity-0 transition-opacity duration-150 group-hover/handle:opacity-100 group-hover/node:opacity-100',
             position === Position.Left && 'left-full ml-2 top-1/2 -translate-y-1/2',
             position === Position.Right && 'right-full mr-2 top-1/2 -translate-y-1/2',
             position === Position.Top && 'top-full mt-2 left-1/2 -translate-x-1/2',

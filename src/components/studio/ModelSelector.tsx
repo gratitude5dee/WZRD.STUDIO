@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Check, ChevronDown, Search, Sparkles, Zap } from 'lucide-react';
+import { Check, ChevronDown, Scale, Search, Sparkles, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export interface Model {
@@ -40,6 +40,14 @@ const QUALITY_OPTIONS: { value: QualityPreset; label: string; helper: string }[]
   { value: 'quality', label: 'Quality', helper: 'Best results' },
 ];
 
+const inferModelType = (model: Model, fallback: ModelSelectorProps['modelType']) => {
+  if (model.type) return model.type;
+  if (model.category?.includes('image')) return 'image';
+  if (model.category?.includes('video')) return 'video';
+  if (model.category?.includes('text') || model.category?.includes('llm')) return 'text';
+  return fallback;
+};
+
 const ModelSelector: React.FC<ModelSelectorProps> = ({
   models,
   selectedModelId,
@@ -61,7 +69,7 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
   const filteredModels = useMemo(() => {
     const searchValue = search.trim().toLowerCase();
     return models.filter(model => {
-      const inferredType = model.type || (model.category?.includes('image') ? 'image' : model.category?.includes('video') ? 'video' : model.category?.includes('text') || model.category?.includes('llm') ? 'text' : modelType);
+      const inferredType = inferModelType(model, modelType);
       const matchesFilter = filter === 'all' || inferredType === filter;
       const matchesSearch =
         !searchValue ||
@@ -72,8 +80,23 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
     });
   }, [models, search, filter, modelType]);
 
-  const recommendedModels = filteredModels.slice(0, 3);
-  const remainingModels = filteredModels.slice(3);
+  const recommendedModels = useMemo(() => filteredModels.slice(0, 3), [filteredModels]);
+  const recommendedIds = useMemo(
+    () => new Set(recommendedModels.map(model => model.id)),
+    [recommendedModels]
+  );
+  const groupedModels = useMemo(() => {
+    return filteredModels.reduce(
+      (acc, model) => {
+        const inferredType = inferModelType(model, modelType);
+        if (!recommendedIds.has(model.id)) {
+          acc[inferredType].push(model);
+        }
+        return acc;
+      },
+      { text: [] as Model[], image: [] as Model[], video: [] as Model[] }
+    );
+  }, [filteredModels, modelType, recommendedIds]);
 
   return (
     <div className="relative">
@@ -83,7 +106,7 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
         type="button"
       >
         <span className="flex items-center gap-2">
-          <span className="h-5 w-5 rounded-full bg-zinc-700 text-xs text-white flex items-center justify-center">
+          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-zinc-700 text-[10px] text-white">
             {selectedModel?.icon ?? selectedModel?.name?.[0] ?? '?'}
           </span>
           <span className="truncate">{selectedModel?.name || 'Select Model'}</span>
@@ -133,6 +156,7 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
                     ? 'border-blue-500/40 bg-gradient-to-r from-blue-500/20 to-indigo-500/20 text-blue-200 shadow-[0_0_12px_rgba(59,130,246,0.3)]'
                     : 'border-white/10 bg-zinc-900/80 text-zinc-400'
                 )}
+                title="Automatically select the best model for your task"
               >
                 <span
                   className={cn(
@@ -168,7 +192,7 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
                   >
                     <div className="flex items-center gap-1.5">
                       {option.value === 'fast' && <Zap className="h-3 w-3" />}
-                      {option.value === 'balanced' && <Sparkles className="h-3 w-3" />}
+                      {option.value === 'balanced' && <Scale className="h-3 w-3" />}
                       {option.value === 'quality' && <Sparkles className="h-3 w-3" />}
                       <span className="font-medium">{option.label}</span>
                     </div>
@@ -179,7 +203,7 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
             </div>
           </div>
 
-          <div className="mt-4 max-h-[320px] space-y-2 overflow-y-auto pr-1">
+          <div className="mt-4 max-h-[320px] space-y-3 overflow-y-auto pr-1">
             {recommendedModels.length > 0 && (
               <div>
                 <div className="px-2 text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
@@ -201,26 +225,31 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
               </div>
             )}
 
-            {remainingModels.length > 0 && (
-              <div>
-                <div className="px-2 text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
-                  All Models
+            {(['text', 'image', 'video'] as const).map(group => {
+              const groupModels = groupedModels[group];
+              if (!groupModels.length) return null;
+              const label = group === 'text' ? 'Text Models' : group === 'image' ? 'Image Models' : 'Video Models';
+              return (
+                <div key={group}>
+                  <div className="px-2 text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
+                    {label}
+                  </div>
+                  <div className="mt-2 space-y-1">
+                    {groupModels.map(model => (
+                      <ModelItem
+                        key={model.id}
+                        model={model}
+                        isSelected={selectedModelId === model.id}
+                        onSelect={() => {
+                          onModelSelect(model.id);
+                          toggleOpen();
+                        }}
+                      />
+                    ))}
+                  </div>
                 </div>
-                <div className="mt-2 space-y-1">
-                  {remainingModels.map(model => (
-                    <ModelItem
-                      key={model.id}
-                      model={model}
-                      isSelected={selectedModelId === model.id}
-                      onSelect={() => {
-                        onModelSelect(model.id);
-                        toggleOpen();
-                      }}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
+              );
+            })}
             {filteredModels.length === 0 && (
               <div className="rounded-xl border border-dashed border-zinc-700 p-6 text-center text-sm text-zinc-500">
                 No models match your search.
@@ -240,15 +269,18 @@ interface ModelItemProps {
 }
 
 const ModelItem = ({ model, isSelected, onSelect }: ModelItemProps) => {
+  const capabilities = model.capabilities ?? (model.type ? [model.type] : []);
   return (
     <button
       type="button"
       className={cn(
-        'flex w-full items-center gap-3 rounded-xl border border-transparent px-3 py-3 text-left transition-all',
+        'relative flex w-full items-center gap-3 rounded-xl border border-transparent border-b border-white/5 px-4 py-3 text-left transition-all last:border-b-0',
+        'min-h-[64px]',
         isSelected ? 'bg-zinc-800/70' : 'hover:bg-zinc-800/40'
       )}
       onClick={onSelect}
     >
+      {isSelected && <span className="absolute left-0 top-2 h-[calc(100%-16px)] w-1 rounded-full bg-blue-500" />}
       <div className="flex h-10 w-10 items-center justify-center rounded-full bg-zinc-800 text-sm text-white">
         {model.icon ?? model.name[0]}
       </div>
@@ -266,6 +298,37 @@ const ModelItem = ({ model, isSelected, onSelect }: ModelItemProps) => {
           {model.time && <span>~{model.time}</span>}
           {model.description && <span className="truncate">{model.description}</span>}
         </div>
+      </div>
+      <div className="flex items-center gap-1">
+        {capabilities.map(capability => (
+          <span
+            key={capability}
+            className="h-2 w-2 rounded-full"
+            style={{
+              backgroundColor:
+                capability === 'text'
+                  ? '#3B82F6'
+                  : capability === 'image'
+                  ? '#10B981'
+                  : capability === 'video'
+                  ? '#8B5CF6'
+                  : capability === 'audio'
+                  ? '#EC4899'
+                  : '#6B7280',
+              boxShadow: `0 0 6px ${
+                capability === 'text'
+                  ? 'rgba(59,130,246,0.4)'
+                  : capability === 'image'
+                  ? 'rgba(16,185,129,0.4)'
+                  : capability === 'video'
+                  ? 'rgba(139,92,246,0.4)'
+                  : capability === 'audio'
+                  ? 'rgba(236,72,153,0.4)'
+                  : 'rgba(107,114,128,0.3)'
+              }`,
+            }}
+          />
+        ))}
       </div>
       {isSelected && <Check className="h-4 w-4 text-zinc-100" />}
     </button>
