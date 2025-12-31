@@ -45,6 +45,7 @@ export const QueueIndicator: React.FC<QueueIndicatorProps> = ({ className }) => 
         'fixed bottom-6 right-6 z-50',
         className
       )}
+      data-walkthrough="queue"
     >
       <div className="bg-zinc-900/95 border border-zinc-800 rounded-xl shadow-2xl backdrop-blur-md overflow-hidden min-w-[200px]">
         {/* Header - Always visible */}
