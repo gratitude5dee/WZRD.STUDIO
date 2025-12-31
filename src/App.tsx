@@ -124,6 +124,7 @@ const App = () => {
                       }
                     />
                     <Route path="/storyboard/:projectId" element={<RedirectToTimeline />} />
+                    <Route path="/project/:projectId/timeline" element={<RedirectToTimeline />} />
                     <Route path="/storyboard" element={<Navigate to="/home" replace />} />
                     <Route path="/timeline" element={<Navigate to="/home" replace />} />
                     <Route path="/editor" element={<Navigate to="/home" replace />} />

@@ -107,7 +107,7 @@ export default function Home() {
   };
 
   const handleOpenProject = (projectId: string) => {
-    navigate(`/project/${projectId}/timeline`);
+    navigate(`/timeline/${projectId}`);
   };
 
   const handleRenameProject = useCallback(async (projectId: string, newTitle: string) => {
