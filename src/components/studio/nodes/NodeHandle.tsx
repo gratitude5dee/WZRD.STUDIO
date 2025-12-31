@@ -1,6 +1,7 @@
 import { Handle, Position } from '@xyflow/react';
 import { cn } from '@/lib/utils';
 import { DataType, HANDLE_COLORS, HANDLE_GLOW_COLORS } from '@/types/computeFlow';
+import { useState } from 'react';
 
 interface NodeHandleProps {
   id: string;
@@ -22,9 +23,20 @@ export const NodeHandle = ({
 }: NodeHandleProps) => {
   const color = HANDLE_COLORS[dataType];
   const glow = HANDLE_GLOW_COLORS[dataType];
+  const [isHovered, setIsHovered] = useState(false);
 
   return (
-    <div className="group/handle relative">
+    <div 
+      className="group/handle relative"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {/* Invisible enlarged hitbox - 32x32px for easy clicking */}
+      <div 
+        className="absolute -inset-3 z-10 cursor-crosshair" 
+        aria-hidden="true"
+      />
+      
       <Handle
         id={id}
         type={type}
@@ -34,17 +46,23 @@ export const NodeHandle = ({
           'transition-all duration-150 ease-out',
           'hover:scale-125 hover:shadow-[0_0_16px_var(--handle-glow)]',
           'active:scale-150',
+          isHovered && 'scale-125',
           className
         )}
         style={{
           borderColor: color,
-          boxShadow: `0 0 8px ${glow}, 0 0 2px ${glow}`,
+          boxShadow: isHovered 
+            ? `0 0 16px ${glow}, 0 0 4px ${glow}` 
+            : `0 0 8px ${glow}, 0 0 2px ${glow}`,
           ['--handle-glow' as string]: glow,
         }}
         aria-label={`${dataType} ${type} port`}
       >
         <span
-          className="h-1.5 w-1.5 rounded-full"
+          className={cn(
+            "h-1.5 w-1.5 rounded-full transition-transform duration-150",
+            isHovered && "scale-125"
+          )}
           style={{ backgroundColor: color }}
         />
       </Handle>
@@ -54,6 +72,7 @@ export const NodeHandle = ({
           className={cn(
             'absolute z-50 whitespace-nowrap rounded-md border border-zinc-800 bg-zinc-950/90 px-2 py-1 text-[10px] font-medium text-zinc-200 shadow-lg',
             'opacity-0 transition-opacity duration-150 group-hover/handle:opacity-100 group-hover/node:opacity-100',
+            isHovered && 'opacity-100',
             position === Position.Left && 'left-full ml-2 top-1/2 -translate-y-1/2',
             position === Position.Right && 'right-full mr-2 top-1/2 -translate-y-1/2',
             position === Position.Top && 'top-full mt-2 left-1/2 -translate-x-1/2',

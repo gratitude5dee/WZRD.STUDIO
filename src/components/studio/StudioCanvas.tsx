@@ -380,14 +380,23 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
       
       return [...computeNodes, ...blockNodes, ...addBlockNodes];
     });
-    
-    // Fit view when new workflow nodes are added
-    if (isAddingNodes && nodeDefinitions.length > 0) {
+  }, [nodeDefinitions, useComputeFlow, getNodeTypeFromKind, handleSpawnBlocks, handleNodeExecute, setNodes]);
+
+  // Listen for fitView events from workflow generation
+  useEffect(() => {
+    const handleFitViewEvent = (event: Event) => {
+      const customEvent = event as CustomEvent<{ nodeIds: string[]; animate: boolean }>;
+      const { animate } = customEvent.detail;
+      
+      // Slight delay to ensure nodes are fully rendered
       setTimeout(() => {
-        fitView({ padding: 0.3, duration: 400 });
-      }, 150);
-    }
-  }, [nodeDefinitions, useComputeFlow, getNodeTypeFromKind, handleSpawnBlocks, handleNodeExecute, setNodes, isAddingNodes, fitView]);
+        fitView({ padding: 0.3, duration: animate ? 400 : 0 });
+      }, 50);
+    };
+
+    window.addEventListener('fitViewToWorkflow', handleFitViewEvent);
+    return () => window.removeEventListener('fitViewToWorkflow', handleFitViewEvent);
+  }, [fitView]);
 
   // Sync edgeDefinitions from compute flow store to React Flow edges
   useEffect(() => {

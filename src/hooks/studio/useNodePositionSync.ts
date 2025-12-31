@@ -74,7 +74,7 @@ export function useNodePositionSync({
   saveDebounceMs = 500,
   projectId,
 }: UseNodePositionSyncOptions): NodePositionSyncResult {
-  const { updateNode, saveGraph, setDragging } = useComputeFlowStore();
+  const { updateNodeSilent, saveGraph, setDragging } = useComputeFlowStore();
   
   // Track pending save state
   const savePendingRef = useRef(false);
@@ -113,8 +113,8 @@ export function useNodePositionSync({
       console.log('[NodePositionSync] Drag stopped:', node.id, position);
       
       if (useComputeFlow) {
-        // Update compute flow store
-        updateNode(node.id, { position });
+        // Use silent update to avoid re-renders during drag
+        updateNodeSilent(node.id, { position });
         setDragging(false);
         
         // Mark for debounced save
@@ -136,7 +136,7 @@ export function useNodePositionSync({
             };
             
             if (useComputeFlow) {
-              updateNode(draggedNode.id, { position: draggedPosition });
+              updateNodeSilent(draggedNode.id, { position: draggedPosition });
               draggedNodesRef.current.add(draggedNode.id);
             } else if (onUpdateBlockPosition) {
               onUpdateBlockPosition(draggedNode.id, draggedPosition);
@@ -145,7 +145,7 @@ export function useNodePositionSync({
         });
       }
     },
-    [useComputeFlow, updateNode, onUpdateBlockPosition, debouncedSave, setDragging]
+    [useComputeFlow, updateNodeSilent, onUpdateBlockPosition, debouncedSave, setDragging]
   );
 
   const onNodeDragStart: NodeDragHandler = useCallback(() => {

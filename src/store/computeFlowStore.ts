@@ -978,37 +978,42 @@ export const useComputeFlowStore = create<ComputeFlowState>((set, get) => ({
     
     console.log('✅ Validated edges:', validatedEdges.length, 'of', normalizedEdges.length);
     
-    // Phase 1: Add nodes first
+    // Phase 1: Add nodes first (mark that we're adding a workflow)
     set(state => ({
       nodeDefinitions: [...state.nodeDefinitions, ...normalizedNodes],
-    }));
-
-    set(state => ({
       dirtyNodeIds: new Set([...state.dirtyNodeIds, ...normalizedNodes.map(node => node.id)]),
       isGraphDirty: true,
       lastModifiedAt: new Date(),
     }));
     
-    // Phase 2: Add edges after a short delay to allow React Flow to initialize nodes
+    // Phase 2: Add edges using requestAnimationFrame + delay for reliable timing
+    // This ensures React Flow has time to mount and initialize the nodes
     if (validatedEdges.length > 0) {
-      setTimeout(() => {
-        set(state => ({
-          edgeDefinitions: [...state.edgeDefinitions, ...validatedEdges],
-        }));
-        set(state => ({
-          dirtyEdgeIds: new Set([...state.dirtyEdgeIds, ...validatedEdges.map(edge => edge.id)]),
-          isGraphDirty: true,
-          lastModifiedAt: new Date(),
-        }));
-        get().historyManager.pushSnapshot(
-          get().nodeDefinitions,
-          get().edgeDefinitions,
-          `Added ${normalizedNodes.length} nodes and ${validatedEdges.length} edges`
-        );
-        const historyState = get().historyManager.getState();
-        set({ canUndo: historyState.canUndo, canRedo: historyState.canRedo });
-        console.log('✅ Edges added after node initialization delay');
-      }, 100);
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          set(state => ({
+            edgeDefinitions: [...state.edgeDefinitions, ...validatedEdges],
+            dirtyEdgeIds: new Set([...state.dirtyEdgeIds, ...validatedEdges.map(edge => edge.id)]),
+            isGraphDirty: true,
+            lastModifiedAt: new Date(),
+          }));
+          
+          get().historyManager.pushSnapshot(
+            get().nodeDefinitions,
+            get().edgeDefinitions,
+            `Added ${normalizedNodes.length} nodes and ${validatedEdges.length} edges`
+          );
+          const historyState = get().historyManager.getState();
+          set({ canUndo: historyState.canUndo, canRedo: historyState.canRedo });
+          
+          console.log('✅ Edges added after node initialization');
+          
+          // Dispatch fitView event for StudioCanvas
+          window.dispatchEvent(new CustomEvent('fitViewToWorkflow', {
+            detail: { nodeIds: normalizedNodes.map(n => n.id), animate: true }
+          }));
+        }, 150); // 150ms delay for React Flow to mount nodes
+      });
     } else {
       get().historyManager.pushSnapshot(
         get().nodeDefinitions,
