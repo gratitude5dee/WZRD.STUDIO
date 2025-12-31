@@ -23,24 +23,25 @@ const COMMENT_COLORS = [
   { name: 'Purple', value: '#8B5CF6' },
 ];
 
-export const CommentNode: React.FC<NodeProps<CommentNodeData>> = ({ id, data, selected }) => {
+export const CommentNode: React.FC<NodeProps> = ({ id, data, selected }) => {
   const { updateNode, removeNode } = useComputeFlowStore();
-  const params = (data?.params as CommentNodeData) ?? {};
+  const nodeData = data as CommentNodeData;
+  const params = (nodeData?.params as CommentNodeData) ?? {};
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [isEditingContent, setIsEditingContent] = useState(false);
-  const [title, setTitle] = useState(params?.title || data?.title || 'Comment');
-  const [content, setContent] = useState(params?.content || data?.content || '');
+  const [title, setTitle] = useState(params?.title || nodeData?.title || 'Comment');
+  const [content, setContent] = useState(params?.content || nodeData?.content || '');
   const [showColorPicker, setShowColorPicker] = useState(false);
 
   const titleRef = useRef<HTMLInputElement>(null);
   const contentRef = useRef<HTMLTextAreaElement>(null);
 
-  const color = params?.color || data?.color || COMMENT_COLORS[0].value;
+  const color = params?.color || nodeData?.color || COMMENT_COLORS[0].value;
 
   useEffect(() => {
-    setTitle(params?.title || data?.title || 'Comment');
-    setContent(params?.content || data?.content || '');
-  }, [params?.title, params?.content, data?.title, data?.content]);
+    setTitle(params?.title || nodeData?.title || 'Comment');
+    setContent(params?.content || nodeData?.content || '');
+  }, [params?.title, params?.content, nodeData?.title, nodeData?.content]);
 
   const updateNodeData = useCallback(
     (updates: Partial<CommentNodeData>) => {

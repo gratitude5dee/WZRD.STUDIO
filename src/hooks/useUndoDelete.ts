@@ -14,7 +14,7 @@ export function useUndoDelete() {
         .update({
           deleted_at: null,
           status: 'active',
-        })
+        } as any)
         .eq('id', projectId);
 
       if (error) throw error;

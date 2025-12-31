@@ -42,17 +42,17 @@ export const useFlowsStore = create<FlowsState>()(
       fetchFlows: async (projectId: string) => {
         set({ isLoading: true, error: null });
         try {
-          const { data, error } = await supabase
-            .from('saved_flows')
+          const { data, error } = await (supabase
+            .from('saved_flows' as any)
             .select('*')
             .eq('project_id', projectId)
-            .order('updated_at', { ascending: false });
+            .order('updated_at', { ascending: false }) as any);
 
           if (error) throw error;
 
           set({
             savedFlows:
-              data?.map((flow) => ({
+              (data as any[])?.map((flow: any) => ({
                 id: flow.id,
                 name: flow.name,
                 description: flow.description,
@@ -78,16 +78,16 @@ export const useFlowsStore = create<FlowsState>()(
           const { useComputeFlowStore } = await import('@/store/computeFlowStore');
           const { nodeDefinitions, edgeDefinitions } = useComputeFlowStore.getState();
 
-          const { error } = await supabase
-            .from('saved_flows')
+          const { error } = await (supabase
+            .from('saved_flows' as any)
             .insert({
               project_id: projectId,
               name,
               description,
               node_count: nodeDefinitions.length,
               edge_count: edgeDefinitions.length,
-              graph_data: { nodes: nodeDefinitions, edges: edgeDefinitions },
-            });
+              flow_data: { nodes: nodeDefinitions, edges: edgeDefinitions },
+            }) as any);
 
           if (error) throw error;
 
@@ -101,19 +101,19 @@ export const useFlowsStore = create<FlowsState>()(
       loadFlow: async (flowId: string) => {
         set({ isLoading: true, error: null });
         try {
-          const { data, error } = await supabase
-            .from('saved_flows')
-            .select('graph_data')
+          const { data, error } = await (supabase
+            .from('saved_flows' as any)
+            .select('flow_data')
             .eq('id', flowId)
-            .single();
+            .single() as any);
 
           if (error) throw error;
 
           const { useComputeFlowStore } = await import('@/store/computeFlowStore');
           const { setGraphAtomic } = useComputeFlowStore.getState();
 
-          if (data?.graph_data) {
-            setGraphAtomic(data.graph_data.nodes || [], data.graph_data.edges || [], {
+          if (data?.flow_data) {
+            setGraphAtomic(data.flow_data.nodes || [], data.flow_data.edges || [], {
               skipHistory: false,
               skipDirty: false,
             });
@@ -127,7 +127,7 @@ export const useFlowsStore = create<FlowsState>()(
 
       deleteFlow: async (flowId: string) => {
         try {
-          const { error } = await supabase.from('saved_flows').delete().eq('id', flowId);
+          const { error } = await (supabase.from('saved_flows' as any).delete().eq('id', flowId) as any);
 
           if (error) throw error;
 
@@ -145,20 +145,20 @@ export const useFlowsStore = create<FlowsState>()(
         if (!flow) return;
 
         try {
-          const { data: originalData } = await supabase
-            .from('saved_flows')
-            .select('graph_data')
+          const { data: originalData } = await (supabase
+            .from('saved_flows' as any)
+            .select('flow_data')
             .eq('id', flowId)
-            .single();
+            .single() as any);
 
-          const { error } = await supabase.from('saved_flows').insert({
+          const { error } = await (supabase.from('saved_flows' as any).insert({
             project_id: flow.projectId,
             name: newName,
             description: flow.description,
-            graph_data: originalData?.graph_data,
+            flow_data: originalData?.flow_data,
             node_count: flow.nodeCount,
             edge_count: flow.edgeCount,
-          });
+          }) as any);
 
           if (error) throw error;
 
@@ -170,10 +170,10 @@ export const useFlowsStore = create<FlowsState>()(
 
       renameFlow: async (flowId: string, newName: string) => {
         try {
-          const { error } = await supabase
-            .from('saved_flows')
+          const { error } = await (supabase
+            .from('saved_flows' as any)
             .update({ name: newName, updated_at: new Date().toISOString() })
-            .eq('id', flowId);
+            .eq('id', flowId) as any);
 
           if (error) throw error;
 

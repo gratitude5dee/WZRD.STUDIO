@@ -104,7 +104,7 @@ export const DeleteProjectSheet = ({
           .update({
             deleted_at: new Date().toISOString(),
             status: 'deleted',
-          })
+          } as any)
           .eq('id', project.id);
 
         if (error) throw error;
