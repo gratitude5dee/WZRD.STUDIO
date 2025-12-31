@@ -60,30 +60,31 @@ export const useProjectSettingsStore = create<ProjectSettingsState>()(
       fetchSettings: async (projectId: string) => {
         set({ isLoading: true, error: null });
         try {
-          const { data, error } = await supabase
-            .from('project_settings')
+          const { data, error } = await (supabase
+            .from('project_settings' as any)
             .select('*')
             .eq('project_id', projectId)
-            .single();
+            .single() as any);
 
           if (error && error.code !== 'PGRST116') throw error;
 
           if (data) {
+            const settingsData = data as any;
             set({
               settings: {
-                id: data.id,
-                projectId: data.project_id,
-                baseTextModel: data.base_text_model || 'gpt-4o',
-                baseImageModel: data.base_image_model || 'flux-2-turbo',
-                baseVideoModel: data.base_video_model || 'minimax-video-01',
-                baseAudioModel: data.base_audio_model,
-                updatedAt: new Date(data.updated_at),
+                id: settingsData.id,
+                projectId: settingsData.project_id,
+                baseTextModel: settingsData.base_text_model || 'gpt-4o',
+                baseImageModel: settingsData.base_image_model || 'flux-2-turbo',
+                baseVideoModel: settingsData.base_video_model || 'minimax-video-01',
+                baseAudioModel: settingsData.base_audio_model,
+                updatedAt: new Date(settingsData.updated_at),
               },
               isLoading: false,
             });
           } else {
-            const { data: newData } = await supabase
-              .from('project_settings')
+            const { data: newData } = await (supabase
+              .from('project_settings' as any)
               .insert({
                 project_id: projectId,
                 base_text_model: 'gpt-4o',
@@ -91,17 +92,18 @@ export const useProjectSettingsStore = create<ProjectSettingsState>()(
                 base_video_model: 'minimax-video-01',
               })
               .select()
-              .single();
+              .single() as any);
 
             if (newData) {
+              const newSettingsData = newData as any;
               set({
                 settings: {
-                  id: newData.id,
-                  projectId: newData.project_id,
-                  baseTextModel: newData.base_text_model,
-                  baseImageModel: newData.base_image_model,
-                  baseVideoModel: newData.base_video_model,
-                  updatedAt: new Date(newData.updated_at),
+                  id: newSettingsData.id,
+                  projectId: newSettingsData.project_id,
+                  baseTextModel: newSettingsData.base_text_model,
+                  baseImageModel: newSettingsData.base_image_model,
+                  baseVideoModel: newSettingsData.base_video_model,
+                  updatedAt: new Date(newSettingsData.updated_at),
                 },
                 isLoading: false,
               });
@@ -114,8 +116,8 @@ export const useProjectSettingsStore = create<ProjectSettingsState>()(
 
       updateSettings: async (projectId: string, updates: Partial<ProjectSettings>) => {
         try {
-          const { error } = await supabase
-            .from('project_settings')
+          const { error } = await (supabase
+            .from('project_settings' as any)
             .update({
               base_text_model: updates.baseTextModel,
               base_image_model: updates.baseImageModel,
@@ -123,7 +125,7 @@ export const useProjectSettingsStore = create<ProjectSettingsState>()(
               base_audio_model: updates.baseAudioModel,
               updated_at: new Date().toISOString(),
             })
-            .eq('project_id', projectId);
+            .eq('project_id', projectId) as any);
 
           if (error) throw error;
 

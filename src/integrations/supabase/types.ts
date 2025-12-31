@@ -4972,6 +4972,47 @@ export type Database = {
           },
         ]
       }
+      project_settings: {
+        Row: {
+          base_audio_model: string | null
+          base_image_model: string | null
+          base_text_model: string | null
+          base_video_model: string | null
+          created_at: string | null
+          id: string
+          project_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          base_audio_model?: string | null
+          base_image_model?: string | null
+          base_text_model?: string | null
+          base_video_model?: string | null
+          created_at?: string | null
+          id?: string
+          project_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          base_audio_model?: string | null
+          base_image_model?: string | null
+          base_text_model?: string | null
+          base_video_model?: string | null
+          created_at?: string | null
+          id?: string
+          project_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_settings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_share_links: {
         Row: {
           access_level: string
