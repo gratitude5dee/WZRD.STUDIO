@@ -136,10 +136,12 @@ serve(async (req) => {
         .eq('id', shot_id);
     }
 
+    const errorMessage = error instanceof Error ? error.message : 'Failed to upscale image';
+    const errorDetails = error instanceof Error ? error.toString() : String(error);
     return new Response(
       JSON.stringify({
-        error: error.message || 'Failed to upscale image',
-        details: error.toString()
+        error: errorMessage,
+        details: errorDetails
       }),
       {
         status: 500,

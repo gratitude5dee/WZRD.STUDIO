@@ -54,8 +54,8 @@ describe('edgeValidation', () => {
   });
 
   it('validates a compatible connection', () => {
-    const sourcePort = { ...createPort('out', 'image'), position: 'right', cardinality: 'n' };
-    const targetPort = { ...createPort('in', 'image'), position: 'left', cardinality: '1' };
+    const sourcePort = { ...createPort('out', 'image'), position: 'right' as const, cardinality: 'n' as const };
+    const targetPort = { ...createPort('in', 'image'), position: 'left' as const, cardinality: '1' as const };
     const sourceNode = createNode('source', { outputs: [sourcePort] });
     const targetNode = createNode('target', { inputs: [targetPort] });
 
@@ -71,8 +71,8 @@ describe('edgeValidation', () => {
   });
 
   it('rejects self-connection', () => {
-    const sourcePort = { ...createPort('out', 'image'), position: 'right' };
-    const targetPort = { ...createPort('in', 'image'), position: 'left' };
+    const sourcePort = { ...createPort('out', 'image'), position: 'right' as const, cardinality: '1' as const };
+    const targetPort = { ...createPort('in', 'image'), position: 'left' as const, cardinality: '1' as const };
     const node = createNode('same', { outputs: [sourcePort], inputs: [targetPort] });
 
     const result = validateConnection({

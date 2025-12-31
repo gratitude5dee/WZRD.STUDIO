@@ -1043,15 +1043,15 @@ function handleSSEEvent(
       }));
       break;
 
-    case 'node_status':
+    case 'node_status': {
       const { node_id, status, output, error } = data;
       const mappedStatus = mapStatus(status);
       const isCompleted = ['completed', 'failed', 'skipped'].includes(status);
-      const progress = isCompleted ? 100 : status === 'running' ? 50 : 0;
+      const statusProgress = isCompleted ? 100 : status === 'running' ? 50 : 0;
       const existingNode = get().nodeDefinitions.find(n => n.id === node_id);
       get().updateNodeSilent(node_id, {
         status: mappedStatus,
-        progress,
+        progress: statusProgress,
         preview: output ?? existingNode?.preview,
         error: error || undefined,
       });
@@ -1064,14 +1064,16 @@ function handleSSEEvent(
         },
       }));
       break;
+    }
 
-    case 'node_progress':
-      const { node_id: progressNodeId, progress } = data;
+    case 'node_progress': {
+      const { node_id: progressNodeId, progress: nodeProgress } = data;
       const existingProgressNode = get().nodeDefinitions.find(n => n.id === progressNodeId);
       get().updateNodeSilent(progressNodeId, {
-        progress: progress ?? existingProgressNode?.progress,
+        progress: nodeProgress ?? existingProgressNode?.progress,
       });
       break;
+    }
 
     case 'complete':
       set((state: ComputeFlowState) => ({

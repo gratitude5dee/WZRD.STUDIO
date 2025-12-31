@@ -76,6 +76,7 @@ Deno.serve(async (req) => {
     }
     
     // Handle other errors
-    return errorResponse(error.message || 'Failed to share workflow', 500);
+    const errorMessage = error instanceof Error ? error.message : 'Failed to share workflow';
+    return errorResponse(errorMessage, 500);
   }
 });

@@ -36,6 +36,7 @@ serve(async (req) => {
     }
     
     // Handle other errors
-    return errorResponse(error.message || 'Failed to get application keys', 500);
+    const errorMessage = error instanceof Error ? error.message : 'Failed to get application keys';
+    return errorResponse(errorMessage, 500);
   }
 });

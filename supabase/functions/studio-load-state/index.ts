@@ -104,8 +104,9 @@ Deno.serve(async (req) => {
     );
   } catch (error) {
     console.error('Error in studio-load-state:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Failed to load state';
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: errorMessage }),
       { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

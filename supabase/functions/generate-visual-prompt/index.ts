@@ -77,9 +77,11 @@ serve(async (req) => {
       );
     }
 
-    // Handle missing scene or project data
-    const sceneData = shot.scenes || { description: '', location: '', lighting: '', weather: '' };
-    const projectData = shot.projects || { genre: '', tone: '', video_style: '', cinematic_inspiration: '' };
+    // Handle missing scene or project data (Supabase joins return arrays)
+    const sceneArray = Array.isArray(shot.scenes) ? shot.scenes : [];
+    const sceneData = sceneArray[0] || { description: '', location: '', lighting: '', weather: '' };
+    const projectArray = Array.isArray(shot.projects) ? shot.projects : [];
+    const projectData = projectArray[0] || { genre: '', tone: '', video_style: '', cinematic_inspiration: '' };
 
     console.log(`[generate-visual-prompt][Shot ${shotId}] Data fetched successfully.`);
 
@@ -174,9 +176,11 @@ serve(async (req) => {
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
-    console.error(`[generate-visual-prompt][Shot ${shotId || 'UNKNOWN'}] Unexpected error: ${error.message}`, error.stack);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorStack = error instanceof Error ? error.stack : '';
+    console.error(`[generate-visual-prompt][Shot ${shotId || 'UNKNOWN'}] Unexpected error: ${errorMessage}`, errorStack);
     return new Response(
-      JSON.stringify({ success: false, error: error.message }),
+      JSON.stringify({ success: false, error: errorMessage }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
