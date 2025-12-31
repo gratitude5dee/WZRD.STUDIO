@@ -1,5 +1,5 @@
 import React, { useCallback, useRef, useState, useEffect, useMemo } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import {
   ReactFlow,
   Background,
@@ -34,17 +34,19 @@ import { KeyboardShortcutsOverlay } from './KeyboardShortcutsOverlay';
 import { QueueIndicator } from './QueueIndicator';
 import { StudioGalleryPanel } from './StudioGalleryPanel';
 import { useConnectionValidation } from '@/hooks/useConnectionValidation';
+import { useStrictConnectionValidation } from '@/hooks/useStrictConnectionValidation';
 import { useConnectionMode } from '@/hooks/useConnectionMode';
 import { useStudioKeyboardShortcuts } from '@/hooks/studio/useStudioKeyboardShortcuts';
 import { useSelectionBox } from '@/hooks/studio/useSelectionBox';
-import { HANDLE_COLORS, DataType, ConnectionValidator, isTypeCompatible } from '@/types/computeFlow';
+import { useNodePositionSync } from '@/hooks/studio/useNodePositionSync';
+import { HANDLE_COLORS, DataType } from '@/types/computeFlow';
 import { useComputeFlowStore } from '@/store/computeFlowStore';
 import { v4 as uuidv4 } from 'uuid';
 import EmptyCanvasState from './EmptyCanvasState';
 import { toast } from 'sonner';
 import { nanoid } from 'nanoid';
 import { AddBlockNode } from './nodes/AddBlockNode';
-import type { NodeDefinition, EdgeDefinition } from '@/types/computeFlow';
+import { StudioErrorBoundary } from './StudioErrorBoundary';
 
 // New upload nodes
 import { UploadImageNode } from './nodes/UploadImageNode';
@@ -146,8 +148,9 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
   projectId,
   useComputeFlow = false,
 }) => {
-  const { screenToFlowPosition, fitView, zoomIn, zoomOut, getEdges } = useReactFlow();
+  const { screenToFlowPosition, fitView, zoomIn, zoomOut } = useReactFlow();
   const { isValidConnection: isValidBlockConnection } = useConnectionValidation();
+  const { validateNewEdge } = useStrictConnectionValidation();
   const { 
     connectionState, 
     isClickMode, 
@@ -222,6 +225,12 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
     prevNodeCount.current = nodeDefinitions.length;
   }, [nodeDefinitions.length]);
   
+  const { onNodeDragStop, onNodesChange: onNodesChangePosition } = useNodePositionSync({
+    useComputeFlow,
+    projectId,
+    onUpdateBlockPosition,
+  });
+
   // Wrapped onNodesChange to prevent unexpected deletions during node addition
   const onNodesChange = useCallback((changes: any[]) => {
     // Filter out remove events during the protection window
@@ -235,8 +244,9 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
         })
       : changes;
     
-    onNodesChangeBase(safeChanges);
-  }, [onNodesChangeBase, isAddingNodes]);
+    const filteredChanges = onNodesChangePosition(safeChanges);
+    onNodesChangeBase(filteredChanges);
+  }, [onNodesChangeBase, isAddingNodes, onNodesChangePosition]);
   
   // Wrapped onEdgesChange (no special handling needed, just for consistency)
   const onEdgesChange = useCallback((changes: any[]) => {
@@ -433,16 +443,6 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
     }
   }, [useComputeFlow, projectId, loadGraph]);
 
-  // Sync node positions back to blocks
-  useEffect(() => {
-    nodes.forEach(node => {
-      const block = blocks.find(b => b.id === node.id);
-      if (block && (block.position.x !== node.position.x || block.position.y !== node.position.y)) {
-        onUpdateBlockPosition(node.id, node.position);
-      }
-    });
-  }, [nodes]);
-
   const [showNodeSelector, setShowNodeSelector] = useState(false);
   const [nodeSelectorPosition, setNodeSelectorPosition] = useState({ x: 0, y: 0 });
   const [activeConnection, setActiveConnection] = useState<any>(null);
@@ -525,39 +525,35 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
     const { source, target, sourceHandle, targetHandle } = connection;
     if (!source || !target || !sourceHandle || !targetHandle) return false;
 
-    // Prevent self-connections
-    if (source === target) {
-      toast.error('Cannot connect node to itself');
-      return false;
-    }
-
-    const sourceNode = nodeDefinitions.find(n => n.id === source);
-    const targetNode = nodeDefinitions.find(n => n.id === target);
-    if (!sourceNode || !targetNode) return isValidBlockConnection(connection);
-
-    const sourcePort = sourceNode.outputs.find(p => p.id === sourceHandle);
-    const targetPort = targetNode.inputs.find(p => p.id === targetHandle);
-    if (!sourcePort || !targetPort) return isValidBlockConnection(connection);
-
-    // Validate using ConnectionValidator
-    const validation = ConnectionValidator.validateConnection(
-      sourcePort,
-      targetPort,
-      edgeDefinitions,
+    const validation = validateNewEdge(
       source,
-      target
+      sourceHandle,
+      target,
+      targetHandle
     );
 
-    if (!validation.valid) {
-      toast.error(validation.error || 'Invalid connection');
-      return false;
-    }
-
-    return true;
-  }, [useComputeFlow, isValidBlockConnection, nodeDefinitions, edgeDefinitions]);
+    return validation.valid;
+  }, [useComputeFlow, isValidBlockConnection, validateNewEdge]);
 
   const onConnect = useCallback(
     (connection: Connection) => {
+      if (useComputeFlow) {
+        const { source, sourceHandle, target, targetHandle } = connection;
+        if (!source || !target) return;
+
+        const validation = validateNewEdge(
+          source,
+          sourceHandle ?? null,
+          target,
+          targetHandle ?? null
+        );
+
+        if (!validation.valid) {
+          toast.error(validation.error || 'Invalid connection');
+          return;
+        }
+      }
+
       if (isValidConnection(connection)) {
         const { source, sourceHandle } = connection;
         
@@ -594,7 +590,7 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
         }
       }
     },
-    [isValidConnection, useComputeFlow, nodeDefinitions, projectId, saveGraph]
+    [isValidConnection, useComputeFlow, nodeDefinitions, projectId, saveGraph, validateNewEdge]
   );
 
   const onConnectEnd = useCallback(
@@ -816,38 +812,44 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
       </AnimatePresence>
 
       {/* React Flow Canvas */}
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
-        onConnectEnd={onConnectEnd}
-        onNodeClick={handleNodeClick}
-        onPaneClick={handlePaneClick}
-        onDoubleClick={handleCanvasDoubleClick}
-        nodeTypes={nodeTypes}
-        edgeTypes={edgeTypes}
-        connectionLineComponent={CustomConnectionLine}
-        connectionMode={ConnectionMode.Loose}
-        connectionRadius={30}
-        isValidConnection={isValidConnection}
-        defaultEdgeOptions={defaultEdgeOptions}
-        fitView
-        fitViewOptions={{ padding: 0.2 }}
-        minZoom={0.1}
-        maxZoom={2}
-        deleteKeyCode={null}
-        className="bg-transparent"
+      <StudioErrorBoundary
+        fallbackTitle="Canvas Error"
+        fallbackDescription="The studio canvas encountered an error"
       >
-        {showGrid && (
-          <Background
-            color="hsl(var(--border-subtle))"
-            gap={24}
-            variant={BackgroundVariant.Dots}
-          />
-        )}
-      </ReactFlow>
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
+          onConnectEnd={onConnectEnd}
+          onNodeClick={handleNodeClick}
+          onNodeDragStop={onNodeDragStop}
+          onPaneClick={handlePaneClick}
+          onDoubleClick={handleCanvasDoubleClick}
+          nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
+          connectionLineComponent={CustomConnectionLine}
+          connectionMode={ConnectionMode.Loose}
+          connectionRadius={30}
+          isValidConnection={isValidConnection}
+          defaultEdgeOptions={defaultEdgeOptions}
+          fitView
+          fitViewOptions={{ padding: 0.2 }}
+          minZoom={0.1}
+          maxZoom={2}
+          deleteKeyCode={null}
+          className="bg-transparent"
+        >
+          {showGrid && (
+            <Background
+              color="hsl(var(--border-subtle))"
+              gap={24}
+              variant={BackgroundVariant.Dots}
+            />
+          )}
+        </ReactFlow>
+      </StudioErrorBoundary>
 
       {/* Empty state */}
       {nodes.length === 0 && (

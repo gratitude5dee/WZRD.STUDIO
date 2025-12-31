@@ -14,3 +14,5 @@ export type { ConnectionDrawingState, UseConnectionDrawingOptions } from './useC
 
 export { useSelectionBox } from './useSelectionBox';
 export type { SelectionBox, UseSelectionBoxOptions } from './useSelectionBox';
+
+export { useNodePositionSync } from './useNodePositionSync';
