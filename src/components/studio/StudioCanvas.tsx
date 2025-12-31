@@ -39,6 +39,7 @@ import { useConnectionMode } from '@/hooks/useConnectionMode';
 import { useStudioKeyboardShortcuts } from '@/hooks/studio/useStudioKeyboardShortcuts';
 import { useSelectionBox } from '@/hooks/studio/useSelectionBox';
 import { useNodePositionSync } from '@/hooks/studio/useNodePositionSync';
+import { useUnsavedChangesWarning } from '@/hooks/useUnsavedChangesWarning';
 import { HANDLE_COLORS, DataType } from '@/types/computeFlow';
 import { useComputeFlowStore } from '@/store/computeFlowStore';
 import { v4 as uuidv4 } from 'uuid';
@@ -225,11 +226,13 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
     prevNodeCount.current = nodeDefinitions.length;
   }, [nodeDefinitions.length]);
   
-  const { onNodeDragStop, filterNodeChanges } = useNodePositionSync({
+  const { onNodeDragStop, onNodeDragStart, filterNodeChanges } = useNodePositionSync({
     useComputeFlow,
     projectId,
     onUpdateBlockPosition,
   });
+
+  useUnsavedChangesWarning();
 
   // Wrapped onNodesChange to prevent unexpected deletions during node addition
   const onNodesChange = useCallback((changes: any[]) => {
@@ -824,6 +827,7 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
           onConnect={onConnect}
           onConnectEnd={onConnectEnd}
           onNodeClick={handleNodeClick}
+          onNodeDragStart={onNodeDragStart}
           onNodeDragStop={onNodeDragStop}
           onPaneClick={handlePaneClick}
           onDoubleClick={handleCanvasDoubleClick}

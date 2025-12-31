@@ -44,6 +44,8 @@ interface UseNodePositionSyncOptions {
 interface NodePositionSyncResult {
   /** Handler for node drag end - triggers position save */
   onNodeDragStop: NodeDragHandler;
+  /** Handler for node drag start */
+  onNodeDragStart: NodeDragHandler;
   /** Filter function for node changes - returns filtered changes */
   filterNodeChanges: (changes: any[]) => any[];
   /** Whether a save is pending */
@@ -72,7 +74,7 @@ export function useNodePositionSync({
   saveDebounceMs = 500,
   projectId,
 }: UseNodePositionSyncOptions): NodePositionSyncResult {
-  const { updateNode, saveGraph } = useComputeFlowStore();
+  const { updateNode, saveGraph, setDragging } = useComputeFlowStore();
   
   // Track pending save state
   const savePendingRef = useRef(false);
@@ -113,6 +115,7 @@ export function useNodePositionSync({
       if (useComputeFlow) {
         // Update compute flow store
         updateNode(node.id, { position });
+        setDragging(false);
         
         // Mark for debounced save
         draggedNodesRef.current.add(node.id);
@@ -142,8 +145,14 @@ export function useNodePositionSync({
         });
       }
     },
-    [useComputeFlow, updateNode, onUpdateBlockPosition, debouncedSave]
+    [useComputeFlow, updateNode, onUpdateBlockPosition, debouncedSave, setDragging]
   );
+
+  const onNodeDragStart: NodeDragHandler = useCallback(() => {
+    if (useComputeFlow) {
+      setDragging(true);
+    }
+  }, [setDragging, useComputeFlow]);
   
   /**
    * Filter node changes (position during drag, selection, etc.)
@@ -166,6 +175,7 @@ export function useNodePositionSync({
   
   return {
     onNodeDragStop,
+    onNodeDragStart,
     filterNodeChanges,
     isSavePending: savePendingRef.current,
   };
