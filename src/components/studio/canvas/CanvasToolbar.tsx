@@ -67,10 +67,10 @@ export const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
       animate={{ opacity: 1, y: 0 }}
       className={cn(
         'absolute bottom-6 left-1/2 -translate-x-1/2 z-50',
-        'flex items-center gap-1 px-3 py-2',
-        'bg-gradient-to-br from-zinc-900/98 to-zinc-800/98 backdrop-blur-xl',
-        'border border-zinc-700/50 rounded-xl',
-        'shadow-[0_8px_32px_rgba(0,0,0,0.5),0_0_0_1px_rgba(255,255,255,0.05)]',
+        'flex items-center gap-1 px-2 py-1.5',
+        'bg-surface-2/90 backdrop-blur-md',
+        'border border-border-default rounded-xl',
+        'shadow-xl shadow-black/40',
         className
       )}
     >
@@ -84,7 +84,7 @@ export const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-9 w-9 bg-red-500/20 text-red-400 hover:bg-red-500/30"
+                    className="h-9 w-9 bg-accent-rose/15 text-accent-rose hover:bg-accent-rose/25"
                     onClick={onCancelExecution}
                   >
                     <Square className="h-4 w-4" />
@@ -93,7 +93,7 @@ export const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-9 w-9 bg-green-500/20 text-green-400 hover:bg-green-500/30"
+                    className="h-9 w-9 bg-accent-teal/15 text-accent-teal hover:bg-accent-teal/25"
                     onClick={onExecute}
                   >
                     <Play className="h-4 w-4" />
@@ -109,14 +109,14 @@ export const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
             {/* Execution Progress */}
             {isExecuting && executionProgress && (
               <div className="flex items-center gap-2 px-2">
-                <Loader2 className="h-3.5 w-3.5 text-purple-400 animate-spin" />
-                <span className="text-xs text-zinc-400">
+                <Loader2 className="h-3.5 w-3.5 text-accent-purple animate-spin" />
+                <span className="text-xs text-text-secondary">
                   {executionProgress.completed}/{executionProgress.total}
                 </span>
               </div>
             )}
 
-            <Separator orientation="vertical" className="h-6 bg-zinc-700/50" />
+            <Separator orientation="vertical" className="h-6 bg-border-subtle" />
           </>
         )}
 
@@ -148,7 +148,7 @@ export const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
               </TooltipContent>
             </Tooltip>
 
-            <Separator orientation="vertical" className="h-6 bg-zinc-700/50" />
+            <Separator orientation="vertical" className="h-6 bg-border-subtle" />
           </>
         )}
 
@@ -160,7 +160,7 @@ export const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
               size="icon"
               className={cn(
                 'h-9 w-9 transition-all',
-                connectionMode === 'click' && 'bg-blue-500/20 text-blue-400 hover:bg-blue-500/30'
+                connectionMode === 'click' && 'bg-accent-purple/20 text-accent-purple hover:bg-accent-purple/30'
               )}
               onClick={onToggleConnectionMode}
             >
@@ -185,7 +185,7 @@ export const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
               size="icon"
               className={cn(
                 'h-9 w-9 transition-all',
-                showGrid && 'bg-zinc-700/50'
+                showGrid && 'bg-surface-3'
               )}
               onClick={onToggleGrid}
             >
@@ -255,10 +255,10 @@ export const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
         {/* Selection Actions */}
         {selectedCount > 0 && (
           <>
-            <Separator orientation="vertical" className="h-6 bg-zinc-700/50" />
+            <Separator orientation="vertical" className="h-6 bg-border-subtle" />
             
             <div className="flex items-center gap-1">
-              <Badge variant="secondary" className="h-7 px-2 text-xs">
+              <Badge variant="secondary" className="h-7 px-2 text-xs bg-surface-3 text-text-secondary">
                 <Layers className="h-3 w-3 mr-1" />
                 {selectedCount}
               </Badge>
@@ -268,7 +268,7 @@ export const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-9 w-9 hover:bg-blue-500/20 hover:text-blue-400"
+                    className="h-9 w-9 hover:bg-accent-teal/20 hover:text-accent-teal"
                     onClick={onDuplicateSelected}
                   >
                     <Copy className="h-4 w-4" />
@@ -285,7 +285,7 @@ export const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-9 w-9 hover:bg-red-500/20 hover:text-red-400"
+                    className="h-9 w-9 hover:bg-accent-rose/20 hover:text-accent-rose"
                     onClick={onDeleteSelected}
                   >
                     <Trash2 className="h-4 w-4" />

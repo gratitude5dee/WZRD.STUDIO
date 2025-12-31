@@ -62,34 +62,45 @@ export const BaseNode = forwardRef<HTMLDivElement, BaseNodeProps>(
     const style = {
       '--node-accent': nodeColor,
       '--node-accent-glow': nodeGlow,
-      borderColor: `${nodeColor}40`,
     } as CSSProperties;
 
     return (
       <div
         ref={ref}
         className={cn(
-          'group/node relative rounded-2xl border bg-zinc-900/95 text-card-foreground backdrop-blur-xl',
-          'min-w-[320px] max-w-[400px]',
-          'shadow-[0_2px_4px_rgba(0,0,0,0.3),0_8px_16px_rgba(0,0,0,0.2),0_16px_32px_rgba(0,0,0,0.1)]',
+          'group/node relative overflow-hidden rounded-2xl border border-border-default bg-surface-2 text-text-primary',
+          'min-w-[280px] max-w-[400px]',
+          'shadow-lg shadow-black/20',
           'transition-all duration-200 ease-out',
-          'hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(0,0,0,0.35),0_16px_32px_rgba(0,0,0,0.25),0_32px_48px_rgba(0,0,0,0.12)]',
-          '[.react-flow__node.selected_&]:ring-2',
-          '[.react-flow__node.selected_&]:ring-[var(--node-accent)]',
-          '[.react-flow__node.selected_&]:shadow-[0_0_0_2px_var(--node-accent),0_0_24px_var(--node-accent-glow)]',
+          'hover:border-border-strong hover:shadow-xl hover:shadow-black/30',
+          isSelected && 'ring-2 ring-accent-teal/50 border-accent-teal/30',
           className
         )}
         style={style}
         {...props}
       >
+        <div
+          className={cn(
+            'absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl',
+            inferredType === 'image' && 'bg-gradient-to-b from-accent-purple to-accent-purple/50',
+            inferredType === 'text' && 'bg-gradient-to-b from-accent-teal to-accent-teal/50',
+            inferredType === 'video' && 'bg-gradient-to-b from-accent-amber to-accent-amber/50',
+            inferredType === 'audio' && 'bg-gradient-to-b from-accent-teal to-accent-teal/50',
+            inferredType === '3d' && 'bg-gradient-to-b from-accent-amber to-accent-amber/50',
+            inferredType === 'output' && 'bg-gradient-to-b from-text-tertiary to-text-disabled',
+            inferredType === 'compute' && 'bg-gradient-to-b from-accent-purple/60 to-accent-teal/50'
+          )}
+        />
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+
         {/* Corner indicators for selected state */}
         {isSelected && (
           <>
-            <div className="pointer-events-none absolute inset-0 rounded-2xl border border-[var(--node-accent)]/40 shadow-[0_0_24px_var(--node-accent-glow)] animate-pulse" />
-            <div className="absolute top-1.5 left-1.5 h-2 w-2 rounded-full bg-[var(--node-accent)] shadow-[0_0_8px_var(--node-accent-glow)]" />
-            <div className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-[var(--node-accent)] shadow-[0_0_8px_var(--node-accent-glow)]" />
-            <div className="absolute bottom-1.5 left-1.5 h-2 w-2 rounded-full bg-[var(--node-accent)] shadow-[0_0_8px_var(--node-accent-glow)]" />
-            <div className="absolute bottom-1.5 right-1.5 h-2 w-2 rounded-full bg-[var(--node-accent)] shadow-[0_0_8px_var(--node-accent-glow)]" />
+            <div className="pointer-events-none absolute inset-0 rounded-2xl border border-accent-teal/30 shadow-[0_0_24px_hsl(var(--glow-teal))] animate-pulse-subtle" />
+            <div className="absolute top-1.5 left-1.5 h-2 w-2 rounded-full bg-accent-teal shadow-[0_0_8px_hsl(var(--glow-teal))]" />
+            <div className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-accent-teal shadow-[0_0_8px_hsl(var(--glow-teal))]" />
+            <div className="absolute bottom-1.5 left-1.5 h-2 w-2 rounded-full bg-accent-teal shadow-[0_0_8px_hsl(var(--glow-teal))]" />
+            <div className="absolute bottom-1.5 right-1.5 h-2 w-2 rounded-full bg-accent-teal shadow-[0_0_8px_hsl(var(--glow-teal))]" />
           </>
         )}
 
@@ -114,7 +125,7 @@ export const BaseNodeHeader = forwardRef<HTMLElement, HTMLAttributes<HTMLElement
       ref={ref}
       {...props}
       className={cn(
-        'flex min-h-[44px] flex-row items-center justify-between gap-2 border-b border-white/5 bg-zinc-800/80 px-4 py-2',
+        'flex min-h-[44px] flex-row items-center justify-between gap-2 border-b border-border-subtle bg-surface-2 px-4 py-2',
         'cursor-grab select-none active:cursor-grabbing',
         className
       )}
@@ -129,7 +140,7 @@ export const BaseNodeHeaderTitle = forwardRef<
 >(({ className, ...props }, ref) => (
   <h3
     ref={ref}
-    className={cn('flex-1 select-none text-sm font-semibold text-zinc-100', className)}
+    className={cn('flex-1 select-none text-sm font-semibold text-text-primary', className)}
     {...props}
   />
 ));
@@ -139,7 +150,7 @@ export const BaseNodeContent = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDiv
   ({ className, ...props }, ref) => (
     <div
       ref={ref}
-      className={cn('flex flex-col gap-y-3 p-4', className)}
+      className={cn('flex flex-col gap-y-3 p-4 text-text-secondary', className)}
       {...props}
     />
   )
@@ -151,7 +162,7 @@ export const BaseNodeFooter = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivE
     <div
       ref={ref}
       className={cn(
-        'flex min-h-[36px] flex-row items-center gap-2 border-t border-white/5 bg-zinc-800/50 px-4 py-2',
+        'flex min-h-[36px] flex-row items-center gap-2 border-t border-border-subtle bg-surface-2/80 px-4 py-2 text-text-secondary',
         className
       )}
       {...props}
