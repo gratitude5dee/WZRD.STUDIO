@@ -254,7 +254,7 @@ const StudioPage = () => {
       <div className="flex-1 flex overflow-hidden">
         <StudioSidebar onAddBlock={handleAddBlock} projectId={projectId} onAssetSelect={handleAssetInsert} />
 
-        <div className="flex-1 flex bg-[#0a0a0a]">
+        <div className="flex-1 flex bg-[#0a0a0a] pb-[52px]">
           {isLoading ? <div className="flex-1 flex items-center justify-center bg-black">
               <div className="flex flex-col items-center gap-3">
                 <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
@@ -266,7 +266,7 @@ const StudioPage = () => {
         
       </div>
 
-      <div className="border-t border-zinc-800 bg-[#0f0f0f] px-6 py-3 flex items-center justify-between text-sm">
+      <div className="fixed bottom-0 left-0 right-0 border-t border-zinc-800 bg-[#0f0f0f]/95 backdrop-blur-sm px-6 py-3 flex items-center justify-between text-sm z-30">
         <div className="flex items-center gap-3 text-zinc-200">
           <span className="w-6 h-6 rounded-full border border-zinc-700 flex items-center justify-center">
             <Info className="w-4 h-4" />

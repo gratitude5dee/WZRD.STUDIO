@@ -423,7 +423,7 @@ const StudioSidebar = ({ onAddBlock, projectId, onAssetSelect }: StudioSidebarPr
             <AnimatePresence>
               {showWorkflowPanel && (
                 <motion.div
-                  className="absolute left-14 bottom-0 w-80 bg-surface-2 border border-border-default rounded-2xl shadow-2xl z-50 overflow-hidden"
+                  className="absolute left-14 bottom-[68px] w-80 bg-surface-2/95 backdrop-blur-md border border-border-default rounded-2xl shadow-2xl z-50 overflow-hidden"
                   initial={{ opacity: 0, x: -10, scale: 0.95 }}
                   animate={{ opacity: 1, x: 0, scale: 1 }}
                   exit={{ opacity: 0, x: -10, scale: 0.95 }}
