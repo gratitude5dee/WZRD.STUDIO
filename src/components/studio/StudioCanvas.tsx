@@ -225,7 +225,7 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
     prevNodeCount.current = nodeDefinitions.length;
   }, [nodeDefinitions.length]);
   
-  const { onNodeDragStop, onNodesChange: onNodesChangePosition } = useNodePositionSync({
+  const { onNodeDragStop, filterNodeChanges } = useNodePositionSync({
     useComputeFlow,
     projectId,
     onUpdateBlockPosition,
@@ -244,9 +244,9 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
         })
       : changes;
     
-    const filteredChanges = onNodesChangePosition(safeChanges);
+    const filteredChanges = filterNodeChanges(safeChanges);
     onNodesChangeBase(filteredChanges);
-  }, [onNodesChangeBase, isAddingNodes, onNodesChangePosition]);
+  }, [onNodesChangeBase, isAddingNodes, filterNodeChanges]);
   
   // Wrapped onEdgesChange (no special handling needed, just for consistency)
   const onEdgesChange = useCallback((changes: any[]) => {

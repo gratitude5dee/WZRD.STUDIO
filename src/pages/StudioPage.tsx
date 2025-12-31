@@ -1,13 +1,13 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { useParams } from 'react-router-dom';
-import { Info, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useAppStore } from '@/store/appStore';
 import AppHeader from '@/components/AppHeader';
 import StudioSidebar from '@/components/studio/StudioSidebar';
 import StudioCanvas from '@/components/studio/StudioCanvas';
 import BlockSettingsModal from '@/components/studio/BlockSettingsModal';
-import StudioInspectorPanel from '@/components/studio/StudioInspectorPanel';
+import { CreditsCorner } from '@/components/studio/CreditsCorner';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { AssetType, ProjectAsset } from '@/types/assets';
@@ -248,40 +248,56 @@ const StudioPage = () => {
   const selectedBlockType = selectedBlock?.type || null;
   const selectedModel = selectedBlockId ? blockModels[selectedBlockId] : '';
   const activeJobs = 0;
-  return <div className="h-screen flex flex-col bg-[#0a0a0a] text-white">
+  return (
+    <div className="h-screen flex flex-col bg-[#0a0a0a] text-white">
       <AppHeader />
 
       <div className="flex-1 flex overflow-hidden">
+        {/* Floating sidebar is now position:fixed, so it doesn't need to be in the flex flow */}
         <StudioSidebar onAddBlock={handleAddBlock} projectId={projectId} onAssetSelect={handleAssetInsert} />
 
-        <div className="flex-1 flex bg-[#0a0a0a] pb-[52px]">
-          {isLoading ? <div className="flex-1 flex items-center justify-center bg-black">
+        <div className="flex-1 flex bg-[#0a0a0a]">
+          {isLoading ? (
+            <div className="flex-1 flex items-center justify-center bg-black">
               <div className="flex flex-col items-center gap-3">
                 <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
                 <p className="text-sm text-zinc-400">Loading project...</p>
               </div>
-            </div> : <StudioCanvas blocks={blocks} selectedBlockId={selectedBlockId} onSelectBlock={handleSelectBlock} onAddBlock={handleAddBlock} onDeleteBlock={handleDeleteBlock} onUpdateBlockPosition={handleUpdateBlockPosition} onUpdateBlockData={handleUpdateBlockData} blockModels={blockModels} onModelChange={handleModelChange} projectId={projectId} useComputeFlow={true} />}
+            </div>
+          ) : (
+            <StudioCanvas
+              blocks={blocks}
+              selectedBlockId={selectedBlockId}
+              onSelectBlock={handleSelectBlock}
+              onAddBlock={handleAddBlock}
+              onDeleteBlock={handleDeleteBlock}
+              onUpdateBlockPosition={handleUpdateBlockPosition}
+              onUpdateBlockData={handleUpdateBlockData}
+              blockModels={blockModels}
+              onModelChange={handleModelChange}
+              projectId={projectId}
+              useComputeFlow={true}
+            />
+          )}
         </div>
-
-        
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 border-t border-zinc-800 bg-[#0f0f0f]/95 backdrop-blur-sm px-6 py-3 flex items-center justify-between text-sm z-30">
-        <div className="flex items-center gap-3 text-zinc-200">
-          <span className="w-6 h-6 rounded-full border border-zinc-700 flex items-center justify-center">
-            <Info className="w-4 h-4" />
-          </span>
-          <span>Your Workspace is almost out of credits</span>
-        </div>
-        <button className="text-emerald-400 font-medium">Upgrade now</button>
-      </div>
+      {/* Floating Credits Corner */}
+      <CreditsCorner />
 
       {/* Block Settings Modal */}
-      <BlockSettingsModal isOpen={isSettingsModalOpen} onClose={handleCloseModal} blockType={selectedBlockType} selectedModel={selectedModel} onModelChange={modelId => {
-      if (selectedBlockId) {
-        handleModelChange(selectedBlockId, modelId);
-      }
-    }} />
-    </div>;
+      <BlockSettingsModal
+        isOpen={isSettingsModalOpen}
+        onClose={handleCloseModal}
+        blockType={selectedBlockType}
+        selectedModel={selectedModel}
+        onModelChange={(modelId) => {
+          if (selectedBlockId) {
+            handleModelChange(selectedBlockId, modelId);
+          }
+        }}
+      />
+    </div>
+  );
 };
 export default StudioPage;
