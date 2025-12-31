@@ -72,6 +72,7 @@ serve(async (req) => {
     }
     
     // Handle other errors
-    return errorResponse(error.message || 'Failed to upload file', 500);
+    const errorMessage = error instanceof Error ? error.message : 'Failed to upload file';
+    return errorResponse(errorMessage, 500);
   }
 });

@@ -232,9 +232,11 @@ serve(async (req) => {
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
-    console.error(`[Luma Webhook][${lumaJobId || 'UNKNOWN'}] Unexpected error: ${error.message}`, error.stack);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorStack = error instanceof Error ? error.stack : '';
+    console.error(`[Luma Webhook][${lumaJobId || 'UNKNOWN'}] Unexpected error: ${errorMessage}`, errorStack);
     return new Response(
-      JSON.stringify({ success: false, error: error.message }),
+      JSON.stringify({ success: false, error: errorMessage }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

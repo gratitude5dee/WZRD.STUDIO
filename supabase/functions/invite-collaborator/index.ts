@@ -354,6 +354,7 @@ Deno.serve(async (req) => {
       return errorResponse(error.message, 401);
     }
 
-    return errorResponse(error.message || 'Failed to invite collaborator', 500);
+    const errorMessage = error instanceof Error ? error.message : 'Failed to invite collaborator';
+    return errorResponse(errorMessage, 500);
   }
 });

@@ -61,6 +61,7 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Groq stream error:', error);
-    return errorResponse(error.message || 'Internal server error', 500);
+    const errorMessage = error instanceof Error ? error.message : 'Internal server error';
+    return errorResponse(errorMessage, 500);
   }
 });

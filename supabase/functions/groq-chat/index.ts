@@ -18,8 +18,9 @@ serve(async (req) => {
       try {
         await authenticateRequest(req.headers);
       } catch (authError) {
-        console.error('Authentication error:', authError.message);
-        return errorResponse(authError.message, 401);
+        const authErrorMessage = authError instanceof Error ? authError.message : 'Authentication failed';
+        console.error('Authentication error:', authErrorMessage);
+        return errorResponse(authErrorMessage, 401);
       }
     }
 

@@ -183,19 +183,7 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Job processing error:', error);
-    
-    // If a specific job failed, update its status
-    if (error instanceof Error) {
-      await supabase
-        .from('job_queue')
-        .update({ 
-          status: 'failed', 
-          last_error: error.message,
-          attempts: error.attempts ? error.attempts + 1 : 1
-        })
-        .eq('id', error.jobId);
-    }
-
-    return errorResponse(error.message || 'Job processing failed', 500);
+    const errorMessage = error instanceof Error ? error.message : 'Job processing failed';
+    return errorResponse(errorMessage, 500);
   }
 });
