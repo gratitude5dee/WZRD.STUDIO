@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import {
   MousePointer2,
   Square,
@@ -13,6 +13,7 @@ import {
   ZoomIn,
   ZoomOut,
   Maximize2,
+  Loader2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -25,6 +26,7 @@ import {
 import { useCanvasStore } from '@/lib/stores/canvas-store';
 import type { CanvasObject } from '@/types/canvas';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 type Tool = 'select' | 'rectangle' | 'circle' | 'text' | 'image' | 'video';
 
@@ -159,13 +161,163 @@ export function CanvasToolbar({ onAddImage, onAddVideo }: CanvasToolbarProps) {
     toast.success('Redo');
   };
 
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [isUploadingVideo, setIsUploadingVideo] = useState(false);
+
+  const handleAddImageUpload = useCallback(async () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+
+      // Validate file size (max 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error('Image must be under 10MB');
+        return;
+      }
+
+      setIsUploadingImage(true);
+      try {
+        const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+        const { data, error } = await supabase.storage
+          .from('user-uploads')
+          .upload(`images/${fileName}`, file);
+
+        if (error) throw error;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('user-uploads')
+          .getPublicUrl(`images/${fileName}`);
+
+        // Create a temporary image to get dimensions
+        const img = new Image();
+        img.onload = () => {
+          const aspectRatio = img.width / img.height;
+          const maxWidth = 400;
+          const width = Math.min(img.width, maxWidth);
+          const height = width / aspectRatio;
+
+          const newObject: CanvasObject = {
+            id: crypto.randomUUID(),
+            type: 'image',
+            layerIndex: objects.length,
+            transform: {
+              x: -viewport.x / viewport.scale + 100,
+              y: -viewport.y / viewport.scale + 100,
+              scaleX: 1,
+              scaleY: 1,
+              rotation: 0,
+            },
+            visibility: true,
+            locked: false,
+            data: {
+              url: publicUrl,
+              width,
+              height,
+              originalWidth: img.width,
+              originalHeight: img.height,
+            },
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          };
+
+          addObject(newObject);
+          toast.success('Image added to canvas');
+        };
+        img.src = publicUrl;
+      } catch (error) {
+        console.error('Upload error:', error);
+        toast.error('Failed to upload image');
+      } finally {
+        setIsUploadingImage(false);
+      }
+    };
+    input.click();
+  }, [objects, viewport, addObject]);
+
+  const handleAddVideoUpload = useCallback(async () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'video/*';
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+
+      // Validate file size (max 100MB)
+      if (file.size > 100 * 1024 * 1024) {
+        toast.error('Video must be under 100MB');
+        return;
+      }
+
+      setIsUploadingVideo(true);
+      try {
+        const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+        const { data, error } = await supabase.storage
+          .from('user-uploads')
+          .upload(`videos/${fileName}`, file);
+
+        if (error) throw error;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('user-uploads')
+          .getPublicUrl(`videos/${fileName}`);
+
+        // Create video element to get dimensions and duration
+        const video = document.createElement('video');
+        video.onloadedmetadata = () => {
+          const aspectRatio = video.videoWidth / video.videoHeight;
+          const maxWidth = 400;
+          const width = Math.min(video.videoWidth, maxWidth);
+          const height = width / aspectRatio;
+
+          const newObject: CanvasObject = {
+            id: crypto.randomUUID(),
+            type: 'video',
+            layerIndex: objects.length,
+            transform: {
+              x: -viewport.x / viewport.scale + 100,
+              y: -viewport.y / viewport.scale + 100,
+              scaleX: 1,
+              scaleY: 1,
+              rotation: 0,
+            },
+            visibility: true,
+            locked: false,
+            data: {
+              url: publicUrl,
+              width,
+              height,
+              duration: video.duration,
+              originalWidth: video.videoWidth,
+              originalHeight: video.videoHeight,
+            },
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          };
+
+          addObject(newObject);
+          toast.success('Video added to canvas');
+        };
+        video.src = publicUrl;
+      } catch (error) {
+        console.error('Upload error:', error);
+        toast.error('Failed to upload video');
+      } finally {
+        setIsUploadingVideo(false);
+      }
+    };
+    input.click();
+  }, [objects, viewport, addObject]);
+
   const tools = [
     { id: 'select' as Tool, icon: MousePointer2, label: 'Select (V)', onClick: () => setActiveTool('select') },
     { id: 'rectangle' as Tool, icon: Square, label: 'Rectangle (R)', onClick: () => handleAddShape('rectangle') },
     { id: 'circle' as Tool, icon: Circle, label: 'Circle (C)', onClick: () => handleAddShape('circle') },
     { id: 'text' as Tool, icon: Type, label: 'Text (T)', onClick: handleAddText },
-    { id: 'image' as Tool, icon: ImageIcon, label: 'Image (I)', onClick: onAddImage || (() => toast.info('Image upload coming soon')) },
-    { id: 'video' as Tool, icon: Video, label: 'Video', onClick: onAddVideo || (() => toast.info('Video upload coming soon')) },
+    { id: 'image' as Tool, icon: ImageIcon, label: 'Image (I)', onClick: onAddImage || handleAddImageUpload, isLoading: isUploadingImage },
+    { id: 'video' as Tool, icon: Video, label: 'Video', onClick: onAddVideo || handleAddVideoUpload, isLoading: isUploadingVideo },
   ];
 
   return (
@@ -177,6 +329,7 @@ export function CanvasToolbar({ onAddImage, onAddVideo }: CanvasToolbarProps) {
             {tools.map((tool) => {
               const Icon = tool.icon;
               const isActive = activeTool === tool.id;
+              const isLoading = 'isLoading' in tool && tool.isLoading;
 
               return (
                 <Tooltip key={tool.id}>
@@ -185,17 +338,18 @@ export function CanvasToolbar({ onAddImage, onAddVideo }: CanvasToolbarProps) {
                       size="sm"
                       variant="ghost"
                       onClick={tool.onClick}
+                      disabled={isLoading}
                       className={`h-8 w-8 p-0 ${
                         isActive
                           ? 'bg-white/[0.12] text-white'
                           : 'text-white/60 hover:text-white hover:bg-white/[0.08]'
                       }`}
                     >
-                      <Icon className="w-4 h-4" />
+                      {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Icon className="w-4 h-4" />}
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p className="text-xs">{tool.label}</p>
+                    <p className="text-xs">{isLoading ? 'Uploading...' : tool.label}</p>
                   </TooltipContent>
                 </Tooltip>
               );

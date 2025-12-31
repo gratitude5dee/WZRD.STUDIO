@@ -302,11 +302,45 @@ export function ClothingSection({
                             </div>
                           ))}
 
-                          {/* Add button placeholder */}
+                          {/* Add reference image */}
                           <Button
                             variant="outline"
                             className="aspect-square border-dashed border-2 hover:border-primary bg-zinc-900/30"
-                            onClick={() => toast.info('Image upload feature coming soon')}
+                            onClick={() => {
+                              const input = document.createElement('input');
+                              input.type = 'file';
+                              input.accept = 'image/*';
+                              input.onchange = async (e) => {
+                                const file = (e.target as HTMLInputElement).files?.[0];
+                                if (!file) return;
+
+                                try {
+                                  const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+                                  const { error: uploadError } = await supabase.storage
+                                    .from('user-uploads')
+                                    .upload(`references/${fileName}`, file);
+
+                                  if (uploadError) throw uploadError;
+
+                                  const { data: { publicUrl } } = supabase.storage
+                                    .from('user-uploads')
+                                    .getPublicUrl(`references/${fileName}`);
+
+                                  updateCharacterData(char.id, {
+                                    referenceImages: [...data.referenceImages, {
+                                      id: `img-${Date.now()}`,
+                                      url: publicUrl
+                                    }]
+                                  });
+
+                                  toast.success('Reference image uploaded');
+                                } catch (error) {
+                                  console.error('Upload failed:', error);
+                                  toast.error('Failed to upload image');
+                                }
+                              };
+                              input.click();
+                            }}
                           >
                             <Plus className="w-5 h-5" />
                           </Button>

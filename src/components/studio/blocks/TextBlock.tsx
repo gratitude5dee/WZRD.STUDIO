@@ -222,9 +222,20 @@ const TextBlock: React.FC<TextBlockProps> = ({
       {/* Suggestions Mode - Enhanced Empty State */}
       {mode === 'suggestions' && !isVisualIntelligence && (
         <div className="space-y-1.5">
-          <button 
+          <button
             className="w-full flex items-center gap-3 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50 p-3 rounded-lg transition-all text-left text-xs group border border-transparent hover:border-zinc-700/50"
-            onClick={() => toast.info('Documentation coming soon')}
+            onClick={() => toast.info(
+              <div className="space-y-2">
+                <p className="font-semibold">Text Block</p>
+                <p>Generate and transform text using AI models like Gemini 2.5 Flash or GPT-5.</p>
+                <ul className="text-xs space-y-1 list-disc pl-4">
+                  <li>Write stories, scripts, and copy</li>
+                  <li>Summarize and expand text</li>
+                  <li>Connect to other blocks for multi-step workflows</li>
+                </ul>
+              </div>,
+              { duration: 6000 }
+            )}
             onMouseDown={(e) => e.stopPropagation()}
           >
             <div className="w-7 h-7 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-500/20 transition-colors">

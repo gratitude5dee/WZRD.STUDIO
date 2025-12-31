@@ -173,24 +173,32 @@ const StudioPage = () => {
     setSelectedBlockId(newBlock.id);
   }, []);
   const handleAssetInsert = useCallback((asset: ProjectAsset) => {
-    if (asset.asset_type !== 'image') {
-      toast.info('Asset insertion for this block type is coming soon.');
-      return;
-    }
     const assetUrl = asset.cdn_url || asset.preview_url || asset.thumbnail_url;
     if (!assetUrl) {
       toast.error('Asset is still processing. Try again in a moment.');
       return;
     }
+
+    let blockType: 'image' | 'video' | 'text' | 'upload' = 'upload';
+
+    if (asset.asset_type === 'image') {
+      blockType = 'image';
+    } else if (asset.asset_type === 'video') {
+      blockType = 'video';
+    } else if (asset.asset_type === 'audio') {
+      // Audio assets can be represented as upload blocks with audio data
+      blockType = 'upload';
+    }
+
     const newBlock: Block = {
       id: uuidv4(),
-      type: 'image',
+      type: blockType,
       position: {
         x: 400 + Math.random() * 200,
         y: 300 + Math.random() * 200
       },
       initialData: {
-        imageUrl: assetUrl,
+        imageUrl: asset.asset_type === 'image' ? assetUrl : undefined,
         prompt: asset.original_file_name,
         assetId: asset.id,
         assetType: asset.asset_type,
@@ -198,7 +206,7 @@ const StudioPage = () => {
       }
     };
     handleAddBlock(newBlock);
-    toast.success('Asset added to the canvas.');
+    toast.success(`${asset.asset_type.charAt(0).toUpperCase() + asset.asset_type.slice(1)} asset added to the canvas.`);
   }, [handleAddBlock]);
   const handleDeleteBlock = useCallback((blockId: string) => {
     setBlocks(prev => prev.filter(b => b.id !== blockId));

@@ -1,12 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Search } from 'lucide-react';
 import { editorTheme, layoutDimensions, typography, exactMeasurements } from '@/lib/editor/theme';
 import { EditorTab } from './EditorIconBar';
 import { AssetDropZone } from './AssetDropZone';
+import { VideoLibraryTab } from './tabs/VideoLibraryTab';
+import { MusicLibraryTab } from './tabs/MusicLibraryTab';
+import { TextOverlayTab } from './tabs/TextOverlayTab';
+import { TransitionsTab } from './tabs/TransitionsTab';
+import { EffectsTab } from './tabs/EffectsTab';
+import { ElementsTab } from './tabs/ElementsTab';
+import { toast } from 'sonner';
 
 interface EditorMediaPanelProps {
   activeTab: EditorTab;
   onAssetDrag?: (asset: any) => void;
+  onAddToTimeline?: (item: any) => void;
+  onApplyTransition?: (transition: any) => void;
+  onApplyEffect?: (effect: any) => void;
+  projectId?: string;
 }
 
 // Sample Pexels-style images for demo
@@ -24,8 +35,39 @@ const sampleImages = [
 export const EditorMediaPanel: React.FC<EditorMediaPanelProps> = ({
   activeTab,
   onAssetDrag,
+  onAddToTimeline,
+  onApplyTransition,
+  onApplyEffect,
+  projectId,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Handler for adding items to timeline
+  const handleAddToTimeline = useCallback((item: any) => {
+    if (onAddToTimeline) {
+      onAddToTimeline(item);
+    } else {
+      toast.success(`Added ${item.name || item.type} to timeline`);
+    }
+  }, [onAddToTimeline]);
+
+  // Handler for applying transitions
+  const handleApplyTransition = useCallback((transition: any) => {
+    if (onApplyTransition) {
+      onApplyTransition(transition);
+    } else {
+      toast.success(`Applied ${transition.name} transition`);
+    }
+  }, [onApplyTransition]);
+
+  // Handler for applying effects
+  const handleApplyEffect = useCallback((effect: any) => {
+    if (onApplyEffect) {
+      onApplyEffect(effect);
+    } else {
+      toast.success(`Applied ${effect.name} effect`);
+    }
+  }, [onApplyEffect]);
 
   const getTabTitle = (tab: EditorTab): string => {
     const titles: Record<EditorTab, string> = {
@@ -153,16 +195,73 @@ export const EditorMediaPanel: React.FC<EditorMediaPanelProps> = ({
 
         {activeTab === 'upload' && <AssetDropZone />}
 
-        {activeTab !== 'photos' && activeTab !== 'upload' && (
-          <div
-            className="flex items-center justify-center h-full"
-            style={{
-              color: editorTheme.text.tertiary,
-              fontSize: typography.fontSize.sm,
+        {activeTab === 'videos' && (
+          <VideoLibraryTab
+            projectId={projectId}
+            onSelectVideo={(video) => {
+              handleAddToTimeline({
+                type: 'video',
+                url: video.url,
+                duration: video.duration,
+                name: video.name,
+              });
             }}
-          >
-            {getTabTitle(activeTab)} panel content coming soon
-          </div>
+          />
+        )}
+
+        {activeTab === 'elements' && (
+          <ElementsTab
+            onSelectElement={(element) => {
+              handleAddToTimeline({
+                type: 'element',
+                elementType: element.type,
+                ...element,
+              });
+            }}
+          />
+        )}
+
+        {activeTab === 'text' && (
+          <TextOverlayTab
+            onAddText={(textConfig) => {
+              handleAddToTimeline({
+                type: 'text',
+                text: textConfig.text,
+                style: textConfig.style,
+                position: textConfig.position,
+                duration: 5000,
+              });
+            }}
+          />
+        )}
+
+        {activeTab === 'music' && (
+          <MusicLibraryTab
+            onSelectTrack={(track) => {
+              handleAddToTimeline({
+                type: 'audio',
+                url: track.url,
+                duration: track.duration,
+                name: track.name,
+              });
+            }}
+          />
+        )}
+
+        {activeTab === 'transitions' && (
+          <TransitionsTab
+            onSelectTransition={(transition) => {
+              handleApplyTransition(transition);
+            }}
+          />
+        )}
+
+        {activeTab === 'effects' && (
+          <EffectsTab
+            onSelectEffect={(effect) => {
+              handleApplyEffect(effect);
+            }}
+          />
         )}
       </div>
     </div>

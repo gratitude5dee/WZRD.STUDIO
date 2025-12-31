@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Copy, Scissors, Trash2, ArrowUp, ArrowDown, Download, Sparkles } from 'lucide-react';
 import { useCanvasStore } from '@/lib/stores/canvas-store';
 import { toast } from 'sonner';
+import { ExportService } from '@/services/exportService';
 
 interface CanvasContextMenuProps {
   x: number;
@@ -11,8 +12,42 @@ interface CanvasContextMenuProps {
 }
 
 export function CanvasContextMenu({ x, y, onClose, onAiTransform }: CanvasContextMenuProps) {
-  const { selectedIds, copy, paste, duplicate, deleteSelected, bringToFront, sendToBack } = useCanvasStore();
+  const { selectedIds, objects, viewport, copy, paste, duplicate, deleteSelected, bringToFront, sendToBack } = useCanvasStore();
   const [position, setPosition] = useState({ x, y });
+
+  const handleExportSelection = useCallback(async () => {
+    try {
+      const selectedObjects = objects.filter(obj => selectedIds.includes(obj.id));
+      if (selectedObjects.length === 0) {
+        toast.error('No objects selected');
+        return;
+      }
+
+      toast.loading('Exporting selection...', { id: 'export-selection' });
+
+      const dataURL = await ExportService.exportToPNG(
+        selectedObjects.map(obj => ({
+          id: obj.id,
+          x: obj.x,
+          y: obj.y,
+          width: obj.width || 200,
+          height: obj.height || 200,
+          rotation: obj.rotation || 0,
+          data: obj.data || { url: obj.src }
+        })),
+        viewport,
+        { format: 'png', quality: 1, scale: 2, transparent: true }
+      );
+
+      const filename = `selection-${Date.now()}.png`;
+      ExportService.downloadImage(dataURL, filename);
+
+      toast.success('Selection exported!', { id: 'export-selection' });
+    } catch (error) {
+      console.error('Export failed:', error);
+      toast.error('Export failed', { id: 'export-selection' });
+    }
+  }, [objects, selectedIds, viewport]);
 
   useEffect(() => {
     // Adjust position if menu would go off screen
@@ -91,7 +126,10 @@ export function CanvasContextMenu({ x, y, onClose, onAiTransform }: CanvasContex
             <MenuItem
               icon={<Download className="w-4 h-4" />}
               label="Export Selection"
-              onClick={() => handleAction(() => {}, 'Export coming soon')}
+              onClick={() => {
+                handleExportSelection();
+                onClose();
+              }}
             />
             <div className="h-px bg-border my-1" />
             <MenuItem

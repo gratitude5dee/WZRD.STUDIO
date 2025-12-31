@@ -21,8 +21,17 @@ interface AudioNodeData {
 }
 
 const AUDIO_MODELS = [
-  { id: 'elevenlabs-sfx', name: 'ElevenLabs SFX', type: 'sfx' },
-  { id: 'elevenlabs-music', name: 'ElevenLabs Music', type: 'music' },
+  { id: 'elevenlabs-tts', name: 'Text to Speech', type: 'tts' },
+  { id: 'elevenlabs-sfx', name: 'Sound Effects', type: 'sfx' },
+  { id: 'elevenlabs-music', name: 'AI Music', type: 'music' },
+];
+
+const DEFAULT_VOICES = [
+  { voice_id: 'JBFqnCBsd6RMkjVDRZzb', name: 'George (Professional)' },
+  { voice_id: 'EXAVITQu4vr4xnSDxMaL', name: 'Sarah (Warm)' },
+  { voice_id: 'onwK4e9ZLuTAKqWW03F9', name: 'Daniel (Authoritative)' },
+  { voice_id: 'pFZP5JQG7iQjIQuC4Bku', name: 'Lily (Friendly)' },
+  { voice_id: '21m00Tcm4TlvDq8ikWAM', name: 'Rachel (Calm)' },
 ];
 
 export const ReactFlowAudioNode = memo(({ id, data, selected }: NodeProps) => {
@@ -33,9 +42,10 @@ export const ReactFlowAudioNode = memo(({ id, data, selected }: NodeProps) => {
   
   const [prompt, setPrompt] = useState(nodeData?.prompt || '');
   const [audioUrl, setAudioUrl] = useState<string | null>(nodeData?.audioUrl || null);
-  const [model, setModel] = useState(nodeData?.model || 'elevenlabs-sfx');
+  const [model, setModel] = useState(nodeData?.model || 'elevenlabs-tts');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [selectedVoice, setSelectedVoice] = useState(DEFAULT_VOICES[0].voice_id);
 
   const handles = [
     {
@@ -56,14 +66,29 @@ export const ReactFlowAudioNode = memo(({ id, data, selected }: NodeProps) => {
 
   const handleGenerate = useCallback(async () => {
     if (!prompt.trim()) {
-      toast.error('Please enter a prompt');
+      toast.error('Please enter text or a prompt');
       return;
     }
 
     setIsGenerating(true);
     try {
-      const functionName = model === 'elevenlabs-music' ? 'elevenlabs-music' : 'elevenlabs-sfx';
-      
+      let functionName: string;
+      let body: Record<string, any>;
+
+      if (model === 'elevenlabs-tts') {
+        functionName = 'elevenlabs-tts';
+        body = {
+          text: prompt,
+          voiceId: selectedVoice,
+        };
+      } else if (model === 'elevenlabs-music') {
+        functionName = 'elevenlabs-music';
+        body = { prompt, duration: 30 };
+      } else {
+        functionName = 'elevenlabs-sfx';
+        body = { prompt, duration: 5 };
+      }
+
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/${functionName}`,
         {
@@ -72,26 +97,26 @@ export const ReactFlowAudioNode = memo(({ id, data, selected }: NodeProps) => {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
           },
-          body: JSON.stringify({ 
-            prompt, 
-            duration: model === 'elevenlabs-music' ? 30 : 5 
-          }),
+          body: JSON.stringify(body),
         }
       );
 
-      if (!response.ok) throw new Error('Generation failed');
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || 'Generation failed');
+      }
 
       const audioBlob = await response.blob();
       const url = URL.createObjectURL(audioBlob);
       setAudioUrl(url);
-      toast.success('Audio generated!');
+      toast.success(model === 'elevenlabs-tts' ? 'Speech generated!' : 'Audio generated!');
     } catch (err: any) {
       console.error('Audio generation failed:', err);
       toast.error(err.message || 'Generation failed');
     } finally {
       setIsGenerating(false);
     }
-  }, [prompt, model]);
+  }, [prompt, model, selectedVoice]);
 
   const togglePlay = useCallback(() => {
     const audio = document.getElementById(`audio-gen-${id}`) as HTMLAudioElement;
@@ -126,7 +151,7 @@ export const ReactFlowAudioNode = memo(({ id, data, selected }: NodeProps) => {
         <div className="p-3 space-y-3">
           {/* Model Selector */}
           <div>
-            <label className="text-[10px] text-zinc-500 uppercase tracking-wider mb-1 block">Model</label>
+            <label className="text-[10px] text-zinc-500 uppercase tracking-wider mb-1 block">Type</label>
             <Select value={model} onValueChange={setModel}>
               <SelectTrigger className="h-8 text-xs bg-zinc-900 border-zinc-700">
                 <SelectValue />
@@ -141,13 +166,40 @@ export const ReactFlowAudioNode = memo(({ id, data, selected }: NodeProps) => {
             </Select>
           </div>
 
-          {/* Prompt */}
+          {/* Voice Selector - only for TTS */}
+          {model === 'elevenlabs-tts' && (
+            <div>
+              <label className="text-[10px] text-zinc-500 uppercase tracking-wider mb-1 block">Voice</label>
+              <Select value={selectedVoice} onValueChange={setSelectedVoice}>
+                <SelectTrigger className="h-8 text-xs bg-zinc-900 border-zinc-700">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {DEFAULT_VOICES.map(v => (
+                    <SelectItem key={v.voice_id} value={v.voice_id} className="text-xs">
+                      {v.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {/* Prompt/Text Input */}
           <div>
-            <label className="text-[10px] text-zinc-500 uppercase tracking-wider mb-1 block">Prompt</label>
+            <label className="text-[10px] text-zinc-500 uppercase tracking-wider mb-1 block">
+              {model === 'elevenlabs-tts' ? 'Text' : 'Prompt'}
+            </label>
             <Textarea
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              placeholder={model === 'elevenlabs-music' ? 'Epic orchestral soundtrack...' : 'Footsteps on gravel...'}
+              placeholder={
+                model === 'elevenlabs-tts'
+                  ? 'Enter the text you want to convert to speech...'
+                  : model === 'elevenlabs-music'
+                    ? 'Epic orchestral soundtrack...'
+                    : 'Footsteps on gravel...'
+              }
               className="min-h-[60px] text-xs bg-zinc-900 border-zinc-700 resize-none"
             />
           </div>
