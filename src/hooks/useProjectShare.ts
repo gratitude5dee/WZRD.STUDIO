@@ -36,14 +36,14 @@ export function useProjectShare(projectId: string) {
         }
       }
 
-      const { error } = await supabase
-        .from('project_share_links')
+      const { error } = await (supabase
+        .from('project_share_links' as any)
         .insert({
           project_id: projectId,
           token,
           access_level: accessLevel,
           expires_at: expiresAt?.toISOString(),
-        });
+        }) as any);
 
       if (error) throw error;
 
@@ -65,7 +65,7 @@ export function useProjectShare(projectId: string) {
     try {
       const { error } = await supabase
         .from('projects')
-        .update({ is_private: isPrivate })
+        .update({ is_private: isPrivate } as any)
         .eq('id', projectId);
 
       if (error) throw error;

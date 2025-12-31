@@ -60,20 +60,20 @@ export const AssetsGalleryPanel: React.FC<AssetsGalleryPanelProps> = ({
   const fetchAssets = async () => {
     setIsLoading(true);
     try {
-      const { data: uploadedData } = await supabase
-        .from('project_assets')
+      const { data: uploadedData } = await (supabase
+        .from('project_assets' as any)
         .select('*')
         .eq('project_id', projectId)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false }) as any);
 
-      const { data: generatedData } = await supabase
-        .from('generation_outputs')
+      const { data: generatedData } = await (supabase
+        .from('generation_outputs' as any)
         .select('*')
         .eq('project_id', projectId)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false }) as any);
 
       const allAssets: Asset[] = [
-        ...(uploadedData?.map((asset) => ({
+        ...((uploadedData as any[])?.map((asset: any) => ({
           id: asset.id,
           name: asset.name,
           url: asset.url,
@@ -84,7 +84,7 @@ export const AssetsGalleryPanel: React.FC<AssetsGalleryPanelProps> = ({
           createdAt: new Date(asset.created_at),
           metadata: asset.metadata,
         })) || []),
-        ...(generatedData?.map((generated) => ({
+        ...((generatedData as any[])?.map((generated: any) => ({
           id: generated.id,
           name: generated.prompt?.slice(0, 30) ? `${generated.prompt.slice(0, 30)}...` : 'Generated',
           url: generated.output_url,
@@ -118,7 +118,7 @@ export const AssetsGalleryPanel: React.FC<AssetsGalleryPanelProps> = ({
 
       const { data: urlData } = supabase.storage.from('project-assets').getPublicUrl(fileName);
 
-      await supabase.from('project_assets').insert({
+      await (supabase.from('project_assets' as any).insert({
         project_id: projectId,
         name: file.name,
         url: urlData.publicUrl,
@@ -130,7 +130,7 @@ export const AssetsGalleryPanel: React.FC<AssetsGalleryPanelProps> = ({
               ? 'audio'
               : 'document',
         size: file.size,
-      });
+      }) as any);
 
       return urlData.publicUrl;
     });
@@ -150,7 +150,7 @@ export const AssetsGalleryPanel: React.FC<AssetsGalleryPanelProps> = ({
     if (!confirm('Delete this asset?')) return;
 
     try {
-      await supabase.from('project_assets').delete().eq('id', assetId);
+      await (supabase.from('project_assets' as any).delete().eq('id', assetId) as any);
       setAssets((current) => current.filter((asset) => asset.id !== assetId));
       toast.success('Asset deleted');
     } catch (error) {

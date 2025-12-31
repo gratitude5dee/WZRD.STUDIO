@@ -2566,6 +2566,47 @@ export type Database = {
         }
         Relationships: []
       }
+      generation_outputs: {
+        Row: {
+          created_at: string | null
+          id: string
+          model: string | null
+          output_type: string | null
+          output_url: string | null
+          project_id: string | null
+          prompt: string | null
+          thumbnail_url: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          model?: string | null
+          output_type?: string | null
+          output_url?: string | null
+          project_id?: string | null
+          prompt?: string | null
+          thumbnail_url?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          model?: string | null
+          output_type?: string | null
+          output_url?: string | null
+          project_id?: string | null
+          prompt?: string | null
+          thumbnail_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "generation_outputs_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       generations: {
         Row: {
           canvas_id: string | null
@@ -4887,6 +4928,85 @@ export type Database = {
           },
         ]
       }
+      project_assets: {
+        Row: {
+          created_at: string | null
+          id: string
+          metadata: Json | null
+          name: string
+          project_id: string | null
+          size: number | null
+          thumbnail_url: string | null
+          type: string
+          url: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          name: string
+          project_id?: string | null
+          size?: number | null
+          thumbnail_url?: string | null
+          type: string
+          url: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          name?: string
+          project_id?: string | null
+          size?: number | null
+          thumbnail_url?: string | null
+          type?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_assets_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_share_links: {
+        Row: {
+          access_level: string
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          project_id: string | null
+          token: string
+        }
+        Insert: {
+          access_level?: string
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          project_id?: string | null
+          token: string
+        }
+        Update: {
+          access_level?: string
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          project_id?: string | null
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_share_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_shares: {
         Row: {
           created_at: string
@@ -4942,16 +5062,19 @@ export type Database = {
           concept_text: string | null
           created_at: string | null
           custom_format_description: string | null
+          deleted_at: string | null
           description: string | null
           format: string | null
           genre: string | null
           id: string
           infotainment_data: Json | null
+          is_private: boolean | null
           main_message: string | null
           music_video_data: Json | null
           product_name: string | null
           selected_storyline_id: string | null
           special_requests: string | null
+          status: string | null
           style_reference_asset_id: string | null
           target_audience: string | null
           title: string
@@ -4973,16 +5096,19 @@ export type Database = {
           concept_text?: string | null
           created_at?: string | null
           custom_format_description?: string | null
+          deleted_at?: string | null
           description?: string | null
           format?: string | null
           genre?: string | null
           id?: string
           infotainment_data?: Json | null
+          is_private?: boolean | null
           main_message?: string | null
           music_video_data?: Json | null
           product_name?: string | null
           selected_storyline_id?: string | null
           special_requests?: string | null
+          status?: string | null
           style_reference_asset_id?: string | null
           target_audience?: string | null
           title?: string
@@ -5004,16 +5130,19 @@ export type Database = {
           concept_text?: string | null
           created_at?: string | null
           custom_format_description?: string | null
+          deleted_at?: string | null
           description?: string | null
           format?: string | null
           genre?: string | null
           id?: string
           infotainment_data?: Json | null
+          is_private?: boolean | null
           main_message?: string | null
           music_video_data?: Json | null
           product_name?: string | null
           selected_storyline_id?: string | null
           special_requests?: string | null
+          status?: string | null
           style_reference_asset_id?: string | null
           target_audience?: string | null
           title?: string
@@ -5228,6 +5357,62 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      saved_flows: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          edge_count: number | null
+          flow_data: Json | null
+          id: string
+          is_template: boolean | null
+          name: string
+          node_count: number | null
+          project_id: string | null
+          tags: string[] | null
+          thumbnail_url: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          edge_count?: number | null
+          flow_data?: Json | null
+          id?: string
+          is_template?: boolean | null
+          name: string
+          node_count?: number | null
+          project_id?: string | null
+          tags?: string[] | null
+          thumbnail_url?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          edge_count?: number | null
+          flow_data?: Json | null
+          id?: string
+          is_template?: boolean | null
+          name?: string
+          node_count?: number | null
+          project_id?: string | null
+          tags?: string[] | null
+          thumbnail_url?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_flows_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       scene_objects: {
         Row: {
