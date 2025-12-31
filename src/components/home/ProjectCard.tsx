@@ -1,11 +1,34 @@
-import { useNavigate } from 'react-router-dom';
-import { MoreHorizontal, Trash2, Lock, Globe, Play, Edit3, Share2 } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import { formatDistanceToNow } from 'date-fns';
-import { useState, useEffect, useRef } from 'react';
-import { DeleteProjectDialog } from '../dialogs/DeleteProjectDialog';
-import { useProjectActions } from '@/hooks/useProjectActions';
-import { supabase } from '@/integrations/supabase/client';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Edit3,
+  ExternalLink,
+  Globe,
+  Lock,
+  MoreHorizontal,
+  Play,
+  Share2,
+  Trash2,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+import { InlineEditableTitle } from './InlineEditableTitle';
+import { ShareProjectDialog } from './ShareProjectDialog';
+import { DeleteProjectSheet } from './DeleteProjectSheet';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 export interface Project {
   id: string;
@@ -14,30 +37,31 @@ export interface Project {
   updated_at: string;
   is_private?: boolean;
   description?: string | null;
+  status?: string | null;
 }
 
 interface ProjectCardProps {
   project: Project;
   onOpen: (projectId: string) => void;
   onDelete?: (projectId: string) => void;
+  onRename?: (projectId: string, newTitle: string) => void;
 }
 
-export const ProjectCard = ({ project, onOpen, onDelete }: ProjectCardProps) => {
-  const navigate = useNavigate();
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+export const ProjectCard = ({ project, onOpen, onDelete, onRename }: ProjectCardProps) => {
   const [isHovered, setIsHovered] = useState(false);
+  const [showShareDialog, setShowShareDialog] = useState(false);
+  const [showDeleteSheet, setShowDeleteSheet] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const [mediaUrl, setMediaUrl] = useState<string | null>(null);
   const [mediaType, setMediaType] = useState<'video' | 'image' | null>(null);
-  const { deleteProject, isDeleting } = useProjectActions();
   const videoRef = useRef<HTMLVideoElement>(null);
-  
+
   const formattedDate = formatDistanceToNow(new Date(project.updated_at), { addSuffix: true });
 
-  // Fetch first media item for this project
   useEffect(() => {
     const fetchProjectMedia = async () => {
       try {
-        const { data, error } = await supabase
+        const { data } = await supabase
           .from('video_clips')
           .select('storage_bucket, storage_path, thumbnail_bucket, thumbnail_path, type')
           .eq('project_id', project.id)
@@ -45,38 +69,31 @@ export const ProjectCard = ({ project, onOpen, onDelete }: ProjectCardProps) => 
           .limit(1)
           .maybeSingle();
 
-        if (error && error.code !== 'PGRST116') {
-          console.error('Failed to load project media preview', error);
-          return;
-        }
-
         if (!data) return;
 
-        const previewBucket = data.thumbnail_path ? data.thumbnail_bucket ?? 'thumbnails' : data.storage_bucket;
+        const previewBucket = data.thumbnail_path
+          ? data.thumbnail_bucket ?? 'thumbnails'
+          : data.storage_bucket;
         const previewPath = data.thumbnail_path ?? data.storage_path;
 
         if (!previewBucket || !previewPath) return;
 
-        const { data: publicData } = supabase
-          .storage
-          .from(previewBucket)
-          .getPublicUrl(previewPath);
+        const { data: publicData } = supabase.storage.from(previewBucket).getPublicUrl(previewPath);
 
         setMediaUrl(publicData.publicUrl);
         setMediaType((data.type as 'video' | 'image') ?? 'image');
-      } catch (err) {
-        console.log('No media items found for project', project.id);
+      } catch (error) {
+        console.error('Failed to load project media preview', error);
       }
     };
 
     fetchProjectMedia();
   }, [project.id]);
 
-  // Handle video playback on hover
   useEffect(() => {
     if (videoRef.current && mediaType === 'video') {
       if (isHovered) {
-        videoRef.current.play().catch(err => console.log('Video play error:', err));
+        videoRef.current.play().catch(() => {});
       } else {
         videoRef.current.pause();
         videoRef.current.currentTime = 0;
@@ -84,168 +101,213 @@ export const ProjectCard = ({ project, onOpen, onDelete }: ProjectCardProps) => 
     }
   }, [isHovered, mediaType]);
 
-  const handleDelete = async () => {
-    const success = await deleteProject(project.id);
-    if (success && onDelete) {
-      onDelete(project.id);
-    }
-    setShowDeleteDialog(false);
-  };
-
-  const handleCardClick = () => {
-    navigate(`/timeline/${project.id}`);
-  };
-
-  const handleDeleteClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setShowDeleteDialog(true);
-  };
-
-  const handleMoreClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleTitleSave = (newTitle: string) => {
+    onRename?.(project.id, newTitle);
+    setIsEditing(false);
   };
 
   return (
-    <>
-      <div
+    <TooltipProvider>
+      <motion.div
+        layout
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        whileHover={{ y: -4 }}
+        transition={{ duration: 0.2 }}
         className={cn(
-          "group relative rounded-2xl overflow-hidden cursor-pointer transition-all duration-300",
-          "bg-gradient-to-br from-[rgba(24,24,32,0.75)] to-[rgba(16,16,22,0.55)]",
-          "backdrop-blur-xl border border-white/[0.08]",
-          "hover:border-[rgba(139,92,246,0.4)] hover:shadow-[0_8px_45px_rgba(139,92,246,0.15),0_0_0_1px_rgba(139,92,246,0.12)]",
-          "hover:-translate-y-1"
+          'group relative rounded-2xl overflow-hidden cursor-pointer',
+          'bg-surface-1 border border-border-default',
+          'shadow-sm hover:shadow-lg',
+          'transition-all duration-300 ease-out',
+          'dark:bg-zinc-900 dark:border-zinc-800'
         )}
-        onClick={handleCardClick}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
+        onClick={() => !isEditing && onOpen(project.id)}
       >
-        {/* Top shine line */}
-        <div className="absolute top-0 left-4 right-4 h-px bg-gradient-to-r from-transparent via-white/[0.1] to-transparent z-10" />
-        
-          {/* Glow effect on hover */}
-          <div className="absolute inset-0 bg-gradient-to-br from-[rgba(139,92,246,0.06)] via-transparent to-[rgba(245,158,11,0.03)] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
-        
-        {/* Thumbnail */}
-        <div className="relative aspect-video bg-gradient-to-br from-muted/30 to-muted/10 overflow-hidden">
-          {mediaUrl && mediaType === 'video' ? (
-            <video
-              ref={videoRef}
-              src={mediaUrl}
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-              loop
-              muted
-              playsInline
-            />
-          ) : mediaUrl && mediaType === 'image' ? (
-            <img
-              src={mediaUrl}
-              alt={project.title}
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-            />
-          ) : project.thumbnail_url ? (
-            <img
-              src={project.thumbnail_url}
-              alt={project.title}
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-            />
+        <div className="relative aspect-[4/3] bg-surface-2 dark:bg-zinc-800 overflow-hidden">
+          {mediaUrl ? (
+            mediaType === 'video' ? (
+              <video
+                ref={videoRef}
+                src={mediaUrl}
+                className="w-full h-full object-cover"
+                muted
+                loop
+                playsInline
+              />
+            ) : (
+              <img
+                src={mediaUrl}
+                alt={project.title}
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              />
+            )
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/[0.08] to-accent/[0.05]">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/25 to-accent/20 flex items-center justify-center backdrop-blur-sm border border-white/[0.08]">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary/60 to-accent/60" />
+            <div className="w-full h-full flex items-center justify-center">
+              <div
+                className={cn(
+                  'w-16 h-16 rounded-2xl flex items-center justify-center',
+                  'bg-gradient-to-br from-accent-purple/20 to-accent-purple/5',
+                  'dark:from-purple-500/20 dark:to-purple-500/5'
+                )}
+              >
+                <Play className="w-8 h-8 text-accent-purple dark:text-purple-400" />
               </div>
             </div>
           )}
 
-          {/* Gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-[rgba(8,8,12,0.95)] via-[rgba(8,8,12,0.3)] to-transparent opacity-70 group-hover:opacity-85 transition-opacity duration-300" />
+          <AnimatePresence>
+            {isHovered && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"
+              >
+                <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <motion.button
+                          initial={{ scale: 0.8, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          transition={{ delay: 0.05 }}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            onOpen(project.id);
+                          }}
+                          className="p-2.5 rounded-xl bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white transition-colors"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                        </motion.button>
+                      </TooltipTrigger>
+                      <TooltipContent>Open Project</TooltipContent>
+                    </Tooltip>
 
-          {/* Play button overlay on hover */}
-          <div className={cn(
-            "absolute inset-0 flex items-center justify-center transition-all duration-300",
-            isHovered ? "opacity-100" : "opacity-0"
-          )}>
-            <div className="w-14 h-14 rounded-full bg-[rgba(139,92,246,0.9)] backdrop-blur-md flex items-center justify-center shadow-[0_0_35px_rgba(139,92,246,0.6)] hover:scale-110 transition-transform border border-[rgba(167,139,250,0.4)]">
-              <Play className="w-6 h-6 text-white ml-1" fill="currentColor" />
-            </div>
-          </div>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <motion.button
+                          initial={{ scale: 0.8, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          transition={{ delay: 0.1 }}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            setShowShareDialog(true);
+                          }}
+                          className="p-2.5 rounded-xl bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white transition-colors"
+                        >
+                          <Share2 className="w-4 h-4" />
+                        </motion.button>
+                      </TooltipTrigger>
+                      <TooltipContent>Share Project</TooltipContent>
+                    </Tooltip>
+                  </div>
 
-          {/* Top Actions */}
-          <div className={cn(
-            "absolute top-3 right-3 flex gap-2 transition-all duration-300",
-            isHovered ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2"
-          )}>
-            <button
-              onClick={handleMoreClick}
-              className="w-8 h-8 flex items-center justify-center rounded-xl bg-[rgba(0,0,0,0.5)] backdrop-blur-md border border-white/[0.1] text-foreground hover:bg-[rgba(0,0,0,0.7)] hover:border-white/[0.15] transition-colors"
-            >
-              <Edit3 className="w-4 h-4" />
-            </button>
-            <button
-              onClick={handleMoreClick}
-              className="w-8 h-8 flex items-center justify-center rounded-xl bg-[rgba(0,0,0,0.5)] backdrop-blur-md border border-white/[0.1] text-foreground hover:bg-[rgba(0,0,0,0.7)] hover:border-white/[0.15] transition-colors"
-            >
-              <Share2 className="w-4 h-4" />
-            </button>
-            <button
-              onClick={handleDeleteClick}
-              className="w-8 h-8 flex items-center justify-center rounded-xl bg-[rgba(0,0,0,0.5)] backdrop-blur-md border border-white/[0.1] text-foreground hover:bg-destructive/80 hover:text-destructive-foreground hover:border-destructive/50 transition-colors"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
-          </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <motion.button
+                        initial={{ scale: 0.8, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ delay: 0.15 }}
+                        onClick={(event) => event.stopPropagation()}
+                        className="p-2.5 rounded-xl bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white transition-colors"
+                      >
+                        <MoreHorizontal className="w-4 h-4" />
+                      </motion.button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
+                      <DropdownMenuItem onClick={() => setIsEditing(true)}>
+                        <Edit3 className="w-4 h-4 mr-2" />
+                        Edit Title
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setShowShareDialog(true)}>
+                        <Share2 className="w-4 h-4 mr-2" />
+                        Share
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() => setShowDeleteSheet(true)}
+                        className="text-accent-rose focus:text-accent-rose dark:text-red-400"
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-          {/* Privacy Badge */}
-          <div className="absolute top-3 left-3">
-            <div className={cn(
-              "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold backdrop-blur-md border transition-colors",
-              project.is_private 
-                ? "bg-amber/15 border-amber/25 text-amber-200"
-                : "bg-emerald-500/15 border-emerald-500/25 text-emerald-200"
-            )}>
+          <div className="absolute top-3 right-3">
+            <div
+              className={cn(
+                'flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium',
+                'backdrop-blur-md',
+                project.is_private
+                  ? 'bg-zinc-900/70 text-zinc-300'
+                  : 'bg-emerald-500/90 text-white'
+              )}
+            >
               {project.is_private ? (
                 <>
                   <Lock className="w-3 h-3" />
-                  <span>Private</span>
+                  Private
                 </>
               ) : (
                 <>
                   <Globe className="w-3 h-3" />
-                  <span>Public</span>
+                  Public
                 </>
               )}
             </div>
           </div>
         </div>
 
-        {/* Content */}
-        <div className="relative p-4">
-          <h3 className="text-base font-semibold text-foreground mb-1 truncate group-hover:text-[#A78BFA] transition-colors">
-            {project.title}
-          </h3>
-          
-          <p className="text-xs text-muted-foreground/70">
+        <div className="p-4">
+          {isEditing ? (
+            <InlineEditableTitle
+              initialValue={project.title}
+              onSave={handleTitleSave}
+              onCancel={() => setIsEditing(false)}
+            />
+          ) : (
+            <h3
+              className={cn(
+                'text-base font-semibold truncate',
+                'text-text-primary dark:text-white',
+                'group-hover:text-accent-purple dark:group-hover:text-purple-400',
+                'transition-colors cursor-text'
+              )}
+              onClick={(event) => {
+                event.stopPropagation();
+                setIsEditing(true);
+              }}
+            >
+              {project.title}
+            </h3>
+          )}
+
+          <p className="text-sm text-text-tertiary dark:text-zinc-500 mt-1">
             Updated {formattedDate}
           </p>
-
-          {/* Description on hover */}
-          <div className={cn(
-            "overflow-hidden transition-all duration-300",
-            isHovered && project.description ? "max-h-20 mt-3 opacity-100" : "max-h-0 opacity-0"
-          )}>
-            <p className="text-xs text-muted-foreground/60 line-clamp-2">
-              {project.description}
-            </p>
-          </div>
         </div>
-      </div>
+      </motion.div>
 
-      <DeleteProjectDialog
-        isOpen={showDeleteDialog}
-        onClose={() => setShowDeleteDialog(false)}
-        onConfirm={handleDelete}
-        isDeleting={isDeleting}
-        projectTitle={project.title}
+      <ShareProjectDialog
+        open={showShareDialog}
+        onOpenChange={setShowShareDialog}
+        project={project}
       />
-    </>
+
+      <DeleteProjectSheet
+        open={showDeleteSheet}
+        onOpenChange={setShowDeleteSheet}
+        project={project}
+        onDelete={onDelete}
+      />
+    </TooltipProvider>
   );
 };

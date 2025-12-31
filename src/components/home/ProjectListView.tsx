@@ -180,38 +180,38 @@ export const ProjectListView = ({ projects, onOpenProject, onRefresh }: ProjectL
       </div>
 
       {/* Table */}
-      <div className="rounded-lg border border-white/[0.08] overflow-hidden">
+      <div className="rounded-lg border border-border-default bg-surface-1 overflow-hidden dark:border-white/[0.08] dark:bg-zinc-900">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-white/[0.08] bg-white/[0.02]">
-                <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">
+              <tr className="border-b border-border-default bg-surface-2 dark:border-white/[0.08] dark:bg-white/[0.02]">
+                <th className="px-6 py-3 text-left text-xs font-medium text-text-tertiary uppercase tracking-wider dark:text-white/60">
                   Title
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-text-tertiary uppercase tracking-wider dark:text-white/60">
                   Status
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-text-tertiary uppercase tracking-wider dark:text-white/60">
                   Updated
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-white/60 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-text-tertiary uppercase tracking-wider dark:text-white/60">
                   Visibility
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-white/60 uppercase tracking-wider">
+                <th className="px-6 py-3 text-right text-xs font-medium text-text-tertiary uppercase tracking-wider dark:text-white/60">
                   Actions
                 </th>
                 {isSelectMode && (
-                  <th className="px-6 py-3 text-center text-xs font-medium text-white/60 uppercase tracking-wider w-20">
+                  <th className="px-6 py-3 text-center text-xs font-medium text-text-tertiary uppercase tracking-wider w-20 dark:text-white/60">
                     Select
                   </th>
                 )}
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/[0.08]">
+            <tbody className="divide-y divide-border-default dark:divide-white/[0.08]">
               {projects.map((project) => (
                 <tr
                   key={project.id}
-                  className="hover:bg-white/[0.02] transition-colors"
+                  className="hover:bg-surface-2 transition-colors dark:hover:bg-white/[0.02]"
                 >
                   {/* Title */}
                   <td className="px-6 py-4">
@@ -253,7 +253,7 @@ export const ProjectListView = ({ projects, onOpenProject, onRefresh }: ProjectL
                       <div className="flex items-center gap-3">
                         <button
                           onClick={() => onOpenProject(project.id)}
-                          className="text-sm font-medium text-white hover:text-purple-400 transition-colors text-left"
+                          className="text-sm font-medium text-text-primary hover:text-accent-purple transition-colors text-left dark:text-white dark:hover:text-purple-400"
                         >
                           {project.title}
                         </button>
@@ -265,7 +265,7 @@ export const ProjectListView = ({ projects, onOpenProject, onRefresh }: ProjectL
                   <td className="px-6 py-4">
                     <Badge
                       variant="outline"
-                      className="bg-green-500/10 text-green-400 border-green-500/30"
+                      className="bg-emerald-500/10 text-emerald-600 border-emerald-400/30 dark:text-emerald-300"
                     >
                       Active
                     </Badge>
@@ -273,7 +273,7 @@ export const ProjectListView = ({ projects, onOpenProject, onRefresh }: ProjectL
 
                   {/* Updated */}
                   <td className="px-6 py-4">
-                    <span className="text-sm text-white/60">
+                    <span className="text-sm text-text-tertiary dark:text-white/60">
                       {format(new Date(project.updated_at), 'MMM d, yyyy')}
                     </span>
                   </td>
@@ -284,8 +284,8 @@ export const ProjectListView = ({ projects, onOpenProject, onRefresh }: ProjectL
                       variant="outline"
                       className={
                         project.is_private
-                          ? 'bg-blue-500/10 text-blue-400 border-blue-500/30'
-                          : 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+                          ? 'bg-blue-500/10 text-blue-600 border-blue-400/30 dark:text-blue-300'
+                          : 'bg-amber-500/10 text-amber-600 border-amber-400/30 dark:text-amber-300'
                       }
                     >
                       {project.is_private ? 'Private' : 'Public'}

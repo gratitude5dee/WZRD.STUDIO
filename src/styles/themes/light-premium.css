@@ -1,0 +1,75 @@
+:root[data-theme="light"],
+:root.light,
+html.light {
+  /* Background hierarchy */
+  --bg-page: 210 25% 98%;
+  --bg-surface-1: 0 0% 100%;
+  --bg-surface-2: 220 23% 97%;
+  --bg-surface-3: 216 20% 95%;
+  --bg-elevated: 0 0% 100%;
+  --bg-overlay: 0 0% 0% / 0.4;
+
+  /* Surface tokens mapped to Tailwind surface scale */
+  --background: var(--bg-page);
+  --surface-0: var(--bg-page);
+  --surface-1: var(--bg-surface-1);
+  --surface-2: var(--bg-surface-2);
+  --surface-3: var(--bg-surface-3);
+  --surface-4: 216 18% 92%;
+
+  /* Text hierarchy */
+  --text-primary: 214 12% 12%;
+  --text-secondary: 218 17% 35%;
+  --text-tertiary: 216 15% 52%;
+  --text-disabled: 214 20% 69%;
+  --text-inverse: 0 0% 100%;
+
+  /* Borders & dividers */
+  --border-subtle: 0 0% 0% / 0.04;
+  --border-default: 0 0% 0% / 0.08;
+  --border-strong: 0 0% 0% / 0.12;
+  --border-focus: 262 83% 58%;
+
+  /* Accent colors */
+  --accent-purple: 262 83% 58%;
+  --accent-blue: 217 91% 60%;
+  --accent-emerald: 160 84% 39%;
+  --accent-amber: 38 92% 50%;
+  --accent-rose: 350 89% 60%;
+  --accent-teal: 168 76% 42%;
+
+  /* Interactive states */
+  --interactive-hover: 0 0% 0% / 0.04;
+  --interactive-active: 0 0% 0% / 0.08;
+  --interactive-selected: 250 100% 98%;
+
+  /* UI core tokens */
+  --foreground: var(--text-primary);
+  --card: var(--bg-surface-1);
+  --card-foreground: var(--text-primary);
+  --popover: var(--bg-elevated);
+  --popover-foreground: var(--text-primary);
+
+  --primary: var(--accent-purple);
+  --primary-foreground: var(--text-inverse);
+  --secondary: var(--bg-surface-2);
+  --secondary-foreground: var(--text-primary);
+  --muted: var(--bg-surface-2);
+  --muted-foreground: var(--text-secondary);
+  --accent: var(--accent-purple);
+  --accent-foreground: var(--text-inverse);
+  --destructive: var(--accent-rose);
+  --destructive-foreground: var(--text-inverse);
+  --border: var(--border-default);
+  --input: var(--bg-surface-2);
+  --ring: var(--border-focus);
+
+  /* Premium shadows */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --shadow-glow-purple: 0 0 0 3px rgba(124, 58, 237, 0.15);
+  --shadow-glow-blue: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}

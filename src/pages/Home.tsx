@@ -21,6 +21,7 @@ import { useCredits } from '@/hooks/useCredits';
 import { isDemoModeEnabled, getDemoProjects } from '@/utils/demoMode';
 import { cn } from '@/lib/utils';
 import type { Project } from '@/components/home/ProjectCard';
+import { supabase } from '@/integrations/supabase/client';
 
 type ViewMode = 'grid' | 'list';
 
@@ -53,7 +54,10 @@ export default function Home() {
         setProjects(demoProjects as Project[]);
       } else {
         const data = await supabaseService.projects.list();
-        setProjects(data as Project[]);
+        const activeProjects = (data as Project[]).filter(
+          (project) => project.status !== 'deleted'
+        );
+        setProjects(activeProjects);
       }
     } catch (err) {
       console.error('Error fetching projects:', err);
@@ -72,6 +76,32 @@ export default function Home() {
     fetchProjects();
   }, [fetchProjects]);
 
+  useEffect(() => {
+    const handleRestore = () => {
+      fetchProjects();
+    };
+
+    const handleVisibilityUpdate = (
+      event: Event
+    ) => {
+      const detail = (event as CustomEvent<{ projectId: string; isPrivate: boolean }>).detail;
+      if (!detail) return;
+      setProjects((prev) =>
+        prev.map((project) =>
+          project.id === detail.projectId ? { ...project, is_private: detail.isPrivate } : project
+        )
+      );
+    };
+
+    window.addEventListener('project-restored', handleRestore);
+    window.addEventListener('project-visibility-updated', handleVisibilityUpdate);
+
+    return () => {
+      window.removeEventListener('project-restored', handleRestore);
+      window.removeEventListener('project-visibility-updated', handleVisibilityUpdate);
+    };
+  }, [fetchProjects]);
+
   const handleCreateProject = () => {
     navigate('/project-setup');
   };
@@ -79,6 +109,38 @@ export default function Home() {
   const handleOpenProject = (projectId: string) => {
     navigate(`/project/${projectId}/timeline`);
   };
+
+  const handleRenameProject = useCallback(async (projectId: string, newTitle: string) => {
+    const trimmedTitle = newTitle.trim();
+    if (!trimmedTitle) {
+      toast({
+        title: 'Error',
+        description: 'Project title cannot be empty.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setProjects((prev) =>
+      prev.map((project) =>
+        project.id === projectId ? { ...project, title: trimmedTitle } : project
+      )
+    );
+
+    const { error } = await supabase
+      .from('projects')
+      .update({ title: trimmedTitle, updated_at: new Date().toISOString() })
+      .eq('id', projectId);
+
+    if (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to update project title.',
+        variant: 'destructive',
+      });
+      fetchProjects();
+    }
+  }, [fetchProjects, toast]);
 
   const handleSearch = useCallback((query: string) => {
     setSearchQuery(query);
@@ -148,16 +210,16 @@ export default function Home() {
 
           {/* Desktop Header - hidden on mobile */}
           <header className={cn(
-            "h-20 border-b border-border/30 items-center justify-between px-6",
-            "bg-gradient-to-r from-card/50 via-transparent to-card/50 backdrop-blur-sm",
+            "h-20 border-b border-border-default items-center justify-between px-6",
+            "bg-gradient-to-r from-surface-2 via-transparent to-surface-2 backdrop-blur-sm",
             "hidden md:flex"
           )}>
             <div className="flex flex-col">
               <div className="flex items-center gap-2">
-                <span className="text-xl font-semibold text-foreground">Dashboard</span>
+              <span className="text-xl font-semibold text-text-primary dark:text-foreground">Dashboard</span>
                 <span className="text-lg">📊</span>
               </div>
-              <p className="text-sm text-muted-foreground">Welcome back! Here's your creative overview</p>
+              <p className="text-sm text-text-secondary dark:text-muted-foreground">Welcome back! Here's your creative overview</p>
             </div>
             <div className="flex items-center gap-3">
               <ThemeToggle />
@@ -173,7 +235,7 @@ export default function Home() {
           </header>
 
           {/* Stats Row - Responsive grid */}
-          <div className="px-4 md:px-6 py-4 md:py-6 border-b border-border/30 bg-gradient-to-b from-card/30 to-transparent">
+          <div className="px-4 md:px-6 py-4 md:py-6 border-b border-border-default bg-gradient-to-b from-surface-2 to-transparent">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
               <StatCard 
                 icon={<FolderKanban className="w-5 h-5" />}
@@ -214,9 +276,9 @@ export default function Home() {
           </div>
 
           {/* Toolbar - Responsive */}
-          <div className="h-12 md:h-14 border-b border-border/30 flex items-center justify-between px-4 md:px-6 bg-card/20">
+          <div className="h-12 md:h-14 border-b border-border-default flex items-center justify-between px-4 md:px-6 bg-surface-2/70">
             <div className="flex items-center gap-3">
-              <span className="text-xs md:text-sm text-muted-foreground font-medium">
+              <span className="text-xs md:text-sm text-text-secondary dark:text-muted-foreground font-medium">
                 {filteredProjects.length} {filteredProjects.length === 1 ? 'project' : 'projects'}
               </span>
             </div>
@@ -228,9 +290,9 @@ export default function Home() {
           </div>
 
           {/* Tabs and Actions Bar - Responsive */}
-          <div className="min-h-14 md:h-16 border-b border-border/30 flex flex-col md:flex-row md:items-center justify-between px-4 md:px-6 py-3 md:py-0 gap-3 md:gap-0">
+          <div className="min-h-14 md:h-16 border-b border-border-default flex flex-col md:flex-row md:items-center justify-between px-4 md:px-6 py-3 md:py-0 gap-3 md:gap-0">
             {/* Tabs - scrollable on mobile */}
-            <div className="flex items-center gap-1 p-1 rounded-xl bg-muted/30 overflow-x-auto">
+            <div className="flex items-center gap-1 p-1 rounded-xl bg-surface-2 overflow-x-auto">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
@@ -238,8 +300,8 @@ export default function Home() {
                   className={cn(
                     "px-3 md:px-4 py-2 text-xs md:text-sm font-medium rounded-lg transition-all duration-200 whitespace-nowrap",
                     activeTab === tab.id
-                      ? "text-foreground bg-background shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
+                      ? "text-text-primary bg-surface-1 shadow-sm"
+                      : "text-text-tertiary hover:text-text-primary"
                   )}
                 >
                   {tab.label}
@@ -257,8 +319,8 @@ export default function Home() {
             <div className="hidden md:flex items-center gap-3">
               <button className={cn(
                 "flex items-center gap-2 h-9 px-4 rounded-lg text-sm font-medium transition-all duration-200",
-                "bg-muted/50 border border-border/50 text-muted-foreground",
-                "hover:text-foreground hover:border-border hover:bg-muted"
+                "bg-surface-2 border border-border-default text-text-secondary",
+                "hover:text-text-primary hover:border-border-strong hover:bg-surface-3"
               )}>
                 <UserPlus className="w-4 h-4" />
                 <span>Invite</span>
@@ -284,16 +346,16 @@ export default function Home() {
                 <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-accent/15 flex items-center justify-center mb-4">
                   <Loader2 className="w-7 h-7 md:w-8 md:h-8 animate-spin text-primary" />
                 </div>
-                <p className="text-xs md:text-sm text-muted-foreground">Loading projects...</p>
+                <p className="text-xs md:text-sm text-text-tertiary dark:text-muted-foreground">Loading projects...</p>
               </div>
             ) : error ? (
               <div className="flex flex-col items-center justify-center py-12 md:py-20">
                 <div className="text-center max-w-md px-4">
-                  <h3 className="text-base md:text-lg font-semibold text-foreground mb-2">Error Loading Projects</h3>
-                  <p className="text-xs md:text-sm text-muted-foreground mb-6">{error}</p>
+                  <h3 className="text-base md:text-lg font-semibold text-text-primary dark:text-foreground mb-2">Error Loading Projects</h3>
+                  <p className="text-xs md:text-sm text-text-tertiary dark:text-muted-foreground mb-6">{error}</p>
                   <button
                     onClick={() => window.location.reload()}
-                    className="px-4 py-2 bg-muted border border-border rounded-lg text-sm text-foreground hover:bg-muted/80 transition-colors"
+                    className="px-4 py-2 bg-surface-2 border border-border-default rounded-lg text-sm text-text-primary hover:bg-surface-3 transition-colors"
                   >
                     Retry
                   </button>
@@ -302,8 +364,8 @@ export default function Home() {
             ) : filteredProjects.length === 0 && searchQuery ? (
               <div className="flex flex-col items-center justify-center py-12 md:py-20">
                 <div className="text-center max-w-md px-4">
-                  <h3 className="text-base md:text-lg font-semibold text-foreground mb-2">No results found</h3>
-                  <p className="text-xs md:text-sm text-muted-foreground">
+                  <h3 className="text-base md:text-lg font-semibold text-text-primary dark:text-foreground mb-2">No results found</h3>
+                  <p className="text-xs md:text-sm text-text-tertiary dark:text-muted-foreground">
                     Try adjusting your search or filters
                   </p>
                 </div>
@@ -314,8 +376,8 @@ export default function Home() {
                   <div className="w-16 h-16 md:w-20 md:h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-primary/20 to-accent/15 flex items-center justify-center">
                     <Plus className="w-8 h-8 md:w-10 md:h-10 text-primary" />
                   </div>
-                  <h3 className="text-lg md:text-xl font-semibold text-foreground mb-2">Create your first project</h3>
-                  <p className="text-xs md:text-sm text-muted-foreground mb-6">
+                  <h3 className="text-lg md:text-xl font-semibold text-text-primary dark:text-foreground mb-2">Create your first project</h3>
+                  <p className="text-xs md:text-sm text-text-tertiary dark:text-muted-foreground mb-6">
                     Start bringing your ideas to life with AI-powered video creation
                   </p>
                   <button
@@ -341,6 +403,7 @@ export default function Home() {
                 projects={filteredProjects}
                 onOpenProject={handleOpenProject}
                 onCreateProject={handleCreateProject}
+                onRenameProject={handleRenameProject}
               />
             )}
           </main>

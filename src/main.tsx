@@ -1,6 +1,7 @@
 import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
+import './styles/themes/light-premium.css';
 import { reportWebVitals } from './lib/perf/webVitals';
 
 const container = document.getElementById('root');

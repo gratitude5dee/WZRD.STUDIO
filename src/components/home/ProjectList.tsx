@@ -7,9 +7,15 @@ interface ProjectListProps {
   projects: Project[];
   onOpenProject: (projectId: string) => void;
   onCreateProject: () => void;
+  onRenameProject?: (projectId: string, newTitle: string) => void;
 }
 
-export const ProjectList = ({ projects, onOpenProject, onCreateProject }: ProjectListProps) => {
+export const ProjectList = ({
+  projects,
+  onOpenProject,
+  onCreateProject,
+  onRenameProject,
+}: ProjectListProps) => {
   const [localProjects, setLocalProjects] = useState(projects);
 
   // Update local projects when projects prop changes
@@ -19,6 +25,15 @@ export const ProjectList = ({ projects, onOpenProject, onCreateProject }: Projec
 
   const handleDeleteProject = (projectId: string) => {
     setLocalProjects(prev => prev.filter(p => p.id !== projectId));
+  };
+
+  const handleRenameProject = (projectId: string, newTitle: string) => {
+    setLocalProjects((prev) =>
+      prev.map((project) =>
+        project.id === projectId ? { ...project, title: newTitle } : project
+      )
+    );
+    onRenameProject?.(projectId, newTitle);
   };
 
   return (
@@ -33,6 +48,7 @@ export const ProjectList = ({ projects, onOpenProject, onCreateProject }: Projec
           project={project}
           onOpen={onOpenProject}
           onDelete={handleDeleteProject}
+          onRename={handleRenameProject}
         />
       ))}
     </div>
