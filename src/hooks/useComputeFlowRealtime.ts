@@ -5,11 +5,11 @@ import type { NodeDefinition, EdgeDefinition, Port, DataType, NodeStatus } from 
 
 export function useComputeFlowRealtime(projectId: string | undefined) {
   const { 
-    addNode, 
-    updateNode, 
-    removeNode, 
-    addEdge, 
-    removeEdge,
+    addNodeSilent,
+    updateNodeSilent,
+    removeNodeSilent,
+    addEdgeSilent,
+    removeEdgeSilent,
     setNodeStatus,
   } = useComputeFlowStore();
 
@@ -49,7 +49,7 @@ export function useComputeFlowRealtime(projectId: string | undefined) {
             error: n.error,
             isDirty: n.is_dirty,
           };
-          addNode(node);
+          addNodeSilent(node);
         }
       )
       .on(
@@ -63,7 +63,7 @@ export function useComputeFlowRealtime(projectId: string | undefined) {
         (payload) => {
           console.log('📝 Node updated:', payload.new);
           const n = payload.new as any;
-          updateNode(n.id, {
+          updateNodeSilent(n.id, {
             kind: n.kind,
             label: n.label,
             position: n.position,
@@ -90,7 +90,7 @@ export function useComputeFlowRealtime(projectId: string | undefined) {
         },
         (payload) => {
           console.log('🗑️ Node deleted:', payload.old);
-          removeNode((payload.old as any).id);
+          removeNodeSilent((payload.old as any).id);
         }
       )
       .subscribe((status) => {
@@ -119,7 +119,7 @@ export function useComputeFlowRealtime(projectId: string | undefined) {
             status: e.status,
             metadata: e.metadata,
           };
-          addEdge(edge);
+          addEdgeSilent(edge);
         }
       )
       .on(
@@ -132,7 +132,7 @@ export function useComputeFlowRealtime(projectId: string | undefined) {
         },
         (payload) => {
           console.log('🗑️ Edge deleted:', payload.old);
-          removeEdge((payload.old as any).id);
+          removeEdgeSilent((payload.old as any).id);
         }
       )
       .subscribe((status) => {
@@ -165,5 +165,13 @@ export function useComputeFlowRealtime(projectId: string | undefined) {
       supabase.removeChannel(edgesChannel);
       supabase.removeChannel(eventsChannel);
     };
-  }, [projectId, addNode, updateNode, removeNode, addEdge, removeEdge, setNodeStatus]);
+  }, [
+    projectId,
+    addNodeSilent,
+    updateNodeSilent,
+    removeNodeSilent,
+    addEdgeSilent,
+    removeEdgeSilent,
+    setNodeStatus,
+  ]);
 }

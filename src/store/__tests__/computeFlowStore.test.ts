@@ -219,7 +219,8 @@ describe('ComputeFlowStore', () => {
         act(() => {
           result.current.addNode(node1);
           result.current.addNode(node2);
-          result.current.addEdge(edge);
+          const validation = result.current.addEdge(edge);
+          expect(validation.valid).toBe(true);
         });
         
         expect(result.current.edgeDefinitions).toHaveLength(1);
@@ -245,7 +246,8 @@ describe('ComputeFlowStore', () => {
         act(() => {
           result.current.addNode(node1);
           result.current.addNode(node2);
-          result.current.addEdge(edge);
+          const validation = result.current.addEdge(edge);
+          expect(validation.valid).toBe(true);
         });
         
         expect(result.current.edgeDefinitions).toHaveLength(1);
@@ -264,7 +266,8 @@ describe('ComputeFlowStore', () => {
         act(() => {
           result.current.addNode(node1);
           result.current.addNode(node2);
-          result.current.addEdge(edge);
+          const validation = result.current.addEdge(edge);
+          expect(validation.valid).toBe(true);
           result.current.removeEdge(edge.id);
         });
         
@@ -349,7 +352,8 @@ describe('ComputeFlowStore', () => {
         act(() => {
           result.current.addNode(node1);
           result.current.addNode(node2);
-          result.current.addEdge(edge);
+          const validation = result.current.addEdge(edge);
+          expect(validation.valid).toBe(true);
           result.current.clearGraph();
         });
         
@@ -387,12 +391,17 @@ describe('ComputeFlowStore', () => {
           createTestEdge('gen-node-1', 'gen-node-2'),
         ];
         
+        vi.useFakeTimers();
         act(() => {
           result.current.addGeneratedWorkflow(nodes, edges);
+        });
+        act(() => {
+          vi.runAllTimers();
         });
         
         expect(result.current.nodeDefinitions).toHaveLength(2);
         expect(result.current.edgeDefinitions).toHaveLength(1);
+        vi.useRealTimers();
       });
 
       it('normalizes legacy IDs to UUIDs', () => {

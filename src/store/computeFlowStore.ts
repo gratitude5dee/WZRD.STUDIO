@@ -12,6 +12,15 @@ import { NODE_TYPE_CONFIGS } from '@/types/computeFlow';
 import { guardStatusTransition } from '@/types/nodeStatusMachine';
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from 'sonner';
+import {
+  ComputeFlowHistoryManager,
+  edgesMeaningfullyChanged,
+  nodesMeaningfullyChanged,
+} from '@/store/computeFlowHistory';
+import {
+  validateConnection,
+  type ValidationResult as EdgeValidationResult,
+} from '@/utils/edgeValidation';
 
 // UUID validation regex
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -102,6 +111,14 @@ interface ExecutionProgress {
   error: string | null;
 }
 
+interface DirtyState {
+  dirtyNodeIds: Set<string>;
+  dirtyEdgeIds: Set<string>;
+  isGraphDirty: boolean;
+  lastSavedAt: Date | null;
+  lastModifiedAt: Date | null;
+}
+
 interface ComputeFlowState {
   nodeDefinitions: NodeDefinition[];
   edgeDefinitions: EdgeDefinition[];
@@ -109,16 +126,30 @@ interface ComputeFlowState {
   isSaving: boolean;
   error: string | null;
   execution: ExecutionProgress;
+  historyManager: ComputeFlowHistoryManager;
+  canUndo: boolean;
+  canRedo: boolean;
+  dirtyNodeIds: DirtyState['dirtyNodeIds'];
+  dirtyEdgeIds: DirtyState['dirtyEdgeIds'];
+  isGraphDirty: DirtyState['isGraphDirty'];
+  lastSavedAt: DirtyState['lastSavedAt'];
+  lastModifiedAt: DirtyState['lastModifiedAt'];
   
   // Actions
   loadGraph: (projectId: string) => Promise<void>;
   saveGraph: (projectId: string) => Promise<void>;
   addNode: (node: NodeDefinition) => void;
+  addNodeSilent: (node: NodeDefinition) => void;
   createNode: (kind: NodeDefinition['kind'], position: { x: number; y: number }) => NodeDefinition;
   updateNode: (nodeId: string, updates: Partial<NodeDefinition>) => void;
+  updateNodeSilent: (nodeId: string, updates: Partial<NodeDefinition>) => void;
+  updateNodesSilent: (updates: Map<string, Partial<NodeDefinition>>) => void;
   removeNode: (nodeId: string) => void;
-  addEdge: (edge: EdgeDefinition) => void;
+  removeNodeSilent: (nodeId: string) => void;
+  addEdge: (edge: EdgeDefinition) => EdgeValidationResult;
+  addEdgeSilent: (edge: EdgeDefinition) => void;
   removeEdge: (edgeId: string) => void;
+  removeEdgeSilent: (edgeId: string) => void;
   setNodeStatus: (nodeId: string, status: NodeStatus, progress?: number, preview?: any) => void;
   setNodePreview: (nodeId: string, preview: any) => void;
   executeGraph: (projectId: string) => Promise<void>;
@@ -126,6 +157,36 @@ interface ComputeFlowState {
   cancelExecution: () => void;
   clearGraph: () => void;
   resetNodeStatuses: () => void;
+  resetAllNodeStatus: () => void;
+  updateGraphAtomic: (
+    nodeUpdates: Array<{ id: string; updates: Partial<NodeDefinition> }>,
+    edgeUpdates: Array<{ id: string; updates: Partial<EdgeDefinition> }>,
+    description?: string
+  ) => void;
+  addNodesAndEdgesAtomic: (
+    nodes: NodeDefinition[],
+    edges: EdgeDefinition[],
+    description?: string
+  ) => void;
+  setGraphAtomic: (
+    nodes: NodeDefinition[],
+    edges: EdgeDefinition[],
+    options?: { skipHistory?: boolean; skipDirty?: boolean }
+  ) => void;
+  undo: () => void;
+  redo: () => void;
+  setDragging: (dragging: boolean) => void;
+  markNodeDirty: (nodeId: string) => void;
+  markEdgeDirty: (edgeId: string) => void;
+  markGraphDirty: () => void;
+  clearDirtyState: () => void;
+  isNodeDirty: (nodeId: string) => boolean;
+  getDirtySummary: () => {
+    nodeCount: number;
+    edgeCount: number;
+    isGraphDirty: boolean;
+    timeSinceLastSave: number | null;
+  };
   
   // AI Workflow Generation
   addGeneratedWorkflow: (nodes: NodeDefinition[], edges: EdgeDefinition[]) => void;
@@ -140,6 +201,14 @@ export const useComputeFlowStore = create<ComputeFlowState>((set, get) => ({
   isLoading: false,
   isSaving: false,
   error: null,
+  historyManager: new ComputeFlowHistoryManager(),
+  canUndo: false,
+  canRedo: false,
+  dirtyNodeIds: new Set(),
+  dirtyEdgeIds: new Set(),
+  isGraphDirty: false,
+  lastSavedAt: null,
+  lastModifiedAt: null,
   execution: {
     runId: null,
     isRunning: false,
@@ -194,7 +263,22 @@ export const useComputeFlowStore = create<ComputeFlowState>((set, get) => ({
       }));
 
       console.log('📥 Loaded compute graph:', { nodes: nodeDefinitions.length, edges: edgeDefinitions.length });
-      set({ nodeDefinitions, edgeDefinitions, isLoading: false });
+      const historyManager = get().historyManager;
+      historyManager.clear();
+      historyManager.pushSnapshot(nodeDefinitions, edgeDefinitions, 'Loaded graph');
+      const historyState = historyManager.getState();
+      set({
+        nodeDefinitions,
+        edgeDefinitions,
+        isLoading: false,
+        canUndo: historyState.canUndo,
+        canRedo: historyState.canRedo,
+        dirtyNodeIds: new Set(),
+        dirtyEdgeIds: new Set(),
+        isGraphDirty: false,
+        lastSavedAt: new Date(),
+        lastModifiedAt: null,
+      });
     } catch (error: any) {
       console.error('Error loading graph:', error);
       set({ error: error.message, isLoading: false });
@@ -231,7 +315,13 @@ export const useComputeFlowStore = create<ComputeFlowState>((set, get) => ({
 
       if (error) throw error;
       console.log('💾 Compute graph saved');
-      set({ isSaving: false });
+      set({
+        isSaving: false,
+        dirtyNodeIds: new Set(),
+        dirtyEdgeIds: new Set(),
+        isGraphDirty: false,
+        lastSavedAt: new Date(),
+      });
     } catch (error: any) {
       console.error('Error saving graph:', error);
       set({ error: error.message, isSaving: false });
@@ -274,9 +364,43 @@ export const useComputeFlowStore = create<ComputeFlowState>((set, get) => ({
     set(state => ({
       nodeDefinitions: [...state.nodeDefinitions, node],
     }));
+    get().markNodeDirty(node.id);
+    get().historyManager.pushSnapshot(
+      get().nodeDefinitions,
+      get().edgeDefinitions,
+      `Added ${node.label}`
+    );
+    const historyState = get().historyManager.getState();
+    set({ canUndo: historyState.canUndo, canRedo: historyState.canRedo });
+  },
+
+  addNodeSilent: (node) => {
+    set(state => ({
+      nodeDefinitions: [...state.nodeDefinitions, node],
+    }));
   },
 
   updateNode: (nodeId, updates) => {
+    const previousNodes = get().nodeDefinitions;
+    set(state => ({
+      nodeDefinitions: state.nodeDefinitions.map(n =>
+        n.id === nodeId ? { ...n, ...updates } : n
+      ),
+    }));
+    get().markNodeDirty(nodeId);
+    const nextNodes = get().nodeDefinitions;
+    if (nodesMeaningfullyChanged(previousNodes, nextNodes)) {
+      get().historyManager.pushSnapshot(
+        nextNodes,
+        get().edgeDefinitions,
+        `Updated ${get().nodeDefinitions.find(n => n.id === nodeId)?.label ?? 'node'}`
+      );
+      const historyState = get().historyManager.getState();
+      set({ canUndo: historyState.canUndo, canRedo: historyState.canRedo });
+    }
+  },
+
+  updateNodeSilent: (nodeId, updates) => {
     set(state => ({
       nodeDefinitions: state.nodeDefinitions.map(n =>
         n.id === nodeId ? { ...n, ...updates } : n
@@ -284,7 +408,42 @@ export const useComputeFlowStore = create<ComputeFlowState>((set, get) => ({
     }));
   },
 
+  updateNodesSilent: (updates) => {
+    set(state => ({
+      nodeDefinitions: state.nodeDefinitions.map(n => {
+        const nodeUpdates = updates.get(n.id);
+        return nodeUpdates ? { ...n, ...nodeUpdates } : n;
+      }),
+    }));
+  },
+
   removeNode: (nodeId) => {
+    const previousNodes = get().nodeDefinitions;
+    const previousEdges = get().edgeDefinitions;
+    set(state => ({
+      nodeDefinitions: state.nodeDefinitions.filter(n => n.id !== nodeId),
+      edgeDefinitions: state.edgeDefinitions.filter(
+        e => e.source.nodeId !== nodeId && e.target.nodeId !== nodeId
+      ),
+    }));
+    get().markGraphDirty();
+    const nextNodes = get().nodeDefinitions;
+    const nextEdges = get().edgeDefinitions;
+    if (
+      nodesMeaningfullyChanged(previousNodes, nextNodes) ||
+      edgesMeaningfullyChanged(previousEdges, nextEdges)
+    ) {
+      get().historyManager.pushSnapshot(
+        nextNodes,
+        nextEdges,
+        'Removed node'
+      );
+      const historyState = get().historyManager.getState();
+      set({ canUndo: historyState.canUndo, canRedo: historyState.canRedo });
+    }
+  },
+
+  removeNodeSilent: (nodeId) => {
     set(state => ({
       nodeDefinitions: state.nodeDefinitions.filter(n => n.id !== nodeId),
       edgeDefinitions: state.edgeDefinitions.filter(
@@ -294,12 +453,74 @@ export const useComputeFlowStore = create<ComputeFlowState>((set, get) => ({
   },
 
   addEdge: (edge) => {
+    const state = get();
+    const sourceNode = state.nodeDefinitions.find(n => n.id === edge.source.nodeId);
+    const targetNode = state.nodeDefinitions.find(n => n.id === edge.target.nodeId);
+
+    if (!sourceNode || !targetNode) {
+      return { valid: false, error: 'Source or target node not found' };
+    }
+
+    const sourcePort = sourceNode.outputs?.find(p => p.id === edge.source.portId);
+    const targetPort = targetNode.inputs?.find(p => p.id === edge.target.portId);
+
+    if (!sourcePort || !targetPort) {
+      return { valid: false, error: 'Source or target port not found' };
+    }
+
+    const validation = validateConnection({
+      sourceNode,
+      sourcePort,
+      targetNode,
+      targetPort,
+      existingEdges: state.edgeDefinitions,
+    });
+
+    if (!validation.valid) {
+      return validation;
+    }
+
+    set(current => ({
+      edgeDefinitions: [...current.edgeDefinitions, edge],
+    }));
+
+    get().markEdgeDirty(edge.id);
+    get().historyManager.pushSnapshot(
+      get().nodeDefinitions,
+      get().edgeDefinitions,
+      `Connected ${sourceNode.label} to ${targetNode.label}`
+    );
+    const historyState = get().historyManager.getState();
+    set({ canUndo: historyState.canUndo, canRedo: historyState.canRedo });
+
+    return validation;
+  },
+
+  addEdgeSilent: (edge) => {
     set(state => ({
       edgeDefinitions: [...state.edgeDefinitions, edge],
     }));
   },
 
   removeEdge: (edgeId) => {
+    const previousEdges = get().edgeDefinitions;
+    set(state => ({
+      edgeDefinitions: state.edgeDefinitions.filter(e => e.id !== edgeId),
+    }));
+    get().markEdgeDirty(edgeId);
+    const nextEdges = get().edgeDefinitions;
+    if (edgesMeaningfullyChanged(previousEdges, nextEdges)) {
+      get().historyManager.pushSnapshot(
+        get().nodeDefinitions,
+        nextEdges,
+        'Removed edge'
+      );
+      const historyState = get().historyManager.getState();
+      set({ canUndo: historyState.canUndo, canRedo: historyState.canRedo });
+    }
+  },
+
+  removeEdgeSilent: (edgeId) => {
     set(state => ({
       edgeDefinitions: state.edgeDefinitions.filter(e => e.id !== edgeId),
     }));
@@ -310,36 +531,33 @@ export const useComputeFlowStore = create<ComputeFlowState>((set, get) => ({
     if (node) {
       guardStatusTransition(node.status, status, nodeId);
     }
-    set(state => ({
-      nodeDefinitions: state.nodeDefinitions.map(n =>
-        n.id === nodeId 
-          ? { 
-              ...n, 
-              status, 
-              progress: progress ?? n.progress,
-              preview: preview ?? n.preview,
-            } 
-          : n
-      ),
-    }));
+    get().updateNodeSilent(nodeId, {
+      status,
+      progress: progress ?? node?.progress,
+      preview: preview ?? node?.preview,
+    });
   },
 
   setNodePreview: (nodeId, preview) => {
-    set(state => ({
-      nodeDefinitions: state.nodeDefinitions.map(n =>
-        n.id === nodeId ? { ...n, preview } : n
-      ),
-    }));
+    get().updateNodeSilent(nodeId, { preview });
   },
 
   resetNodeStatuses: () => {
-    set(state => ({
-      nodeDefinitions: state.nodeDefinitions.map(n => ({
-        ...n,
+    get().resetAllNodeStatus();
+  },
+
+  resetAllNodeStatus: () => {
+    const updates = new Map<string, Partial<NodeDefinition>>();
+    for (const node of get().nodeDefinitions) {
+      updates.set(node.id, {
         status: 'idle',
         progress: 0,
+        preview: undefined,
         error: undefined,
-      })),
+      });
+    }
+    get().updateNodesSilent(updates);
+    set({
       execution: {
         runId: null,
         isRunning: false,
@@ -348,7 +566,168 @@ export const useComputeFlowStore = create<ComputeFlowState>((set, get) => ({
         startedAt: null,
         error: null,
       },
+    });
+  },
+
+  updateGraphAtomic: (nodeUpdates, edgeUpdates, description) => {
+    const previousNodes = get().nodeDefinitions;
+    const previousEdges = get().edgeDefinitions;
+
+    set((state) => {
+      const nodeUpdateMap = new Map(nodeUpdates.map((update) => [update.id, update.updates]));
+      const edgeUpdateMap = new Map(edgeUpdates.map((update) => [update.id, update.updates]));
+
+      return {
+        nodeDefinitions: state.nodeDefinitions.map((node) => {
+          const updates = nodeUpdateMap.get(node.id);
+          return updates ? { ...node, ...updates } : node;
+        }),
+        edgeDefinitions: state.edgeDefinitions.map((edge) => {
+          const updates = edgeUpdateMap.get(edge.id);
+          return updates ? { ...edge, ...updates } : edge;
+        }),
+      };
+    });
+
+    set((state) => ({
+      dirtyNodeIds: new Set([...state.dirtyNodeIds, ...nodeUpdates.map((u) => u.id)]),
+      dirtyEdgeIds: new Set([...state.dirtyEdgeIds, ...edgeUpdates.map((u) => u.id)]),
+      isGraphDirty: true,
+      lastModifiedAt: new Date(),
     }));
+
+    const nextNodes = get().nodeDefinitions;
+    const nextEdges = get().edgeDefinitions;
+
+    if (
+      nodesMeaningfullyChanged(previousNodes, nextNodes) ||
+      edgesMeaningfullyChanged(previousEdges, nextEdges)
+    ) {
+      get().historyManager.pushSnapshot(
+        nextNodes,
+        nextEdges,
+        description ?? 'Batch update'
+      );
+      const historyState = get().historyManager.getState();
+      set({ canUndo: historyState.canUndo, canRedo: historyState.canRedo });
+    }
+  },
+
+  addNodesAndEdgesAtomic: (nodes, edges, description) => {
+    set((state) => ({
+      nodeDefinitions: [...state.nodeDefinitions, ...nodes],
+      edgeDefinitions: [...state.edgeDefinitions, ...edges],
+    }));
+
+    set((state) => ({
+      dirtyNodeIds: new Set([...state.dirtyNodeIds, ...nodes.map((node) => node.id)]),
+      dirtyEdgeIds: new Set([...state.dirtyEdgeIds, ...edges.map((edge) => edge.id)]),
+      isGraphDirty: true,
+      lastModifiedAt: new Date(),
+    }));
+
+    get().historyManager.pushSnapshot(
+      get().nodeDefinitions,
+      get().edgeDefinitions,
+      description ?? `Added ${nodes.length} nodes and ${edges.length} edges`
+    );
+    const historyState = get().historyManager.getState();
+    set({ canUndo: historyState.canUndo, canRedo: historyState.canRedo });
+  },
+
+  setGraphAtomic: (nodes, edges, options) => {
+    const previousNodes = get().nodeDefinitions;
+    const previousEdges = get().edgeDefinitions;
+
+    set({ nodeDefinitions: nodes, edgeDefinitions: edges });
+
+    if (!options?.skipDirty) {
+      set({
+        dirtyNodeIds: new Set(nodes.map((node) => node.id)),
+        dirtyEdgeIds: new Set(edges.map((edge) => edge.id)),
+        isGraphDirty: true,
+        lastModifiedAt: new Date(),
+      });
+    }
+
+    if (!options?.skipHistory) {
+      if (
+        nodesMeaningfullyChanged(previousNodes, nodes) ||
+        edgesMeaningfullyChanged(previousEdges, edges)
+      ) {
+        get().historyManager.pushSnapshot(nodes, edges, 'Graph replaced');
+        const historyState = get().historyManager.getState();
+        set({ canUndo: historyState.canUndo, canRedo: historyState.canRedo });
+      }
+    }
+  },
+
+  undo: () => {
+    const snapshot = get().historyManager.undo();
+    if (!snapshot) return;
+    get().setGraphAtomic(snapshot.nodes, snapshot.edges, { skipHistory: true });
+    const historyState = get().historyManager.getState();
+    set({ canUndo: historyState.canUndo, canRedo: historyState.canRedo });
+  },
+
+  redo: () => {
+    const snapshot = get().historyManager.redo();
+    if (!snapshot) return;
+    get().setGraphAtomic(snapshot.nodes, snapshot.edges, { skipHistory: true });
+    const historyState = get().historyManager.getState();
+    set({ canUndo: historyState.canUndo, canRedo: historyState.canRedo });
+  },
+
+  setDragging: (dragging) => {
+    get().historyManager.setDragging(dragging);
+  },
+
+  markNodeDirty: (nodeId) => {
+    set((state) => ({
+      dirtyNodeIds: new Set([...state.dirtyNodeIds, nodeId]),
+      isGraphDirty: true,
+      lastModifiedAt: new Date(),
+    }));
+  },
+
+  markEdgeDirty: (edgeId) => {
+    set((state) => ({
+      dirtyEdgeIds: new Set([...state.dirtyEdgeIds, edgeId]),
+      isGraphDirty: true,
+      lastModifiedAt: new Date(),
+    }));
+  },
+
+  markGraphDirty: () => {
+    set({
+      isGraphDirty: true,
+      lastModifiedAt: new Date(),
+    });
+  },
+
+  clearDirtyState: () => {
+    set({
+      dirtyNodeIds: new Set(),
+      dirtyEdgeIds: new Set(),
+      isGraphDirty: false,
+      lastSavedAt: new Date(),
+    });
+  },
+
+  isNodeDirty: (nodeId) => {
+    return get().dirtyNodeIds.has(nodeId);
+  },
+
+  getDirtySummary: () => {
+    const state = get();
+    return {
+      nodeCount: state.dirtyNodeIds.size,
+      edgeCount: state.dirtyEdgeIds.size,
+      isGraphDirty: state.isGraphDirty,
+      timeSinceLastSave: state.lastSavedAt
+        ? Date.now() - state.lastSavedAt.getTime()
+        : null,
+    };
   },
 
   /**
@@ -365,13 +744,16 @@ export const useComputeFlowStore = create<ComputeFlowState>((set, get) => ({
     console.log('🚀 Executing compute graph with streaming...');
 
     // Reset all node statuses to queued
-    set(state => ({
-      nodeDefinitions: state.nodeDefinitions.map(n => ({
-        ...n,
-        status: 'queued' as NodeStatus,
+    const statusUpdates = new Map<string, Partial<NodeDefinition>>();
+    for (const node of nodeDefinitions) {
+      statusUpdates.set(node.id, {
+        status: 'queued',
         progress: 0,
         error: undefined,
-      })),
+      });
+    }
+    get().updateNodesSilent(statusUpdates);
+    set({
       execution: {
         runId: null,
         isRunning: true,
@@ -380,7 +762,7 @@ export const useComputeFlowStore = create<ComputeFlowState>((set, get) => ({
         startedAt: new Date(),
         error: null,
       },
-    }));
+    });
 
     // Create abort controller
     executionAbortController = new AbortController();
@@ -511,10 +893,19 @@ export const useComputeFlowStore = create<ComputeFlowState>((set, get) => ({
   },
 
   clearGraph: () => {
+    const historyManager = get().historyManager;
+    historyManager.clear();
     set({
       nodeDefinitions: [],
       edgeDefinitions: [],
       error: null,
+      canUndo: false,
+      canRedo: false,
+      dirtyNodeIds: new Set(),
+      dirtyEdgeIds: new Set(),
+      isGraphDirty: false,
+      lastSavedAt: null,
+      lastModifiedAt: null,
       execution: {
         runId: null,
         isRunning: false,
@@ -591,6 +982,12 @@ export const useComputeFlowStore = create<ComputeFlowState>((set, get) => ({
     set(state => ({
       nodeDefinitions: [...state.nodeDefinitions, ...normalizedNodes],
     }));
+
+    set(state => ({
+      dirtyNodeIds: new Set([...state.dirtyNodeIds, ...normalizedNodes.map(node => node.id)]),
+      isGraphDirty: true,
+      lastModifiedAt: new Date(),
+    }));
     
     // Phase 2: Add edges after a short delay to allow React Flow to initialize nodes
     if (validatedEdges.length > 0) {
@@ -598,8 +995,28 @@ export const useComputeFlowStore = create<ComputeFlowState>((set, get) => ({
         set(state => ({
           edgeDefinitions: [...state.edgeDefinitions, ...validatedEdges],
         }));
+        set(state => ({
+          dirtyEdgeIds: new Set([...state.dirtyEdgeIds, ...validatedEdges.map(edge => edge.id)]),
+          isGraphDirty: true,
+          lastModifiedAt: new Date(),
+        }));
+        get().historyManager.pushSnapshot(
+          get().nodeDefinitions,
+          get().edgeDefinitions,
+          `Added ${normalizedNodes.length} nodes and ${validatedEdges.length} edges`
+        );
+        const historyState = get().historyManager.getState();
+        set({ canUndo: historyState.canUndo, canRedo: historyState.canRedo });
         console.log('✅ Edges added after node initialization delay');
       }, 100);
+    } else {
+      get().historyManager.pushSnapshot(
+        get().nodeDefinitions,
+        get().edgeDefinitions,
+        `Added ${normalizedNodes.length} nodes`
+      );
+      const historyState = get().historyManager.getState();
+      set({ canUndo: historyState.canUndo, canRedo: historyState.canRedo });
     }
   },
 }));
@@ -627,44 +1044,33 @@ function handleSSEEvent(
       break;
 
     case 'node_status':
-      const { node_id, status, output, error, processing_time_ms } = data;
+      const { node_id, status, output, error } = data;
       const mappedStatus = mapStatus(status);
-      
-      set((state: ComputeFlowState) => {
-        const isCompleted = ['completed', 'failed', 'skipped'].includes(status);
-        
-        return {
-          nodeDefinitions: state.nodeDefinitions.map(n =>
-            n.id === node_id
-              ? {
-                  ...n,
-                  status: mappedStatus,
-                  progress: isCompleted ? 100 : (status === 'running' ? 50 : 0),
-                  preview: output || n.preview,
-                  error: error || undefined,
-                }
-              : n
-          ),
-          execution: {
-            ...state.execution,
-            completed: isCompleted 
-              ? state.execution.completed + 1 
-              : state.execution.completed,
-          },
-        };
+      const isCompleted = ['completed', 'failed', 'skipped'].includes(status);
+      const progress = isCompleted ? 100 : status === 'running' ? 50 : 0;
+      const existingNode = get().nodeDefinitions.find(n => n.id === node_id);
+      get().updateNodeSilent(node_id, {
+        status: mappedStatus,
+        progress,
+        preview: output ?? existingNode?.preview,
+        error: error || undefined,
       });
+      set((state: ComputeFlowState) => ({
+        execution: {
+          ...state.execution,
+          completed: isCompleted
+            ? state.execution.completed + 1
+            : state.execution.completed,
+        },
+      }));
       break;
 
     case 'node_progress':
       const { node_id: progressNodeId, progress } = data;
-      
-      set((state: ComputeFlowState) => ({
-        nodeDefinitions: state.nodeDefinitions.map(n =>
-          n.id === progressNodeId
-            ? { ...n, progress: progress || n.progress }
-            : n
-        ),
-      }));
+      const existingProgressNode = get().nodeDefinitions.find(n => n.id === progressNodeId);
+      get().updateNodeSilent(progressNodeId, {
+        progress: progress ?? existingProgressNode?.progress,
+      });
       break;
 
     case 'complete':
