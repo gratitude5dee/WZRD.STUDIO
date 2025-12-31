@@ -9,6 +9,7 @@ import type {
   ArtifactRef,
 } from '@/types/computeFlow';
 import { NODE_TYPE_CONFIGS } from '@/types/computeFlow';
+import { guardStatusTransition } from '@/types/nodeStatusMachine';
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from 'sonner';
 
@@ -305,6 +306,10 @@ export const useComputeFlowStore = create<ComputeFlowState>((set, get) => ({
   },
 
   setNodeStatus: (nodeId, status, progress, preview) => {
+    const node = get().nodeDefinitions.find(n => n.id === nodeId);
+    if (node) {
+      guardStatusTransition(node.status, status, nodeId);
+    }
     set(state => ({
       nodeDefinitions: state.nodeDefinitions.map(n =>
         n.id === nodeId 
