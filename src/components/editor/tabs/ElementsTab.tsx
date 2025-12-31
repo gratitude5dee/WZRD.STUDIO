@@ -17,7 +17,7 @@ interface Element {
   name: string;
   type: 'shape' | 'line' | 'icon';
   shape?: string;
-  icon?: React.ComponentType<{ className?: string }>;
+  icon?: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
   color: string;
 }
 

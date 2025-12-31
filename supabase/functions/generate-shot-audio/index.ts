@@ -124,8 +124,9 @@ serve(async (req) => {
             from_cache: true
           });
         }
-      } catch (error) {
-        console.log(`[Shot ${shotId}] Error checking cache: ${error.message}`);
+      } catch (error: unknown) {
+        const msg = error instanceof Error ? error.message : 'Unknown error';
+        console.log(`[Shot ${shotId}] Error checking cache: ${msg}`);
       }
     }
 
@@ -187,23 +188,21 @@ serve(async (req) => {
         audio_url: urlData.publicUrl
       });
 
-    } catch (error) {
+    } catch (error: unknown) {
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
       console.error(`[Shot ${shotId}] Error generating audio:`, error);
-      await updateShotStatus(supabaseClient, shotId, 'failed', null, error.message);
-      return errorResponse(`Failed to generate or store audio: ${error.message}`, 500);
+      await updateShotStatus(supabaseClient, shotId!, 'failed', null, errorMsg);
+      return errorResponse(`Failed to generate or store audio: ${errorMsg}`, 500);
     }
 
-  } catch (error) {
+  } catch (error: unknown) {
+    const errorMsg = error instanceof Error ? error.message : 'Unknown server error';
     console.error(`[Shot ${shotId || 'UNKNOWN'}] Top-level error:`, error);
-    
-    if (shotId) {
-      await updateShotStatus(supabaseClient, shotId, 'failed', null, error.message || 'Unknown server error');
-    }
     
     if (error instanceof AuthError) {
       return errorResponse(error.message, 401);
     }
     
-    return errorResponse(error.message || 'Internal server error', 500);
+    return errorResponse(errorMsg, 500);
   }
 });

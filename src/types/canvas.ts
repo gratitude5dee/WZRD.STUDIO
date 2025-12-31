@@ -31,6 +31,8 @@ export interface ImageData {
   width: number;
   height: number;
   filters?: ImageFilter[];
+  originalWidth?: number;
+  originalHeight?: number;
 }
 
 export interface VideoData {
@@ -39,6 +41,8 @@ export interface VideoData {
   height: number;
   duration: number;
   currentTime: number;
+  originalWidth?: number;
+  originalHeight?: number;
 }
 
 export interface TextData {

@@ -33,10 +33,11 @@ export const VideoLibraryTab: React.FC<VideoLibraryTabProps> = ({
   const loadVideos = async () => {
     setIsLoading(true);
     try {
+      // Load from content_items table which exists in the schema
       const { data, error } = await supabase
-        .from('media_items')
+        .from('content_items')
         .select('*')
-        .eq('type', 'video')
+        .eq('file_type', 'video')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -44,10 +45,10 @@ export const VideoLibraryTab: React.FC<VideoLibraryTabProps> = ({
       setVideos(
         data?.map((item) => ({
           id: item.id,
-          url: item.url,
-          name: item.name || 'Untitled Video',
-          duration: item.duration || 0,
-          thumbnail: item.thumbnail_url,
+          url: item.file_url || '',
+          name: item.title || 'Untitled Video',
+          duration: (item.metadata as { duration?: number })?.duration || 0,
+          thumbnail: item.thumbnail_url || undefined,
           createdAt: item.created_at,
         })) || []
       );
@@ -57,6 +58,8 @@ export const VideoLibraryTab: React.FC<VideoLibraryTabProps> = ({
       const storedVideos = JSON.parse(sessionStorage.getItem('videoEditorImages') || '[]');
       if (storedVideos.length > 0) {
         setVideos(storedVideos.filter((v: any) => v.type === 'video'));
+      } else {
+        setVideos([]);
       }
     } finally {
       setIsLoading(false);
@@ -104,19 +107,8 @@ export const VideoLibraryTab: React.FC<VideoLibraryTabProps> = ({
           createdAt: new Date().toISOString(),
         };
 
-        // Try to save to database
-        try {
-          await supabase.from('media_items').insert({
-            url: publicUrl,
-            name: file.name,
-            type: 'video',
-            duration: video.duration * 1000,
-            project_id: projectId,
-          });
-        } catch (dbError) {
-          console.warn('Could not save to database:', dbError);
-        }
-
+        // Store video info in local state only for now
+        // The video is already uploaded to storage
         setVideos((prev) => [newVideo, ...prev]);
         toast.success('Video uploaded!');
       } catch (error) {

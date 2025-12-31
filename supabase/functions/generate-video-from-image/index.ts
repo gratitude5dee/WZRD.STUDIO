@@ -1,7 +1,6 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { FAL_MODELS, submitToFalQueue } from "../_shared/falai-client.ts";
+import { FAL_MODELS, submitToFalQueue, FalResponse } from "../_shared/falai-client.ts";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") as string;
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") as string;
@@ -11,6 +10,15 @@ const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// Define the expected video result structure from FAL
+interface FalVideoData {
+  video?: { url: string; duration?: number; frames?: number };
+  url?: string;
+  duration?: number;
+  frames?: number;
+  videos?: Array<{ url: string; duration?: number; frames?: number }>;
+}
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -80,7 +88,7 @@ serve(async (req) => {
         reverse_video: false,
         enable_safety_checker: true,
         constant_rate_factor: 35
-      });
+      }) as FalResponse<FalVideoData | string>;
 
       console.log(`[Shot ${shot_id}] Fal.ai response:`, JSON.stringify(result, null, 2));
 
@@ -91,27 +99,32 @@ serve(async (req) => {
 
       // Check various possible response structures
       if (result.success && result.data) {
-        // Format 1: result.data.video.url
-        if (result.data.video?.url) {
-          videoUrl = result.data.video.url;
-          videoDuration = result.data.video.duration;
-          videoFrames = result.data.video.frames;
-        }
-        // Format 2: result.data.url (direct video URL)
-        else if (result.data.url) {
-          videoUrl = result.data.url;
-          videoDuration = result.data.duration;
-          videoFrames = result.data.frames;
-        }
+        const data = result.data;
+        
         // Format 3: result.data is the video URL string
-        else if (typeof result.data === 'string' && result.data.startsWith('http')) {
-          videoUrl = result.data;
-        }
-        // Format 4: Check if data has a videos array
-        else if (result.data.videos && result.data.videos.length > 0) {
-          videoUrl = result.data.videos[0].url;
-          videoDuration = result.data.videos[0].duration;
-          videoFrames = result.data.videos[0].frames;
+        if (typeof data === 'string' && data.startsWith('http')) {
+          videoUrl = data;
+        } else if (typeof data === 'object') {
+          const videoData = data as FalVideoData;
+          
+          // Format 1: result.data.video.url
+          if (videoData.video?.url) {
+            videoUrl = videoData.video.url;
+            videoDuration = videoData.video.duration;
+            videoFrames = videoData.video.frames;
+          }
+          // Format 2: result.data.url (direct video URL)
+          else if (videoData.url) {
+            videoUrl = videoData.url;
+            videoDuration = videoData.duration;
+            videoFrames = videoData.frames;
+          }
+          // Format 4: Check if data has a videos array
+          else if (videoData.videos && videoData.videos.length > 0) {
+            videoUrl = videoData.videos[0].url;
+            videoDuration = videoData.videos[0].duration;
+            videoFrames = videoData.videos[0].frames;
+          }
         }
       }
 
@@ -171,18 +184,20 @@ serve(async (req) => {
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
-    } catch (error) {
+    } catch (error: unknown) {
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
       console.error(`[Shot ${shot_id}] Error in generate-video-from-image: ${error}`);
       
       return new Response(
-        JSON.stringify({ success: false, error: error.message }),
+        JSON.stringify({ success: false, error: errorMsg }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
-  } catch (error) {
-    console.error(`Unexpected error: ${error.message}`);
+  } catch (error: unknown) {
+    const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+    console.error(`Unexpected error: ${errorMsg}`);
     return new Response(
-      JSON.stringify({ success: false, error: error.message }),
+      JSON.stringify({ success: false, error: errorMsg }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
