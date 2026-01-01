@@ -279,14 +279,16 @@ interface PanelWrapperProps {
 }
 
 const PanelWrapper: React.FC<PanelWrapperProps> = ({ children, offsetY = 0 }) => (
-    <motion.div
-      className="fixed left-11 top-1/2 z-50"
+  <motion.div
+    className="fixed left-14 top-1/2 z-50"
     style={{ transform: `translateY(calc(-50% + ${offsetY}px))` }}
     initial={{ opacity: 0, x: -16, scale: 0.96 }}
     animate={{ opacity: 1, x: 0, scale: 1 }}
     exit={{ opacity: 0, x: -16, scale: 0.96 }}
     transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
   >
+    {/* Arrow connector pointing back to sidebar */}
+    <div className="absolute -left-2 top-1/2 -translate-y-1/2 w-0 h-0 border-t-[6px] border-t-transparent border-r-[8px] border-r-surface-1 border-b-[6px] border-b-transparent" />
     {children}
   </motion.div>
 );
@@ -303,27 +305,27 @@ const AddNodeMenu: React.FC<{
 
   return (
     <motion.div 
-      className="w-56 bg-surface-1/98 backdrop-blur-2xl border border-border-subtle rounded-xl overflow-hidden shadow-2xl shadow-black/50"
+      className="w-48 bg-surface-1/98 backdrop-blur-2xl border border-border-subtle rounded-xl overflow-hidden shadow-2xl shadow-black/50"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.15 }}
     >
-      <div className="p-2 space-y-0.5">
+      <div className="p-1.5 space-y-0.5">
         {menuItems.map((item, index) => (
           <motion.button
             key={item.type}
             onClick={() => onAddBlock(item.type)}
-            className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-surface-2 transition-colors group"
+            className="w-full flex items-center justify-between px-2.5 py-2 rounded-lg hover:bg-surface-2 transition-colors group"
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.15, delay: index * 0.03 }}
-            whileHover={{ x: 4 }}
+            whileHover={{ x: 3 }}
           >
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2.5">
               <item.icon className={cn("w-4 h-4 transition-colors", item.color)} />
               <span className="text-sm text-text-primary">{item.label}</span>
             </div>
-            <span className="text-xs text-text-tertiary group-hover:text-text-secondary transition-colors px-1.5 py-0.5 rounded bg-surface-2 group-hover:bg-surface-3">{item.shortcut}</span>
+            <span className="text-[10px] text-text-tertiary group-hover:text-text-secondary transition-colors px-1.5 py-0.5 rounded bg-surface-2 group-hover:bg-surface-3">{item.shortcut}</span>
           </motion.button>
         ))}
       </div>
