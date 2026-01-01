@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Loader2, UserPlus, Plus, FolderKanban, Activity, Image, Sparkles } from 'lucide-react';
+import { motion } from 'framer-motion';
 import wzrdLogo from '@/assets/wzrd-logo.png';
 import { ProjectList } from '@/components/home/ProjectList';
 import { ProjectListView } from '@/components/home/ProjectListView';
@@ -14,6 +15,8 @@ import { ProjectViewModeSelector } from '@/components/home/ProjectViewModeSelect
 import { StatCard } from '@/components/home/StatCard';
 import { DemoBanner } from '@/components/demo/DemoBanner';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { TextAnimate } from '@/components/ui/text-animate';
+import { ShimmerButton } from '@/components/ui/shimmer-button';
 import { useAuth } from '@/providers/AuthProvider';
 import { supabaseService } from '@/services/supabaseService';
 import { useToast } from '@/hooks/use-toast';
@@ -216,10 +219,21 @@ export default function Home() {
           )}>
             <div className="flex flex-col">
               <div className="flex items-center gap-2">
-              <span className="text-xl font-semibold text-text-primary dark:text-foreground">Dashboard</span>
-                <span className="text-lg">📊</span>
+                <TextAnimate animation="blurInUp" by="word" className="text-xl font-semibold text-text-primary dark:text-foreground">
+                  Dashboard
+                </TextAnimate>
+                <motion.span
+                  initial={{ opacity: 0, scale: 0 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.3, type: "spring" }}
+                  className="text-lg"
+                >
+                  📊
+                </motion.span>
               </div>
-              <p className="text-sm text-text-secondary dark:text-muted-foreground">Welcome back! Here's your creative overview</p>
+              <TextAnimate animation="fadeIn" by="word" delay={0.2} className="text-sm text-text-secondary dark:text-muted-foreground">
+                Welcome back! Here's your creative overview
+              </TextAnimate>
             </div>
             <div className="flex items-center gap-3">
               <ThemeToggle />
@@ -243,6 +257,7 @@ export default function Home() {
                 value={projects.length}
                 trend="+12%"
                 trendDirection="up"
+                index={0}
               />
               <StatCard 
                 icon={<Activity className="w-5 h-5" />}
@@ -255,6 +270,7 @@ export default function Home() {
                 }).length}
                 trend="This week"
                 trendDirection="neutral"
+                index={1}
               />
               <StatCard 
                 icon={<Image className="w-5 h-5" />}
@@ -263,6 +279,7 @@ export default function Home() {
                 trend="Coming soon"
                 trendDirection="neutral"
                 className="hidden sm:block"
+                index={2}
               />
               <StatCard 
                 icon={<Sparkles className="w-5 h-5" />}
@@ -271,6 +288,7 @@ export default function Home() {
                 trend="Available"
                 trendDirection="neutral"
                 className="hidden sm:block"
+                index={3}
               />
             </div>
           </div>
@@ -317,25 +335,29 @@ export default function Home() {
 
             {/* Actions - hidden on mobile (use bottom nav instead) */}
             <div className="hidden md:flex items-center gap-3">
-              <button className={cn(
-                "flex items-center gap-2 h-9 px-4 rounded-lg text-sm font-medium transition-all duration-200",
-                "bg-surface-2 border border-border-default text-text-secondary",
-                "hover:text-text-primary hover:border-border-strong hover:bg-surface-3"
-              )}>
-                <UserPlus className="w-4 h-4" />
-                <span>Invite</span>
-              </button>
-              <button
-                onClick={handleCreateProject}
+              <motion.button 
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 className={cn(
                   "flex items-center gap-2 h-9 px-4 rounded-lg text-sm font-medium transition-all duration-200",
-                  "bg-gradient-to-r from-primary to-primary/80 text-primary-foreground",
-                  "hover:shadow-[0_0_30px_hsl(var(--primary)/0.4)] hover:-translate-y-0.5"
+                  "bg-surface-2 border border-border-default text-text-secondary",
+                  "hover:text-text-primary hover:border-border-strong hover:bg-surface-3"
                 )}
               >
-                <Plus className="w-4 h-4" />
+                <UserPlus className="w-4 h-4" />
+                <span>Invite</span>
+              </motion.button>
+              <ShimmerButton
+                onClick={handleCreateProject}
+                shimmerColor="#ffffff"
+                shimmerSize="0.05em"
+                shimmerDuration="2.5s"
+                background="linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary)/0.8) 100%)"
+                className="h-9 px-4 text-sm font-medium"
+              >
+                <Plus className="w-4 h-4 mr-2" />
                 <span>New Project</span>
-              </button>
+              </ShimmerButton>
             </div>
           </div>
 

@@ -1,4 +1,5 @@
 import { Grid, Users, Globe, Star, Settings, HelpCircle, ChevronDown, LogOut, Layers, Sparkles, Home, FolderKanban } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { WorkspaceSwitcher } from './WorkspaceSwitcher';
 import CreditsDisplay from '../CreditsDisplay';
 import { Badge } from '@/components/ui/badge';
@@ -7,6 +8,8 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { TextAnimate } from '@/components/ui/text-animate';
+import { ShineBorder } from '@/components/ui/shine-border';
 
 interface SidebarProps {
   activeView: string;
@@ -60,16 +63,23 @@ export const Sidebar = ({ activeView, onViewChange }: SidebarProps) => {
         <div>
           <div className="flex items-center gap-2 px-3 mb-3">
             <Sparkles className="w-3.5 h-3.5 text-accent-purple" />
-            <span className="text-[10px] font-semibold text-text-tertiary uppercase tracking-[0.15em]">Main Menu</span>
+            <TextAnimate animation="fadeIn" by="character" delay={0.1} className="text-[10px] font-semibold text-text-tertiary uppercase tracking-[0.15em]">
+              Main Menu
+            </TextAnimate>
           </div>
           <div className="space-y-1">
-            {mainNavItems.map((item) => {
+            {mainNavItems.map((item, index) => {
               const Icon = item.icon;
               const isActive = activeView === item.id;
 
               return (
-                <button
+                <motion.button
                   key={item.id}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                  whileHover={{ x: 2 }}
+                  whileTap={{ scale: 0.98 }}
                   onClick={() => {
                     if (item.isRoute) {
                       navigate('/kanvas');
@@ -78,12 +88,19 @@ export const Sidebar = ({ activeView, onViewChange }: SidebarProps) => {
                     }
                   }}
                   className={cn(
-                    "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200",
+                    "relative w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200",
                     isActive
                       ? "bg-[hsl(var(--interactive-selected))] text-accent-purple border border-accent-purple/20 shadow-sm"
                       : "text-text-secondary hover:text-text-primary hover:bg-[hsl(var(--interactive-hover))] dark:text-muted-foreground dark:hover:text-foreground dark:hover:bg-white/[0.04]"
                   )}
                 >
+                  {isActive && (
+                    <ShineBorder
+                      shineColor="#8B5CF6"
+                      borderWidth={1}
+                      duration={10}
+                    />
+                  )}
                   <div className={cn(
                     "w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200",
                     isActive 
@@ -98,7 +115,7 @@ export const Sidebar = ({ activeView, onViewChange }: SidebarProps) => {
                       New
                     </Badge>
                   )}
-                </button>
+                </motion.button>
               );
             })}
           </div>
@@ -108,7 +125,9 @@ export const Sidebar = ({ activeView, onViewChange }: SidebarProps) => {
         <div>
           <div className="flex items-center gap-2 px-3 mb-3">
             <Users className="w-3.5 h-3.5 text-text-tertiary" />
-            <span className="text-[10px] font-semibold text-text-tertiary uppercase tracking-[0.15em]">Collaborate</span>
+            <TextAnimate animation="fadeIn" by="character" delay={0.2} className="text-[10px] font-semibold text-text-tertiary uppercase tracking-[0.15em]">
+              Collaborate
+            </TextAnimate>
           </div>
           <div className="space-y-1">
             {secondaryNavItems.map((item) => {

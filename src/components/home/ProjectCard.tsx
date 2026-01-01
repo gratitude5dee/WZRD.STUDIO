@@ -16,6 +16,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { InlineEditableTitle } from './InlineEditableTitle';
 import { ShareProjectDialog } from './ShareProjectDialog';
 import { DeleteProjectSheet } from './DeleteProjectSheet';
+import { ShineBorder } from '@/components/ui/shine-border';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -113,12 +114,12 @@ export const ProjectCard = ({ project, onOpen, onDelete, onRename }: ProjectCard
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        whileHover={{ y: -4 }}
+        whileHover={{ y: -6, scale: 1.02 }}
         transition={{ duration: 0.2 }}
         className={cn(
           'group relative rounded-2xl overflow-hidden cursor-pointer',
           'bg-surface-1 border border-border-default',
-          'shadow-sm hover:shadow-lg',
+          'shadow-sm hover:shadow-xl',
           'transition-all duration-300 ease-out',
           'dark:bg-zinc-900 dark:border-zinc-800'
         )}
@@ -126,6 +127,13 @@ export const ProjectCard = ({ project, onOpen, onDelete, onRename }: ProjectCard
         onMouseLeave={() => setIsHovered(false)}
         onClick={() => !isEditing && onOpen(project.id)}
       >
+        {/* Shine Border on hover */}
+        <ShineBorder
+          shineColor={["#8B5CF6", "#EC4899"]}
+          borderWidth={1}
+          duration={14}
+          className="opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+        />
         <div className="relative aspect-[4/3] bg-surface-2 dark:bg-zinc-800 overflow-hidden">
           {mediaUrl ? (
             mediaType === 'video' ? (
