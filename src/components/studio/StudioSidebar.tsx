@@ -3,7 +3,6 @@ import {
   Plus,
   History,
   Inbox,
-  Settings,
   HelpCircle,
   Type,
   Image as ImageIcon,
@@ -12,13 +11,14 @@ import {
   Workflow,
   MessageCircle,
   Sparkles,
+  Hand,
+  MousePointer,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { FlowsPanel } from './panels/FlowsPanel';
 import { HistoryPanel } from './panels/HistoryPanel';
 import { AssetsGalleryPanel, type Asset } from './panels/AssetsGalleryPanel';
-import { SettingsPanel } from './panels/SettingsPanel';
 import { WorkflowGeneratorTab } from './WorkflowGeneratorTab';
 import { WalkthroughTooltip } from './panels/HelpWalkthroughPanel';
 import { useWalkthrough } from '@/hooks/useWalkthrough';
@@ -32,11 +32,19 @@ interface StudioSidebarProps {
   onAddBlock: (blockType: 'text' | 'image' | 'video' | 'upload') => void;
   projectId?: string;
   onAssetSelect?: (asset: Asset) => void;
+  interactionMode?: 'pan' | 'select';
+  onToggleInteractionMode?: () => void;
 }
 
-type PanelType = 'add' | 'flows' | 'history' | 'workflow' | 'assets' | 'settings' | null;
+type PanelType = 'add' | 'flows' | 'history' | 'workflow' | 'assets' | null;
 
-const StudioSidebar = ({ onAddBlock, projectId, onAssetSelect }: StudioSidebarProps) => {
+const StudioSidebar = ({ 
+  onAddBlock, 
+  projectId, 
+  onAssetSelect,
+  interactionMode = 'pan',
+  onToggleInteractionMode 
+}: StudioSidebarProps) => {
   const { addGeneratedWorkflow, addNode, saveGraph, executeGraphStreaming } = useComputeFlowStore();
   const [activePanel, setActivePanel] = useState<PanelType>(null);
   const walkthrough = useWalkthrough();
@@ -94,19 +102,30 @@ const StudioSidebar = ({ onAddBlock, projectId, onAssetSelect }: StudioSidebarPr
 
   return (
     <TooltipProvider delayDuration={300}>
-      <aside className="fixed left-0 top-0 bottom-0 w-16 bg-zinc-950/90 backdrop-blur-xl border-r border-zinc-800/50 flex flex-col items-center py-4 z-40">
-        <div className="mb-6">
-          <Logo className="w-8 h-8" />
-        </div>
-
-        <nav className="flex-1 flex flex-col items-center gap-2">
+      <aside className="fixed left-0 top-14 bottom-0 w-16 bg-zinc-950/90 backdrop-blur-xl border-r border-zinc-800/50 flex flex-col items-center py-4 z-40">
+        <nav className="flex-1 flex flex-col items-center gap-1.5">
+          {/* Primary Add Node Button */}
           <SidebarButton
             icon={Plus}
             label="Add Node"
             active={activePanel === 'add'}
             onClick={() => togglePanel('add')}
             data-walkthrough="add-button"
+            primary
           />
+
+          <div className="w-8 h-px bg-zinc-800/50 my-1" />
+
+          {/* Pan/Select Mode Toggle */}
+          {onToggleInteractionMode && (
+            <SidebarButton
+              icon={interactionMode === 'pan' ? Hand : MousePointer}
+              label={interactionMode === 'pan' ? 'Pan Mode (H)' : 'Select Mode (V)'}
+              active={interactionMode === 'select'}
+              onClick={onToggleInteractionMode}
+              modeIndicator={interactionMode}
+            />
+          )}
 
           <SidebarButton
             icon={Workflow}
@@ -144,15 +163,13 @@ const StudioSidebar = ({ onAddBlock, projectId, onAssetSelect }: StudioSidebarPr
           <SidebarButton icon={MessageCircle} label="Add Comment" onClick={handleAddComment} />
         </nav>
 
-        <div className="flex flex-col items-center gap-2 mt-auto">
-          <SidebarButton
-            icon={Settings}
-            label="Settings"
-            active={activePanel === 'settings'}
-            onClick={() => togglePanel('settings')}
+        {/* Bottom Section: Help Only */}
+        <div className="flex flex-col items-center gap-2 mt-auto pt-4 border-t border-zinc-800/50">
+          <SidebarButton 
+            icon={HelpCircle} 
+            label="Help & Tour" 
+            onClick={() => walkthrough.start()} 
           />
-
-          <SidebarButton icon={HelpCircle} label="Help & Tour" onClick={() => walkthrough.start()} />
         </div>
 
         <div ref={panelRef}>
@@ -198,12 +215,6 @@ const StudioSidebar = ({ onAddBlock, projectId, onAssetSelect }: StudioSidebarPr
                 />
               </PanelWrapper>
             )}
-
-            {activePanel === 'settings' && projectId && (
-              <PanelWrapper position="bottom">
-                <SettingsPanel projectId={projectId} onClose={() => setActivePanel(null)} />
-              </PanelWrapper>
-            )}
           </AnimatePresence>
         </div>
 
@@ -230,7 +241,9 @@ interface SidebarButtonProps {
   active?: boolean;
   onClick: () => void;
   accent?: boolean;
+  primary?: boolean;
   badge?: number;
+  modeIndicator?: 'pan' | 'select';
   'data-walkthrough'?: string;
 }
 
@@ -240,7 +253,9 @@ const SidebarButton: React.FC<SidebarButtonProps> = ({
   active,
   onClick,
   accent,
+  primary,
   badge,
+  modeIndicator,
   ...props
 }) => (
   <Tooltip>
@@ -248,12 +263,16 @@ const SidebarButton: React.FC<SidebarButtonProps> = ({
       <button
         onClick={onClick}
         className={cn(
-          'relative w-10 h-10 rounded-xl flex items-center justify-center transition-all',
-          active
-            ? 'bg-accent-purple/20 text-accent-purple'
-            : accent
-              ? 'bg-zinc-800/50 text-zinc-400 hover:text-accent-purple hover:bg-accent-purple/10'
-              : 'bg-zinc-800/50 text-zinc-400 hover:text-white hover:bg-zinc-700/50'
+          'relative w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-200',
+          primary
+            ? 'bg-accent-purple/20 text-accent-purple hover:bg-accent-purple/30'
+            : active
+              ? 'bg-accent-purple/20 text-accent-purple'
+              : modeIndicator === 'select'
+                ? 'bg-accent-teal/15 text-accent-teal'
+                : accent
+                  ? 'bg-zinc-800/50 text-zinc-400 hover:text-accent-purple hover:bg-accent-purple/10'
+                  : 'bg-zinc-800/50 text-zinc-400 hover:text-white hover:bg-zinc-700/50'
         )}
         {...props}
       >
@@ -262,6 +281,13 @@ const SidebarButton: React.FC<SidebarButtonProps> = ({
           <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-accent-rose text-[10px] font-bold text-white flex items-center justify-center">
             {badge}
           </span>
+        )}
+        {/* Mode indicator dot */}
+        {modeIndicator && (
+          <span className={cn(
+            'absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full',
+            modeIndicator === 'pan' ? 'bg-zinc-500' : 'bg-accent-teal'
+          )} />
         )}
       </button>
     </TooltipTrigger>

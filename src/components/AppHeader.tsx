@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/ui/logo';
-import { Share } from 'lucide-react';
+import { Share, Settings, Coins } from 'lucide-react';
 import { useAppStore } from '@/store/appStore';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -10,17 +10,21 @@ import { supabaseService } from '@/services/supabaseService';
 import { Input } from '@/components/ui/input';
 import { z } from 'zod';
 import { ShareModal } from '@/components/share/ShareModal';
+import CreditsDisplay from '@/components/CreditsDisplay';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 type ViewMode = 'studio' | 'timeline' | 'editor';
 
 interface AppHeaderProps {
   className?: string;
   showShareButton?: boolean;
+  onOpenSettings?: () => void;
 }
 
 export const AppHeader = ({ 
   className, 
-  showShareButton = true 
+  showShareButton = true,
+  onOpenSettings 
 }: AppHeaderProps) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -153,99 +157,125 @@ export const AppHeader = ({
   };
 
   return (
-    <header className={cn(
-      'w-full bg-zinc-950/80 backdrop-blur-xl border-b border-zinc-800/50 px-4 py-2.5 flex items-center justify-between relative z-20',
-      className
-    )}>
-      {/* Left: Logo + Project Name */}
-      <div className="flex items-center gap-3">
-        <div onClick={handleLogoClick} className="cursor-pointer">
-          <Logo size="sm" showVersion={false} />
-        </div>
-        
-        <div className="h-4 w-px bg-zinc-800" />
-        
-        {isEditing ? (
-          <Input
-            ref={inputRef}
-            value={editValue}
-            onChange={(e) => setEditValue(e.target.value)}
-            onBlur={saveTitle}
-            onKeyDown={handleKeyDown}
-            className="h-7 text-sm font-medium bg-zinc-900 border-zinc-700 text-white max-w-[200px]"
-          />
-        ) : (
-          <span 
-            className="text-sm font-medium text-zinc-300 cursor-text hover:text-white transition-colors"
-            onClick={startEditing}
-            title="Click to edit project name"
-          >
-            {activeProjectName || 'Untitled'}
-          </span>
-        )}
-      </div>
-
-      {/* Center: View Mode Tabs (minimal) */}
-      <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-0.5 bg-zinc-900/50 rounded-lg p-0.5">
-        <Button
-          variant="ghost"
-          size="sm"
-          className={getButtonClass('studio')}
-          onClick={() => handleNavigate('studio')}
-        >
-          Studio
-        </Button>
-        
-        <Button
-          variant="ghost"
-          size="sm"
-          className={getButtonClass('timeline')}
-          onClick={() => handleNavigate('timeline')}
-        >
-          Timeline
-        </Button>
-        
-        <Button
-          variant="ghost"
-          size="sm"
-          className={getButtonClass('editor')}
-          onClick={() => handleNavigate('editor')}
-        >
-          Editor
-        </Button>
-      </div>
-
-      {/* Right: Share Button Only */}
-      <div className="flex items-center gap-2">
-        {showShareButton && (
-          <>
-            <Button
-              size="sm"
-              className="bg-white/10 hover:bg-white/20 text-white border-0 text-xs px-3"
-              onClick={() => {
-                if (!resolvedProjectId) {
-                  toast.warning('Please select a project to share');
-                  return;
-                }
-                setShowShareModal(true);
-              }}
+    <TooltipProvider delayDuration={300}>
+      <header className={cn(
+        'w-full h-14 bg-zinc-950/80 backdrop-blur-xl border-b border-zinc-800/50 px-4 flex items-center justify-between relative z-20',
+        className
+      )}>
+        {/* Left: Logo + Project Name */}
+        <div className="flex items-center gap-3">
+          <div onClick={handleLogoClick} className="cursor-pointer">
+            <Logo size="sm" showVersion={false} />
+          </div>
+          
+          <div className="h-4 w-px bg-zinc-800" />
+          
+          {isEditing ? (
+            <Input
+              ref={inputRef}
+              value={editValue}
+              onChange={(e) => setEditValue(e.target.value)}
+              onBlur={saveTitle}
+              onKeyDown={handleKeyDown}
+              className="h-7 text-sm font-medium bg-zinc-900 border-zinc-700 text-white max-w-[200px]"
+            />
+          ) : (
+            <span 
+              className="text-sm font-medium text-zinc-300 cursor-text hover:text-white transition-colors"
+              onClick={startEditing}
+              title="Click to edit project name"
             >
-              <Share className="h-3.5 w-3.5 mr-1.5" />
-              Share
-            </Button>
+              {activeProjectName || 'Untitled'}
+            </span>
+          )}
+        </div>
 
-            {resolvedProjectId && (
-              <ShareModal
-                isOpen={showShareModal}
-                onClose={() => setShowShareModal(false)}
-                projectId={resolvedProjectId}
-                projectName={activeProjectName || 'Untitled'}
-              />
-            )}
-          </>
-        )}
-      </div>
-    </header>
+        {/* Center: View Mode Tabs (minimal) */}
+        <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-0.5 bg-zinc-900/50 rounded-lg p-0.5">
+          <Button
+            variant="ghost"
+            size="sm"
+            className={getButtonClass('studio')}
+            onClick={() => handleNavigate('studio')}
+          >
+            Studio
+          </Button>
+          
+          <Button
+            variant="ghost"
+            size="sm"
+            className={getButtonClass('timeline')}
+            onClick={() => handleNavigate('timeline')}
+          >
+            Timeline
+          </Button>
+          
+          <Button
+            variant="ghost"
+            size="sm"
+            className={getButtonClass('editor')}
+            onClick={() => handleNavigate('editor')}
+          >
+            Editor
+          </Button>
+        </div>
+
+        {/* Right: Credits + Settings + Share */}
+        <div className="flex items-center gap-2">
+          {/* Credits Display */}
+          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900/60 border border-zinc-800/50 rounded-lg">
+            <Coins className="w-3.5 h-3.5 text-accent-teal" />
+            <CreditsDisplay showTooltip={false} />
+          </div>
+
+          {/* Settings Button */}
+          {onOpenSettings && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9 text-zinc-400 hover:text-white hover:bg-zinc-800/50"
+                  onClick={onOpenSettings}
+                >
+                  <Settings className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">Settings</TooltipContent>
+            </Tooltip>
+          )}
+
+          {/* Share Button */}
+          {showShareButton && (
+            <>
+              <Button
+                size="sm"
+                className="bg-white/10 hover:bg-white/20 text-white border-0 text-xs px-3 h-9"
+                onClick={() => {
+                  if (!resolvedProjectId) {
+                    toast.warning('Please select a project to share');
+                    return;
+                  }
+                  setShowShareModal(true);
+                }}
+              >
+                <Share className="h-3.5 w-3.5 mr-1.5" />
+                Share
+              </Button>
+
+              {resolvedProjectId && (
+                <ShareModal
+                  isOpen={showShareModal}
+                  onClose={() => setShowShareModal(false)}
+                  projectId={resolvedProjectId}
+                  projectName={activeProjectName || 'Untitled'}
+                />
+              )}
+            </>
+          )}
+        </div>
+      </header>
+    </TooltipProvider>
   );
 };
 

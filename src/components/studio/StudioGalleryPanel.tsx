@@ -6,11 +6,15 @@ import {
   ChevronRight,
   Download,
   Plus,
-  Clock,
   Sparkles,
+  Image as ImageIcon,
+  Video,
+  Type,
+  Keyboard,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useComputeFlowStore } from '@/store/computeFlowStore';
+import { Button } from '@/components/ui/button';
 
 interface GalleryItem {
   id: string;
@@ -19,6 +23,8 @@ interface GalleryItem {
   timestamp: Date;
   nodeLabel?: string;
 }
+
+type FilterTab = 'all' | 'images' | 'videos' | 'text';
 
 interface StudioGalleryPanelProps {
   isOpen: boolean;
@@ -34,6 +40,7 @@ export const StudioGalleryPanel: React.FC<StudioGalleryPanelProps> = ({
   className,
 }) => {
   const [selectedItem, setSelectedItem] = useState<GalleryItem | null>(null);
+  const [activeFilter, setActiveFilter] = useState<FilterTab>('all');
   const { nodeDefinitions } = useComputeFlowStore();
 
   const galleryItems: GalleryItem[] = useMemo(() => {
@@ -48,6 +55,23 @@ export const StudioGalleryPanel: React.FC<StudioGalleryPanelProps> = ({
       }))
       .slice(0, 20);
   }, [nodeDefinitions]);
+
+  const filteredItems = useMemo(() => {
+    if (activeFilter === 'all') return galleryItems;
+    return galleryItems.filter((item) => {
+      if (activeFilter === 'images') return item.type === 'image';
+      if (activeFilter === 'videos') return item.type === 'video';
+      if (activeFilter === 'text') return item.type === 'text';
+      return true;
+    });
+  }, [galleryItems, activeFilter]);
+
+  const filterTabs: { id: FilterTab; label: string; icon: React.ElementType }[] = [
+    { id: 'all', label: 'All', icon: Images },
+    { id: 'images', label: 'Images', icon: ImageIcon },
+    { id: 'videos', label: 'Videos', icon: Video },
+    { id: 'text', label: 'Text', icon: Type },
+  ];
 
   return (
     <>
@@ -69,21 +93,22 @@ export const StudioGalleryPanel: React.FC<StudioGalleryPanelProps> = ({
         {isOpen && (
           <motion.div
             initial={{ width: 0, opacity: 0 }}
-            animate={{ width: 320, opacity: 1 }}
+            animate={{ width: 360, opacity: 1 }}
             exit={{ width: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
             className={cn(
-              'fixed right-0 top-14 bottom-[52px] z-40 bg-surface-1 border-l border-border-subtle shadow-2xl',
+              'fixed right-0 top-14 bottom-0 z-40 bg-surface-1 border-l border-border-subtle shadow-2xl',
               'flex flex-col overflow-hidden',
               className
             )}
           >
+            {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-border-subtle">
               <div className="flex items-center gap-2">
                 <Images className="w-4 h-4 text-text-secondary" />
                 <h3 className="text-sm font-medium text-text-primary">Gallery</h3>
                 <span className="px-1.5 py-0.5 rounded bg-surface-3 text-[10px] font-medium text-text-secondary">
-                  {galleryItems.length}
+                  {filteredItems.length}
                 </span>
               </div>
               <button className="p-1.5 rounded-lg hover:bg-surface-3 text-text-tertiary" onClick={onToggle}>
@@ -91,18 +116,40 @@ export const StudioGalleryPanel: React.FC<StudioGalleryPanelProps> = ({
               </button>
             </div>
 
+            {/* Filter Tabs */}
+            <div className="flex items-center gap-1 px-3 py-2 border-b border-border-subtle">
+              {filterTabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveFilter(tab.id)}
+                  className={cn(
+                    'flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors',
+                    activeFilter === tab.id
+                      ? 'bg-accent-purple/15 text-accent-purple'
+                      : 'text-text-tertiary hover:text-text-secondary hover:bg-surface-3'
+                  )}
+                >
+                  <tab.icon className="w-3.5 h-3.5" />
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Content Grid */}
             <div className="flex-1 overflow-y-auto p-3">
-              {galleryItems.length === 0 ? (
-                <div className="h-full flex flex-col items-center justify-center text-center px-4">
-                  <div className="w-16 h-16 rounded-2xl bg-surface-2 flex items-center justify-center mb-3">
+              {filteredItems.length === 0 ? (
+                <div className="h-full flex flex-col items-center justify-center text-center px-6">
+                  <div className="w-16 h-16 rounded-2xl bg-surface-2 flex items-center justify-center mb-4">
                     <Sparkles className="w-7 h-7 text-text-disabled" />
                   </div>
                   <p className="text-sm text-text-secondary mb-1">No generations yet</p>
-                  <p className="text-xs text-text-tertiary">Generated content will appear here</p>
+                  <p className="text-xs text-text-tertiary">
+                    Run a workflow to see outputs here
+                  </p>
                 </div>
               ) : (
                 <div className="grid grid-cols-2 gap-3">
-                  {galleryItems.map((item) => (
+                  {filteredItems.map((item) => (
                     <GalleryThumbnail
                       key={item.id}
                       item={item}
@@ -114,19 +161,23 @@ export const StudioGalleryPanel: React.FC<StudioGalleryPanelProps> = ({
               )}
             </div>
 
+            {/* Footer */}
             <div className="px-4 py-3 border-t border-border-subtle bg-surface-2/50">
-              <div className="flex items-center justify-between text-xs text-text-tertiary">
-                <span className="flex items-center gap-1">
-                  <Clock className="w-3 h-3" />
-                  Recent outputs
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-text-tertiary">
+                  {filteredItems.length} {filteredItems.length === 1 ? 'item' : 'items'}
                 </span>
-                <span>{galleryItems.length} items</span>
+                <button className="flex items-center gap-1.5 text-text-tertiary hover:text-text-secondary transition-colors">
+                  <Keyboard className="w-3.5 h-3.5" />
+                  <span>Shortcuts</span>
+                </button>
               </div>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
+      {/* Lightbox */}
       <AnimatePresence>
         {selectedItem && (
           <motion.div
@@ -152,30 +203,40 @@ export const StudioGalleryPanel: React.FC<StudioGalleryPanelProps> = ({
               )}
 
               <div className="absolute top-4 right-4 flex items-center gap-2">
-                <button
+                <Button
+                  size="icon"
                   onClick={() => onAddToCanvas?.(selectedItem)}
-                  className="p-2 rounded-lg bg-accent-purple hover:bg-accent-purple/80 text-white transition-colors"
+                  className="h-10 w-10 bg-accent-purple hover:bg-accent-purple/80"
                 >
                   <Plus className="w-5 h-5" />
-                </button>
-                <button
+                </Button>
+                <Button
+                  size="icon"
+                  variant="secondary"
                   onClick={() => {
-                    /* Download */
+                    if (selectedItem.url) {
+                      const link = document.createElement('a');
+                      link.href = selectedItem.url;
+                      link.download = `generation-${selectedItem.id}.png`;
+                      link.click();
+                    }
                   }}
-                  className="p-2 rounded-lg bg-surface-3 hover:bg-surface-4 text-text-primary transition-colors"
+                  className="h-10 w-10"
                 >
                   <Download className="w-5 h-5" />
-                </button>
-                <button
+                </Button>
+                <Button
+                  size="icon"
+                  variant="secondary"
                   onClick={() => setSelectedItem(null)}
-                  className="p-2 rounded-lg bg-surface-3 hover:bg-surface-4 text-text-primary transition-colors"
+                  className="h-10 w-10"
                 >
                   <ChevronRight className="w-5 h-5" />
-                </button>
+                </Button>
               </div>
 
               {selectedItem.nodeLabel && (
-                <div className="absolute bottom-4 left-4 bg-black/60 px-3 py-1.5 rounded-lg">
+                <div className="absolute bottom-4 left-4 bg-black/60 backdrop-blur-sm px-3 py-2 rounded-lg">
                   <p className="text-sm text-text-secondary">{selectedItem.nodeLabel}</p>
                 </div>
               )}
@@ -196,42 +257,52 @@ interface GalleryThumbnailProps {
 const GalleryThumbnail = ({ item, onAddToCanvas, onSelectItem }: GalleryThumbnailProps) => (
   <motion.div
     whileHover={{ scale: 1.02 }}
-    className="group relative aspect-square rounded-xl overflow-hidden bg-surface-3 border border-border-subtle hover:border-accent-purple/50 cursor-pointer transition-colors"
+    className="group relative aspect-square rounded-xl overflow-hidden bg-surface-3 border border-border-subtle hover:border-accent-purple/50 cursor-pointer transition-all"
     onClick={() => onSelectItem(item)}
   >
     {item.type === 'image' && item.url ? (
       <img src={item.url} alt="" className="w-full h-full object-cover" />
     ) : item.type === 'text' ? (
-      <div className="w-full h-full p-2 text-[10px] text-text-tertiary overflow-hidden">{item.url}</div>
+      <div className="w-full h-full p-3 text-xs text-text-tertiary overflow-hidden leading-relaxed">
+        {item.url}
+      </div>
     ) : (
       <div className="w-full h-full flex items-center justify-center">
-        <Images className="w-6 h-6 text-text-disabled" />
+        <Images className="w-8 h-8 text-text-disabled" />
       </div>
     )}
 
+    {/* Hover Overlay */}
     <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
       <button
         onClick={(e) => {
           e.stopPropagation();
           onAddToCanvas?.(item);
         }}
-        className="p-2 rounded-lg bg-accent-purple hover:bg-accent-purple/80 text-white"
+        className="p-2.5 rounded-lg bg-accent-purple hover:bg-accent-purple/80 text-white transition-colors"
       >
         <Plus className="w-4 h-4" />
       </button>
       <button
         onClick={(e) => {
           e.stopPropagation();
+          if (item.url) {
+            const link = document.createElement('a');
+            link.href = item.url;
+            link.download = `generation-${item.id}.png`;
+            link.click();
+          }
         }}
-        className="p-2 rounded-lg bg-surface-3 hover:bg-surface-4 text-text-primary"
+        className="p-2.5 rounded-lg bg-surface-3 hover:bg-surface-4 text-text-primary transition-colors"
       >
         <Download className="w-4 h-4" />
       </button>
     </div>
 
+    {/* Label - Only visible on hover */}
     {item.nodeLabel && (
-      <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/80 to-transparent">
-        <p className="text-[11px] text-text-secondary truncate">{item.nodeLabel}</p>
+      <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+        <p className="text-[11px] text-white truncate">{item.nodeLabel}</p>
       </div>
     )}
   </motion.div>

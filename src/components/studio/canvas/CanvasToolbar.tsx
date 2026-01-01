@@ -13,7 +13,9 @@ import {
   Play,
   Square,
   Loader2,
-  Save
+  Save,
+  Hand,
+  MousePointer
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -40,6 +42,9 @@ interface CanvasToolbarProps {
   onCancelExecution?: () => void;
   onSave?: () => void;
   isSaving?: boolean;
+  // Pan/Select mode
+  interactionMode?: 'pan' | 'select';
+  onToggleInteractionMode?: () => void;
 }
 
 export const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
@@ -60,6 +65,8 @@ export const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
   onCancelExecution,
   onSave,
   isSaving = false,
+  interactionMode = 'pan',
+  onToggleInteractionMode,
 }) => {
   return (
     <motion.div
@@ -147,6 +154,55 @@ export const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
                 <kbd className="px-1.5 py-0.5 text-[10px] font-mono bg-zinc-800 rounded">⌘S</kbd>
               </TooltipContent>
             </Tooltip>
+
+            <Separator orientation="vertical" className="h-6 bg-border-subtle" />
+          </>
+        )}
+
+        {/* Pan/Select Mode Toggle */}
+        {onToggleInteractionMode && (
+          <>
+            <div className="flex items-center bg-surface-3/50 rounded-lg p-0.5">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={cn(
+                      'h-8 w-8 transition-all rounded-md',
+                      interactionMode === 'pan' && 'bg-surface-3 text-text-primary'
+                    )}
+                    onClick={() => interactionMode !== 'pan' && onToggleInteractionMode()}
+                  >
+                    <Hand className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="flex items-center gap-2">
+                  <span>Pan Mode</span>
+                  <kbd className="px-1.5 py-0.5 text-[10px] font-mono bg-zinc-800 rounded">H</kbd>
+                </TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={cn(
+                      'h-8 w-8 transition-all rounded-md',
+                      interactionMode === 'select' && 'bg-accent-teal/20 text-accent-teal'
+                    )}
+                    onClick={() => interactionMode !== 'select' && onToggleInteractionMode()}
+                  >
+                    <MousePointer className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="flex items-center gap-2">
+                  <span>Select Mode</span>
+                  <kbd className="px-1.5 py-0.5 text-[10px] font-mono bg-zinc-800 rounded">V</kbd>
+                </TooltipContent>
+              </Tooltip>
+            </div>
 
             <Separator orientation="vertical" className="h-6 bg-border-subtle" />
           </>
