@@ -103,9 +103,19 @@ export function WorkflowGeneratorTab({ onWorkflowGenerated }: WorkflowGeneratorT
       <div className="relative px-4 py-3 border-b border-border-subtle">
         <div className="absolute inset-0 bg-gradient-to-r from-accent-purple/10 to-accent-teal/10" />
         <div className="relative flex items-center gap-2">
-          <div className="p-1.5 rounded-lg bg-accent-purple/20">
+          <motion.div 
+            className="p-1.5 rounded-lg bg-accent-purple/20"
+            animate={{
+              boxShadow: [
+                '0 0 0 0 rgba(147, 51, 234, 0)',
+                '0 0 12px 3px rgba(147, 51, 234, 0.4)',
+                '0 0 0 0 rgba(147, 51, 234, 0)',
+              ],
+            }}
+            transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+          >
             <Wand2 className="w-4 h-4 text-accent-purple" />
-          </div>
+          </motion.div>
           <div>
             <h3 className="text-sm font-semibold text-text-primary">AI Workflow Generator</h3>
             <p className="text-[11px] text-text-tertiary">Describe what you want to create</p>
@@ -157,27 +167,29 @@ export function WorkflowGeneratorTab({ onWorkflowGenerated }: WorkflowGeneratorT
         <div className="px-4 pb-4">
           <p className="text-[10px] uppercase tracking-wider text-text-tertiary mb-2">Examples</p>
           <div className="space-y-2">
-            {WORKFLOW_EXAMPLES.map((example) => {
+            {WORKFLOW_EXAMPLES.map((example, index) => {
               const Icon = example.icon;
               return (
                 <motion.button
                   key={example.id}
-                  initial={{ opacity: 0, x: -5 }}
+                  initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.06, duration: 0.25, ease: 'easeOut' }}
+                  whileHover={{ scale: 1.02, x: 4, transition: { duration: 0.15 } }}
                   onClick={() => handleExampleClick(example.prompt)}
                   className={cn(
                     'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-surface-3/50 hover:bg-surface-3',
-                    'border border-transparent hover:border-border-subtle transition-all text-left group'
+                    'border border-transparent hover:border-accent-purple/30 transition-colors text-left group'
                   )}
                 >
-                  <div className="p-1.5 rounded-lg bg-surface-4 text-text-tertiary group-hover:text-text-secondary">
+                  <div className="p-1.5 rounded-lg bg-surface-4 text-text-tertiary group-hover:text-accent-purple transition-colors">
                     <Icon className="w-3.5 h-3.5" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-text-primary truncate">{example.title}</p>
                     <p className="text-[11px] text-text-tertiary">{example.type}</p>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-text-disabled group-hover:text-text-tertiary" />
+                  <ChevronRight className="w-4 h-4 text-text-disabled group-hover:text-accent-purple transition-colors" />
                 </motion.button>
               );
             })}
