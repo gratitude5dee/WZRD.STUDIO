@@ -135,36 +135,43 @@ export const ProjectCard = ({ project, onOpen, onDelete, onRename }: ProjectCard
           className="opacity-0 group-hover:opacity-100 transition-opacity duration-300"
         />
         <div className="relative aspect-[4/3] bg-surface-2 dark:bg-zinc-800 overflow-hidden">
-          {mediaUrl ? (
-            mediaType === 'video' ? (
-              <video
-                ref={videoRef}
-                src={mediaUrl}
-                className="w-full h-full object-cover"
-                muted
-                loop
-                playsInline
-              />
+          {/* Parallax effect on thumbnail */}
+          <motion.div
+            className="w-full h-full"
+            animate={isHovered ? { scale: 1.1, y: -5 } : { scale: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+          >
+            {mediaUrl ? (
+              mediaType === 'video' ? (
+                <video
+                  ref={videoRef}
+                  src={mediaUrl}
+                  className="w-full h-full object-cover"
+                  muted
+                  loop
+                  playsInline
+                />
+              ) : (
+                <img
+                  src={mediaUrl}
+                  alt={project.title}
+                  className="w-full h-full object-cover"
+                />
+              )
             ) : (
-              <img
-                src={mediaUrl}
-                alt={project.title}
-                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-              />
-            )
-          ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <div
-                className={cn(
-                  'w-16 h-16 rounded-2xl flex items-center justify-center',
-                  'bg-gradient-to-br from-accent-purple/20 to-accent-purple/5',
-                  'dark:from-purple-500/20 dark:to-purple-500/5'
-                )}
-              >
-                <Play className="w-8 h-8 text-accent-purple dark:text-purple-400" />
+              <div className="w-full h-full flex items-center justify-center">
+                <div
+                  className={cn(
+                    'w-16 h-16 rounded-2xl flex items-center justify-center',
+                    'bg-gradient-to-br from-accent-purple/20 to-accent-purple/5',
+                    'dark:from-purple-500/20 dark:to-purple-500/5'
+                  )}
+                >
+                  <Play className="w-8 h-8 text-accent-purple dark:text-purple-400" />
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </motion.div>
 
           <AnimatePresence>
             {isHovered && (
@@ -284,9 +291,8 @@ export const ProjectCard = ({ project, onOpen, onDelete, onRename }: ProjectCard
           ) : (
             <h3
               className={cn(
-                'text-base font-semibold truncate',
+                'text-base font-semibold truncate relative inline-block',
                 'text-text-primary dark:text-white',
-                'group-hover:text-accent-purple dark:group-hover:text-purple-400',
                 'transition-colors cursor-text'
               )}
               onClick={(event) => {
@@ -294,7 +300,15 @@ export const ProjectCard = ({ project, onOpen, onDelete, onRename }: ProjectCard
                 setIsEditing(true);
               }}
             >
-              {project.title}
+              <span className="group-hover:text-accent-purple dark:group-hover:text-purple-400 transition-colors">
+                {project.title}
+              </span>
+              <motion.span
+                className="absolute bottom-0 left-0 h-0.5 bg-accent-purple"
+                initial={{ width: 0 }}
+                animate={isHovered ? { width: "100%" } : { width: 0 }}
+                transition={{ duration: 0.3, ease: "easeOut" }}
+              />
             </h3>
           )}
 
