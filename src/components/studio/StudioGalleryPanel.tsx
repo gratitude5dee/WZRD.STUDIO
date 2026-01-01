@@ -134,16 +134,24 @@ export const StudioGalleryPanel: React.FC<StudioGalleryPanelProps> = ({
                       key={tab.id}
                       onClick={() => setActiveMainTab(tab.id)}
                       className={cn(
-                        'relative flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+                        'relative flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors overflow-hidden',
                         isActive
                           ? 'bg-surface-3 text-text-primary'
                           : 'text-text-tertiary hover:text-text-secondary hover:bg-surface-2'
                       )}
                     >
-                      <Icon className={cn('w-4 h-4', isActive && tab.id === 'workflow' && 'text-accent-purple')} />
-                      <span>{tab.label}</span>
+                      {/* Shimmer effect for active workflow tab */}
+                      {isActive && tab.id === 'workflow' && (
+                        <motion.div
+                          className="absolute inset-0 bg-gradient-to-r from-transparent via-accent-purple/20 to-transparent"
+                          animate={{ x: ['-100%', '200%'] }}
+                          transition={{ duration: 2, repeat: Infinity, ease: 'linear', repeatDelay: 1 }}
+                        />
+                      )}
+                      <Icon className={cn('w-4 h-4 relative z-10', isActive && tab.id === 'workflow' && 'text-accent-purple')} />
+                      <span className="relative z-10">{tab.label}</span>
                       {tab.id === 'gallery' && (
-                        <span className="px-1.5 py-0.5 rounded bg-surface-3 text-[10px] font-medium text-text-secondary">
+                        <span className="px-1.5 py-0.5 rounded bg-surface-3 text-[10px] font-medium text-text-secondary relative z-10">
                           {filteredItems.length}
                         </span>
                       )}
@@ -229,18 +237,28 @@ export const StudioGalleryPanel: React.FC<StudioGalleryPanelProps> = ({
               {activeMainTab === 'workflow' && (
                 <motion.div
                   key="workflow"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.15 }}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2, ease: 'easeOut' }}
                   className="flex-1 overflow-hidden p-3"
                 >
                   <div className="relative">
+                    {/* Animated gradient glow background */}
+                    <motion.div
+                      className="absolute -inset-2 rounded-3xl opacity-40 blur-xl pointer-events-none"
+                      style={{
+                        background: 'linear-gradient(135deg, hsl(var(--accent-purple)), hsl(var(--accent-teal)), hsl(var(--accent-amber)))',
+                        backgroundSize: '200% 200%',
+                      }}
+                      animate={{ backgroundPosition: ['0% 0%', '100% 100%', '0% 0%'] }}
+                      transition={{ duration: 5, repeat: Infinity, ease: 'linear' }}
+                    />
                     <WorkflowGeneratorTab onWorkflowGenerated={handleWorkflowGenerated} />
                     <ShineBorder
-                      shineColor={['hsl(var(--accent-purple))', 'hsl(var(--accent-amber))']}
-                      borderWidth={1}
-                      duration={4}
+                      shineColor={['hsl(var(--accent-purple))', 'hsl(var(--accent-teal))', 'hsl(var(--accent-amber))']}
+                      borderWidth={1.5}
+                      duration={3}
                     />
                   </div>
                 </motion.div>
