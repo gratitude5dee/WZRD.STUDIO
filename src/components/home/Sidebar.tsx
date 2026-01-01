@@ -50,7 +50,7 @@ export const Sidebar = ({ activeView, onViewChange }: SidebarProps) => {
 
   const sidebarVariants = {
     expanded: { width: 256 },
-    collapsed: { width: 72 }
+    collapsed: { width: 64 }
   };
 
   const textVariants = {
@@ -236,12 +236,12 @@ export const Sidebar = ({ activeView, onViewChange }: SidebarProps) => {
         <div className="absolute top-0 left-4 right-4 h-px bg-gradient-to-r from-transparent via-white/[0.08] to-transparent" />
         
         {/* Workspace Switcher */}
-        <div className="relative z-10 p-4 border-b border-border-default dark:border-white/[0.05]">
+        <div className={cn("relative z-10 border-b border-border-default dark:border-white/[0.05]", isCollapsed ? "p-2" : "p-4")}>
           <WorkspaceSwitcher isCollapsed={isCollapsed} />
         </div>
 
         {/* Main Navigation */}
-        <nav data-tour="sidebar-nav" className="relative z-10 flex-1 p-4 space-y-6 overflow-y-auto">
+        <nav data-tour="sidebar-nav" className={cn("relative z-10 flex-1 space-y-6 overflow-y-auto", isCollapsed ? "p-2" : "p-4")}>
           {/* Main Menu Section */}
           <div>
             <AnimatePresence mode="wait">
@@ -364,7 +364,7 @@ export const Sidebar = ({ activeView, onViewChange }: SidebarProps) => {
         </nav>
 
         {/* Bottom Section */}
-        <div className="relative z-10 p-4 border-t border-border-default space-y-4 dark:border-white/[0.05]">
+        <div className={cn("relative z-10 border-t border-border-default space-y-4 dark:border-white/[0.05]", isCollapsed ? "p-2" : "p-4")}>
           {/* Credits Display */}
           <AnimatePresence mode="wait">
             {!isCollapsed && (
