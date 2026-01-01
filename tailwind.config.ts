@@ -244,6 +244,32 @@ export default {
 				'pulse-glow': {
 					'0%, 100%': { opacity: '0.3', strokeWidth: '3' },
 					'50%': { opacity: '0.8', strokeWidth: '5' }
+				},
+				// Magic UI Animations
+				'shimmer-slide': {
+					to: { transform: 'translate(calc(100cqw - 100%), 0)' }
+				},
+				'spin-around': {
+					'0%': { transform: 'translateZ(0) rotate(0)' },
+					'15%, 35%': { transform: 'translateZ(0) rotate(90deg)' },
+					'65%, 85%': { transform: 'translateZ(0) rotate(270deg)' },
+					'100%': { transform: 'translateZ(0) rotate(360deg)' }
+				},
+				'shine': {
+					'0%': { backgroundPosition: '0% 0%' },
+					'50%': { backgroundPosition: '100% 100%' },
+					'100%': { backgroundPosition: '0% 0%' }
+				},
+				'gradient': {
+					to: { backgroundPosition: 'var(--bg-size) 0' }
+				},
+				'pulse-subtle': {
+					'0%, 100%': { opacity: '1' },
+					'50%': { opacity: '0.7' }
+				},
+				'marquee': {
+					from: { transform: 'translateX(0)' },
+					to: { transform: 'translateX(calc(-100% - var(--gap)))' }
 				}
 			},
 			animation: {
@@ -267,7 +293,14 @@ export default {
 				'slide-up': 'slide-up 0.8s ease-out',
 				'fade-in': 'fade-in 1s ease-out',
 				'hologram': 'hologram 3s ease-in-out infinite',
-				'stars': 'stars 20s linear infinite'
+				'stars': 'stars 20s linear infinite',
+				// Magic UI Animations
+				'shimmer-slide': 'shimmer-slide var(--speed) ease-in-out infinite alternate',
+				'spin-around': 'spin-around calc(var(--speed) * 2) infinite linear',
+				'shine': 'shine var(--duration) infinite linear',
+				'gradient': 'gradient 8s linear infinite',
+				'pulse-subtle': 'pulse-subtle 2s ease-in-out infinite',
+				'marquee': 'marquee var(--duration) linear infinite'
 			},
 			backgroundImage: {
 				'noise': 'url("/noise.png")',
