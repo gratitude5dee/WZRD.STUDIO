@@ -27,6 +27,7 @@ import { useComputeFlowStore } from '@/store/computeFlowStore';
 import { toast } from 'sonner';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Logo } from '@/components/ui/logo';
+import { ShineBorder } from '@/components/ui/shine-border';
 
 interface StudioSidebarProps {
   onAddBlock: (blockType: 'text' | 'image' | 'video' | 'upload') => void;
@@ -104,28 +105,44 @@ const StudioSidebar = ({
     <TooltipProvider delayDuration={300}>
       {/* Floating Sidebar - Vertically Centered */}
       <aside className="fixed left-4 top-1/2 -translate-y-1/2 z-40">
-        <div className="bg-zinc-900/90 backdrop-blur-xl border border-zinc-800/50 rounded-2xl shadow-2xl shadow-black/30 p-2 flex flex-col items-center gap-1">
-          {/* Primary Add Node Button */}
-          <SidebarButton
-            icon={Plus}
-            label="Add Node"
-            active={activePanel === 'add'}
-            onClick={() => togglePanel('add')}
-            data-walkthrough="add-button"
-            primary
-          />
+        <motion.div 
+          className="relative bg-surface-1/95 backdrop-blur-2xl border border-border-subtle rounded-2xl shadow-2xl shadow-black/40 p-2 flex flex-col items-center gap-1"
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+        >
+          {/* Primary Add Node Button with ShineBorder */}
+          <div className="relative">
+            <SidebarButton
+              icon={Plus}
+              label="Add Node"
+              active={activePanel === 'add'}
+              onClick={() => togglePanel('add')}
+              data-walkthrough="add-button"
+              primary
+            />
+            {activePanel === 'add' && (
+              <ShineBorder 
+                shineColor={["hsl(var(--accent-purple))", "hsl(var(--accent-teal))"]} 
+                borderWidth={2}
+                duration={4}
+              />
+            )}
+          </div>
 
           <Divider />
 
           {/* Pan/Select Mode Toggle */}
           {onToggleInteractionMode && (
-            <SidebarButton
-              icon={interactionMode === 'pan' ? Hand : MousePointer}
-              label={interactionMode === 'pan' ? 'Pan Mode (H)' : 'Select Mode (V)'}
-              active={interactionMode === 'select'}
-              onClick={onToggleInteractionMode}
-              modeIndicator={interactionMode}
-            />
+            <div className="relative">
+              <SidebarButton
+                icon={interactionMode === 'pan' ? Hand : MousePointer}
+                label={interactionMode === 'pan' ? 'Pan Mode (H)' : 'Select Mode (V)'}
+                active={interactionMode === 'select'}
+                onClick={onToggleInteractionMode}
+                modeIndicator={interactionMode}
+              />
+            </div>
           )}
 
           <SidebarButton
@@ -144,14 +161,23 @@ const StudioSidebar = ({
             data-walkthrough="history-button"
           />
 
-          <SidebarButton
-            icon={Sparkles}
-            label="AI Workflow"
-            active={activePanel === 'workflow'}
-            onClick={() => togglePanel('workflow')}
-            accent
-            data-walkthrough="ai-workflow-button"
-          />
+          <div className="relative">
+            <SidebarButton
+              icon={Sparkles}
+              label="AI Workflow"
+              active={activePanel === 'workflow'}
+              onClick={() => togglePanel('workflow')}
+              accent
+              data-walkthrough="ai-workflow-button"
+            />
+            {activePanel === 'workflow' && (
+              <ShineBorder 
+                shineColor={["hsl(var(--accent-purple))", "hsl(var(--accent-amber))"]} 
+                borderWidth={2}
+                duration={3}
+              />
+            )}
+          </div>
 
           <SidebarButton
             icon={Inbox}
@@ -173,16 +199,20 @@ const StudioSidebar = ({
 
           <Divider />
 
-          {/* Bottom Logo - using sm size with scale */}
-          <div className="pt-1 pb-1 opacity-40 hover:opacity-70 transition-opacity scale-75">
+          {/* Bottom Logo */}
+          <motion.div 
+            className="pt-1 pb-1 opacity-40 hover:opacity-70 transition-opacity duration-300 scale-75"
+            whileHover={{ scale: 0.8 }}
+            transition={{ type: "spring", stiffness: 400, damping: 17 }}
+          >
             <Logo size="sm" showVersion={false} />
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       </aside>
 
       {/* Panels Container */}
       <div ref={panelRef}>
-        <AnimatePresence>
+        <AnimatePresence mode="wait">
           {activePanel === 'add' && (
             <PanelWrapper>
               <AddNodeMenu
@@ -244,7 +274,7 @@ const StudioSidebar = ({
 };
 
 const Divider = () => (
-  <div className="w-8 h-px bg-zinc-800/60 my-1" />
+  <div className="w-8 h-px bg-gradient-to-r from-transparent via-border-subtle to-transparent my-1.5" />
 );
 
 interface SidebarButtonProps {
@@ -272,37 +302,49 @@ const SidebarButton: React.FC<SidebarButtonProps> = ({
 }) => (
   <Tooltip>
     <TooltipTrigger asChild>
-      <button
+      <motion.button
         onClick={onClick}
         className={cn(
-          'relative w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-200',
+          'relative w-10 h-10 rounded-xl flex items-center justify-center transition-colors duration-200',
           primary
-            ? 'bg-accent-purple text-white hover:bg-accent-purple/80 shadow-lg shadow-accent-purple/20'
+            ? 'bg-accent-purple text-white shadow-lg shadow-accent-purple/30'
             : active
               ? 'bg-accent-purple/20 text-accent-purple'
               : modeIndicator === 'select'
                 ? 'bg-accent-teal/15 text-accent-teal'
                 : accent
-                  ? 'text-zinc-400 hover:text-accent-purple hover:bg-accent-purple/10'
-                  : 'text-zinc-400 hover:text-white hover:bg-zinc-800/70'
+                  ? 'text-text-secondary hover:text-accent-purple hover:bg-accent-purple/10'
+                  : 'text-text-secondary hover:text-text-primary hover:bg-surface-2'
         )}
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        transition={{ type: "spring", stiffness: 400, damping: 17 }}
         {...props}
       >
         <Icon className="w-[18px] h-[18px]" />
         {badge !== undefined && badge > 0 && (
-          <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-accent-rose text-[10px] font-bold text-white flex items-center justify-center">
+          <motion.span 
+            className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-accent-rose text-[10px] font-bold text-white flex items-center justify-center"
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", stiffness: 500, damping: 25 }}
+          >
             {badge}
-          </span>
+          </motion.span>
         )}
         {modeIndicator && (
-          <span className={cn(
-            'absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full',
-            modeIndicator === 'pan' ? 'bg-zinc-500' : 'bg-accent-teal'
-          )} />
+          <motion.span 
+            className={cn(
+              'absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full',
+              modeIndicator === 'pan' ? 'bg-text-tertiary' : 'bg-accent-teal'
+            )}
+            layoutId="mode-indicator"
+            transition={{ type: "spring", stiffness: 500, damping: 30 }}
+          />
         )}
-      </button>
+      </motion.button>
     </TooltipTrigger>
-    <TooltipContent side="right" className="text-xs">
+    <TooltipContent side="right" className="text-xs bg-surface-2 border-border-subtle">
       {label}
     </TooltipContent>
   </Tooltip>
@@ -317,10 +359,10 @@ const PanelWrapper: React.FC<PanelWrapperProps> = ({ children, offsetY = 0 }) =>
   <motion.div
     className="fixed left-20 top-1/2 z-50"
     style={{ transform: `translateY(calc(-50% + ${offsetY}px))` }}
-    initial={{ opacity: 0, x: -10, scale: 0.95 }}
+    initial={{ opacity: 0, x: -16, scale: 0.96 }}
     animate={{ opacity: 1, x: 0, scale: 1 }}
-    exit={{ opacity: 0, x: -10, scale: 0.95 }}
-    transition={{ duration: 0.15 }}
+    exit={{ opacity: 0, x: -16, scale: 0.96 }}
+    transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
   >
     {children}
   </motion.div>
@@ -328,29 +370,42 @@ const PanelWrapper: React.FC<PanelWrapperProps> = ({ children, offsetY = 0 }) =>
 
 const AddNodeMenu: React.FC<{
   onAddBlock: (type: 'text' | 'image' | 'video' | 'upload') => void;
-}> = ({ onAddBlock }) => (
-  <div className="w-56 bg-zinc-900/95 backdrop-blur-xl border border-zinc-800/50 rounded-xl overflow-hidden shadow-2xl">
-    <div className="p-2 space-y-1">
-      {[
-        { type: 'text' as const, icon: Type, label: 'Text', shortcut: 'T' },
-        { type: 'image' as const, icon: ImageIcon, label: 'Image', shortcut: 'I' },
-        { type: 'video' as const, icon: Video, label: 'Video', shortcut: 'V' },
-        { type: 'upload' as const, icon: Upload, label: 'Upload', shortcut: 'U' },
-      ].map((item) => (
-        <button
-          key={item.type}
-          onClick={() => onAddBlock(item.type)}
-          className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-zinc-800/50 transition-colors"
-        >
-          <div className="flex items-center gap-3">
-            <item.icon className="w-4 h-4 text-zinc-400" />
-            <span className="text-sm text-white">{item.label}</span>
-          </div>
-          <span className="text-xs text-zinc-600">{item.shortcut}</span>
-        </button>
-      ))}
-    </div>
-  </div>
-);
+}> = ({ onAddBlock }) => {
+  const menuItems = [
+    { type: 'text' as const, icon: Type, label: 'Text', shortcut: 'T', color: 'text-accent-teal' },
+    { type: 'image' as const, icon: ImageIcon, label: 'Image', shortcut: 'I', color: 'text-accent-purple' },
+    { type: 'video' as const, icon: Video, label: 'Video', shortcut: 'V', color: 'text-accent-rose' },
+    { type: 'upload' as const, icon: Upload, label: 'Upload', shortcut: 'U', color: 'text-accent-amber' },
+  ];
+
+  return (
+    <motion.div 
+      className="w-56 bg-surface-1/98 backdrop-blur-2xl border border-border-subtle rounded-xl overflow-hidden shadow-2xl shadow-black/50"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.15 }}
+    >
+      <div className="p-2 space-y-0.5">
+        {menuItems.map((item, index) => (
+          <motion.button
+            key={item.type}
+            onClick={() => onAddBlock(item.type)}
+            className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-surface-2 transition-colors group"
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.15, delay: index * 0.03 }}
+            whileHover={{ x: 4 }}
+          >
+            <div className="flex items-center gap-3">
+              <item.icon className={cn("w-4 h-4 transition-colors", item.color)} />
+              <span className="text-sm text-text-primary">{item.label}</span>
+            </div>
+            <span className="text-xs text-text-tertiary group-hover:text-text-secondary transition-colors px-1.5 py-0.5 rounded bg-surface-2 group-hover:bg-surface-3">{item.shortcut}</span>
+          </motion.button>
+        ))}
+      </div>
+    </motion.div>
+  );
+};
 
 export default StudioSidebar;
