@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Loader2, UserPlus, Plus, FolderKanban, Activity, Image, Sparkles } from 'lucide-react';
+import { Loader2, UserPlus, Plus, FolderKanban, Activity, Image, Sparkles, Settings, HelpCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import wzrdLogo from '@/assets/wzrd-logo.png';
 import { ProjectList } from '@/components/home/ProjectList';
@@ -17,6 +17,10 @@ import { DemoBanner } from '@/components/demo/DemoBanner';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { TextAnimate } from '@/components/ui/text-animate';
 import { ShimmerButton } from '@/components/ui/shimmer-button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { OnboardingTour } from '@/components/onboarding/OnboardingTour';
+import { useOnboardingTour } from '@/hooks/useOnboardingTour';
+import { useSidebar } from '@/contexts/SidebarContext';
 import { useAuth } from '@/providers/AuthProvider';
 import { supabaseService } from '@/services/supabaseService';
 import { useToast } from '@/hooks/use-toast';
@@ -33,6 +37,8 @@ export default function Home() {
   const { user } = useAuth();
   const { toast } = useToast();
   const { availableCredits } = useCredits();
+  const { isCollapsed } = useSidebar();
+  const onboarding = useOnboardingTour();
   const isDemo = isDemoModeEnabled();
 
   const [activeView, setActiveView] = useState('all');
@@ -207,12 +213,17 @@ export default function Home() {
         />
 
         {/* Main Content */}
-        <div className="flex-1 md:ml-64 pb-20 md:pb-0">
+        <motion.div 
+          className="flex-1 pb-20 md:pb-0"
+          animate={{ marginLeft: isCollapsed ? 72 : 256 }}
+          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+          initial={false}
+        >
           {/* Mobile Header */}
           <MobileHeader onMenuClick={() => setIsMobileSidebarOpen(true)} />
 
           {/* Desktop Header - hidden on mobile */}
-          <header className={cn(
+          <header data-tour="dashboard-title" className={cn(
             "border-b border-border-default",
             "bg-gradient-to-r from-surface-2 via-transparent to-surface-2 backdrop-blur-sm",
             "hidden md:block"
@@ -239,7 +250,44 @@ export default function Home() {
                 </span>
               </div>
               
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                {/* Settings button */}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <motion.button 
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className={cn(
+                        "p-2 rounded-lg transition-all duration-200",
+                        "text-text-secondary hover:text-text-primary hover:bg-surface-2",
+                        "dark:text-muted-foreground dark:hover:text-foreground dark:hover:bg-white/[0.06]"
+                      )}
+                    >
+                      <Settings className="w-4 h-4" />
+                    </motion.button>
+                  </TooltipTrigger>
+                  <TooltipContent>Settings</TooltipContent>
+                </Tooltip>
+
+                {/* Help button - triggers onboarding tour */}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <motion.button 
+                      onClick={onboarding.start}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className={cn(
+                        "p-2 rounded-lg transition-all duration-200",
+                        "text-text-secondary hover:text-text-primary hover:bg-surface-2",
+                        "dark:text-muted-foreground dark:hover:text-foreground dark:hover:bg-white/[0.06]"
+                      )}
+                    >
+                      <HelpCircle className="w-4 h-4" />
+                    </motion.button>
+                  </TooltipTrigger>
+                  <TooltipContent>Help & Tour</TooltipContent>
+                </Tooltip>
+
                 <ThemeToggle />
                 <img 
                   src={wzrdLogo} 
@@ -274,7 +322,7 @@ export default function Home() {
               </div>
               
               {/* Search + Sort + View Mode */}
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-4" data-tour="search-bar">
                 <div className="w-72">
                   <SearchBar onSearch={handleSearch} />
                 </div>
@@ -297,6 +345,7 @@ export default function Home() {
                   <span>Invite</span>
                 </motion.button>
                 <ShimmerButton
+                  data-tour="new-project-btn"
                   onClick={handleCreateProject}
                   shimmerColor="#ffffff"
                   shimmerSize="0.05em"
@@ -312,7 +361,7 @@ export default function Home() {
           </header>
 
           {/* Stats Row - Responsive grid */}
-          <div className="px-4 md:px-6 py-4 md:py-6 border-b border-border-default bg-gradient-to-b from-surface-2 to-transparent">
+          <div data-tour="stats-section" className="px-4 md:px-6 py-4 md:py-6 border-b border-border-default bg-gradient-to-b from-surface-2 to-transparent">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
               <StatCard 
                 icon={<FolderKanban className="w-5 h-5" />}
@@ -357,7 +406,7 @@ export default function Home() {
           </div>
 
           {/* Content Area */}
-          <main className="p-4 md:p-6">
+          <main data-tour="projects-section" className="p-4 md:p-6">
             {isLoading ? (
               <div className="flex flex-col items-center justify-center py-12 md:py-20">
                 <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-accent/15 flex items-center justify-center mb-4">
@@ -424,7 +473,7 @@ export default function Home() {
               />
             )}
           </main>
-        </div>
+        </motion.div>
 
         {/* Mobile Bottom Navigation */}
         <MobileBottomNav
@@ -433,6 +482,19 @@ export default function Home() {
           onCreateProject={handleCreateProject}
         />
       </div>
+
+      {/* Onboarding Tour */}
+      <OnboardingTour
+        isActive={onboarding.isActive}
+        currentStep={onboarding.currentStep}
+        currentStepIndex={onboarding.currentStepIndex}
+        totalSteps={onboarding.totalSteps}
+        onNext={onboarding.next}
+        onPrev={onboarding.prev}
+        onSkip={onboarding.stop}
+        onComplete={onboarding.complete}
+        onGoToStep={onboarding.goToStep}
+      />
     </>
   );
 }
