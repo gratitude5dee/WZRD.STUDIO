@@ -215,7 +215,7 @@ export default function Home() {
         {/* Main Content */}
         <motion.div 
           className="flex-1 pb-20 md:pb-0"
-          animate={{ marginLeft: isCollapsed ? 72 : 256 }}
+          animate={{ marginLeft: isCollapsed ? 64 : 256 }}
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
           initial={false}
         >
