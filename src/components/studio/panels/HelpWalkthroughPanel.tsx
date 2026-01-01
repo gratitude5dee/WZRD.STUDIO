@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { X, ChevronLeft, ChevronRight, HelpCircle } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import { type WalkthroughStep } from '@/hooks/useWalkthrough';
 import { createPortal } from 'react-dom';
+import { cn } from '@/lib/utils';
 
 interface WalkthroughTooltipProps {
   step: WalkthroughStep;
@@ -34,7 +35,7 @@ export const WalkthroughTooltip: React.FC<WalkthroughTooltipProps> = ({
 
     let top = 0;
     let left = 0;
-    const offset = 12;
+    const offset = 16;
 
     switch (step.placement) {
       case 'right':
@@ -43,15 +44,15 @@ export const WalkthroughTooltip: React.FC<WalkthroughTooltipProps> = ({
         break;
       case 'left':
         top = rect.top + rect.height / 2 - (tooltipRect?.height || 100) / 2;
-        left = rect.left - (tooltipRect?.width || 280) - offset;
+        left = rect.left - (tooltipRect?.width || 320) - offset;
         break;
       case 'top':
         top = rect.top - (tooltipRect?.height || 100) - offset;
-        left = rect.left + rect.width / 2 - (tooltipRect?.width || 280) / 2;
+        left = rect.left + rect.width / 2 - (tooltipRect?.width || 320) / 2;
         break;
       case 'bottom':
         top = rect.bottom + offset;
-        left = rect.left + rect.width / 2 - (tooltipRect?.width || 280) / 2;
+        left = rect.left + rect.width / 2 - (tooltipRect?.width || 320) / 2;
         break;
       default:
         break;
@@ -65,49 +66,67 @@ export const WalkthroughTooltip: React.FC<WalkthroughTooltipProps> = ({
 
   return createPortal(
     <>
-      <div className="fixed inset-0 bg-black/50 z-[9998]" onClick={onClose} />
+      <div className="fixed inset-0 bg-black/60 z-[9998]" onClick={onClose} />
 
       <motion.div
         ref={tooltipRef}
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.9 }}
-        className="fixed z-[9999] w-72 bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl overflow-hidden"
+        initial={{ opacity: 0, scale: 0.9, y: 10 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.9, y: 10 }}
+        className="fixed z-[9999] w-80 bg-surface-1/98 backdrop-blur-2xl border border-border-subtle rounded-2xl shadow-2xl shadow-black/50 overflow-hidden"
         style={{ top: position.top, left: position.left }}
       >
-        <div className="p-4">
-          <div className="flex items-start justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <HelpCircle className="w-5 h-5 text-accent-purple" />
-              <h3 className="text-sm font-semibold text-white">{step.title}</h3>
+        {/* Gradient accent border at top */}
+        <div className="h-1 bg-gradient-to-r from-accent-purple via-accent-teal to-accent-amber" />
+
+        <div className="p-5">
+          <div className="flex items-start justify-between mb-3">
+            <div className="flex items-center gap-2.5">
+              <div className="p-1.5 rounded-lg bg-accent-purple/20">
+                <Sparkles className="w-4 h-4 text-accent-purple" />
+              </div>
+              <h3 className="text-base font-semibold text-text-primary">{step.title}</h3>
             </div>
-            <button onClick={onClose} className="p-1 hover:bg-zinc-800 rounded">
-              <X className="w-4 h-4 text-zinc-400" />
+            <button 
+              onClick={onClose} 
+              className="p-1.5 hover:bg-surface-2 rounded-lg transition-colors"
+            >
+              <X className="w-4 h-4 text-text-tertiary" />
             </button>
           </div>
-          <p className="text-sm text-zinc-400 leading-relaxed">{step.content}</p>
+          <p className="text-sm text-text-secondary leading-relaxed">{step.content}</p>
         </div>
 
-        <div className="px-4 py-3 bg-zinc-800/50 flex items-center justify-between">
-          <span className="text-xs text-zinc-500">
-            Step {currentIndex + 1} of {totalSteps}
-          </span>
+        <div className="px-5 py-3.5 bg-surface-2/50 border-t border-border-subtle flex items-center justify-between">
+          {/* Progress dots */}
+          <div className="flex items-center gap-1.5">
+            {Array.from({ length: totalSteps }).map((_, i) => (
+              <div
+                key={i}
+                className={cn(
+                  'w-2 h-2 rounded-full transition-colors',
+                  i === currentIndex ? 'bg-accent-purple' : 'bg-surface-3'
+                )}
+              />
+            ))}
+          </div>
+
           <div className="flex items-center gap-2">
             {currentIndex > 0 && (
               <button
                 onClick={onPrev}
-                className="px-3 py-1.5 text-xs bg-zinc-700 hover:bg-zinc-600 text-white rounded-lg flex items-center gap-1"
+                className="px-3 py-1.5 text-sm bg-surface-3 hover:bg-surface-3/80 text-text-primary rounded-lg flex items-center gap-1.5 transition-colors"
               >
-                <ChevronLeft className="w-3 h-3" />
+                <ChevronLeft className="w-3.5 h-3.5" />
                 Back
               </button>
             )}
             <button
               onClick={onNext}
-              className="px-3 py-1.5 text-xs bg-accent-purple hover:bg-accent-purple/80 text-white rounded-lg flex items-center gap-1"
+              className="px-4 py-1.5 text-sm bg-accent-purple hover:bg-accent-purple/90 text-white rounded-lg flex items-center gap-1.5 transition-colors"
             >
               {currentIndex === totalSteps - 1 ? 'Finish' : 'Next'}
-              {currentIndex < totalSteps - 1 && <ChevronRight className="w-3 h-3" />}
+              {currentIndex < totalSteps - 1 && <ChevronRight className="w-3.5 h-3.5" />}
             </button>
           </div>
         </div>
@@ -121,7 +140,7 @@ export const walkthroughStyles = `
   .walkthrough-highlight {
     position: relative;
     z-index: 9999 !important;
-    box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.5), 0 0 20px rgba(139, 92, 246, 0.3) !important;
-    border-radius: 8px;
+    box-shadow: 0 0 0 3px hsl(var(--accent-purple)), 0 0 30px hsla(var(--accent-purple) / 0.4) !important;
+    border-radius: 12px;
   }
 `;

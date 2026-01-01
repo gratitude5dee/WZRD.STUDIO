@@ -133,6 +133,7 @@ export const StudioGalleryPanel: React.FC<StudioGalleryPanelProps> = ({
                     <button
                       key={tab.id}
                       onClick={() => setActiveMainTab(tab.id)}
+                      data-walkthrough={tab.id === 'gallery' ? 'gallery-tab' : tab.id === 'workflow' ? 'workflow-tab' : undefined}
                       className={cn(
                         'relative flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors overflow-hidden',
                         isActive
