@@ -115,6 +115,7 @@ export function StudioRightPanel({
                       projectId={projectId}
                       onAssetSelect={onAssetSelect}
                       onClose={() => setIsCollapsed(true)}
+                      hideHeader={true}
                     />
                   </motion.div>
                 )}

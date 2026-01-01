@@ -39,11 +39,13 @@ interface AssetsGalleryPanelProps {
   projectId: string;
   onAssetSelect?: (asset: Asset) => void;
   onClose: () => void;
+  hideHeader?: boolean;
 }
 
 export const AssetsGalleryPanel: React.FC<AssetsGalleryPanelProps> = ({
   projectId,
   onAssetSelect,
+  hideHeader = false,
 }) => {
   const [assets, setAssets] = useState<Asset[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -175,31 +177,33 @@ export const AssetsGalleryPanel: React.FC<AssetsGalleryPanelProps> = ({
   return (
     <div className="w-96 bg-zinc-900/95 backdrop-blur-xl border border-zinc-800/50 rounded-xl overflow-hidden shadow-2xl">
       <div className="px-4 py-3 border-b border-zinc-800/50">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <ImageIcon className="w-4 h-4 text-accent-amber" />
-            <span className="text-sm font-medium text-white">Project Assets</span>
-            <span className="text-xs text-zinc-500">({filteredAssets.length})</span>
+        {!hideHeader && (
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <ImageIcon className="w-4 h-4 text-accent-amber" />
+              <span className="text-sm font-medium text-white">Project Assets</span>
+              <span className="text-xs text-zinc-500">({filteredAssets.length})</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
+                className="p-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white transition-colors"
+              >
+                {viewMode === 'grid' ? <List className="w-4 h-4" /> : <Grid className="w-4 h-4" />}
+              </button>
+              <label className="p-1.5 rounded-lg bg-accent-amber/20 hover:bg-accent-amber/30 text-accent-amber cursor-pointer transition-colors">
+                <Plus className="w-4 h-4" />
+                <input
+                  type="file"
+                  multiple
+                  className="hidden"
+                  onChange={(event) => handleUpload(event.target.files)}
+                  disabled={isUploading}
+                />
+              </label>
+            </div>
           </div>
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
-              className="p-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white transition-colors"
-            >
-              {viewMode === 'grid' ? <List className="w-4 h-4" /> : <Grid className="w-4 h-4" />}
-            </button>
-            <label className="p-1.5 rounded-lg bg-accent-amber/20 hover:bg-accent-amber/30 text-accent-amber cursor-pointer transition-colors">
-              <Plus className="w-4 h-4" />
-              <input
-                type="file"
-                multiple
-                className="hidden"
-                onChange={(event) => handleUpload(event.target.files)}
-                disabled={isUploading}
-              />
-            </label>
-          </div>
-        </div>
+        )}
 
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />

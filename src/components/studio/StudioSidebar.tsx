@@ -148,8 +148,6 @@ const StudioSidebar = ({
             onClick={() => walkthrough.start()} 
           />
 
-          <Divider />
-
         </motion.div>
       </aside>
 
