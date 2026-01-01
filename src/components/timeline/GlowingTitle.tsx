@@ -1,49 +1,58 @@
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { TextAnimate } from '@/components/ui/text-animate';
 
 interface GlowingTitleProps {
   title: string;
   className?: string;
   glowColor?: string;
+  animate?: boolean;
 }
 
 export function GlowingTitle({
   title,
   className,
-  glowColor = '#00D9FF' // Default cyan
+  glowColor = '#00D9FF',
+  animate = true
 }: GlowingTitleProps) {
   return (
-    <motion.h1
-      className={cn(
-        'text-4xl font-bold relative',
-        'animate-glow',
-        className
-      )}
-      animate={{
-        textShadow: [
-          `0 0 4px ${glowColor}66, 0 0 8px ${glowColor}4D, 0 0 12px ${glowColor}33`,
-          `0 0 8px ${glowColor}99, 0 0 16px ${glowColor}80, 0 0 24px ${glowColor}4D, 0 0 32px ${glowColor}33`,
-          `0 0 4px ${glowColor}66, 0 0 8px ${glowColor}4D, 0 0 12px ${glowColor}33`
+    <motion.div
+      className={cn('relative', className)}
+      animate={animate ? {
+        filter: [
+          `drop-shadow(0 0 4px ${glowColor}66)`,
+          `drop-shadow(0 0 12px ${glowColor}80)`,
+          `drop-shadow(0 0 4px ${glowColor}66)`
         ]
-      }}
+      } : undefined}
       transition={{
         duration: 2.5,
         repeat: Infinity,
         ease: 'easeInOut'
       }}
     >
-      {title}
+      <TextAnimate 
+        animation="blurInUp" 
+        by="character"
+        className="text-4xl font-bold"
+        style={{
+          textShadow: `0 0 8px ${glowColor}99, 0 0 16px ${glowColor}80`
+        }}
+      >
+        {title}
+      </TextAnimate>
 
       {/* Additional glow layer for depth */}
       <span
-        className="absolute inset-0 blur-md opacity-40 -z-10"
+        className="absolute inset-0 blur-md opacity-40 -z-10 text-4xl font-bold"
         style={{
           color: glowColor,
           textShadow: `0 0 20px ${glowColor}`
         }}
+        aria-hidden
       >
         {title}
       </span>
-    </motion.h1>
+    </motion.div>
   );
 }

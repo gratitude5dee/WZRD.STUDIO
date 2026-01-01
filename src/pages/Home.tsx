@@ -213,38 +213,101 @@ export default function Home() {
 
           {/* Desktop Header - hidden on mobile */}
           <header className={cn(
-            "h-20 border-b border-border-default items-center justify-between px-6",
+            "border-b border-border-default",
             "bg-gradient-to-r from-surface-2 via-transparent to-surface-2 backdrop-blur-sm",
-            "hidden md:flex"
+            "hidden md:block"
           )}>
-            <div className="flex flex-col">
-              <div className="flex items-center gap-2">
-                <TextAnimate animation="blurInUp" by="word" className="text-xl font-semibold text-text-primary dark:text-foreground">
-                  Dashboard
-                </TextAnimate>
-                <motion.span
-                  initial={{ opacity: 0, scale: 0 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.3, type: "spring" }}
-                  className="text-lg"
-                >
-                  📊
-                </motion.span>
+            {/* Row 1: Title + Project Count + Actions */}
+            <div className="h-16 flex items-center justify-between px-6">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <TextAnimate animation="blurInUp" by="word" className="text-xl font-semibold text-text-primary dark:text-foreground">
+                    Dashboard
+                  </TextAnimate>
+                  <motion.span
+                    initial={{ opacity: 0, scale: 0 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.3, type: "spring" }}
+                    className="text-lg"
+                  >
+                    📊
+                  </motion.span>
+                </div>
+                <div className="h-5 w-px bg-border-default" />
+                <span className="text-sm text-text-secondary dark:text-muted-foreground font-medium">
+                  {filteredProjects.length} {filteredProjects.length === 1 ? 'project' : 'projects'}
+                </span>
               </div>
-              <TextAnimate animation="fadeIn" by="word" delay={0.2} className="text-sm text-text-secondary dark:text-muted-foreground">
-                Welcome back! Here's your creative overview
-              </TextAnimate>
+              
+              <div className="flex items-center gap-3">
+                <ThemeToggle />
+                <img 
+                  src={wzrdLogo} 
+                  alt="WZRD.STUDIO Logo" 
+                  className="h-10 object-contain"
+                />
+                <span className="text-xs text-primary bg-primary/15 px-2 py-0.5 rounded-full border border-primary/25 font-medium">
+                  ALPHA
+                </span>
+              </div>
             </div>
-            <div className="flex items-center gap-3">
-              <ThemeToggle />
-              <img 
-                src={wzrdLogo} 
-                alt="WZRD.STUDIO Logo" 
-                className="h-10 object-contain"
-              />
-              <span className="text-xs text-primary bg-primary/15 px-2 py-0.5 rounded-full border border-primary/25 font-medium">
-                ALPHA
-              </span>
+            
+            {/* Row 2: Tabs + Search + Actions */}
+            <div className="h-14 flex items-center justify-between px-6 border-t border-border-subtle">
+              {/* Tabs */}
+              <div className="flex items-center gap-1 p-1 rounded-xl bg-surface-2">
+                {tabs.map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={cn(
+                      "px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200",
+                      activeTab === tab.id
+                        ? "text-text-primary bg-surface-1 shadow-sm"
+                        : "text-text-tertiary hover:text-text-primary"
+                    )}
+                  >
+                    {tab.label}
+                    <span className="ml-2 text-xs opacity-60">({tab.count})</span>
+                  </button>
+                ))}
+              </div>
+              
+              {/* Search + Sort + View Mode */}
+              <div className="flex items-center gap-4">
+                <div className="w-72">
+                  <SearchBar onSearch={handleSearch} />
+                </div>
+                <SortDropdown value={sortBy} onChange={setSortBy} />
+                <ProjectViewModeSelector viewMode={viewMode} setViewMode={setViewMode} />
+              </div>
+              
+              {/* Actions */}
+              <div className="flex items-center gap-3">
+                <motion.button 
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className={cn(
+                    "flex items-center gap-2 h-9 px-4 rounded-lg text-sm font-medium transition-all duration-200",
+                    "bg-surface-2 border border-border-default text-text-secondary",
+                    "hover:text-text-primary hover:border-border-strong hover:bg-surface-3"
+                  )}
+                >
+                  <UserPlus className="w-4 h-4" />
+                  <span>Invite</span>
+                </motion.button>
+                <ShimmerButton
+                  onClick={handleCreateProject}
+                  shimmerColor="#ffffff"
+                  shimmerSize="0.05em"
+                  shimmerDuration="2.5s"
+                  background="linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary)/0.8) 100%)"
+                  className="h-9 px-4 text-sm font-medium"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  <span>New Project</span>
+                </ShimmerButton>
+              </div>
             </div>
           </header>
 
@@ -290,74 +353,6 @@ export default function Home() {
                 className="hidden sm:block"
                 index={3}
               />
-            </div>
-          </div>
-
-          {/* Toolbar - Responsive */}
-          <div className="h-12 md:h-14 border-b border-border-default flex items-center justify-between px-4 md:px-6 bg-surface-2/70">
-            <div className="flex items-center gap-3">
-              <span className="text-xs md:text-sm text-text-secondary dark:text-muted-foreground font-medium">
-                {filteredProjects.length} {filteredProjects.length === 1 ? 'project' : 'projects'}
-              </span>
-            </div>
-
-            <div className="flex items-center gap-2 md:gap-3">
-              <SortDropdown value={sortBy} onChange={setSortBy} />
-              <ProjectViewModeSelector viewMode={viewMode} setViewMode={setViewMode} />
-            </div>
-          </div>
-
-          {/* Tabs and Actions Bar - Responsive */}
-          <div className="min-h-14 md:h-16 border-b border-border-default flex flex-col md:flex-row md:items-center justify-between px-4 md:px-6 py-3 md:py-0 gap-3 md:gap-0">
-            {/* Tabs - scrollable on mobile */}
-            <div className="flex items-center gap-1 p-1 rounded-xl bg-surface-2 overflow-x-auto">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={cn(
-                    "px-3 md:px-4 py-2 text-xs md:text-sm font-medium rounded-lg transition-all duration-200 whitespace-nowrap",
-                    activeTab === tab.id
-                      ? "text-text-primary bg-surface-1 shadow-sm"
-                      : "text-text-tertiary hover:text-text-primary"
-                  )}
-                >
-                  {tab.label}
-                  <span className="ml-1 md:ml-2 text-[10px] md:text-xs opacity-60">({tab.count})</span>
-                </button>
-              ))}
-            </div>
-
-            {/* Search - full width on mobile */}
-            <div className="flex-1 md:max-w-md md:mx-6 order-last md:order-none">
-              <SearchBar onSearch={handleSearch} />
-            </div>
-
-            {/* Actions - hidden on mobile (use bottom nav instead) */}
-            <div className="hidden md:flex items-center gap-3">
-              <motion.button 
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className={cn(
-                  "flex items-center gap-2 h-9 px-4 rounded-lg text-sm font-medium transition-all duration-200",
-                  "bg-surface-2 border border-border-default text-text-secondary",
-                  "hover:text-text-primary hover:border-border-strong hover:bg-surface-3"
-                )}
-              >
-                <UserPlus className="w-4 h-4" />
-                <span>Invite</span>
-              </motion.button>
-              <ShimmerButton
-                onClick={handleCreateProject}
-                shimmerColor="#ffffff"
-                shimmerSize="0.05em"
-                shimmerDuration="2.5s"
-                background="linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary)/0.8) 100%)"
-                className="h-9 px-4 text-sm font-medium"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                <span>New Project</span>
-              </ShimmerButton>
             </div>
           </div>
 

@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { supabaseService } from '@/services/supabaseService';
 import { Button } from '@/components/ui/button';
@@ -11,6 +10,8 @@ import { toast } from 'sonner';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useProjectContext } from './ProjectContext';
 import { StorylineProgress } from './StorylineProgress';
+import { TextAnimate } from '@/components/ui/text-animate';
+import { motion, AnimatePresence } from 'framer-motion';
 import type { Storyline } from './types';
 import { ProjectData } from './types';
 
@@ -445,59 +446,100 @@ const StorylineTab = ({ projectData, updateProjectData }: StorylineTabProps) => 
                   <div className="prose prose-invert max-w-none">
                     {['creating', 'generating', 'scenes', 'characters'].includes(streamingStatus) && streamingStory ? (
                       <div className="relative">
-                        <p className="text-zinc-300 whitespace-pre-line leading-relaxed transition-all duration-75">
-                          {streamingStory}
-                          <span className="inline-block w-0.5 h-5 bg-primary ml-0.5 animate-[blink_0.8s_ease-in-out_infinite]" />
-                        </p>
-                        <style>{`
-                          @keyframes blink {
-                            0%, 50% { opacity: 1; }
-                            51%, 100% { opacity: 0; }
-                          }
-                        `}</style>
+                        <div className="text-zinc-300 whitespace-pre-line leading-relaxed">
+                          <TextAnimate 
+                            animation="blurIn" 
+                            by="word"
+                            duration={0.4}
+                            className="inline"
+                          >
+                            {streamingStory}
+                          </TextAnimate>
+                          <motion.span 
+                            className="inline-block w-0.5 h-5 bg-primary ml-1 align-middle"
+                            animate={{ opacity: [1, 0, 1] }}
+                            transition={{ duration: 0.8, repeat: Infinity, ease: "easeInOut" }}
+                          />
+                        </div>
                       </div>
                     ) : selectedStoryline?.full_story ? (
-                      <p className="text-zinc-300 whitespace-pre-line leading-relaxed">
+                      <TextAnimate 
+                        animation="fadeIn" 
+                        by="word"
+                        className="text-zinc-300 whitespace-pre-line leading-relaxed"
+                      >
                         {selectedStoryline.full_story}
-                      </p>
+                      </TextAnimate>
                     ) : streamingStatus === 'creating' ? (
                       <div className="space-y-3">
-                        <Skeleton className="h-4 w-full" />
-                        <Skeleton className="h-4 w-5/6" />
-                        <Skeleton className="h-4 w-4/5" />
-                        <Skeleton className="h-4 w-full" />
-                        <Skeleton className="h-4 w-3/4" />
+                        <Skeleton className="h-4 w-full animate-shimmer" />
+                        <Skeleton className="h-4 w-5/6 animate-shimmer" />
+                        <Skeleton className="h-4 w-4/5 animate-shimmer" />
+                        <Skeleton className="h-4 w-full animate-shimmer" />
+                        <Skeleton className="h-4 w-3/4 animate-shimmer" />
                       </div>
                     ) : (
                       <Skeleton className="h-48 w-full" />
                     )}
                   </div>
 
-                  {/* Show streaming scenes */}
-                  {streamingScenes.length > 0 && (
-                    <div className="mt-6 space-y-2">
-                      <h3 className="text-lg font-semibold text-zinc-300">Scenes</h3>
-                      {streamingScenes.map((scene, idx) => (
-                        <div key={scene.id || idx} className="p-3 bg-zinc-900 rounded animate-fade-in">
-                          <span className="font-medium">Scene {scene.scene_number}:</span> {scene.title}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  
-                  {/* Show streaming characters */}
-                  {streamingCharacters.length > 0 && (
-                    <div className="mt-6">
-                      <h3 className="text-lg font-semibold text-zinc-300 mb-2">Characters</h3>
-                      <div className="flex flex-wrap gap-2">
-                        {streamingCharacters.map((char, idx) => (
-                          <Badge key={char.id || idx} className="bg-zinc-900 text-zinc-300 animate-fade-in">
-                            {char.name}
-                          </Badge>
+                  {/* Show streaming scenes with staggered animation */}
+                  <AnimatePresence>
+                    {streamingScenes.length > 0 && (
+                      <motion.div 
+                        className="mt-6 space-y-2"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        <TextAnimate animation="fadeIn" by="word" className="text-lg font-semibold text-zinc-300">
+                          Scenes
+                        </TextAnimate>
+                        {streamingScenes.map((scene, idx) => (
+                          <motion.div 
+                            key={scene.id || idx} 
+                            className="p-3 bg-zinc-900 rounded border border-zinc-800"
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: idx * 0.1, duration: 0.3 }}
+                          >
+                            <span className="font-medium text-primary">Scene {scene.scene_number}:</span>{' '}
+                            <span className="text-zinc-300">{scene.title}</span>
+                          </motion.div>
                         ))}
-                      </div>
-                    </div>
-                  )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                  
+                  {/* Show streaming characters with staggered animation */}
+                  <AnimatePresence>
+                    {streamingCharacters.length > 0 && (
+                      <motion.div 
+                        className="mt-6"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        <TextAnimate animation="fadeIn" by="word" className="text-lg font-semibold text-zinc-300 mb-2">
+                          Characters
+                        </TextAnimate>
+                        <div className="flex flex-wrap gap-2">
+                          {streamingCharacters.map((char, idx) => (
+                            <motion.div
+                              key={char.id || idx}
+                              initial={{ opacity: 0, scale: 0.8 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              transition={{ delay: idx * 0.08, type: "spring", stiffness: 300 }}
+                            >
+                              <Badge className="bg-zinc-900 text-zinc-300 border border-zinc-700">
+                                {char.name}
+                              </Badge>
+                            </motion.div>
+                          ))}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                   
                   <div className="mt-4 text-right text-sm text-zinc-500">
                     {(streamingStory || selectedStoryline?.full_story || '').length} characters
