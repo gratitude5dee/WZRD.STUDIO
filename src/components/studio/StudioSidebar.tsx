@@ -21,7 +21,7 @@ import { useWalkthrough } from '@/hooks/useWalkthrough';
 import { useComputeFlowStore } from '@/store/computeFlowStore';
 import { toast } from 'sonner';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Logo } from '@/components/ui/logo';
+
 import { ShineBorder } from '@/components/ui/shine-border';
 
 interface StudioSidebarProps {
@@ -81,9 +81,9 @@ const StudioSidebar = ({
   return (
     <TooltipProvider delayDuration={300}>
       {/* Floating Sidebar - Vertically Centered - Reduced width */}
-      <aside className="fixed left-2 top-1/2 -translate-y-1/2 z-40">
+      <aside className="fixed left-1 top-1/2 -translate-y-1/2 z-40">
         <motion.div 
-          className="relative bg-surface-1/95 backdrop-blur-2xl border border-border-subtle rounded-2xl shadow-2xl shadow-black/40 p-1.5 flex flex-col items-center gap-0.5"
+          className="relative bg-surface-1/95 backdrop-blur-2xl border border-border-subtle rounded-2xl shadow-2xl shadow-black/40 p-1 flex flex-col items-center gap-0"
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
@@ -150,14 +150,6 @@ const StudioSidebar = ({
 
           <Divider />
 
-          {/* Bottom Logo */}
-          <motion.div 
-            className="pt-1 pb-1 opacity-40 hover:opacity-70 transition-opacity duration-300 scale-75"
-            whileHover={{ scale: 0.8 }}
-            transition={{ type: "spring", stiffness: 400, damping: 17 }}
-          >
-            <Logo size="sm" showVersion={false} />
-          </motion.div>
         </motion.div>
       </aside>
 
@@ -289,8 +281,8 @@ interface PanelWrapperProps {
 }
 
 const PanelWrapper: React.FC<PanelWrapperProps> = ({ children, offsetY = 0 }) => (
-  <motion.div
-    className="fixed left-14 top-1/2 z-50"
+    <motion.div
+      className="fixed left-11 top-1/2 z-50"
     style={{ transform: `translateY(calc(-50% + ${offsetY}px))` }}
     initial={{ opacity: 0, x: -16, scale: 0.96 }}
     animate={{ opacity: 1, x: 0, scale: 1 }}
