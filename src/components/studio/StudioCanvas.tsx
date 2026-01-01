@@ -91,6 +91,8 @@ interface StudioCanvasProps {
   onModelChange: (blockId: string, modelId: string) => void;
   projectId?: string;
   useComputeFlow?: boolean;
+  interactionMode?: 'pan' | 'select';
+  onToggleInteractionMode?: () => void;
 }
 
 // Node types configuration (outside component for React Flow optimization)
@@ -152,6 +154,8 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
   onModelChange,
   projectId,
   useComputeFlow = false,
+  interactionMode = 'pan',
+  onToggleInteractionMode,
 }) => {
   const { screenToFlowPosition, fitView, zoomIn, zoomOut } = useReactFlow();
   const { isValidConnection: isValidBlockConnection } = useConnectionValidation();
@@ -928,6 +932,8 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
         onCancelExecution={cancelExecution}
         onSave={useComputeFlow && projectId ? () => saveGraph(projectId) : undefined}
         isSaving={isSaving}
+        interactionMode={interactionMode}
+        onToggleInteractionMode={onToggleInteractionMode}
       />
       
       {/* Keyboard Shortcuts Overlay */}
