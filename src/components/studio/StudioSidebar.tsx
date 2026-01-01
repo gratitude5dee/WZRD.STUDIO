@@ -2,7 +2,6 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import {
   Plus,
   History,
-  Inbox,
   HelpCircle,
   Type,
   Image as ImageIcon,
@@ -10,7 +9,6 @@ import {
   Upload,
   Workflow,
   MessageCircle,
-  Sparkles,
   Hand,
   MousePointer,
 } from 'lucide-react';
@@ -18,11 +16,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { FlowsPanel } from './panels/FlowsPanel';
 import { HistoryPanel } from './panels/HistoryPanel';
-import { AssetsGalleryPanel, type Asset } from './panels/AssetsGalleryPanel';
-import { WorkflowGeneratorTab } from './WorkflowGeneratorTab';
 import { WalkthroughTooltip } from './panels/HelpWalkthroughPanel';
 import { useWalkthrough } from '@/hooks/useWalkthrough';
-import type { NodeDefinition, EdgeDefinition } from '@/types/computeFlow';
 import { useComputeFlowStore } from '@/store/computeFlowStore';
 import { toast } from 'sonner';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -32,21 +27,19 @@ import { ShineBorder } from '@/components/ui/shine-border';
 interface StudioSidebarProps {
   onAddBlock: (blockType: 'text' | 'image' | 'video' | 'upload') => void;
   projectId?: string;
-  onAssetSelect?: (asset: Asset) => void;
   interactionMode?: 'pan' | 'select';
   onToggleInteractionMode?: () => void;
 }
 
-type PanelType = 'add' | 'flows' | 'history' | 'workflow' | 'assets' | null;
+type PanelType = 'add' | 'flows' | 'history' | null;
 
 const StudioSidebar = ({ 
   onAddBlock, 
   projectId, 
-  onAssetSelect,
   interactionMode = 'pan',
   onToggleInteractionMode 
 }: StudioSidebarProps) => {
-  const { addGeneratedWorkflow, addNode, saveGraph, executeGraphStreaming } = useComputeFlowStore();
+  const { addNode } = useComputeFlowStore();
   const [activePanel, setActivePanel] = useState<PanelType>(null);
   const walkthrough = useWalkthrough();
   const panelRef = useRef<HTMLDivElement>(null);
@@ -55,23 +48,8 @@ const StudioSidebar = ({
     setActivePanel((current) => (current === panel ? null : panel));
   };
 
-  const handleWorkflowGenerated = useCallback(
-    (nodes: NodeDefinition[], edges: EdgeDefinition[]) => {
-      addGeneratedWorkflow(nodes, edges);
-      if (projectId) {
-        setTimeout(() => {
-          saveGraph(projectId);
-          toast.info('Workflow saved! Starting generation...');
-          setTimeout(() => executeGraphStreaming(projectId), 600);
-        }, 500);
-      }
-      setActivePanel(null);
-    },
-    [addGeneratedWorkflow, saveGraph, projectId, executeGraphStreaming]
-  );
-
   const handleAddComment = useCallback(() => {
-    const commentNode: NodeDefinition = {
+    addNode({
       id: crypto.randomUUID(),
       kind: 'comment',
       version: '1.0.0',
@@ -86,8 +64,7 @@ const StudioSidebar = ({
         content: '',
         color: '#FBBF24',
       },
-    };
-    addNode(commentNode);
+    });
     toast.success('Comment added to canvas');
   }, [addNode]);
 
@@ -103,10 +80,10 @@ const StudioSidebar = ({
 
   return (
     <TooltipProvider delayDuration={300}>
-      {/* Floating Sidebar - Vertically Centered */}
-      <aside className="fixed left-4 top-1/2 -translate-y-1/2 z-40">
+      {/* Floating Sidebar - Vertically Centered - Reduced width */}
+      <aside className="fixed left-2 top-1/2 -translate-y-1/2 z-40">
         <motion.div 
-          className="relative bg-surface-1/95 backdrop-blur-2xl border border-border-subtle rounded-2xl shadow-2xl shadow-black/40 p-2 flex flex-col items-center gap-1"
+          className="relative bg-surface-1/95 backdrop-blur-2xl border border-border-subtle rounded-2xl shadow-2xl shadow-black/40 p-1.5 flex flex-col items-center gap-0.5"
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
@@ -161,32 +138,6 @@ const StudioSidebar = ({
             data-walkthrough="history-button"
           />
 
-          <div className="relative">
-            <SidebarButton
-              icon={Sparkles}
-              label="AI Workflow"
-              active={activePanel === 'workflow'}
-              onClick={() => togglePanel('workflow')}
-              accent
-              data-walkthrough="ai-workflow-button"
-            />
-            {activePanel === 'workflow' && (
-              <ShineBorder 
-                shineColor={["hsl(var(--accent-purple))", "hsl(var(--accent-amber))"]} 
-                borderWidth={2}
-                duration={3}
-              />
-            )}
-          </div>
-
-          <SidebarButton
-            icon={Inbox}
-            label="Assets"
-            active={activePanel === 'assets'}
-            onClick={() => togglePanel('assets')}
-            data-walkthrough="assets-button"
-          />
-
           <Divider />
 
           <SidebarButton icon={MessageCircle} label="Add Comment" onClick={handleAddComment} />
@@ -236,24 +187,6 @@ const StudioSidebar = ({
             </PanelWrapper>
           )}
 
-          {activePanel === 'workflow' && (
-            <PanelWrapper offsetY={100}>
-              <WorkflowGeneratorTab onWorkflowGenerated={handleWorkflowGenerated} />
-            </PanelWrapper>
-          )}
-
-          {activePanel === 'assets' && projectId && (
-            <PanelWrapper>
-              <AssetsGalleryPanel
-                projectId={projectId}
-                onAssetSelect={(asset) => {
-                  onAssetSelect?.(asset);
-                  setActivePanel(null);
-                }}
-                onClose={() => setActivePanel(null)}
-              />
-            </PanelWrapper>
-          )}
         </AnimatePresence>
       </div>
 
@@ -305,7 +238,7 @@ const SidebarButton: React.FC<SidebarButtonProps> = ({
       <motion.button
         onClick={onClick}
         className={cn(
-          'relative w-10 h-10 rounded-xl flex items-center justify-center transition-colors duration-200',
+          'relative w-8 h-8 rounded-lg flex items-center justify-center transition-colors duration-200',
           primary
             ? 'bg-accent-purple text-white shadow-lg shadow-accent-purple/30'
             : active
@@ -321,7 +254,7 @@ const SidebarButton: React.FC<SidebarButtonProps> = ({
         transition={{ type: "spring", stiffness: 400, damping: 17 }}
         {...props}
       >
-        <Icon className="w-[18px] h-[18px]" />
+        <Icon className="w-4 h-4" />
         {badge !== undefined && badge > 0 && (
           <motion.span 
             className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-accent-rose text-[10px] font-bold text-white flex items-center justify-center"
@@ -357,7 +290,7 @@ interface PanelWrapperProps {
 
 const PanelWrapper: React.FC<PanelWrapperProps> = ({ children, offsetY = 0 }) => (
   <motion.div
-    className="fixed left-20 top-1/2 z-50"
+    className="fixed left-14 top-1/2 z-50"
     style={{ transform: `translateY(calc(-50% + ${offsetY}px))` }}
     initial={{ opacity: 0, x: -16, scale: 0.96 }}
     animate={{ opacity: 1, x: 0, scale: 1 }}
