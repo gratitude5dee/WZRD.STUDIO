@@ -32,6 +32,7 @@ import { CanvasToolbar } from './canvas/CanvasToolbar';
 import { ConnectionModeIndicator } from './canvas/ConnectionModeIndicator';
 import { KeyboardShortcutsOverlay } from './KeyboardShortcutsOverlay';
 import { QueueIndicator } from './QueueIndicator';
+import { StudioGalleryPanel } from './StudioGalleryPanel';
 
 import { useConnectionValidation } from '@/hooks/useConnectionValidation';
 import { useStrictConnectionValidation } from '@/hooks/useStrictConnectionValidation';
@@ -93,6 +94,7 @@ interface StudioCanvasProps {
   useComputeFlow?: boolean;
   interactionMode?: 'pan' | 'select';
   onToggleInteractionMode?: () => void;
+  onWorkflowGenerated?: (nodes: any[], edges: any[]) => void;
 }
 
 // Node types configuration (outside component for React Flow optimization)
@@ -156,6 +158,7 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
   useComputeFlow = false,
   interactionMode = 'pan',
   onToggleInteractionMode,
+  onWorkflowGenerated,
 }) => {
   const { screenToFlowPosition, fitView, zoomIn, zoomOut } = useReactFlow();
   const { isValidConnection: isValidBlockConnection } = useConnectionValidation();
@@ -941,6 +944,28 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
       
       {/* Queue Indicator - Bottom right */}
       {useComputeFlow && <QueueIndicator />}
+      
+      {/* Gallery Panel - Right side */}
+      {useComputeFlow && (
+        <StudioGalleryPanel
+          isOpen={showGallery}
+          onToggle={() => setShowGallery(prev => !prev)}
+          onAddToCanvas={(item) => {
+            const newBlock: Block = {
+              id: uuidv4(),
+              type: item.type === 'image' ? 'image' : item.type === 'video' ? 'video' : 'text',
+              position: { x: 400, y: 300 },
+              initialData: {
+                imageUrl: item.url,
+                prompt: item.nodeLabel,
+              },
+            };
+            onAddBlock(newBlock);
+            toast.success('Added to canvas');
+          }}
+          onWorkflowGenerated={onWorkflowGenerated}
+        />
+      )}
     </div>
   );
 };

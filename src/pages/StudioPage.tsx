@@ -8,7 +8,7 @@ import StudioSidebar from '@/components/studio/StudioSidebar';
 import StudioCanvas from '@/components/studio/StudioCanvas';
 import BlockSettingsModal from '@/components/studio/BlockSettingsModal';
 import { SettingsPanel } from '@/components/studio/panels/SettingsPanel';
-import StudioRightPanel from '@/components/studio/StudioRightPanel';
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useComputeFlowStore } from '@/store/computeFlowStore';
@@ -317,16 +317,11 @@ const StudioPage = () => {
               useComputeFlow={true}
               interactionMode={interactionMode}
               onToggleInteractionMode={handleToggleInteractionMode}
+              onWorkflowGenerated={handleWorkflowGenerated}
             />
           )}
         </div>
 
-        {/* Right Panel with Gallery & Workflow tabs */}
-        <StudioRightPanel
-          projectId={projectId}
-          onAssetSelect={handleAssetInsert}
-          onWorkflowGenerated={handleWorkflowGenerated}
-        />
       </div>
 
       {/* Settings Panel Overlay */}
