@@ -1,15 +1,16 @@
-import { Grid, Users, Globe, Star, Settings, HelpCircle, ChevronLeft, LogOut, Layers, Sparkles, Home, FolderKanban } from 'lucide-react';
+import { Grid, Users, Globe, Star, ChevronLeft, LogOut, Layers, Sparkles, Home, FolderKanban } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { WorkspaceSwitcher } from './WorkspaceSwitcher';
 import CreditsDisplay from '../CreditsDisplay';
 import { Badge } from '@/components/ui/badge';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { TextAnimate } from '@/components/ui/text-animate';
 import { ShineBorder } from '@/components/ui/shine-border';
+import { useSidebar } from '@/contexts/SidebarContext';
 import {
   Tooltip,
   TooltipContent,
@@ -24,15 +25,8 @@ interface SidebarProps {
 
 export const Sidebar = ({ activeView, onViewChange }: SidebarProps) => {
   const [favoritesOpen, setFavoritesOpen] = useState(true);
-  const [isCollapsed, setIsCollapsed] = useState(() => {
-    const saved = localStorage.getItem('sidebar-collapsed');
-    return saved ? JSON.parse(saved) : false;
-  });
+  const { isCollapsed, setIsCollapsed } = useSidebar();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    localStorage.setItem('sidebar-collapsed', JSON.stringify(isCollapsed));
-  }, [isCollapsed]);
 
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
@@ -247,7 +241,7 @@ export const Sidebar = ({ activeView, onViewChange }: SidebarProps) => {
         </div>
 
         {/* Main Navigation */}
-        <nav className="relative z-10 flex-1 p-4 space-y-6 overflow-y-auto">
+        <nav data-tour="sidebar-nav" className="relative z-10 flex-1 p-4 space-y-6 overflow-y-auto">
           {/* Main Menu Section */}
           <div>
             <AnimatePresence mode="wait">
@@ -389,39 +383,8 @@ export const Sidebar = ({ activeView, onViewChange }: SidebarProps) => {
           {/* Action Buttons */}
           <div className={cn(
             "flex items-center",
-            isCollapsed ? "flex-col gap-2" : "justify-between"
+            isCollapsed ? "flex-col gap-2" : "justify-center"
           )}>
-            <div className={cn(
-              "flex items-center gap-1",
-              isCollapsed && "flex-col"
-            )}>
-              <Tooltip delayDuration={0}>
-                <TooltipTrigger asChild>
-                  <button className={cn(
-                    "flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-200",
-                    "text-text-secondary hover:text-text-primary hover:bg-[hsl(var(--interactive-hover))]",
-                    "border border-transparent hover:border-border-default",
-                    "dark:text-muted-foreground dark:hover:text-foreground dark:hover:bg-white/[0.06] dark:hover:border-white/[0.08]"
-                  )}>
-                    <Settings className="w-4 h-4" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side={isCollapsed ? "right" : "top"}>Settings</TooltipContent>
-              </Tooltip>
-              <Tooltip delayDuration={0}>
-                <TooltipTrigger asChild>
-                  <button className={cn(
-                    "flex items-center justify-center w-9 h-9 rounded-xl transition-all duration-200",
-                    "text-text-secondary hover:text-text-primary hover:bg-[hsl(var(--interactive-hover))]",
-                    "border border-transparent hover:border-border-default",
-                    "dark:text-muted-foreground dark:hover:text-foreground dark:hover:bg-white/[0.06] dark:hover:border-white/[0.08]"
-                  )}>
-                    <HelpCircle className="w-4 h-4" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side={isCollapsed ? "right" : "top"}>Help</TooltipContent>
-              </Tooltip>
-            </div>
             <Tooltip delayDuration={0}>
               <TooltipTrigger asChild>
                 <button 

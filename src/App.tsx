@@ -11,6 +11,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import PerfShell from "@/components/perf/PerfShell";
 import CustomCursor from "@/components/CustomCursor";
 import { CursorLoadingProvider, useCursorLoading } from "@/contexts/CursorLoadingContext";
+import { SidebarProvider } from "@/contexts/SidebarContext";
 
 const Landing = lazy(() => import("./pages/Landing"));
 const Login = lazy(() => import("./pages/Login"));
@@ -51,6 +52,7 @@ const App = () => {
           <TooltipProvider>
             <BrowserRouter>
             <AuthProvider>
+              <SidebarProvider>
               <CursorLoadingProvider>
                 <CursorWrapper />
                 <Toaster />
@@ -172,6 +174,7 @@ const App = () => {
                   </Routes>
                 </Suspense>
               </CursorLoadingProvider>
+              </SidebarProvider>
             </AuthProvider>
           </BrowserRouter>
         </TooltipProvider>
