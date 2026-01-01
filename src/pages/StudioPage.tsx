@@ -8,10 +8,13 @@ import StudioSidebar from '@/components/studio/StudioSidebar';
 import StudioCanvas from '@/components/studio/StudioCanvas';
 import BlockSettingsModal from '@/components/studio/BlockSettingsModal';
 import { SettingsPanel } from '@/components/studio/panels/SettingsPanel';
+import StudioRightPanel from '@/components/studio/StudioRightPanel';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useComputeFlowStore } from '@/store/computeFlowStore';
 import type { AssetType } from '@/types/assets';
 import type { Asset } from '@/components/studio/panels/AssetsGalleryPanel';
+import type { NodeDefinition, EdgeDefinition } from '@/types/computeFlow';
 
 export interface Block {
   id: string;
@@ -37,6 +40,7 @@ export interface Block {
 const StudioPage = () => {
   const { projectId } = useParams<{ projectId?: string }>();
   const { setActiveProject } = useAppStore();
+  const { addGeneratedWorkflow, saveGraph, executeGraphStreaming } = useComputeFlowStore();
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
   const [blockModels, setBlockModels] = useState<Record<string, string>>({});
@@ -47,6 +51,21 @@ const StudioPage = () => {
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [interactionMode, setInteractionMode] = useState<'pan' | 'select'>('pan');
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Handle workflow generated from right panel
+  const handleWorkflowGenerated = useCallback(
+    (nodes: NodeDefinition[], edges: EdgeDefinition[]) => {
+      addGeneratedWorkflow(nodes, edges);
+      if (projectId) {
+        setTimeout(() => {
+          saveGraph(projectId);
+          toast.info('Workflow saved! Starting generation...');
+          setTimeout(() => executeGraphStreaming(projectId), 600);
+        }, 500);
+      }
+    },
+    [addGeneratedWorkflow, saveGraph, projectId, executeGraphStreaming]
+  );
 
   // Toggle interaction mode
   const handleToggleInteractionMode = useCallback(() => {
@@ -271,7 +290,6 @@ const StudioPage = () => {
         <StudioSidebar
           onAddBlock={handleAddBlock}
           projectId={projectId}
-          onAssetSelect={handleAssetInsert}
           interactionMode={interactionMode}
           onToggleInteractionMode={handleToggleInteractionMode}
         />
@@ -302,6 +320,13 @@ const StudioPage = () => {
             />
           )}
         </div>
+
+        {/* Right Panel with Gallery & Workflow tabs */}
+        <StudioRightPanel
+          projectId={projectId}
+          onAssetSelect={handleAssetInsert}
+          onWorkflowGenerated={handleWorkflowGenerated}
+        />
       </div>
 
       {/* Settings Panel Overlay */}
