@@ -102,8 +102,9 @@ const StudioSidebar = ({
 
   return (
     <TooltipProvider delayDuration={300}>
-      <aside className="fixed left-0 top-14 bottom-0 w-16 bg-zinc-950/90 backdrop-blur-xl border-r border-zinc-800/50 flex flex-col items-center py-4 z-40">
-        <nav className="flex-1 flex flex-col items-center gap-1.5">
+      {/* Floating Sidebar - Vertically Centered */}
+      <aside className="fixed left-4 top-1/2 -translate-y-1/2 z-40">
+        <div className="bg-zinc-900/90 backdrop-blur-xl border border-zinc-800/50 rounded-2xl shadow-2xl shadow-black/30 p-2 flex flex-col items-center gap-1">
           {/* Primary Add Node Button */}
           <SidebarButton
             icon={Plus}
@@ -114,7 +115,7 @@ const StudioSidebar = ({
             primary
           />
 
-          <div className="w-8 h-px bg-zinc-800/50 my-1" />
+          <Divider />
 
           {/* Pan/Select Mode Toggle */}
           {onToggleInteractionMode && (
@@ -160,80 +161,91 @@ const StudioSidebar = ({
             data-walkthrough="assets-button"
           />
 
-          <SidebarButton icon={MessageCircle} label="Add Comment" onClick={handleAddComment} />
-        </nav>
+          <Divider />
 
-        {/* Bottom Section: Help Only */}
-        <div className="flex flex-col items-center gap-2 mt-auto pt-4 border-t border-zinc-800/50">
+          <SidebarButton icon={MessageCircle} label="Add Comment" onClick={handleAddComment} />
+
           <SidebarButton 
             icon={HelpCircle} 
             label="Help & Tour" 
             onClick={() => walkthrough.start()} 
           />
+
+          <Divider />
+
+          {/* Bottom Logo - using sm size with scale */}
+          <div className="pt-1 pb-1 opacity-40 hover:opacity-70 transition-opacity scale-75">
+            <Logo size="sm" showVersion={false} />
+          </div>
         </div>
+      </aside>
 
-        <div ref={panelRef}>
-          <AnimatePresence>
-            {activePanel === 'add' && (
-              <PanelWrapper position="top">
-                <AddNodeMenu
-                  onAddBlock={(type) => {
-                    onAddBlock(type);
-                    setActivePanel(null);
-                  }}
-                />
-              </PanelWrapper>
-            )}
-
-            {activePanel === 'flows' && projectId && (
-              <PanelWrapper position="top">
-                <FlowsPanel projectId={projectId} onClose={() => setActivePanel(null)} />
-              </PanelWrapper>
-            )}
-
-            {activePanel === 'history' && (
-              <PanelWrapper position="top">
-                <HistoryPanel onClose={() => setActivePanel(null)} />
-              </PanelWrapper>
-            )}
-
-            {activePanel === 'workflow' && (
-              <PanelWrapper position="custom" customTop={300}>
-                <WorkflowGeneratorTab onWorkflowGenerated={handleWorkflowGenerated} />
-              </PanelWrapper>
-            )}
-
-            {activePanel === 'assets' && projectId && (
-              <PanelWrapper position="top">
-                <AssetsGalleryPanel
-                  projectId={projectId}
-                  onAssetSelect={(asset) => {
-                    onAssetSelect?.(asset);
-                    setActivePanel(null);
-                  }}
-                  onClose={() => setActivePanel(null)}
-                />
-              </PanelWrapper>
-            )}
-          </AnimatePresence>
-        </div>
-
+      {/* Panels Container */}
+      <div ref={panelRef}>
         <AnimatePresence>
-          {walkthrough.isActive && walkthrough.currentStep && (
-            <WalkthroughTooltip
-              step={walkthrough.currentStep}
-              onNext={walkthrough.next}
-              onPrev={walkthrough.prev}
-              onClose={walkthrough.stop}
-              currentIndex={walkthrough.currentStepIndex}
-              totalSteps={walkthrough.totalSteps}
-            />
+          {activePanel === 'add' && (
+            <PanelWrapper>
+              <AddNodeMenu
+                onAddBlock={(type) => {
+                  onAddBlock(type);
+                  setActivePanel(null);
+                }}
+              />
+            </PanelWrapper>
+          )}
+
+          {activePanel === 'flows' && projectId && (
+            <PanelWrapper>
+              <FlowsPanel projectId={projectId} onClose={() => setActivePanel(null)} />
+            </PanelWrapper>
+          )}
+
+          {activePanel === 'history' && (
+            <PanelWrapper>
+              <HistoryPanel onClose={() => setActivePanel(null)} />
+            </PanelWrapper>
+          )}
+
+          {activePanel === 'workflow' && (
+            <PanelWrapper offsetY={100}>
+              <WorkflowGeneratorTab onWorkflowGenerated={handleWorkflowGenerated} />
+            </PanelWrapper>
+          )}
+
+          {activePanel === 'assets' && projectId && (
+            <PanelWrapper>
+              <AssetsGalleryPanel
+                projectId={projectId}
+                onAssetSelect={(asset) => {
+                  onAssetSelect?.(asset);
+                  setActivePanel(null);
+                }}
+                onClose={() => setActivePanel(null)}
+              />
+            </PanelWrapper>
           )}
         </AnimatePresence>
-      </aside>
+      </div>
+
+      <AnimatePresence>
+        {walkthrough.isActive && walkthrough.currentStep && (
+          <WalkthroughTooltip
+            step={walkthrough.currentStep}
+            onNext={walkthrough.next}
+            onPrev={walkthrough.prev}
+            onClose={walkthrough.stop}
+            currentIndex={walkthrough.currentStepIndex}
+            totalSteps={walkthrough.totalSteps}
+          />
+        )}
+      </AnimatePresence>
     </TooltipProvider>
   );
 };
+
+const Divider = () => (
+  <div className="w-8 h-px bg-zinc-800/60 my-1" />
+);
 
 interface SidebarButtonProps {
   icon: React.ElementType;
@@ -263,26 +275,25 @@ const SidebarButton: React.FC<SidebarButtonProps> = ({
       <button
         onClick={onClick}
         className={cn(
-          'relative w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-200',
+          'relative w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-200',
           primary
-            ? 'bg-accent-purple/20 text-accent-purple hover:bg-accent-purple/30'
+            ? 'bg-accent-purple text-white hover:bg-accent-purple/80 shadow-lg shadow-accent-purple/20'
             : active
               ? 'bg-accent-purple/20 text-accent-purple'
               : modeIndicator === 'select'
                 ? 'bg-accent-teal/15 text-accent-teal'
                 : accent
-                  ? 'bg-zinc-800/50 text-zinc-400 hover:text-accent-purple hover:bg-accent-purple/10'
-                  : 'bg-zinc-800/50 text-zinc-400 hover:text-white hover:bg-zinc-700/50'
+                  ? 'text-zinc-400 hover:text-accent-purple hover:bg-accent-purple/10'
+                  : 'text-zinc-400 hover:text-white hover:bg-zinc-800/70'
         )}
         {...props}
       >
-        <Icon className="w-5 h-5" />
+        <Icon className="w-[18px] h-[18px]" />
         {badge !== undefined && badge > 0 && (
           <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-accent-rose text-[10px] font-bold text-white flex items-center justify-center">
             {badge}
           </span>
         )}
-        {/* Mode indicator dot */}
         {modeIndicator && (
           <span className={cn(
             'absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full',
@@ -299,18 +310,13 @@ const SidebarButton: React.FC<SidebarButtonProps> = ({
 
 interface PanelWrapperProps {
   children: React.ReactNode;
-  position: 'top' | 'bottom' | 'custom';
-  customTop?: number;
+  offsetY?: number;
 }
 
-const PanelWrapper: React.FC<PanelWrapperProps> = ({ children, position, customTop }) => (
+const PanelWrapper: React.FC<PanelWrapperProps> = ({ children, offsetY = 0 }) => (
   <motion.div
-    className={cn(
-      'absolute left-16 z-50',
-      position === 'top' && 'top-4',
-      position === 'bottom' && 'bottom-4'
-    )}
-    style={position === 'custom' ? { top: customTop } : undefined}
+    className="fixed left-20 top-1/2 z-50"
+    style={{ transform: `translateY(calc(-50% + ${offsetY}px))` }}
     initial={{ opacity: 0, x: -10, scale: 0.95 }}
     animate={{ opacity: 1, x: 0, scale: 1 }}
     exit={{ opacity: 0, x: -10, scale: 0.95 }}
