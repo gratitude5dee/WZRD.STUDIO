@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Loader2, UserPlus, Plus, FolderKanban, Activity, Image, Sparkles, Settings, HelpCircle } from 'lucide-react';
+import { Loader2, UserPlus, Plus, FolderKanban, Activity, Image, Sparkles, Settings, HelpCircle, ChevronDown, User, LogOut, Palette } from 'lucide-react';
 import { motion } from 'framer-motion';
 import wzrdLogo from '@/assets/wzrd-logo.png';
 import { ProjectList } from '@/components/home/ProjectList';
@@ -18,6 +18,15 @@ import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { TextAnimate } from '@/components/ui/text-animate';
 import { ShimmerButton } from '@/components/ui/shimmer-button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  DropdownMenuLabel,
+} from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
 import { OnboardingTour } from '@/components/onboarding/OnboardingTour';
 import { useOnboardingTour } from '@/hooks/useOnboardingTour';
 import { useSidebar } from '@/contexts/SidebarContext';
@@ -251,23 +260,74 @@ export default function Home() {
               </div>
               
               <div className="flex items-center gap-2">
-                {/* Settings button */}
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <motion.button 
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
+                {/* Settings dropdown */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       className={cn(
-                        "p-2 rounded-lg transition-all duration-200",
+                        "h-9 px-2 gap-1 transition-all duration-200",
                         "text-text-secondary hover:text-text-primary hover:bg-surface-2",
                         "dark:text-muted-foreground dark:hover:text-foreground dark:hover:bg-white/[0.06]"
                       )}
                     >
-                      <Settings className="w-4 h-4" />
-                    </motion.button>
-                  </TooltipTrigger>
-                  <TooltipContent>Settings</TooltipContent>
-                </Tooltip>
+                      <Settings className="h-4 w-4" />
+                      <ChevronDown className="h-3 w-3" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent 
+                    align="end" 
+                    className="w-56 bg-surface-1 border-border-default dark:bg-zinc-900 dark:border-zinc-800"
+                    sideOffset={8}
+                  >
+                    <DropdownMenuLabel className="text-text-secondary dark:text-zinc-400 text-xs">
+                      Account
+                    </DropdownMenuLabel>
+                    
+                    <DropdownMenuItem 
+                      onClick={() => navigate('/profile')} 
+                      className="hover:bg-surface-2 dark:hover:bg-zinc-800 cursor-pointer"
+                    >
+                      <User className="mr-2 h-4 w-4" />
+                      My Profile
+                    </DropdownMenuItem>
+                    
+                    <DropdownMenuSeparator className="bg-border-default dark:bg-zinc-800" />
+                    
+                    <DropdownMenuLabel className="text-text-secondary dark:text-zinc-400 text-xs">
+                      Preferences
+                    </DropdownMenuLabel>
+                    
+                    <DropdownMenuItem 
+                      className="hover:bg-surface-2 dark:hover:bg-zinc-800 cursor-pointer"
+                    >
+                      <Palette className="mr-2 h-4 w-4" />
+                      Appearance
+                    </DropdownMenuItem>
+                    
+                    <DropdownMenuSeparator className="bg-border-default dark:bg-zinc-800" />
+                    
+                    <DropdownMenuItem 
+                      onClick={async () => {
+                        try {
+                          await supabase.auth.signOut();
+                          navigate('/auth');
+                        } catch (error) {
+                          toast({
+                            title: 'Error',
+                            description: 'Failed to log out. Please try again.',
+                            variant: 'destructive',
+                          });
+                        }
+                      }} 
+                      className="hover:bg-surface-2 dark:hover:bg-zinc-800 cursor-pointer text-red-500 dark:text-red-400"
+                    >
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Log out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
 
                 {/* Help button - triggers onboarding tour */}
                 <Tooltip>
