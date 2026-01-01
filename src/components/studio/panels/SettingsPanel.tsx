@@ -7,7 +7,10 @@ import {
   Zap,
   Check,
   Loader2,
+  ArrowLeft,
+  X,
 } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import {
   useProjectSettingsStore,
@@ -20,6 +23,7 @@ import { toast } from 'sonner';
 interface SettingsPanelProps {
   projectId: string;
   onClose: () => void;
+  onBack?: () => void;
 }
 
 interface ModelSelectorProps {
@@ -72,7 +76,7 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
   );
 };
 
-export const SettingsPanel: React.FC<SettingsPanelProps> = ({ projectId }) => {
+export const SettingsPanel: React.FC<SettingsPanelProps> = ({ projectId, onClose, onBack }) => {
   const {
     settings,
     isLoading,
@@ -111,9 +115,31 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({ projectId }) => {
 
   return (
     <div className="w-80 bg-zinc-900/95 backdrop-blur-xl border border-zinc-800/50 rounded-xl overflow-hidden shadow-2xl">
-      <div className="px-4 py-3 border-b border-zinc-800/50 flex items-center gap-2">
-        <Settings className="w-4 h-4 text-zinc-400" />
-        <span className="text-sm font-medium text-white">Project Settings</span>
+      <div className="px-4 py-3 border-b border-zinc-800/50 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          {onBack && (
+            <motion.button
+              onClick={onBack}
+              whileHover={{ x: -2 }}
+              whileTap={{ scale: 0.95 }}
+              className="p-1.5 rounded-lg bg-zinc-800/50 hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </motion.button>
+          )}
+          <div className="flex items-center gap-2">
+            <Settings className="w-4 h-4 text-zinc-400" />
+            <span className="text-sm font-medium text-white">Project Settings</span>
+          </div>
+        </div>
+        <motion.button
+          onClick={onClose}
+          whileHover={{ rotate: 90, scale: 1.1 }}
+          whileTap={{ scale: 0.95 }}
+          className="p-1.5 rounded-lg bg-zinc-800/50 hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors"
+        >
+          <X className="w-4 h-4" />
+        </motion.button>
       </div>
 
       <div className="p-4 space-y-6 max-h-[500px] overflow-y-auto">
