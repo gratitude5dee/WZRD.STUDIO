@@ -200,7 +200,7 @@ export const Sidebar = ({ activeView, onViewChange }: SidebarProps) => {
         animate={isCollapsed ? "collapsed" : "expanded"}
         transition={{ type: "spring", stiffness: 300, damping: 30 }}
         className={cn(
-          "h-screen flex flex-col fixed left-0 top-0 z-50 border-r relative group/sidebar",
+          "h-screen flex flex-col fixed left-0 top-0 z-50 border-r group/sidebar",
           "bg-surface-1 border-border-default",
           "dark:glass-sidebar dark:border-white/[0.04]"
         )}
