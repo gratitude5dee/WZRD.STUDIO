@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Images,
@@ -11,10 +11,15 @@ import {
   Video,
   Type,
   Keyboard,
+  Wand2,
+  Inbox,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useComputeFlowStore } from '@/store/computeFlowStore';
 import { Button } from '@/components/ui/button';
+import { WorkflowGeneratorTab } from './WorkflowGeneratorTab';
+import { ShineBorder } from '@/components/ui/shine-border';
+import type { NodeDefinition, EdgeDefinition } from '@/types/computeFlow';
 
 interface GalleryItem {
   id: string;
@@ -25,11 +30,13 @@ interface GalleryItem {
 }
 
 type FilterTab = 'all' | 'images' | 'videos' | 'text';
+type MainTab = 'gallery' | 'workflow';
 
 interface StudioGalleryPanelProps {
   isOpen: boolean;
   onToggle: () => void;
   onAddToCanvas?: (item: GalleryItem) => void;
+  onWorkflowGenerated?: (nodes: NodeDefinition[], edges: EdgeDefinition[]) => void;
   className?: string;
 }
 
@@ -37,11 +44,25 @@ export const StudioGalleryPanel: React.FC<StudioGalleryPanelProps> = ({
   isOpen,
   onToggle,
   onAddToCanvas,
+  onWorkflowGenerated,
   className,
 }) => {
   const [selectedItem, setSelectedItem] = useState<GalleryItem | null>(null);
   const [activeFilter, setActiveFilter] = useState<FilterTab>('all');
+  const [activeMainTab, setActiveMainTab] = useState<MainTab>('gallery');
   const { nodeDefinitions } = useComputeFlowStore();
+
+  const handleWorkflowGenerated = useCallback(
+    (nodes: NodeDefinition[], edges: EdgeDefinition[]) => {
+      onWorkflowGenerated?.(nodes, edges);
+    },
+    [onWorkflowGenerated]
+  );
+
+  const mainTabs = [
+    { id: 'gallery' as const, label: 'Gallery', icon: Inbox },
+    { id: 'workflow' as const, label: 'Workflow', icon: Sparkles },
+  ];
 
   const galleryItems: GalleryItem[] = useMemo(() => {
     return nodeDefinitions
@@ -102,77 +123,129 @@ export const StudioGalleryPanel: React.FC<StudioGalleryPanelProps> = ({
               className
             )}
           >
-            {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-border-subtle">
-              <div className="flex items-center gap-2">
-                <Images className="w-4 h-4 text-text-secondary" />
-                <h3 className="text-sm font-medium text-text-primary">Gallery</h3>
-                <span className="px-1.5 py-0.5 rounded bg-surface-3 text-[10px] font-medium text-text-secondary">
-                  {filteredItems.length}
-                </span>
+            {/* Header with Main Tabs */}
+            <div className="flex items-center justify-between px-2 py-2 border-b border-border-subtle">
+              <div className="flex items-center gap-1">
+                {mainTabs.map((tab) => {
+                  const Icon = tab.icon;
+                  const isActive = activeMainTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveMainTab(tab.id)}
+                      className={cn(
+                        'relative flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+                        isActive
+                          ? 'bg-surface-3 text-text-primary'
+                          : 'text-text-tertiary hover:text-text-secondary hover:bg-surface-2'
+                      )}
+                    >
+                      <Icon className={cn('w-4 h-4', isActive && tab.id === 'workflow' && 'text-accent-purple')} />
+                      <span>{tab.label}</span>
+                      {tab.id === 'gallery' && (
+                        <span className="px-1.5 py-0.5 rounded bg-surface-3 text-[10px] font-medium text-text-secondary">
+                          {filteredItems.length}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
               <button className="p-1.5 rounded-lg hover:bg-surface-3 text-text-tertiary" onClick={onToggle}>
                 <ChevronRight className="w-4 h-4" />
               </button>
             </div>
 
-            {/* Filter Tabs */}
-            <div className="flex items-center gap-1 px-3 py-2 border-b border-border-subtle">
-              {filterTabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveFilter(tab.id)}
-                  className={cn(
-                    'flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors',
-                    activeFilter === tab.id
-                      ? 'bg-accent-purple/15 text-accent-purple'
-                      : 'text-text-tertiary hover:text-text-secondary hover:bg-surface-3'
-                  )}
+            <AnimatePresence mode="wait">
+              {activeMainTab === 'gallery' && (
+                <motion.div
+                  key="gallery"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.15 }}
+                  className="flex flex-col flex-1 overflow-hidden"
                 >
-                  <tab.icon className="w-3.5 h-3.5" />
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-
-            {/* Content Grid */}
-            <div className="flex-1 overflow-y-auto p-3">
-              {filteredItems.length === 0 ? (
-                <div className="h-full flex flex-col items-center justify-center text-center px-6">
-                  <div className="w-16 h-16 rounded-2xl bg-surface-2 flex items-center justify-center mb-4">
-                    <Sparkles className="w-7 h-7 text-text-disabled" />
+                  {/* Filter Tabs */}
+                  <div className="flex items-center gap-1 px-3 py-2 border-b border-border-subtle">
+                    {filterTabs.map((tab) => (
+                      <button
+                        key={tab.id}
+                        onClick={() => setActiveFilter(tab.id)}
+                        className={cn(
+                          'flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors',
+                          activeFilter === tab.id
+                            ? 'bg-accent-purple/15 text-accent-purple'
+                            : 'text-text-tertiary hover:text-text-secondary hover:bg-surface-3'
+                        )}
+                      >
+                        <tab.icon className="w-3.5 h-3.5" />
+                        {tab.label}
+                      </button>
+                    ))}
                   </div>
-                  <p className="text-sm text-text-secondary mb-1">No generations yet</p>
-                  <p className="text-xs text-text-tertiary">
-                    Run a workflow to see outputs here
-                  </p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 gap-3">
-                  {filteredItems.map((item) => (
-                    <GalleryThumbnail
-                      key={item.id}
-                      item={item}
-                      onAddToCanvas={onAddToCanvas}
-                      onSelectItem={setSelectedItem}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
 
-            {/* Footer */}
-            <div className="px-4 py-3 border-t border-border-subtle bg-surface-2/50">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-text-tertiary">
-                  {filteredItems.length} {filteredItems.length === 1 ? 'item' : 'items'}
-                </span>
-                <button className="flex items-center gap-1.5 text-text-tertiary hover:text-text-secondary transition-colors">
-                  <Keyboard className="w-3.5 h-3.5" />
-                  <span>Shortcuts</span>
-                </button>
-              </div>
-            </div>
+                  {/* Content Grid */}
+                  <div className="flex-1 overflow-y-auto p-3">
+                    {filteredItems.length === 0 ? (
+                      <div className="h-full flex flex-col items-center justify-center text-center px-6">
+                        <div className="w-16 h-16 rounded-2xl bg-surface-2 flex items-center justify-center mb-4">
+                          <Sparkles className="w-7 h-7 text-text-disabled" />
+                        </div>
+                        <p className="text-sm text-text-secondary mb-1">No generations yet</p>
+                        <p className="text-xs text-text-tertiary">
+                          Run a workflow to see outputs here
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-2 gap-3">
+                        {filteredItems.map((item) => (
+                          <GalleryThumbnail
+                            key={item.id}
+                            item={item}
+                            onAddToCanvas={onAddToCanvas}
+                            onSelectItem={setSelectedItem}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Footer */}
+                  <div className="px-4 py-3 border-t border-border-subtle bg-surface-2/50">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-text-tertiary">
+                        {filteredItems.length} {filteredItems.length === 1 ? 'item' : 'items'}
+                      </span>
+                      <button className="flex items-center gap-1.5 text-text-tertiary hover:text-text-secondary transition-colors">
+                        <Keyboard className="w-3.5 h-3.5" />
+                        <span>Shortcuts</span>
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
+              {activeMainTab === 'workflow' && (
+                <motion.div
+                  key="workflow"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.15 }}
+                  className="flex-1 overflow-hidden p-3"
+                >
+                  <div className="relative">
+                    <WorkflowGeneratorTab onWorkflowGenerated={handleWorkflowGenerated} />
+                    <ShineBorder
+                      shineColor={['hsl(var(--accent-purple))', 'hsl(var(--accent-amber))']}
+                      borderWidth={1}
+                      duration={4}
+                    />
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </motion.div>
         )}
       </AnimatePresence>
