@@ -184,8 +184,8 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
     addGeneratedWorkflow,
   } = useComputeFlowStore();
   
-  // Gallery open by default
-  const [showGallery, setShowGallery] = useState(true);
+  // Gallery closed by default for clean start
+  const [showGallery, setShowGallery] = useState(false);
   
   // Track dragging data type for handle highlighting
   const [draggingDataType, setDraggingDataType] = useState<DataType | null>(null);
