@@ -271,7 +271,7 @@ const Landing = () => {
             <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-12 opacity-50 hover:opacity-70 transition-opacity">
               <div className="text-white/60 font-bold text-xl">Runway          </div>
               <div className="text-white/60 font-bold text-xl">Kling</div>
-              <div className="text-white/60 font-bold text-xl">Vercel</div>
+              <div className="text-white/60 font-bold text-xl">Google's Veo               </div>
               <div className="text-white/60 font-bold text-xl">React</div>
               <div className="text-white/60 font-bold text-xl">TypeScript</div>
             </div>
