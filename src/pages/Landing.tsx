@@ -269,11 +269,11 @@ const Landing = () => {
               Powered by Industry Leaders
             </p>
             <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-12 opacity-50 hover:opacity-70 transition-opacity">
-              <div className="text-white/60 font-bold text-xl">Runway          </div>
-              <div className="text-white/60 font-bold text-xl">Kling</div>
-              <div className="text-white/60 font-bold text-xl">Google's Veo               </div>
-              <div className="text-white/60 font-bold text-xl">React</div>
-              <div className="text-white/60 font-bold text-xl">TypeScript</div>
+              <div className="text-white/60 font-bold text-xl">Runway 4.5</div>
+              <div className="text-white/60 font-bold text-xl">Kling 2.6</div>
+              <div className="text-white/60 font-bold text-xl">Google's Veo 3</div>
+              <div className="text-white/60 font-bold text-xl">WAN 2.6</div>
+              <div className="text-white/60 font-bold text-xl">Luma Ray 3</div>
             </div>
           </motion.div>
         </section>
