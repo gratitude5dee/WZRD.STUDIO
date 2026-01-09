@@ -37,7 +37,7 @@ export function StudioRightPanel({
 
   return (
     <motion.aside
-      className="fixed right-4 top-1/2 -translate-y-1/2 z-40"
+      className="fixed right-[21px] top-1/2 -translate-y-1/2 z-40"
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
@@ -60,8 +60,26 @@ export function StudioRightPanel({
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className="relative bg-surface-1/95 backdrop-blur-2xl border border-border-subtle rounded-2xl shadow-2xl shadow-black/40 overflow-hidden"
+            className={cn(
+              "relative bg-surface-1/95 backdrop-blur-2xl border rounded-2xl shadow-2xl shadow-black/40 overflow-hidden transition-all duration-500",
+              activeTab === 'workflow'
+                ? "border-accent-purple/40 shadow-[0_0_30px_rgba(147,51,234,0.15),0_0_60px_rgba(147,51,234,0.08)]"
+                : "border-border-subtle"
+            )}
           >
+            {/* Animated glow overlay for workflow tab */}
+            {activeTab === 'workflow' && (
+              <motion.div
+                className="absolute inset-0 pointer-events-none z-0"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.5 }}
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-accent-purple/5 via-transparent to-accent-amber/5" />
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(147,51,234,0.1)_0%,_transparent_50%)]" />
+              </motion.div>
+            )}
             {/* Collapse button */}
             <button
               onClick={() => setIsCollapsed(true)}
@@ -71,7 +89,7 @@ export function StudioRightPanel({
             </button>
 
             {/* Tab buttons */}
-            <div className="flex border-b border-border-subtle">
+            <div className="relative z-10 flex border-b border-border-subtle bg-surface-1/50">
               {tabs.map((tab) => {
                 const Icon = tab.icon;
                 const isActive = activeTab === tab.id;
@@ -101,7 +119,7 @@ export function StudioRightPanel({
             </div>
 
             {/* Tab content */}
-            <div className="relative">
+            <div className="relative z-10">
               <AnimatePresence mode="wait">
                 {activeTab === 'gallery' && projectId && (
                   <motion.div
