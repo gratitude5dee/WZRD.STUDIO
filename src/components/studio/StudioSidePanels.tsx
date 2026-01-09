@@ -17,35 +17,32 @@ const TEXT_MODELS: Model[] = [
   { id: 'claude-3-sonnet', name: 'Claude 3 Sonnet', credits: 2, time: '~4s' },
 ];
 
-// Image models with their icons
+// Image models with their icons - using full Fal.ai model IDs
 const IMAGE_MODELS: Model[] = [
-  { id: 'flux-dev', name: 'Flux Dev', credits: 42, time: '~10s', description: 'Highly customizable image model.' },
-  { id: 'flux-pro', name: 'Flux Pro 1.1', credits: 75, time: '~24s' },
-  { id: 'ideogram', name: 'Ideogram 2.0', credits: 100, time: '~18s' },
-  { id: 'luma-photon', name: 'Luma Photon', credits: 24, time: '~20s' },
-  { id: 'recraft', name: 'Recraft V3', credits: 50, time: '~14s' },
-  { id: 'stable', name: 'Stable Diffusion 3.5', credits: 44, time: '~32s' },
+  { id: 'fal-ai/flux/dev', name: 'Flux Dev', credits: 42, time: '~10s', description: 'Highly customizable image model.' },
+  { id: 'fal-ai/flux-pro/v1.1', name: 'Flux Pro 1.1', credits: 75, time: '~24s' },
+  { id: 'fal-ai/ideogram/v2', name: 'Ideogram 2.0', credits: 100, time: '~18s' },
+  { id: 'fal-ai/recraft-v3', name: 'Recraft V3', credits: 50, time: '~14s' },
+  { id: 'fal-ai/flux/schnell', name: 'Flux Schnell', credits: 20, time: '~3s', description: 'Ultra-fast generation.' },
 ];
 
-// Video models with their icons
+// Video models with their icons - using full Fal.ai model IDs
 const VIDEO_MODELS: Model[] = [
-  { id: 'hailuo', name: 'Hailuo Minimax', credits: 375, time: '~4m', description: 'Powerful, motion-heavy model.' },
-  { id: 'veo2', name: 'Veo2', credits: 1438, time: '~3m' },
-  { id: 'wan', name: 'WAN 2.1', credits: 438, time: '~3m' },
-  { id: 'kling-pro-16', name: 'Kling Pro 1.6', credits: 419, time: '~5m' },
-  { id: 'kling-pro-15', name: 'Kling Pro 1.5', credits: 625, time: '~5m' },
-  { id: 'luma-ray', name: 'Luma Ray 2', credits: 1250, time: '~2m' },
-  { id: 'luma-ray-flash', name: 'Luma Ray 2 Flash', credits: 500, time: '~1m' },
-  { id: 'pika', name: 'Pika', credits: 563, time: '~30s' },
-  { id: 'tencent', name: 'Tencent Hunyuan', credits: 500, time: '~4m' },
-  { id: 'lightricks', name: 'Lightricks LTXV', credits: 25, time: '~10s' },
+  { id: 'fal-ai/minimax/video-01', name: 'Hailuo Minimax', credits: 375, time: '~4m', description: 'Powerful, motion-heavy model.' },
+  { id: 'fal-ai/magi-1', name: 'MAGI-1', credits: 200, time: '~30s', description: 'Fast video generation.' },
+  { id: 'fal-ai/wan/v2.1/text-to-video', name: 'WAN 2.1', credits: 438, time: '~3m' },
+  { id: 'fal-ai/kling-video/v1.6/pro/text-to-video', name: 'Kling Pro 1.6', credits: 419, time: '~5m' },
+  { id: 'fal-ai/kling-video/v1.5/pro/text-to-video', name: 'Kling Pro 1.5', credits: 625, time: '~5m' },
+  { id: 'fal-ai/luma-dream-machine', name: 'Luma Dream', credits: 500, time: '~2m' },
+  { id: 'fal-ai/pika/v2', name: 'Pika', credits: 563, time: '~30s' },
+  { id: 'fal-ai/ltx-video/v0.9.1', name: 'Lightricks LTXV', credits: 25, time: '~10s' },
 ];
 
 export const StudioRightPanel = ({ selectedBlockType }: StudioSidePanelsProps) => {
-  // Model selector state
+// Model selector state - using full model IDs
   const [textModelId, setTextModelId] = useState('gemini-2-flash');
-  const [imageModelId, setImageModelId] = useState('flux-dev');
-  const [videoModelId, setVideoModelId] = useState('hailuo');
+  const [imageModelId, setImageModelId] = useState('fal-ai/flux/dev');
+  const [videoModelId, setVideoModelId] = useState('fal-ai/magi-1');
   
   // Model dropdown states
   const [showTextModelDropdown, setShowTextModelDropdown] = useState(false);

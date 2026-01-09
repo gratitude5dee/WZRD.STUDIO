@@ -83,12 +83,13 @@ const DEFAULT_MODELS = {
   ],
   image: [
     { id: 'google/gemini-2.5-flash-image-preview', name: 'Gemini 2.5 Flash', description: 'Fast AI image generation', credits: 2, time: '~4s', icon: 'image' },
-    { id: 'flux-schnell', name: 'Flux Schnell', description: 'Ultra-fast quality', credits: 3, time: '~3s', icon: 'image' },
-    { id: 'flux-dev', name: 'Flux Dev', description: 'Highest quality', credits: 5, time: '~8s', icon: 'image' },
+    { id: 'fal-ai/flux/schnell', name: 'Flux Schnell', description: 'Ultra-fast quality', credits: 3, time: '~3s', icon: 'image' },
+    { id: 'fal-ai/flux/dev', name: 'Flux Dev', description: 'Highest quality', credits: 5, time: '~8s', icon: 'image' },
+    { id: 'fal-ai/ideogram/v2', name: 'Ideogram V2', description: 'Great for text', credits: 4, time: '~10s', icon: 'image' },
   ],
   video: [
-    { id: 'gemini-2.5-flash-video', name: 'Veo 3 Fast', description: 'Fast video generation', credits: 10, time: '~30s', icon: 'video' },
-    { id: 'luma-dream', name: 'Luma Dream', description: 'Cinematic quality', credits: 25, time: '~90s', icon: 'video' },
+    { id: 'fal-ai/magi-1', name: 'MAGI-1', description: 'Fast video generation', credits: 10, time: '~30s', icon: 'video' },
+    { id: 'fal-ai/luma-dream-machine', name: 'Luma Dream', description: 'Cinematic quality', credits: 25, time: '~90s', icon: 'video' },
   ],
 };
 
