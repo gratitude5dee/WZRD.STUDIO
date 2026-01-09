@@ -1,26 +1,18 @@
 /**
  * useNodePositionSync Hook
- * 
+ *
  * Handles node position synchronization between React Flow and the compute store
  * WITHOUT creating bidirectional update loops.
- * 
- * The Problem:
- * Previously, position sync was done in a useEffect watching the nodes array,
- * which created this loop:
- * 1. User drags node → nodes state updates
- * 2. useEffect fires → calls onUpdateBlockPosition
- * 3. Parent updates blocks → StudioCanvas re-renders
- * 4. blocks→nodes sync effect fires → back to step 1
- * 
- * The Solution:
- * Use event-driven position sync (onNodeDragStop) instead of effect-based sync.
- * Only persist positions on explicit user interactions, not on every state change.
+ *
+ * IMPORTANT: The Studio canvas can be a *hybrid* of compute-flow nodes and legacy
+ * "blocks" nodes. Even when `useComputeFlow` is enabled, legacy blocks still need
+ * their positions persisted via `onUpdateBlockPosition` or they will snap back.
  */
 
-import { useCallback, useRef, useMemo } from 'react';
-import { useComputeFlowStore } from '@/store/computeFlowStore';
-import type { Node, OnNodesChange } from '@xyflow/react';
+import { useCallback, useMemo, useRef } from 'react';
+import type { Node } from '@xyflow/react';
 import { debounce } from '@/lib/utils';
+import { useComputeFlowStore } from '@/store/computeFlowStore';
 
 // Define NodeDragHandler type locally since it's not exported from @xyflow/react
 type NodeDragHandler = (event: React.MouseEvent, node: Node, nodes: Node[]) => void;
@@ -52,22 +44,6 @@ interface NodePositionSyncResult {
   isSavePending: boolean;
 }
 
-/**
- * Hook for managing node position synchronization
- * 
- * @example
- * ```tsx
- * const { onNodeDragStop, onNodesChange } = useNodePositionSync({
- *   useComputeFlow: true,
- *   projectId: 'proj-123',
- * });
- * 
- * <ReactFlow
- *   onNodeDragStop={onNodeDragStop}
- *   onNodesChange={onNodesChange}
- * />
- * ```
- */
 export function useNodePositionSync({
   useComputeFlow,
   onUpdateBlockPosition,
@@ -75,13 +51,30 @@ export function useNodePositionSync({
   projectId,
 }: UseNodePositionSyncOptions): NodePositionSyncResult {
   const { updateNodeSilent, saveGraph, setDragging } = useComputeFlowStore();
-  
+
   // Track pending save state
   const savePendingRef = useRef(false);
-  
+
   // Track which nodes have been dragged (to batch saves)
   const draggedNodesRef = useRef<Set<string>>(new Set());
-  
+
+  /**
+   * Detect whether a node is a compute-flow node.
+   * We prefer a data marker (node.data.nodeDefinition) to avoid relying on node type.
+   */
+  const isComputeNodeInstance = useCallback(
+    (node: Node): boolean => {
+      if (!useComputeFlow) return false;
+
+      const maybeData = (node as any)?.data as any;
+      if (maybeData?.nodeDefinition) return true;
+
+      // Fallback: check store membership (handles cases where node.data isn't hydrated yet)
+      return useComputeFlowStore.getState().nodeDefinitions.some((n) => n.id === node.id);
+    },
+    [useComputeFlow]
+  );
+
   /**
    * Debounced save function to batch rapid position changes
    */
@@ -89,9 +82,11 @@ export function useNodePositionSync({
     () =>
       debounce(() => {
         if (useComputeFlow && projectId && draggedNodesRef.current.size > 0) {
-          console.log('[NodePositionSync] Saving positions for nodes:', 
-            Array.from(draggedNodesRef.current));
-          
+          console.log(
+            '[NodePositionSync] Saving positions for nodes:',
+            Array.from(draggedNodesRef.current)
+          );
+
           saveGraph(projectId).finally(() => {
             savePendingRef.current = false;
             draggedNodesRef.current.clear();
@@ -100,117 +95,73 @@ export function useNodePositionSync({
       }, saveDebounceMs),
     [useComputeFlow, projectId, saveGraph, saveDebounceMs]
   );
-  
+
   /**
    * Handle node drag end
-   * This is the PRIMARY mechanism for position persistence.
-   * Only fires when user explicitly finishes dragging.
+   *
+   * Key behavior:
+   * - If dragged node is compute-flow: persist to compute store and debounce-save
+   * - If dragged node is legacy block: persist via onUpdateBlockPosition
    */
   const onNodeDragStop: NodeDragHandler = useCallback(
-    (event, node, nodes) => {
-      const position = { x: node.position.x, y: node.position.y };
-      
-      console.log('[NodePositionSync] Drag stopped:', node.id, position);
-      
-      if (useComputeFlow) {
-        // Use silent update to avoid re-renders during drag
-        updateNodeSilent(node.id, { position });
+    (_event, node, nodes) => {
+      const draggedNodes = nodes?.length ? nodes : [node];
+      const hasComputeNodes = draggedNodes.some(isComputeNodeInstance);
+
+      if (hasComputeNodes) {
         setDragging(false);
-        
-        // Mark for debounced save
-        draggedNodesRef.current.add(node.id);
-        savePendingRef.current = true;
-        debouncedSave();
-      } else if (onUpdateBlockPosition) {
-        // Legacy block system
-        onUpdateBlockPosition(node.id, position);
       }
-      
-      // Handle multi-select drag (all selected nodes moved together)
-      if (nodes.length > 1) {
-        nodes.forEach((draggedNode) => {
-          if (draggedNode.id !== node.id) {
-            const draggedPosition = { 
-              x: draggedNode.position.x, 
-              y: draggedNode.position.y 
-            };
-            
-            if (useComputeFlow) {
-              updateNodeSilent(draggedNode.id, { position: draggedPosition });
-              draggedNodesRef.current.add(draggedNode.id);
-            } else if (onUpdateBlockPosition) {
-              onUpdateBlockPosition(draggedNode.id, draggedPosition);
-            }
-          }
-        });
+
+      draggedNodes.forEach((draggedNode) => {
+        const position = { x: draggedNode.position.x, y: draggedNode.position.y };
+        console.log('[NodePositionSync] Drag stopped:', draggedNode.id, position);
+
+        if (isComputeNodeInstance(draggedNode)) {
+          updateNodeSilent(draggedNode.id, { position });
+          draggedNodesRef.current.add(draggedNode.id);
+          savePendingRef.current = true;
+        } else if (onUpdateBlockPosition) {
+          // This is the critical fix for the "snap back"/"sticky" behavior in hybrid mode.
+          onUpdateBlockPosition(draggedNode.id, position);
+        }
+      });
+
+      if (hasComputeNodes) {
+        debouncedSave();
       }
     },
-    [useComputeFlow, updateNodeSilent, onUpdateBlockPosition, debouncedSave, setDragging]
+    [debouncedSave, isComputeNodeInstance, onUpdateBlockPosition, setDragging, updateNodeSilent]
   );
 
-  const onNodeDragStart: NodeDragHandler = useCallback(() => {
-    if (useComputeFlow) {
-      setDragging(true);
-    }
-  }, [setDragging, useComputeFlow]);
-  
+  const onNodeDragStart: NodeDragHandler = useCallback(
+    (_event, node, nodes) => {
+      if (!useComputeFlow) return;
+
+      const draggedNodes = nodes?.length ? nodes : [node];
+      const hasComputeNodes = draggedNodes.some(isComputeNodeInstance);
+
+      if (hasComputeNodes) {
+        setDragging(true);
+      }
+    },
+    [isComputeNodeInstance, setDragging, useComputeFlow]
+  );
+
   /**
    * Filter node changes (position during drag, selection, etc.)
    * This is a pure function that returns filtered changes.
    */
-  const filterNodeChanges = useCallback(
-    (changes: any[]): any[] => {
-      // Filter out any changes we want to ignore
-      return changes.filter((change) => {
-        // Always allow non-position changes
-        if (change.type !== 'position') return true;
-        
-        // For position changes during drag, allow them (updates visual position)
-        // The save happens in onNodeDragStop
-        return true;
-      });
-    },
-    []
-  );
-  
+  const filterNodeChanges = useCallback((changes: any[]): any[] => {
+    // Currently we allow all changes through; position persistence happens on drag stop.
+    return changes;
+  }, []);
+
   return {
     onNodeDragStop,
     onNodeDragStart,
     filterNodeChanges,
     isSavePending: savePendingRef.current,
   };
-}
-
-/**
- * Utility to check if a node position has changed significantly
- * (avoids saving micro-movements)
- */
-export function hasPositionChanged(
-  oldPos: Position,
-  newPos: Position,
-  threshold = 1
-): boolean {
-  return (
-    Math.abs(oldPos.x - newPos.x) > threshold ||
-    Math.abs(oldPos.y - newPos.y) > threshold
-  );
-}
-
-/**
- * Merge position changes into existing node array
- * (Pure function, no side effects)
- */
-export function applyPositionUpdates(
-  nodes: Node[],
-  updates: Map<string, Position>
-): Node[] {
-  return nodes.map((node) => {
-    const newPosition = updates.get(node.id);
-    if (newPosition && hasPositionChanged(node.position, newPosition)) {
-      return { ...node, position: newPosition };
-    }
-    return node;
-  });
 }
 
 export default useNodePositionSync;
