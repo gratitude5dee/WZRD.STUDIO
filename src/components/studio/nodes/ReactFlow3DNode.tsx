@@ -5,11 +5,11 @@ import { BaseNode } from './BaseNode';
 import { NodeStatusBadge } from '../status/NodeStatusBadge';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import type { NodeStatus } from '@/types/computeFlow';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import ModelSelector from './ModelSelector';
 
 interface ThreeDNodeData {
   status?: string;
@@ -20,12 +20,6 @@ interface ThreeDNodeData {
   modelUrl?: string;
   model?: string;
 }
-
-const THREE_D_MODELS = [
-  { id: 'fal-ai/trellis/multi', name: 'Trellis Multi', description: 'Image to 3D' },
-  { id: 'fal-ai/stable-fast-3d', name: 'Stable Fast 3D', description: 'Fast 3D generation' },
-  { id: 'fal-ai/triposr', name: 'TripoSR', description: 'Single image to 3D' },
-];
 
 export const ReactFlow3DNode = memo(({ id, data, selected }: NodeProps) => {
   const nodeData = data as ThreeDNodeData;
@@ -149,22 +143,12 @@ export const ReactFlow3DNode = memo(({ id, data, selected }: NodeProps) => {
         <div className="p-3 space-y-3">
           {/* Model Selector */}
           <div>
-            <label className="text-[10px] text-zinc-500 uppercase tracking-wider mb-1 block">Model</label>
-            <Select value={model} onValueChange={setModel}>
-              <SelectTrigger className="h-8 text-xs bg-zinc-900 border-zinc-700">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {THREE_D_MODELS.map(m => (
-                  <SelectItem key={m.id} value={m.id} className="text-xs">
-                    <div className="flex flex-col">
-                      <span>{m.name}</span>
-                      <span className="text-[10px] text-zinc-500">{m.description}</span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <ModelSelector
+              label="Model"
+              selectedModelId={model}
+              onModelSelect={setModel}
+              categoryFilters={['3d']}
+            />
           </div>
 
           {/* Image Input */}
