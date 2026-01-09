@@ -215,6 +215,9 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
         blockPosition: block.position,
         onSpawnBlocks: handleSpawnBlocks,
       },
+      draggable: true,
+      selectable: true,
+      connectable: true,
     })),
     []
   );
@@ -286,6 +289,9 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
           onSpawnBlocks: handleSpawnBlocks,
         },
         selected: block.id === selectedBlockId,
+        draggable: true,
+        selectable: true,
+        connectable: true,
       }));
 
       const nodeMap = new Map<string, Node>();
@@ -380,6 +386,9 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
         onSpawnBlocks: handleSpawnBlocks,
         onExecute: () => handleNodeExecute(nodeDef.id),
       },
+      draggable: true,
+      selectable: true,
+      connectable: true,
     }));
     
     setNodes(currentNodes => {
@@ -663,8 +672,11 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
         }, 100);
       }
 
-      setShowNodeSelector(false);
-      setActiveConnection(null);
+      // Use requestAnimationFrame to defer state clearing and prevent race conditions
+      requestAnimationFrame(() => {
+        setShowNodeSelector(false);
+        setActiveConnection(null);
+      });
     },
     [nodeSelectorPosition, activeConnection, onAddBlock]
   );
@@ -692,6 +704,9 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
           label: 'Add Block',
           isNew: true,
         },
+        draggable: true,
+        selectable: true,
+        connectable: true,
       };
 
       setNodes((nds) => [...nds, newNode]);
@@ -860,6 +875,9 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
           connectionRadius={30}
           isValidConnection={isValidConnection}
           defaultEdgeOptions={defaultEdgeOptions}
+          nodesDraggable={true}
+          nodesConnectable={true}
+          elementsSelectable={true}
           fitView
           fitViewOptions={{ padding: 0.2 }}
           minZoom={0.1}
