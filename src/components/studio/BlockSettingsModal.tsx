@@ -32,14 +32,18 @@ const TEXT_MODELS: Model[] = [
 ];
 
 const IMAGE_MODELS: Model[] = [
-  { id: 'gemini-2.5-flash-image', name: 'Gemini 2.5', description: 'Fast image generation', credits: 2, time: '~4s', icon: 'image' },
-  { id: 'flux-schnell', name: 'Flux Schnell', description: 'Ultra-fast quality', credits: 3, time: '~3s', icon: 'image' },
-  { id: 'flux-dev', name: 'Flux Dev', description: 'Highest quality', credits: 5, time: '~8s', icon: 'image' },
+  { id: 'google/gemini-2.5-flash-image-preview', name: 'Gemini 2.5', description: 'Fast image generation', credits: 2, time: '~4s', icon: 'image' },
+  { id: 'fal-ai/flux/schnell', name: 'Flux Schnell', description: 'Ultra-fast quality', credits: 3, time: '~3s', icon: 'image' },
+  { id: 'fal-ai/flux/dev', name: 'Flux Dev', description: 'Highest quality', credits: 5, time: '~8s', icon: 'image' },
+  { id: 'fal-ai/ideogram/v2', name: 'Ideogram V2', description: 'Great for text in images', credits: 4, time: '~10s', icon: 'image' },
+  { id: 'fal-ai/recraft-v3', name: 'Recraft V3', description: 'Realistic & artistic', credits: 4, time: '~12s', icon: 'image' },
 ];
 
 const VIDEO_MODELS: Model[] = [
-  { id: 'gemini-2.5-flash-video', name: 'Veo 3 Fast', description: 'Fast video generation', credits: 10, time: '~30s', icon: 'video' },
-  { id: 'luma-dream', name: 'Luma Dream', description: 'Cinematic quality', credits: 25, time: '~90s', icon: 'video' },
+  { id: 'fal-ai/magi-1', name: 'MAGI-1', description: 'Fast video generation', credits: 10, time: '~30s', icon: 'video' },
+  { id: 'fal-ai/luma-dream-machine', name: 'Luma Dream', description: 'Cinematic quality', credits: 25, time: '~90s', icon: 'video' },
+  { id: 'fal-ai/minimax/video-01', name: 'Hailuo Minimax', description: 'Motion-heavy videos', credits: 30, time: '~4m', icon: 'video' },
+  { id: 'fal-ai/kling-video/v1.6/pro/text-to-video', name: 'Kling Pro 1.6', description: 'High quality', credits: 35, time: '~5m', icon: 'video' },
 ];
 
 const getModelsForBlockType = (blockType: 'text' | 'image' | 'video' | 'upload' | null): Model[] => {
