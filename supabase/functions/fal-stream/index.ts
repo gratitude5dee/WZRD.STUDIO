@@ -30,8 +30,9 @@ const mapModelToFalId = (modelId: string): string => {
     'luma-dream': 'fal-ai/luma-dream-machine',
     'pika': 'fal-ai/pika/v2',
     'lightricks': 'fal-ai/ltx-video/v0.9.1',
-    'magi': 'fal-ai/magi-1',
-    'fal-ai/magi': 'fal-ai/magi-1',
+    'magi': 'fal-ai/magi',
+    'fal-ai/magi': 'fal-ai/magi',
+    'fal-ai/magi-1': 'fal-ai/magi-1',
     
     // Audio models
     'dia-tts': 'fal-ai/dia-tts',
@@ -79,6 +80,23 @@ const MODEL_INPUT_TRANSFORMERS: Record<string, (inputs: any) => any> = {
     aspect_ratio: inputs.aspect_ratio || '16:9',
     duration: inputs.duration || '5s',
   }),
+  'fal-ai/magi': (inputs) => ({
+    prompt: inputs.prompt,
+    aspect_ratio: inputs.aspect_ratio || '16:9',
+    duration: inputs.duration || '5s',
+  }),
+  'fal-ai/magi/image-to-video': (inputs) => {
+    if (!inputs.image_url) {
+      throw new Error('image_url is required for fal-ai/magi/image-to-video');
+    }
+
+    return {
+      prompt: inputs.prompt,
+      image_url: inputs.image_url,
+      aspect_ratio: inputs.aspect_ratio || '16:9',
+      duration: inputs.duration || '5s',
+    };
+  },
   'fal-ai/luma-dream-machine': (inputs) => ({
     prompt: inputs.prompt,
     aspect_ratio: inputs.aspect_ratio || '16:9',
