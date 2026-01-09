@@ -25,6 +25,7 @@ import { ReactFlowUploadNode } from './nodes/ReactFlowUploadNode';
 import { ComputeNode } from './nodes/ComputeNode';
 import { GlowingEdge } from './edges/GlowingEdge';
 import { ComputeEdge } from './edges/ComputeEdge';
+import { ImprovedEdge } from './edges/ImprovedEdge';
 import { BezierConnection } from './connections/BezierConnection';
 import { CustomConnectionLine } from './ConnectionLine';
 import { ConnectionNodeSelector } from './ConnectionNodeSelector';
@@ -131,12 +132,13 @@ const edgeTypes: EdgeTypes = {
   studio: GlowingEdge,
   glow: GlowingEdge,
   compute: ComputeEdge,
+  improved: ImprovedEdge,
   default: BezierConnection,
 };
 
 // Default edge options
 const defaultEdgeOptions = {
-  type: 'glow',
+  type: 'improved',
   animated: false,
   data: {
     status: 'idle',
@@ -592,7 +594,7 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
         const { source, sourceHandle } = connection;
         
         // Determine edge type and data
-        let edgeType = 'studio';
+        let edgeType = 'improved';
         let edgeData: any = { status: 'idle', dataType: 'data' };
         
         if (useComputeFlow && source && sourceHandle) {
@@ -664,7 +666,7 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
                 id: uuidv4(),
                 source: activeConnection.fromNode.id,
                 target: newBlock.id,
-                type: 'studio',
+                type: 'improved',
               },
               eds
             )

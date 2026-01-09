@@ -1,6 +1,16 @@
 import { useCallback } from 'react';
-import { Connection, useReactFlow, Node, Edge } from '@xyflow/react';
+import { Connection, useReactFlow } from '@xyflow/react';
 import { toast } from 'sonner';
+
+type ConnectionType = 'text' | 'image' | 'video' | 'audio' | 'data';
+
+const TYPE_COMPATIBILITY: Record<ConnectionType, ConnectionType[]> = {
+  text: ['text', 'image', 'video', 'audio', 'data'],
+  image: ['image', 'data'],
+  video: ['video', 'data'],
+  audio: ['audio', 'data'],
+  data: ['text', 'image', 'video', 'audio', 'data'],
+};
 
 export const useConnectionValidation = () => {
   const { getNodes, getEdges } = useReactFlow();
@@ -49,17 +59,18 @@ export const useConnectionValidation = () => {
     [getNodes, getEdges]
   );
 
-  const getHandleType = (nodeId: string, handleId: string | null): string | null => {
+  const getHandleType = (nodeId: string, handleId: string | null): ConnectionType | null => {
     const nodes = getNodes();
     const node = nodes.find(n => n.id === nodeId);
     if (!node || !handleId) return null;
-    
-    // Extract type from handle ID (e.g., "text-output" -> "text")
+
     if (handleId.includes('text')) return 'text';
     if (handleId.includes('image')) return 'image';
     if (handleId.includes('video')) return 'video';
-    
-    return 'any';
+    if (handleId.includes('audio')) return 'audio';
+    if (handleId.includes('data')) return 'data';
+
+    return 'data';
   };
 
   const isValidConnection = useCallback(
@@ -81,15 +92,10 @@ export const useConnectionValidation = () => {
       // Type validation
       const sourceType = getHandleType(connection.source, connection.sourceHandle);
       const targetType = getHandleType(connection.target, connection.targetHandle);
-      
-      if (sourceType && targetType && sourceType !== 'any' && targetType !== 'any') {
-        // Text can connect to anything (metadata passthrough)
-        if (sourceType === 'text' || targetType === 'text') {
-          return true;
-        }
-        
-        // Otherwise require exact match
-        if (sourceType !== targetType) {
+
+      if (sourceType && targetType) {
+        const compatibleTargets = TYPE_COMPATIBILITY[sourceType] ?? [];
+        if (!compatibleTargets.includes(targetType)) {
           toast.error(`Type mismatch: cannot connect ${sourceType} to ${targetType}`);
           return false;
         }
