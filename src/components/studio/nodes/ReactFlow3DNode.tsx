@@ -5,11 +5,11 @@ import { BaseNode } from './BaseNode';
 import { NodeStatusBadge } from '../status/NodeStatusBadge';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import type { NodeStatus } from '@/types/computeFlow';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import ModelSelector from './ModelSelector';
 
 interface ThreeDNodeData {
   status?: string;

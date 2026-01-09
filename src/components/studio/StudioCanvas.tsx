@@ -49,6 +49,7 @@ import { toast } from 'sonner';
 import { nanoid } from 'nanoid';
 import { AddBlockNode } from './nodes/AddBlockNode';
 import { StudioErrorBoundary } from './StudioErrorBoundary';
+import { SelectionNode } from './nodes/SelectionNode';
 
 // New upload nodes
 import { UploadImageNode } from './nodes/UploadImageNode';
@@ -106,6 +107,7 @@ const nodeTypes: NodeTypes = {
   upload: ReactFlowUploadNode,
   compute: ComputeNode,
   addBlockNode: AddBlockNode,
+  selectionNode: SelectionNode,
   
   // Specialized upload nodes
   uploadImage: UploadImageNode,
@@ -316,6 +318,7 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
   useEffect(() => {
     setNodes((currentNodes) => {
       const addBlockNodes = currentNodes.filter((node) => node.type === 'addBlockNode');
+      const selectionNodes = currentNodes.filter((node) => node.type === 'selectionNode');
       const computeFlowNodes = currentNodes.filter((node) =>
         nodeDefinitions.some((nodeDefinition) => nodeDefinition.id === node.id)
       );
@@ -348,6 +351,11 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
         }
       });
       addBlockNodes.forEach((node) => {
+        if (!nodeMap.has(node.id)) {
+          nodeMap.set(node.id, node);
+        }
+      });
+      selectionNodes.forEach((node) => {
         if (!nodeMap.has(node.id)) {
           nodeMap.set(node.id, node);
         }
@@ -457,13 +465,15 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
     setNodes(currentNodes => {
       // Keep addBlockNodes
       const addBlockNodes = currentNodes.filter(n => n.type === 'addBlockNode');
+      const selectionNodes = currentNodes.filter(n => n.type === 'selectionNode');
       // Keep legacy block nodes that aren't in compute flow
       const blockNodes = currentNodes.filter(n => 
         n.type !== 'addBlockNode' && 
+        n.type !== 'selectionNode' &&
         !nodeDefinitions.some(nd => nd.id === n.id)
       );
       
-      return [...computeNodes, ...blockNodes, ...addBlockNodes];
+      return [...computeNodes, ...blockNodes, ...addBlockNodes, ...selectionNodes];
     });
   }, [
     nodeDefinitions,
@@ -719,11 +729,15 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
   );
 
   const handleSelectNodeType = useCallback(
-    (type: 'text' | 'image' | 'video' | 'upload') => {
+    (
+      type: 'text' | 'image' | 'video' | 'upload',
+      positionOverride?: { x: number; y: number }
+    ) => {
+      const resolvedPosition = positionOverride ?? nodeSelectorPosition;
       const newBlock: Block = {
         id: uuidv4(),
         type,
-        position: nodeSelectorPosition,
+        position: resolvedPosition,
       };
 
       onAddBlock(newBlock);
@@ -770,29 +784,25 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
       });
 
       const newNode: Node = {
-        id: `add-block-${nanoid(8)}`,
-        type: 'addBlockNode',
+        id: `selection-${nanoid(8)}`,
+        type: 'selectionNode',
         position,
         data: {
-          label: 'Add Block',
-          isNew: true,
+          showSelector: true,
+          onSelectType: handleSelectNodeType,
+          onClose: (nodeId: string) => {
+            setNodes((nds) => nds.filter((node) => node.id !== nodeId));
+          },
         },
         draggable: true,
         selectable: true,
         connectable: true,
       };
 
+      setNodeSelectorPosition(position);
       setNodes((nds) => [...nds, newNode]);
-
-      window.setTimeout(() => {
-        window.dispatchEvent(
-          new CustomEvent('openBlockSelector', {
-            detail: { nodeId: newNode.id, position },
-          })
-        );
-      }, 100);
     },
-    [screenToFlowPosition, setNodes]
+    [screenToFlowPosition, setNodes, setNodeSelectorPosition, handleSelectNodeType]
   );
 
   useEffect(() => {
