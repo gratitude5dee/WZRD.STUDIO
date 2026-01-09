@@ -80,8 +80,8 @@ const StudioSidebar = ({
 
   return (
     <TooltipProvider delayDuration={300}>
-      {/* Floating Sidebar - Vertically Centered - Reduced width */}
-      <aside className="fixed left-[5px] top-1/2 -translate-y-1/2 z-40">
+      {/* Floating Sidebar - Vertically Centered - Reduced width - Moved right by 5px */}
+      <aside className="fixed left-[10px] top-1/2 -translate-y-1/2 z-40">
         <motion.div 
           className="relative bg-surface-1/95 backdrop-blur-2xl border border-border-subtle rounded-2xl shadow-2xl shadow-black/40 p-1 flex flex-col items-center gap-0"
           initial={{ opacity: 0, x: -20 }}
@@ -280,7 +280,7 @@ interface PanelWrapperProps {
 
 const PanelWrapper: React.FC<PanelWrapperProps> = ({ children, offsetY = 0 }) => (
   <motion.div
-    className="fixed left-14 top-1/2 z-50"
+    className="fixed left-[60px] top-1/2 z-50"
     style={{ transform: `translateY(calc(-50% + ${offsetY}px))` }}
     initial={{ opacity: 0, x: -16, scale: 0.96 }}
     animate={{ opacity: 1, x: 0, scale: 1 }}

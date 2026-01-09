@@ -33,7 +33,7 @@ const StudioBottomBar = () => {
     : 0;
 
   return (
-    <footer className="h-10 bg-surface-1 border-t border-border-subtle px-4 flex items-center justify-between">
+    <footer className="fixed bottom-0 left-0 right-0 h-10 bg-surface-1 border-t border-border-subtle flex items-center justify-between z-30" style={{ paddingLeft: '10px', paddingRight: '16px' }}>
       <div className="flex items-center gap-4 text-xs text-text-tertiary">
         {lowCredits && (
           <div className="flex items-center gap-2 px-2 py-1 rounded-lg bg-accent-amber/10 border border-accent-amber/20 text-accent-amber">
