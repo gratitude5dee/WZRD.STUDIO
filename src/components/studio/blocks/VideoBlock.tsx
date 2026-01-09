@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { Sparkles, Info, Video, Wand2, Download, RotateCw, Play, Pause, Volume2, VolumeX, Maximize2 } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useParams } from 'react-router-dom';
+import { Sparkles, Info, Video, Wand2, Download, RotateCw, Play, Pause, Volume2, VolumeX, Maximize2, Save, Loader2 } from 'lucide-react';
 import BlockBase, { ConnectionPoint } from './BlockBase';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -9,6 +10,7 @@ import { geminiVideoModel } from '@/types/modelTypes';
 import { BlockFloatingToolbar } from './BlockFloatingToolbar';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
+import { useSaveToProjectAssets } from '@/hooks/useSaveToProjectAssets';
 
 export interface VideoBlockProps {
   id: string;
@@ -61,6 +63,8 @@ const VideoBlock: React.FC<VideoBlockProps> = ({
   const [generationStage, setGenerationStage] = useState<string>('Initializing');
   const [estimatedTime, setEstimatedTime] = useState(45);
   const { isGenerating, videoUrl, progress, generateVideo } = useGeminiVideo();
+  const { projectId } = useParams<{ projectId?: string }>();
+  const { saveAsset, isSaving } = useSaveToProjectAssets(projectId);
 
   // Simulate detailed generation progress
   useEffect(() => {
@@ -150,6 +154,21 @@ const VideoBlock: React.FC<VideoBlockProps> = ({
   };
 
   const generatedVideo = videoUrl ? { url: videoUrl } : null;
+
+  const handleSaveToProject = useCallback(async (event: React.MouseEvent) => {
+    event.stopPropagation();
+    if (!generatedVideo?.url) {
+      toast.error('No video available to save.');
+      return;
+    }
+
+    await saveAsset({
+      url: generatedVideo.url,
+      type: 'video',
+      prompt,
+      model: selectedModel,
+    });
+  }, [generatedVideo?.url, prompt, saveAsset, selectedModel]);
 
   return (
     <BlockBase
@@ -356,6 +375,21 @@ const VideoBlock: React.FC<VideoBlockProps> = ({
             >
               <Download className="w-3.5 h-3.5 mr-1.5" />
               Download
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="text-zinc-400 hover:text-zinc-200"
+              onClick={handleSaveToProject}
+              onMouseDown={(e) => e.stopPropagation()}
+              disabled={isSaving}
+            >
+              {isSaving ? (
+                <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+              ) : (
+                <Save className="w-3.5 h-3.5 mr-1.5" />
+              )}
+              Save to Project
             </Button>
             <div className="flex-1" />
             <Button

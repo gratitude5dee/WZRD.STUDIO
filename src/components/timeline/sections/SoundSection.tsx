@@ -1,6 +1,7 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
+import { useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Music, ChevronDown, Mic, Volume2, Loader2, Play, Pause, Trash2, Sparkles } from 'lucide-react';
+import { Music, ChevronDown, Mic, Volume2, Loader2, Play, Pause, Trash2, Sparkles, Save } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
@@ -10,6 +11,7 @@ import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { useSaveToProjectAssets } from '@/hooks/useSaveToProjectAssets';
 
 interface SoundSectionProps {
   sceneId: string;
@@ -43,6 +45,19 @@ const MUSIC_GENRES = [
   'Orchestral', 'Electronic', 'Ambient', 'Rock', 'Synthwave', 'Acoustic',
 ];
 
+const getAudioModelLabel = (type: GeneratedAudio['type']) => {
+  switch (type) {
+    case 'voiceover':
+      return 'elevenlabs-tts';
+    case 'sfx':
+      return 'elevenlabs-sfx';
+    case 'music':
+      return 'elevenlabs-music';
+    default:
+      return 'elevenlabs';
+  }
+};
+
 export function SoundSection({
   sceneId,
   isOpen = false,
@@ -60,6 +75,8 @@ export function SoundSection({
   const [isGenerating, setIsGenerating] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [playingId, setPlayingId] = useState<string | null>(null);
+  const { projectId } = useParams<{ projectId?: string }>();
+  const { saveAsset, isSaving } = useSaveToProjectAssets(projectId);
 
   const generateVoiceover = async () => {
     if (!voiceoverText.trim()) {
@@ -246,6 +263,20 @@ export function SoundSection({
   const filteredAudios = (type: 'voiceover' | 'sfx' | 'music') =>
     generatedAudios.filter(a => a.type === type);
 
+  const handleSaveAudio = useCallback(async (audio: GeneratedAudio) => {
+    if (!audio.audioUrl) {
+      toast.error('Audio is not ready yet.');
+      return;
+    }
+
+    await saveAsset({
+      url: audio.audioUrl,
+      type: 'audio',
+      prompt: audio.prompt,
+      model: getAudioModelLabel(audio.type),
+    });
+  }, [saveAsset]);
+
   return (
     <Collapsible open={isOpen} onOpenChange={onToggle} className="space-y-2 pt-3 border-t border-white/5">
       <CollapsibleTrigger asChild>
@@ -332,6 +363,8 @@ export function SoundSection({
                           isPlaying={playingId === audio.id}
                           onPlay={() => playAudio(audio)}
                           onDelete={() => deleteAudio(audio.id)}
+                          onSave={() => handleSaveAudio(audio)}
+                          isSaving={isSaving}
                         />
                       ))}
                     </div>
@@ -403,6 +436,8 @@ export function SoundSection({
                           isPlaying={playingId === audio.id}
                           onPlay={() => playAudio(audio)}
                           onDelete={() => deleteAudio(audio.id)}
+                          onSave={() => handleSaveAudio(audio)}
+                          isSaving={isSaving}
                         />
                       ))}
                     </div>
@@ -485,6 +520,8 @@ export function SoundSection({
                           isPlaying={playingId === audio.id}
                           onPlay={() => playAudio(audio)}
                           onDelete={() => deleteAudio(audio.id)}
+                          onSave={() => handleSaveAudio(audio)}
+                          isSaving={isSaving}
                         />
                       ))}
                     </div>
@@ -509,12 +546,16 @@ function AudioItem({
   audio,
   isPlaying,
   onPlay,
-  onDelete
+  onDelete,
+  onSave,
+  isSaving
 }: {
   audio: GeneratedAudio;
   isPlaying: boolean;
   onPlay: () => void;
   onDelete: () => void;
+  onSave: () => void;
+  isSaving: boolean;
 }) {
   return (
     <div className="flex items-center gap-2 p-2 bg-zinc-800/30 rounded-lg border border-zinc-700/50">
@@ -536,6 +577,18 @@ function AudioItem({
         )}
       </Button>
       <span className="flex-1 text-xs text-zinc-300 truncate">{audio.prompt}</span>
+      {audio.status === 'ready' && (
+        <Button
+          size="sm"
+          variant="ghost"
+          className="h-6 px-2 text-[10px] text-zinc-400 hover:text-zinc-200"
+          onClick={onSave}
+          disabled={isSaving}
+        >
+          {isSaving ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Save className="w-3 h-3 mr-1" />}
+          Save to Project
+        </Button>
+      )}
       <Button
         size="icon"
         variant="ghost"
