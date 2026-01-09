@@ -22,6 +22,8 @@ export const Upload3DNode = memo(({ id, data, selected }: NodeProps) => {
   const status = (nodeData?.status || 'idle') as NodeStatus;
   const progress = nodeData?.progress || 0;
   const error = nodeData?.error;
+  const onDuplicate = (data as any)?.onDuplicate;
+  const onDelete = (data as any)?.onDelete;
   
   const [modelUrl, setModelUrl] = useState<string | null>(nodeData?.modelUrl || null);
   const [fileName, setFileName] = useState<string | null>(nodeData?.fileName || null);
@@ -94,7 +96,15 @@ export const Upload3DNode = memo(({ id, data, selected }: NodeProps) => {
   }, []);
 
   return (
-    <BaseNode handles={handles} nodeType="3d" isSelected={selected}>
+    <BaseNode
+      handles={handles}
+      nodeType="3d"
+      isSelected={selected}
+      hoverMenu={{
+        onDuplicate,
+        onDelete,
+      }}
+    >
       <NodeStatusBadge status={status} progress={progress} error={error} />
       <div className={cn(
         "w-72 bg-[#1a1a1a] border border-zinc-800 rounded-lg overflow-hidden",

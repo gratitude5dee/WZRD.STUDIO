@@ -41,7 +41,7 @@ import { useStudioKeyboardShortcuts } from '@/hooks/studio/useStudioKeyboardShor
 import { useSelectionBox } from '@/hooks/studio/useSelectionBox';
 import { useNodePositionSync } from '@/hooks/studio/useNodePositionSync';
 import { useUnsavedChangesWarning } from '@/hooks/useUnsavedChangesWarning';
-import { HANDLE_COLORS, DataType } from '@/types/computeFlow';
+import { HANDLE_COLORS, DataType, NodeDefinition } from '@/types/computeFlow';
 import { useComputeFlowStore } from '@/store/computeFlowStore';
 import { v4 as uuidv4 } from 'uuid';
 import EmptyCanvasState from './EmptyCanvasState';
@@ -204,22 +204,64 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
     });
   }, [onAddBlock]);
 
+  const handleDuplicateBlock = useCallback((block: Block) => {
+    const newBlock: Block = {
+      ...block,
+      id: uuidv4(),
+      position: {
+        x: block.position.x + 40,
+        y: block.position.y + 40,
+      },
+    };
+    onAddBlock(newBlock);
+  }, [onAddBlock]);
+
+  const handleDuplicateComputeNode = useCallback((nodeDef: NodeDefinition) => {
+    const newId = uuidv4();
+    const duplicatedNode: NodeDefinition = {
+      ...nodeDef,
+      id: newId,
+      label: `${nodeDef.label} Copy`,
+      position: {
+        x: nodeDef.position.x + 40,
+        y: nodeDef.position.y + 40,
+      },
+      status: 'idle',
+      progress: 0,
+      error: undefined,
+      preview: undefined,
+      inputs: nodeDef.inputs?.map((input, index) => ({
+        ...input,
+        id: `${newId}-input-${index}`,
+      })) ?? [],
+      outputs: nodeDef.outputs?.map((output, index) => ({
+        ...output,
+        id: `${newId}-output-${index}`,
+      })) ?? [],
+    };
+
+    addComputeNode(duplicatedNode);
+  }, [addComputeNode]);
+
   // Convert blocks to React Flow nodes
   const initialNodes: Node[] = useMemo(() => 
     blocks.map(block => ({
       id: block.id,
       type: block.type,
       position: block.position,
-      data: {
-        label: block.type,
-        initialData: block.initialData,
-        selectedModel: blockModels[block.id],
-        blockPosition: block.position,
-        onSpawnBlocks: handleSpawnBlocks,
-      },
-      draggable: true,
-      selectable: true,
-      connectable: true,
+        data: {
+          label: block.type,
+          initialData: block.initialData,
+          selectedModel: blockModels[block.id],
+          blockPosition: block.position,
+          onSpawnBlocks: handleSpawnBlocks,
+          onModelChange: (modelId: string) => onModelChange(block.id, modelId),
+          onDuplicate: () => handleDuplicateBlock(block),
+          onDelete: () => onDeleteBlock(block.id),
+        },
+        draggable: true,
+        selectable: true,
+        connectable: true,
     })),
     []
   );
@@ -290,6 +332,9 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
           selectedModel: blockModels[block.id],
           blockPosition: block.position,
           onSpawnBlocks: handleSpawnBlocks,
+          onModelChange: (modelId: string) => onModelChange(block.id, modelId),
+          onDuplicate: () => handleDuplicateBlock(block),
+          onDelete: () => onDeleteBlock(block.id),
         },
         selected: block.id === selectedBlockId,
         draggable: true,
@@ -318,7 +363,16 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
 
       return Array.from(nodeMap.values());
     });
-  }, [blocks, blockModels, selectedBlockId, handleSpawnBlocks, nodeDefinitions]);
+  }, [
+    blocks,
+    blockModels,
+    selectedBlockId,
+    handleSpawnBlocks,
+    handleDuplicateBlock,
+    onModelChange,
+    onDeleteBlock,
+    nodeDefinitions,
+  ]);
 
   // Helper to map node kind to React Flow node type
   const getNodeTypeFromKind = useCallback((kind: string): string => {
@@ -393,6 +447,15 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
         // Callbacks - wire up onExecute for per-node generation
         onSpawnBlocks: handleSpawnBlocks,
         onExecute: () => handleNodeExecute(nodeDef.id),
+        onGenerate: () => handleNodeExecute(nodeDef.id),
+        onDuplicate: () => handleDuplicateComputeNode(nodeDef),
+        onDelete: () => removeComputeNode(nodeDef.id),
+        onModelChange: (modelId: string) => updateComputeNode(nodeDef.id, {
+          params: {
+            ...nodeDef.params,
+            model: modelId,
+          },
+        }),
       },
       draggable: true,
       selectable: true,
@@ -412,7 +475,17 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
       
       return [...computeNodes, ...blockNodes, ...addBlockNodes, ...selectionNodes];
     });
-  }, [nodeDefinitions, useComputeFlow, getNodeTypeFromKind, handleSpawnBlocks, handleNodeExecute, setNodes]);
+  }, [
+    nodeDefinitions,
+    useComputeFlow,
+    getNodeTypeFromKind,
+    handleSpawnBlocks,
+    handleNodeExecute,
+    handleDuplicateComputeNode,
+    removeComputeNode,
+    updateComputeNode,
+    setNodes,
+  ]);
 
   // Listen for fitView events from workflow generation
   useEffect(() => {

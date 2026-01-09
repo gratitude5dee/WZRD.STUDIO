@@ -21,6 +21,8 @@ export const UploadAudioNode = memo(({ id, data, selected }: NodeProps) => {
   const status = (nodeData?.status || 'idle') as NodeStatus;
   const progress = nodeData?.progress || 0;
   const error = nodeData?.error;
+  const onDuplicate = (data as any)?.onDuplicate;
+  const onDelete = (data as any)?.onDelete;
   
   const [audioUrl, setAudioUrl] = useState<string | null>(nodeData?.audioUrl || null);
   const [fileName, setFileName] = useState<string | null>(nodeData?.fileName || null);
@@ -104,7 +106,15 @@ export const UploadAudioNode = memo(({ id, data, selected }: NodeProps) => {
   }, [id, isPlaying]);
 
   return (
-    <BaseNode handles={handles} nodeType="audio" isSelected={selected}>
+    <BaseNode
+      handles={handles}
+      nodeType="audio"
+      isSelected={selected}
+      hoverMenu={{
+        onDuplicate,
+        onDelete,
+      }}
+    >
       <NodeStatusBadge status={status} progress={progress} error={error} />
       <div className={cn(
         "w-72 bg-[#1a1a1a] border border-zinc-800 rounded-lg overflow-hidden",

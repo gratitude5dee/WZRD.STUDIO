@@ -4,11 +4,22 @@ import { BaseNode } from './BaseNode';
 import TextBlock from '../blocks/TextBlock';
 import { NodeStatusBadge } from '../status/NodeStatusBadge';
 
+const TEXT_MODEL_OPTIONS = [
+  { id: 'google/gemini-2.5-flash', label: 'Gemini 2.5 Flash' },
+  { id: 'google/gemini-2.5-pro', label: 'Gemini 2.5 Pro' },
+  { id: 'openai/gpt-5-mini', label: 'GPT-5 Mini' },
+  { id: 'openai/gpt-5', label: 'GPT-5' },
+];
+
 export const ReactFlowTextNode = memo(({ id, data, selected }: NodeProps) => {
   // Extract status from data if available
   const status = (data as any)?.status || 'idle';
   const progress = (data as any)?.progress || 0;
   const error = (data as any)?.error;
+  const onModelChange = (data as any)?.onModelChange;
+  const onGenerate = (data as any)?.onGenerate ?? (data as any)?.onExecute;
+  const onDuplicate = (data as any)?.onDuplicate;
+  const onDelete = (data as any)?.onDelete;
   const handles = [
     {
       id: 'text-input',
@@ -36,7 +47,19 @@ export const ReactFlowTextNode = memo(({ id, data, selected }: NodeProps) => {
   ];
 
   return (
-    <BaseNode handles={handles} nodeType="text" isSelected={selected}>
+    <BaseNode
+      handles={handles}
+      nodeType="text"
+      isSelected={selected}
+      hoverMenu={{
+        selectedModel: (data as any)?.selectedModel,
+        modelOptions: TEXT_MODEL_OPTIONS,
+        onModelChange,
+        onGenerate,
+        onDuplicate,
+        onDelete,
+      }}
+    >
       {/* Status indicator */}
       <NodeStatusBadge 
         status={status}
@@ -50,6 +73,7 @@ export const ReactFlowTextNode = memo(({ id, data, selected }: NodeProps) => {
           onSelect={() => {}}
           isSelected={selected || false}
           selectedModel={(data as any)?.selectedModel}
+          onModelChange={onModelChange}
           initialData={(data as any)?.initialData}
         />
       </div>

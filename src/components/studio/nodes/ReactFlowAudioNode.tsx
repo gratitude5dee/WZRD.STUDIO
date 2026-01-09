@@ -26,6 +26,11 @@ const AUDIO_MODELS = [
   { id: 'elevenlabs-music', name: 'AI Music', type: 'music' },
 ];
 
+const AUDIO_MODEL_OPTIONS = AUDIO_MODELS.map((model) => ({
+  id: model.id,
+  label: model.name,
+}));
+
 const DEFAULT_VOICES = [
   { voice_id: 'JBFqnCBsd6RMkjVDRZzb', name: 'George (Professional)' },
   { voice_id: 'EXAVITQu4vr4xnSDxMaL', name: 'Sarah (Warm)' },
@@ -46,6 +51,9 @@ export const ReactFlowAudioNode = memo(({ id, data, selected }: NodeProps) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [selectedVoice, setSelectedVoice] = useState(DEFAULT_VOICES[0].voice_id);
+  const onDuplicate = (data as any)?.onDuplicate;
+  const onDelete = (data as any)?.onDelete;
+  const dataOnModelChange = (data as any)?.onModelChange;
 
   const handles = [
     {
@@ -118,6 +126,14 @@ export const ReactFlowAudioNode = memo(({ id, data, selected }: NodeProps) => {
     }
   }, [prompt, model, selectedVoice]);
 
+  const handleModelChange = useCallback(
+    (modelId: string) => {
+      setModel(modelId);
+      dataOnModelChange?.(modelId);
+    },
+    [dataOnModelChange]
+  );
+
   const togglePlay = useCallback(() => {
     const audio = document.getElementById(`audio-gen-${id}`) as HTMLAudioElement;
     if (audio) {
@@ -131,7 +147,19 @@ export const ReactFlowAudioNode = memo(({ id, data, selected }: NodeProps) => {
   }, [id, isPlaying]);
 
   return (
-    <BaseNode handles={handles} nodeType="audio" isSelected={selected}>
+    <BaseNode
+      handles={handles}
+      nodeType="audio"
+      isSelected={selected}
+      hoverMenu={{
+        selectedModel: model,
+        modelOptions: AUDIO_MODEL_OPTIONS,
+        onModelChange: handleModelChange,
+        onGenerate: handleGenerate,
+        onDuplicate,
+        onDelete,
+      }}
+    >
       <NodeStatusBadge status={status} progress={progress} error={error} />
       <div className={cn(
         "w-80 bg-[#1a1a1a] border border-zinc-800 rounded-lg overflow-hidden",
@@ -152,7 +180,7 @@ export const ReactFlowAudioNode = memo(({ id, data, selected }: NodeProps) => {
           {/* Model Selector */}
           <div>
             <label className="text-[10px] text-zinc-500 uppercase tracking-wider mb-1 block">Type</label>
-            <Select value={model} onValueChange={setModel}>
+            <Select value={model} onValueChange={handleModelChange}>
               <SelectTrigger className="h-8 text-xs bg-zinc-900 border-zinc-700">
                 <SelectValue />
               </SelectTrigger>

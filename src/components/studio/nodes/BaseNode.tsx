@@ -1,13 +1,15 @@
-import { CSSProperties, forwardRef, HTMLAttributes, ReactNode } from 'react';
+import { CSSProperties, forwardRef, HTMLAttributes, ReactNode, useState, MouseEvent } from 'react';
 import { Position } from '@xyflow/react';
 import { cn } from '@/lib/utils';
 import { NodeHandle } from './NodeHandle';
 import { DataType, HANDLE_COLORS, HANDLE_GLOW_COLORS } from '@/types/computeFlow';
+import { NodeHoverMenu, NodeHoverMenuProps } from './NodeHoverMenu';
 
 interface BaseNodeProps extends HTMLAttributes<HTMLDivElement> {
   children: ReactNode;
   nodeType?: 'text' | 'image' | 'video' | 'audio' | '3d' | 'compute' | 'output';
   isSelected?: boolean;
+  hoverMenu?: Omit<NodeHoverMenuProps, 'isVisible'>;
   handles?: {
     id: string;
     type: 'source' | 'target';
@@ -19,7 +21,8 @@ interface BaseNodeProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 export const BaseNode = forwardRef<HTMLDivElement, BaseNodeProps>(
-  ({ className, children, handles = [], nodeType, isSelected = false, ...props }, ref) => {
+  ({ className, children, handles = [], nodeType, isSelected = false, hoverMenu, onMouseEnter, onMouseLeave, ...props }, ref) => {
+    const [isHovered, setIsHovered] = useState(false);
     const inferredType = (() => {
       if (nodeType) return nodeType;
       if (handles.some(handle => handle.dataType === 'image')) return 'image';
@@ -64,6 +67,25 @@ export const BaseNode = forwardRef<HTMLDivElement, BaseNodeProps>(
       '--node-accent-glow': nodeGlow,
     } as CSSProperties;
 
+    const shouldRenderHoverMenu = Boolean(
+      hoverMenu && (
+        hoverMenu.onGenerate ||
+        hoverMenu.onDuplicate ||
+        hoverMenu.onDelete ||
+        (hoverMenu.onModelChange && hoverMenu.modelOptions?.length)
+      )
+    );
+
+    const handleMouseEnter = (event: MouseEvent<HTMLDivElement>) => {
+      setIsHovered(true);
+      onMouseEnter?.(event);
+    };
+
+    const handleMouseLeave = (event: MouseEvent<HTMLDivElement>) => {
+      setIsHovered(false);
+      onMouseLeave?.(event);
+    };
+
     return (
       <div
         ref={ref}
@@ -77,8 +99,13 @@ export const BaseNode = forwardRef<HTMLDivElement, BaseNodeProps>(
           className
         )}
         style={style}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
         {...props}
       >
+        {shouldRenderHoverMenu && hoverMenu && (
+          <NodeHoverMenu isVisible={isHovered} {...hoverMenu} />
+        )}
         <div
           className={cn(
             'absolute left-0 top-0 bottom-0 w-1 rounded-l-2xl',

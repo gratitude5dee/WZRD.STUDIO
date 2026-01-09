@@ -4,12 +4,23 @@ import { BaseNode } from './BaseNode';
 import ImageBlock from '../blocks/ImageBlock';
 import { NodeStatusBadge } from '../status/NodeStatusBadge';
 
+const IMAGE_MODEL_OPTIONS = [
+  { id: 'google/gemini-2.5-flash-image-preview', label: 'Gemini 2.5 Flash' },
+  { id: 'fal-ai/flux/dev', label: 'Flux Dev' },
+  { id: 'fal-ai/flux-pro/v1.1', label: 'Flux Pro' },
+  { id: 'fal-ai/recraft-v3', label: 'Recraft V3' },
+];
+
 export const ReactFlowImageNode = memo(({ id, data, selected }: NodeProps) => {
   const status = (data as any)?.status || 'idle';
   const progress = (data as any)?.progress || 0;
   const error = (data as any)?.error;
   const onSpawnBlocks = (data as any)?.onSpawnBlocks;
   const blockPosition = (data as any)?.blockPosition || { x: 0, y: 0 };
+  const onModelChange = (data as any)?.onModelChange;
+  const onGenerate = (data as any)?.onGenerate ?? (data as any)?.onExecute;
+  const onDuplicate = (data as any)?.onDuplicate;
+  const onDelete = (data as any)?.onDelete;
   
   const handles = [
     {
@@ -30,7 +41,19 @@ export const ReactFlowImageNode = memo(({ id, data, selected }: NodeProps) => {
   ];
 
   return (
-    <BaseNode handles={handles} nodeType="image" isSelected={selected}>
+    <BaseNode
+      handles={handles}
+      nodeType="image"
+      isSelected={selected}
+      hoverMenu={{
+        selectedModel: (data as any)?.selectedModel,
+        modelOptions: IMAGE_MODEL_OPTIONS,
+        onModelChange,
+        onGenerate,
+        onDuplicate,
+        onDelete,
+      }}
+    >
       <NodeStatusBadge 
         status={status}
         progress={progress}
@@ -43,6 +66,7 @@ export const ReactFlowImageNode = memo(({ id, data, selected }: NodeProps) => {
           onSelect={() => {}}
           isSelected={selected || false}
           selectedModel={(data as any)?.selectedModel}
+          onModelChange={onModelChange}
           initialData={(data as any)?.initialData}
           displayMode="input"
           blockPosition={blockPosition}
