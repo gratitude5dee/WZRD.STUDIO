@@ -1,17 +1,19 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { useParams } from 'react-router-dom';
 import BlockBase from './BlockBase';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useGeminiImage } from '@/hooks/useGeminiImage';
 import { falAI, FalStreamEvent } from '@/lib/falai-client';
-import { Download, Copy, Maximize2, Sparkles, Info, Upload, Video, MessageSquare, Send, Plus, Loader2, HelpCircle, Film } from 'lucide-react';
+import { Download, Copy, Maximize2, Sparkles, Info, Upload, Video, MessageSquare, Send, Plus, Loader2, HelpCircle, Film, Save } from 'lucide-react';
 import { toast } from 'sonner';
 import { BlockFloatingToolbar } from './BlockFloatingToolbar';
 import { v4 as uuidv4 } from 'uuid';
 import { motion } from 'framer-motion';
 import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
+import { useSaveToProjectAssets } from '@/hooks/useSaveToProjectAssets';
 
 interface StreamProgress {
   status: string;
@@ -84,6 +86,8 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
   const [isCreatingVariation, setIsCreatingVariation] = useState(false);
   const [isConvertingToVideo, setIsConvertingToVideo] = useState(false);
   const { isGenerating, generateImage } = useGeminiImage();
+  const { projectId } = useParams<{ projectId?: string }>();
+  const { saveAsset, isSaving } = useSaveToProjectAssets(projectId);
 
   // Handle variation generation
   const handleVariation = useCallback(async () => {
@@ -482,6 +486,21 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
     }
   };
 
+  const handleSaveToProject = useCallback(async (event?: React.MouseEvent) => {
+    event?.stopPropagation();
+    if (!generatedImage?.url) {
+      toast.error('No image available to save.');
+      return;
+    }
+
+    await saveAsset({
+      url: generatedImage.url,
+      type: 'image',
+      prompt,
+      model: selectedModel,
+    });
+  }, [generatedImage?.url, prompt, saveAsset, selectedModel]);
+
   // Display mode - prominent image with overlay
   if (displayMode === 'display' && generatedImage) {
     return (
@@ -524,6 +543,16 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
             onMouseDown={(e) => e.stopPropagation()}
           >
             <Download className="w-4 h-4" />
+          </Button>
+          <Button
+            size="sm"
+            className="bg-white/90 hover:bg-white text-black shadow-lg"
+            onClick={handleSaveToProject}
+            onMouseDown={(e) => e.stopPropagation()}
+            disabled={isSaving}
+          >
+            {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4 mr-1" />}
+            Save to Project
           </Button>
           <Button
             size="icon"
@@ -805,57 +834,72 @@ const ImageBlock: React.FC<ImageBlockProps> = ({
 
           {/* Generated Image with Enhanced Display */}
           {generatedImage && !isGenerating && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="relative group cursor-pointer rounded-xl overflow-hidden bg-zinc-800/30 aspect-square"
-            >
-              <img
-                src={generatedImage.url}
-                alt="Generated"
-                className="w-full h-full object-cover"
-              />
-              
-              {/* Generation Time Badge */}
-              {generatedImage.generationTime && (
-                <div className="absolute top-2 right-2">
-                  <Badge className="bg-black/60 text-white text-xs backdrop-blur-sm border-0">
-                    ~{generatedImage.generationTime}s
-                  </Badge>
+            <div className="space-y-2">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="relative group cursor-pointer rounded-xl overflow-hidden bg-zinc-800/30 aspect-square"
+              >
+                <img
+                  src={generatedImage.url}
+                  alt="Generated"
+                  className="w-full h-full object-cover"
+                />
+
+                {/* Generation Time Badge */}
+                {generatedImage.generationTime && (
+                  <div className="absolute top-2 right-2">
+                    <Badge className="bg-black/60 text-white text-xs backdrop-blur-sm border-0">
+                      ~{generatedImage.generationTime}s
+                    </Badge>
+                  </div>
+                )}
+
+                {/* Hover Actions */}
+                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center gap-2">
+                  <Button
+                    size="icon"
+                    className="bg-white/90 hover:bg-white text-black shadow-lg"
+                    onClick={(e) => handleDownload(generatedImage.url, e)}
+                    onMouseDown={(e) => e.stopPropagation()}
+                  >
+                    <Download className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    size="icon"
+                    className="bg-white/90 hover:bg-white text-black shadow-lg"
+                    onClick={(e) => handleCopy(generatedImage.url, e)}
+                    onMouseDown={(e) => e.stopPropagation()}
+                  >
+                    <Copy className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    size="icon"
+                    className="bg-white/90 hover:bg-white text-black shadow-lg"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setDisplayMode('display');
+                    }}
+                    onMouseDown={(e) => e.stopPropagation()}
+                  >
+                    <Maximize2 className="w-4 h-4" />
+                  </Button>
                 </div>
-              )}
-              
-              {/* Hover Actions */}
-              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center gap-2">
+              </motion.div>
+
+              <div className="flex justify-end">
                 <Button
-                  size="icon"
-                  className="bg-white/90 hover:bg-white text-black shadow-lg"
-                  onClick={(e) => handleDownload(generatedImage.url, e)}
-                  onMouseDown={(e) => e.stopPropagation()}
+                  size="sm"
+                  variant="outline"
+                  className="text-xs"
+                  onClick={handleSaveToProject}
+                  disabled={isSaving}
                 >
-                  <Download className="w-4 h-4" />
-                </Button>
-                <Button
-                  size="icon"
-                  className="bg-white/90 hover:bg-white text-black shadow-lg"
-                  onClick={(e) => handleCopy(generatedImage.url, e)}
-                  onMouseDown={(e) => e.stopPropagation()}
-                >
-                  <Copy className="w-4 h-4" />
-                </Button>
-                <Button
-                  size="icon"
-                  className="bg-white/90 hover:bg-white text-black shadow-lg"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setDisplayMode('display');
-                  }}
-                  onMouseDown={(e) => e.stopPropagation()}
-                >
-                  <Maximize2 className="w-4 h-4" />
+                  {isSaving ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Save className="w-3 h-3 mr-1" />}
+                  Save to Project
                 </Button>
               </div>
-            </motion.div>
+            </div>
           )}
         </div>
       </BlockBase>
