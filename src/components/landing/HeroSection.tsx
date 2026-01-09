@@ -1,139 +1,154 @@
-import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowUpRight, Play } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { ArrowRight, Play, Sparkles, Zap } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { MotionBackground } from './MotionBackground';
 
 interface HeroSectionProps {
   headline: string;
   subheadline: string;
-  ctaPrimary: { text: string; href: string };
-  ctaSecondary: { text: string; href: string };
-  demoVideoUrl?: string;
 }
 
-const TYPING_INTERVAL = 35;
-
-export const HeroSection = ({
-  headline,
-  subheadline,
-  ctaPrimary,
-  ctaSecondary,
-  demoVideoUrl,
-}: HeroSectionProps) => {
-  const [typedHeadline, setTypedHeadline] = useState('');
-
-  useEffect(() => {
-    let index = 0;
-    const interval = window.setInterval(() => {
-      setTypedHeadline(headline.slice(0, index + 1));
-      index += 1;
-      if (index >= headline.length) {
-        window.clearInterval(interval);
-      }
-    }, TYPING_INTERVAL);
-
-    return () => window.clearInterval(interval);
-  }, [headline]);
-
+export function HeroSection({ headline, subheadline }: HeroSectionProps) {
   return (
-    <section className="relative overflow-hidden">
-      <div className="absolute inset-0 -z-10">
-        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(148,163,184,0.08)_1px,transparent_1px),linear-gradient(rgba(148,163,184,0.08)_1px,transparent_1px)] bg-[size:60px_60px] opacity-40" />
-        <motion.div
-          className="absolute -top-40 right-0 h-80 w-80 rounded-full bg-purple-500/30 blur-[120px]"
-          animate={{ y: [0, 30, 0], x: [0, -20, 0] }}
-          transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
-        />
-        <motion.div
-          className="absolute bottom-10 left-10 h-72 w-72 rounded-full bg-blue-500/20 blur-[120px]"
-          animate={{ y: [0, -20, 0], x: [0, 30, 0] }}
-          transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
-        />
-      </div>
+    <section className="relative min-h-[100vh] lg:min-h-[110vh] flex items-center justify-center overflow-hidden">
+      <MotionBackground intensity="medium" />
 
-      <div className="container mx-auto px-6 pb-20 pt-28 md:pt-32">
-        <div className="grid gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
-          <div className="space-y-8">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-              className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-medium uppercase tracking-[0.2em] text-white/70"
+      <div className="relative z-10 container mx-auto px-4 py-32 lg:py-40">
+        <div className="max-w-5xl mx-auto text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="mb-8"
+          >
+            <span
+              className={cn(
+                'inline-flex items-center gap-2 px-4 py-2 rounded-full',
+                'bg-purple-500/10 border border-purple-500/20',
+                'text-sm text-purple-300 font-medium',
+                'backdrop-blur-sm',
+              )}
             >
-              Ship cinematic video in minutes
-              <span className="h-1.5 w-1.5 rounded-full bg-violet-400" />
-            </motion.div>
+              <Sparkles className="w-4 h-4" />
+              Now in Public Beta
+              <ArrowRight className="w-3 h-3" />
+            </span>
+          </motion.div>
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.1 }}
-              className="space-y-4"
-            >
-              <h1 className="text-4xl font-semibold leading-tight text-white md:text-6xl">
-                <span className="glow-text block min-h-[3.5rem] md:min-h-[5rem]">
-                  {typedHeadline}
-                  <span className="ml-1 inline-block h-6 w-[2px] animate-pulse bg-violet-300 align-middle" />
-                </span>
-              </h1>
-              <p className="max-w-xl text-base text-white/70 md:text-lg">{subheadline}</p>
-            </motion.div>
+          <motion.h1
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.1 }}
+            className={cn(
+              'text-5xl sm:text-6xl lg:text-7xl xl:text-8xl',
+              'font-bold tracking-tight',
+              'bg-clip-text text-transparent',
+              'bg-gradient-to-b from-white via-white to-white/60',
+              'leading-[1.1] mb-8',
+            )}
+          >
+            {headline}
+          </motion.h1>
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.2 }}
-              className="flex flex-wrap gap-4"
-            >
-              <motion.a
-                href={ctaPrimary.href}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="group inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-violet-500 to-indigo-500 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-violet-500/20"
-              >
-                {ctaPrimary.text}
-                <ArrowUpRight className="h-4 w-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-              </motion.a>
-              <motion.a
-                href={ctaSecondary.href}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-6 py-3 text-sm font-semibold text-white/80 transition-colors hover:border-violet-400/60 hover:text-white"
-              >
-                <Play className="h-4 w-4" />
-                {ctaSecondary.text}
-              </motion.a>
-            </motion.div>
-          </div>
+          <motion.p
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.2 }}
+            className={cn(
+              'text-lg sm:text-xl lg:text-2xl',
+              'text-white/60 max-w-3xl mx-auto',
+              'leading-relaxed mb-12',
+            )}
+          >
+            {subheadline}
+          </motion.p>
 
           <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.7, delay: 0.15 }}
-            className="relative overflow-hidden rounded-3xl border border-white/10 bg-black/60 shadow-2xl"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.3 }}
+            className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16"
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-violet-500/10 via-transparent to-blue-500/10" />
-            {demoVideoUrl ? (
-              <video
-                className="h-full w-full object-cover"
-                autoPlay
-                muted
-                loop
-                playsInline
-                preload="auto"
-              >
-                <source src={demoVideoUrl} type="video/mp4" />
-              </video>
-            ) : (
-              <div className="flex h-72 items-center justify-center text-white/60">
-                Live canvas preview loading...
-              </div>
-            )}
-            <div className="absolute inset-0 border border-white/10" />
+            <Link
+              to="/login?mode=signup"
+              className={cn(
+                'group relative inline-flex items-center gap-3',
+                'px-8 py-4 rounded-xl',
+                'bg-gradient-to-r from-purple-600 to-purple-700',
+                'hover:from-purple-500 hover:to-purple-600',
+                'text-white font-semibold text-lg',
+                'shadow-[0_0_40px_rgba(139,92,246,0.3)]',
+                'hover:shadow-[0_0_60px_rgba(139,92,246,0.5)]',
+                'transition-all duration-300',
+                'hover:-translate-y-1',
+              )}
+            >
+              <Zap className="w-5 h-5" />
+              Start Creating Free
+              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            </Link>
+
+            <Link
+              to="/demo"
+              className={cn(
+                'inline-flex items-center gap-3',
+                'px-8 py-4 rounded-xl',
+                'bg-white/5 border border-white/10',
+                'hover:bg-white/10 hover:border-white/20',
+                'text-white font-medium text-lg',
+                'backdrop-blur-sm',
+                'transition-all duration-300',
+              )}
+            >
+              <Play className="w-5 h-5" />
+              Watch Demo
+            </Link>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.7, delay: 0.5 }}
+            className="flex flex-col items-center gap-4"
+          >
+            <div className="flex items-center gap-1">
+              {[...Array(5)].map((_, i) => (
+                <svg key={i} className="w-5 h-5 text-yellow-400 fill-current" viewBox="0 0 20 20">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                </svg>
+              ))}
+            </div>
+            <p className="text-sm text-white/40">
+              Trusted by <span className="text-white/60 font-medium">500+</span> creators and brands
+            </p>
           </motion.div>
         </div>
+
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.5 }}
+          className="absolute bottom-8 left-1/2 -translate-x-1/2"
+        >
+          <motion.div
+            animate={{ y: [0, 10, 0] }}
+            transition={{ duration: 2, repeat: Infinity }}
+            className="flex flex-col items-center gap-2"
+          >
+            <span className="text-xs text-white/30 uppercase tracking-widest">Scroll</span>
+            <div className="w-6 h-10 rounded-full border-2 border-white/20 flex items-start justify-center p-1">
+              <motion.div
+                animate={{ y: [0, 16, 0] }}
+                transition={{ duration: 2, repeat: Infinity }}
+                className="w-1.5 h-3 rounded-full bg-purple-400"
+              />
+            </div>
+          </motion.div>
+        </motion.div>
       </div>
     </section>
   );
-};
+}
 
 export default HeroSection;
