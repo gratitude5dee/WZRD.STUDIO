@@ -74,7 +74,7 @@ export const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
       animate={{ opacity: 1, y: 0 }}
       data-walkthrough="toolbar"
       className={cn(
-        'absolute bottom-6 left-[calc(50%-150px)] -translate-x-1/2 z-50',
+        'absolute bottom-6 left-[calc(50%-150px)] ml-[-10px] -translate-x-1/2 z-50',
         'flex items-center gap-1 px-2 py-1.5',
         'bg-surface-2/90 backdrop-blur-md',
         'border border-border-default rounded-xl',

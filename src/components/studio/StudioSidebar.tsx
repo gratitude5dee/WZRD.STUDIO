@@ -81,7 +81,7 @@ const StudioSidebar = ({
   return (
     <TooltipProvider delayDuration={300}>
       {/* Floating Sidebar - Vertically Centered - Reduced width */}
-      <aside className="fixed left-1 top-1/2 -translate-y-1/2 z-40">
+      <aside className="fixed left-[5px] top-1/2 -translate-y-1/2 z-40">
         <motion.div 
           className="relative bg-surface-1/95 backdrop-blur-2xl border border-border-subtle rounded-2xl shadow-2xl shadow-black/40 p-1 flex flex-col items-center gap-0"
           initial={{ opacity: 0, x: -20 }}

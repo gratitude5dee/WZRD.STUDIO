@@ -103,7 +103,7 @@ export const StudioGalleryPanel: React.FC<StudioGalleryPanelProps> = ({
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 20 }}
             onClick={onToggle}
-            className="fixed right-4 top-[calc(50%-26px)] z-40 bg-surface-2/90 border border-border-default rounded-l-xl p-3 hover:bg-surface-3 transition-colors shadow-xl"
+            className="fixed right-[5px] top-[calc(50%-26px)] z-40 bg-surface-2/90 border border-border-default rounded-l-xl p-3 hover:bg-surface-3 transition-colors shadow-xl"
           >
             <ChevronLeft className="w-5 h-5 text-text-secondary" />
           </motion.button>
@@ -118,8 +118,8 @@ export const StudioGalleryPanel: React.FC<StudioGalleryPanelProps> = ({
             exit={{ width: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
             className={cn(
-              'fixed right-0 top-14 bottom-0 z-40 bg-surface-1 border-l border-border-subtle shadow-2xl',
-              'flex flex-col overflow-hidden',
+              'fixed right-0 top-14 bottom-0 z-40 bg-surface-1 border-l border-border-subtle shadow-2xl shadow-glow-purple-md',
+              "relative flex flex-col overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-br before:from-accent-purple/10 before:via-transparent before:to-accent-teal/10 before:opacity-80 before:pointer-events-none before:content-['']",
               className
             )}
           >
