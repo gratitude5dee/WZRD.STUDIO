@@ -22,6 +22,8 @@ export const UploadDocumentNode = memo(({ id, data, selected }: NodeProps) => {
   const status = (nodeData?.status || 'idle') as NodeStatus;
   const progress = nodeData?.progress || 0;
   const error = nodeData?.error;
+  const onDuplicate = (data as any)?.onDuplicate;
+  const onDelete = (data as any)?.onDelete;
   
   const [documentUrl, setDocumentUrl] = useState<string | null>(nodeData?.documentUrl || null);
   const [fileName, setFileName] = useState<string | null>(nodeData?.fileName || null);
@@ -106,7 +108,15 @@ export const UploadDocumentNode = memo(({ id, data, selected }: NodeProps) => {
   }, []);
 
   return (
-    <BaseNode handles={handles} nodeType="text" isSelected={selected}>
+    <BaseNode
+      handles={handles}
+      nodeType="text"
+      isSelected={selected}
+      hoverMenu={{
+        onDuplicate,
+        onDelete,
+      }}
+    >
       <NodeStatusBadge status={status} progress={progress} error={error} />
       <div className={cn(
         "w-72 bg-[#1a1a1a] border border-zinc-800 rounded-lg overflow-hidden",

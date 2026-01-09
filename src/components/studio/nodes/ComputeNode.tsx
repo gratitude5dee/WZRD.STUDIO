@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useMemo, useState } from 'react';
+import React, { memo, useCallback, useMemo, useState, useEffect } from 'react';
 import { Handle, Position, NodeProps, useReactFlow, Connection } from '@xyflow/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { HANDLE_COLORS, HANDLE_GLOW_COLORS, Port, DataType, isTypeCompatible } from '@/types/computeFlow';
+import { NodeHoverMenu } from './NodeHoverMenu';
 
 export interface ComputeNodeData {
   kind: string;
@@ -36,6 +37,8 @@ export interface ComputeNodeData {
   model?: string;
   onExecute?: () => void;
   onDelete?: () => void;
+  onDuplicate?: () => void;
+  onModelChange?: (modelId: string) => void;
   onParamsChange?: (params: Record<string, any>) => void;
 }
 
@@ -77,6 +80,12 @@ export const ComputeNode = memo(({ id, data, selected }: NodeProps) => {
   const Icon = NODE_ICONS[nodeData.kind] || Box;
   const helperText = HELPER_TEXT[nodeData.kind] || '';
   const models = MODEL_OPTIONS[nodeData.kind] || [];
+
+  useEffect(() => {
+    if (nodeData.model && nodeData.model !== selectedModel) {
+      setSelectedModel(nodeData.model);
+    }
+  }, [nodeData.model, selectedModel]);
 
   // Get primary color based on node type
   const primaryColor = useMemo(() => {
@@ -128,6 +137,14 @@ export const ComputeNode = memo(({ id, data, selected }: NodeProps) => {
     return true;
   }, [nodeData.inputs, getEdges]);
 
+  const handleModelChange = useCallback((modelId: string) => {
+    setSelectedModel(modelId);
+    nodeData.onModelChange?.(modelId);
+    if (nodeData.onParamsChange) {
+      nodeData.onParamsChange({ ...nodeData.params, model: modelId });
+    }
+  }, [nodeData]);
+
   // Hover state for node
   const [isNodeHovered, setIsNodeHovered] = useState(false);
 
@@ -156,6 +173,15 @@ export const ComputeNode = memo(({ id, data, selected }: NodeProps) => {
         transform: isNodeHovered && !selected ? 'translateY(-2px)' : undefined,
       }}
     >
+      <NodeHoverMenu
+        isVisible={isNodeHovered}
+        selectedModel={selectedModel}
+        modelOptions={models.map((model) => ({ id: model, label: model }))}
+        onModelChange={models.length ? handleModelChange : undefined}
+        onGenerate={nodeData.onExecute}
+        onDuplicate={nodeData.onDuplicate}
+        onDelete={nodeData.onDelete}
+      />
       {/* Compact Header */}
       <div className="flex items-center gap-2.5 px-3 py-2.5">
         {/* Icon with glow */}

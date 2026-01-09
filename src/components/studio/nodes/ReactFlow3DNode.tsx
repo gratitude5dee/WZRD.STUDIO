@@ -27,6 +27,11 @@ const THREE_D_MODELS = [
   { id: 'fal-ai/triposr', name: 'TripoSR', description: 'Single image to 3D' },
 ];
 
+const THREE_D_MODEL_OPTIONS = THREE_D_MODELS.map((model) => ({
+  id: model.id,
+  label: model.name,
+}));
+
 export const ReactFlow3DNode = memo(({ id, data, selected }: NodeProps) => {
   const nodeData = data as ThreeDNodeData;
   const status = (nodeData?.status || 'idle') as NodeStatus;
@@ -38,6 +43,9 @@ export const ReactFlow3DNode = memo(({ id, data, selected }: NodeProps) => {
   const [modelUrl, setModelUrl] = useState<string | null>(nodeData?.modelUrl || null);
   const [model, setModel] = useState(nodeData?.model || 'fal-ai/triposr');
   const [isGenerating, setIsGenerating] = useState(false);
+  const onDuplicate = (data as any)?.onDuplicate;
+  const onDelete = (data as any)?.onDelete;
+  const dataOnModelChange = (data as any)?.onModelChange;
 
   const handles = [
     {
@@ -99,6 +107,14 @@ export const ReactFlow3DNode = memo(({ id, data, selected }: NodeProps) => {
     }
   }, [prompt, imageUrl, model]);
 
+  const handleModelChange = useCallback(
+    (modelId: string) => {
+      setModel(modelId);
+      dataOnModelChange?.(modelId);
+    },
+    [dataOnModelChange]
+  );
+
   const handleImageUpload = useCallback(() => {
     const input = document.createElement('input');
     input.type = 'file';
@@ -129,7 +145,19 @@ export const ReactFlow3DNode = memo(({ id, data, selected }: NodeProps) => {
   }, [id]);
 
   return (
-    <BaseNode handles={handles} nodeType="3d" isSelected={selected}>
+    <BaseNode
+      handles={handles}
+      nodeType="3d"
+      isSelected={selected}
+      hoverMenu={{
+        selectedModel: model,
+        modelOptions: THREE_D_MODEL_OPTIONS,
+        onModelChange: handleModelChange,
+        onGenerate: handleGenerate,
+        onDuplicate,
+        onDelete,
+      }}
+    >
       <NodeStatusBadge status={status} progress={progress} error={error} />
       <div className={cn(
         "w-80 bg-[#1a1a1a] border border-zinc-800 rounded-lg overflow-hidden",
@@ -150,7 +178,7 @@ export const ReactFlow3DNode = memo(({ id, data, selected }: NodeProps) => {
           {/* Model Selector */}
           <div>
             <label className="text-[10px] text-zinc-500 uppercase tracking-wider mb-1 block">Model</label>
-            <Select value={model} onValueChange={setModel}>
+            <Select value={model} onValueChange={handleModelChange}>
               <SelectTrigger className="h-8 text-xs bg-zinc-900 border-zinc-700">
                 <SelectValue />
               </SelectTrigger>

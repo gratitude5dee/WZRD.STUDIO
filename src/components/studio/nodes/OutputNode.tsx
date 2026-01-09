@@ -45,6 +45,8 @@ export const OutputNode = memo(({ id, data, selected }: NodeProps) => {
   const inputValue = nodeData?.inputValue;
   const inputType: OutputType = nodeData?.inputType || 'unknown';
   const label = nodeData?.label || 'Output';
+  const onDuplicate = (data as any)?.onDuplicate;
+  const onDelete = (data as any)?.onDelete;
   
   const [isDownloading, setIsDownloading] = useState(false);
 
@@ -163,7 +165,15 @@ export const OutputNode = memo(({ id, data, selected }: NodeProps) => {
   };
 
   return (
-    <BaseNode handles={handles} nodeType="output" isSelected={selected}>
+    <BaseNode
+      handles={handles}
+      nodeType="output"
+      isSelected={selected}
+      hoverMenu={{
+        onDuplicate,
+        onDelete,
+      }}
+    >
       <NodeStatusBadge status={status} progress={progress} error={error} />
       <div className={cn(
         "w-72 bg-[#1a1a1a] border border-zinc-800 rounded-lg overflow-hidden",

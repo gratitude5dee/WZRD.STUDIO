@@ -8,6 +8,8 @@ export const ReactFlowUploadNode = memo(({ id, data, selected }: NodeProps) => {
   const status = (data as any)?.status || 'idle';
   const progress = (data as any)?.progress || 0;
   const error = (data as any)?.error;
+  const onDuplicate = (data as any)?.onDuplicate;
+  const onDelete = (data as any)?.onDelete;
 
   const handles = [
     {
@@ -20,7 +22,15 @@ export const ReactFlowUploadNode = memo(({ id, data, selected }: NodeProps) => {
   ];
 
   return (
-    <BaseNode handles={handles} nodeType="image" isSelected={selected}>
+    <BaseNode
+      handles={handles}
+      nodeType="image"
+      isSelected={selected}
+      hoverMenu={{
+        onDuplicate,
+        onDelete,
+      }}
+    >
       <NodeStatusBadge status={status} progress={progress} error={error} />
       <div className="w-80 bg-[#1a1a1a] border border-zinc-800">
         <div className="flex items-center justify-between px-4 py-3 bg-[#0f0f0f] border-b border-zinc-800">

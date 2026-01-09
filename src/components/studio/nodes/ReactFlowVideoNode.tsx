@@ -4,10 +4,19 @@ import { BaseNode } from './BaseNode';
 import VideoBlock from '../blocks/VideoBlock';
 import { NodeStatusBadge } from '../status/NodeStatusBadge';
 
+const VIDEO_MODEL_OPTIONS = [
+  { id: 'gemini-2.5-flash-video', label: 'Veo 3 Fast' },
+  { id: 'luma-dream', label: 'Luma Dream' },
+];
+
 export const ReactFlowVideoNode = memo(({ id, data, selected }: NodeProps) => {
   const status = (data as any)?.status || 'idle';
   const progress = (data as any)?.progress || 0;
   const error = (data as any)?.error;
+  const onModelChange = (data as any)?.onModelChange;
+  const onGenerate = (data as any)?.onGenerate ?? (data as any)?.onExecute;
+  const onDuplicate = (data as any)?.onDuplicate;
+  const onDelete = (data as any)?.onDelete;
   
   const handles = [
     {
@@ -36,7 +45,19 @@ export const ReactFlowVideoNode = memo(({ id, data, selected }: NodeProps) => {
   ];
 
   return (
-    <BaseNode handles={handles} nodeType="video" isSelected={selected}>
+    <BaseNode
+      handles={handles}
+      nodeType="video"
+      isSelected={selected}
+      hoverMenu={{
+        selectedModel: (data as any)?.selectedModel,
+        modelOptions: VIDEO_MODEL_OPTIONS,
+        onModelChange,
+        onGenerate,
+        onDuplicate,
+        onDelete,
+      }}
+    >
       <NodeStatusBadge 
         status={status}
         progress={progress}
@@ -49,6 +70,7 @@ export const ReactFlowVideoNode = memo(({ id, data, selected }: NodeProps) => {
           onSelect={() => {}}
           isSelected={selected || false}
           selectedModel={(data as any)?.selectedModel}
+          onModelChange={onModelChange}
         />
       </div>
     </BaseNode>
