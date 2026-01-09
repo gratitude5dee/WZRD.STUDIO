@@ -1,4 +1,4 @@
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, useEffect, useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -12,6 +12,7 @@ import PerfShell from "@/components/perf/PerfShell";
 import CustomCursor from "@/components/CustomCursor";
 import { CursorLoadingProvider, useCursorLoading } from "@/contexts/CursorLoadingContext";
 import { SidebarProvider } from "@/contexts/SidebarContext";
+import { LoadingScreen } from "@/components/ui/LoadingScreen";
 
 const Landing = lazy(() => import("./pages/Landing"));
 const Login = lazy(() => import("./pages/Login"));
@@ -44,6 +45,15 @@ const queryClient = new QueryClient();
 const App = () => {
   const usePerfShell = (import.meta.env.VITE_USE_PERF_SHELL ?? 'true') !== 'false';
   const fallback = usePerfShell ? <PerfShell headline="Preparing studio" /> : null;
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setIsLoading(false);
+    }, 2000);
+
+    return () => window.clearTimeout(timer);
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -54,6 +64,7 @@ const App = () => {
             <AuthProvider>
               <SidebarProvider>
               <CursorLoadingProvider>
+                <LoadingScreen isLoading={isLoading} message="Initializing WZRD Studio..." />
                 <CursorWrapper />
                 <Toaster />
                 <Sonner />

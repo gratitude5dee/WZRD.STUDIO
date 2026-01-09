@@ -1,93 +1,113 @@
 import { motion } from 'framer-motion';
-import { Music, Users, Building2, ArrowRight } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Music2, ShoppingBag, Megaphone, Film } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-interface UseCase {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-  cta: string;
-  href: string;
-}
-
-const useCases: UseCase[] = [
+const useCases = [
   {
-    icon: <Music className="w-8 h-8" />,
-    title: 'Music Labels & Artists',
-    description: 'Release-ready music videos in hours. Scale your visual content production without compromising creative control or quality.',
-    cta: 'View case studies',
-    href: '#testimonials'
+    icon: Music2,
+    title: 'Indie Labels',
+    subtitle: 'Music Videos & Visualizers',
+    description:
+      'Turn tracks into stunning visuals. Create lyric videos, album visualizers, and full music videos without hiring a production crew.',
+    stats: '80% cost reduction vs. traditional production',
+    image: '/images/use-case-music.jpg',
   },
   {
-    icon: <Users className="w-8 h-8" />,
-    title: 'Content Creators',
-    description: 'Multiply your output 10x. Transform raw footage into polished content with AI-assisted editing and automated post-production.',
-    cta: 'Creator playbook',
-    href: '#how-it-works'
+    icon: ShoppingBag,
+    title: 'DTC Brands',
+    subtitle: 'Product Ads & Social Content',
+    description:
+      'Generate product videos, lifestyle content, and ad creatives at scale. Test 50 variations instead of betting on one.',
+    stats: '10x more creative variants',
   },
   {
-    icon: <Building2 className="w-8 h-8" />,
-    title: 'Production Companies',
-    description: 'Scale video production without overhead. Enterprise tools for team collaboration, asset management, and workflow automation.',
-    cta: 'Book enterprise demo',
-    href: '/login'
-  }
+    icon: Megaphone,
+    title: 'Content Agencies',
+    subtitle: 'Client Work at Scale',
+    description:
+      'Deliver more to clients without growing headcount. WZRD handles the production, you handle the strategy.',
+    stats: '5x client capacity',
+  },
+  {
+    icon: Film,
+    title: 'UGC Studios',
+    subtitle: 'Authentic Content Creation',
+    description:
+      'Create UGC-style content that feels native to each platform. Perfect for brands that need volume with authenticity.',
+    stats: '100+ videos per week',
+  },
 ];
 
-export const UseCasesSection = () => {
+export function UseCasesSection() {
   return (
-    <section className="py-32 relative overflow-hidden">
-      <div className="absolute inset-0 bg-black" />
-      
-      <div className="relative z-10 max-w-7xl mx-auto px-6">
+    <section className="py-32 px-4 relative">
+      <div className="container mx-auto max-w-7xl">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
           className="text-center mb-20"
         >
-          <h2 className="text-4xl lg:text-5xl font-bold text-white mb-4">
-            Built for Professionals
+          <h2 className="text-4xl sm:text-5xl font-bold text-white mb-6">
+            Built for Creators Who{' '}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-violet-400">
+              Move Fast
+            </span>
           </h2>
-          <p className="text-xl text-zinc-400 max-w-2xl mx-auto">
-            Trusted by industry leaders across music, media, and entertainment
+          <p className="text-lg text-white/60 max-w-2xl mx-auto">
+            Whether you&apos;re launching an album or scaling ad spend, WZRD adapts to your
+            creative workflow.
           </p>
         </motion.div>
 
-        <div className="grid lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {useCases.map((useCase, index) => (
             <motion.div
               key={useCase.title}
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-100px' }}
-              transition={{ duration: 0.6, delay: index * 0.15 }}
-              className="group"
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: index * 0.1 }}
+              className={cn(
+                'group relative p-8 rounded-2xl overflow-hidden',
+                'bg-gradient-to-br from-white/[0.06] to-white/[0.02]',
+                'border border-white/[0.08]',
+                'hover:border-purple-500/30',
+                'transition-all duration-500',
+              )}
             >
-              <div className="h-full bg-zinc-900/50 backdrop-blur-sm rounded-2xl border border-zinc-800 p-8 hover:border-zinc-700 transition-colors duration-300">
-                <div className="w-14 h-14 bg-zinc-800 rounded-xl flex items-center justify-center mb-6 text-white group-hover:bg-zinc-700 transition-colors duration-300">
-                  {useCase.icon}
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl" />
+              </div>
+
+              <div className="relative z-10">
+                <div className="flex items-start justify-between mb-6">
+                  <div className="flex items-center gap-4">
+                    <div
+                      className={cn(
+                        'w-12 h-12 rounded-xl flex items-center justify-center',
+                        'bg-purple-500/15 border border-purple-500/25',
+                      )}
+                    >
+                      <useCase.icon className="w-6 h-6 text-purple-400" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-semibold text-white">{useCase.title}</h3>
+                      <p className="text-sm text-purple-300">{useCase.subtitle}</p>
+                    </div>
+                  </div>
                 </div>
-                
-                <h3 className="text-2xl font-bold text-white mb-4">
-                  {useCase.title}
-                </h3>
-                
-                <p className="text-zinc-400 leading-relaxed mb-6">
-                  {useCase.description}
-                </p>
-                
-                <Button
-                  variant="ghost"
-                  className="text-white hover:text-white p-0 h-auto font-medium group/button"
-                  asChild
+
+                <p className="text-white/60 mb-6 leading-relaxed">{useCase.description}</p>
+
+                <div
+                  className={cn(
+                    'inline-flex items-center gap-2 px-4 py-2 rounded-lg',
+                    'bg-purple-500/10 border border-purple-500/20',
+                  )}
                 >
-                  <a href={useCase.href} className="inline-flex items-center gap-2">
-                    {useCase.cta}
-                    <ArrowRight className="w-4 h-4 group-hover/button:translate-x-1 transition-transform duration-200" />
-                  </a>
-                </Button>
+                  <span className="text-sm font-semibold text-purple-300">{useCase.stats}</span>
+                </div>
               </div>
             </motion.div>
           ))}
@@ -95,4 +115,6 @@ export const UseCasesSection = () => {
       </div>
     </section>
   );
-};
+}
+
+export default UseCasesSection;

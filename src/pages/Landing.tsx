@@ -3,13 +3,13 @@ import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import HeroSection from '@/components/landing/HeroSection';
 import FeatureGrid from '@/components/landing/FeatureGrid';
+import { UseCasesSection } from '@/components/landing/UseCasesSection';
 import { TestimonialsSection } from '@/components/landing/TestimonialsSection';
 import { NewReleasePromo } from '@/components/landing/NewReleasePromo';
 import FAQAccordion from '@/components/landing/FAQAccordion';
-import { PricingSection } from '@/components/landing/PricingSection';
+import { PricingSectionRedesigned } from '@/components/landing/PricingSectionRedesigned';
 import { StickyFooter } from '@/components/landing/StickyFooter';
 import { useAuth } from '@/providers/AuthProvider';
-import { Logo } from '@/components/ui/logo';
 import wzrdLogo from '@/assets/wzrd-logo.png';
 const Landing = () => {
   const navigate = useNavigate();
@@ -208,7 +208,7 @@ const Landing = () => {
           <div className="absolute top-20 left-4 right-4 bg-black/95 backdrop-blur-md border border-white/10 rounded-2xl shadow-2xl p-6">
             <nav className="flex flex-col space-y-4">
               <button onClick={() => handleMobileNavClick("features")} className="text-left px-4 py-3 text-lg font-medium text-white/60 hover:text-white transition-colors rounded-lg hover:bg-white/10">
-                Gemini 3.0 Pro, Nanobanana Pro 2, Veo 3.1           
+                Features
               </button>
               <button onClick={() => handleMobileNavClick("pricing")} className="text-left px-4 py-3 text-lg font-medium text-white/60 hover:text-white transition-colors rounded-lg hover:bg-white/10">
                 Pricing
@@ -244,13 +244,10 @@ const Landing = () => {
         </div>}
 
       {/* Hero Content from Wizard Web App - Always visible */}
-      <HeroSection headline="Your AI production studio, orchestrated end-to-end" subheadline="Plan, generate, and polish every frame with realtime collaboration, AI tooling, and cinematic presets." ctaPrimary={{
-      text: 'Start Creating',
-      href: '/login?mode=signup'
-    }} ctaSecondary={{
-      text: 'Watch the Demo',
-      href: '/demo'
-    }} demoVideoUrl="/wzrdstudiointro1.mp4" />
+      <HeroSection
+        headline="Your AI Video Production Studio. No Agency Required."
+        subheadline="Create scroll-stopping UGC, music videos, and ad content 10x faster. Indie labels and DTC brands use WZRD to automate what agencies charge $50K+ for."
+      />
 
       {/* Trust Indicators Section */}
       <section className="py-16 px-4 border-y border-white/5 bg-black/40 backdrop-blur-sm">
@@ -283,7 +280,6 @@ const Landing = () => {
 
         {/* Features Section */}
         <div id="features" className="relative">
-          {/* Floating orbs */}
           <div className="absolute -top-20 -right-20 w-40 h-40 rounded-full bg-[#8b5cf6]/20 blur-3xl pointer-events-none" />
           <div className="absolute -bottom-20 -left-20 w-40 h-40 rounded-full bg-[#7c3aed]/20 blur-3xl pointer-events-none" />
           <FeatureGrid />
@@ -292,14 +288,14 @@ const Landing = () => {
         {/* Gradient Divider */}
         <div className="h-px bg-gradient-to-r from-transparent via-[#8b5cf6]/30 to-transparent" />
 
-        {/* Pricing Section */}
-        <div id="pricing" className="relative">
-          <PricingSection />
+        {/* Use Cases Section */}
+        <div className="relative">
+          <UseCasesSection />
         </div>
 
         {/* Gradient Divider */}
         <div className="h-px bg-gradient-to-r from-transparent via-[#8b5cf6]/30 to-transparent" />
-            
+
         {/* Testimonials Section */}
         <div id="testimonials" className="relative">
           <div className="absolute top-1/2 -right-20 w-60 h-60 rounded-full bg-[#8b5cf6]/10 blur-3xl pointer-events-none" />
@@ -313,6 +309,14 @@ const Landing = () => {
         {/* New Release Promo */}
         <div className="relative">
           <NewReleasePromo />
+        </div>
+
+        {/* Gradient Divider */}
+        <div className="h-px bg-gradient-to-r from-transparent via-[#8b5cf6]/30 to-transparent" />
+
+        {/* Pricing Section */}
+        <div id="pricing" className="relative">
+          <PricingSectionRedesigned />
         </div>
 
         {/* Gradient Divider */}

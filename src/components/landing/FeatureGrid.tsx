@@ -1,85 +1,189 @@
-import { motion, useInView } from 'framer-motion';
-import { useRef } from 'react';
-import { Wand2, Layers, Share2, Sparkles, Film, Zap } from 'lucide-react';
+import { motion } from 'framer-motion';
+import {
+  Video,
+  Music2,
+  Wand2,
+  TrendingUp,
+  Sparkles,
+  Clock,
+  DollarSign,
+  Zap,
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const features = [
   {
+    icon: Video,
+    title: 'UGC at Scale',
+    description:
+      'Generate authentic user-generated content that converts. Create 100+ ad variations in the time it takes agencies to make one.',
+    highlight: '100x faster',
+    color: 'purple',
+  },
+  {
+    icon: Music2,
+    title: 'Music Video Production',
+    description:
+      'From visualizers to full narratives. Perfect for indie labels who need professional music videos without the $20K+ price tag.',
+    highlight: 'Save 90%',
+    color: 'violet',
+  },
+  {
     icon: Wand2,
-    title: 'AI-Powered Generation',
-    description: 'Direct the model with structured prompts, references, and instant visual feedback.',
+    title: 'AI-Powered Creative',
+    description:
+      'Let AI handle the heavy lifting. Generate storyboards, visuals, and edits from a simple text prompt or reference.',
+    highlight: 'Text to Video',
+    color: 'indigo',
   },
   {
-    icon: Layers,
-    title: 'Node-Based Workflow',
-    description: 'Build modular pipelines that scale from single shots to full productions.',
+    icon: TrendingUp,
+    title: 'Platform-Ready Formats',
+    description:
+      'Export optimized for TikTok, Instagram, YouTube Shorts, and paid ads. Every aspect ratio, every platform, instantly.',
+    highlight: 'All Platforms',
+    color: 'purple',
   },
   {
-    icon: Share2,
-    title: 'Realtime Collaboration',
-    description: 'Invite teammates, comment inline, and ship faster with synced playback.',
+    icon: Clock,
+    title: 'Hours, Not Weeks',
+    description:
+      'What takes traditional production weeks, WZRD delivers in hours. Rapid iteration means you can test more, learn faster.',
+    highlight: '48hr Turnaround',
+    color: 'violet',
   },
   {
-    icon: Sparkles,
-    title: 'Cinematic Presets',
-    description: 'Apply curated lighting, color, and motion presets inspired by modern studios.',
-  },
-  {
-    icon: Film,
-    title: 'Timeline Precision',
-    description: 'Trim, layer, and remix assets with frame-accurate control across formats.',
-  },
-  {
-    icon: Zap,
-    title: 'Fast Iteration',
-    description: 'Render previews in seconds and ship polished deliverables with confidence.',
+    icon: DollarSign,
+    title: 'Agency Costs, Eliminated',
+    description:
+      'Stop paying agency markups for AI-generated content. Own your creative pipeline and scale without the overhead.',
+    highlight: '10x ROI',
+    color: 'indigo',
   },
 ];
 
-export const FeatureGrid = () => {
-  const sectionRef = useRef(null);
-  const isInView = useInView(sectionRef, { once: true, margin: '-100px' });
+export function FeatureGrid() {
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 30 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.6 },
+    },
+  };
 
   return (
-    <section ref={sectionRef} className="py-20">
-      <div className="container mx-auto px-6">
-        <div className="mx-auto max-w-3xl text-center">
-          <p className="text-sm uppercase tracking-[0.3em] text-violet-300">Built for modern studios</p>
-          <h2 className="mt-4 text-3xl font-semibold text-white md:text-5xl">
-            Every feature optimized for speed and storytelling
-          </h2>
-          <p className="mt-4 text-base text-white/70">
-            From node-based generation to collaborative reviews, WZRD keeps your team in flow.
-          </p>
-        </div>
+    <section className="py-32 px-4 relative">
+      <div className="container mx-auto max-w-7xl">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-20"
+        >
+          <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-sm text-purple-300 mb-6">
+            <Sparkles className="w-3.5 h-3.5" />
+            Why Creators Choose WZRD
+          </span>
 
-        <div className="mt-14 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {features.map((feature, index) => (
+          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6">
+            Replace Your Agency.
+            <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-violet-400">
+              Keep Your Budget.
+            </span>
+          </h2>
+
+          <p className="text-lg text-white/60 max-w-2xl mx-auto">
+            The same AI tools major studios use, now accessible to indie labels, DTC brands, and
+            content teams who refuse to overpay.
+          </p>
+        </motion.div>
+
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: '-100px' }}
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+        >
+          {features.map((feature) => (
             <motion.div
               key={feature.title}
-              initial={{ opacity: 0, y: 30 }}
-              animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
-              className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.02] p-6 shadow-[0_20px_40px_rgba(0,0,0,0.25)] backdrop-blur"
-              whileHover={{ scale: 1.02, y: -4 }}
+              variants={itemVariants}
+              className={cn(
+                'group relative p-8 rounded-2xl',
+                'bg-gradient-to-b from-white/[0.05] to-transparent',
+                'border border-white/[0.08]',
+                'hover:border-purple-500/30 hover:bg-white/[0.08]',
+                'transition-all duration-500',
+              )}
             >
-              <div className="absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                <div className="absolute inset-0 bg-gradient-to-br from-violet-500/10 via-transparent to-blue-500/10" />
+              <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-b from-purple-500/5 to-transparent pointer-events-none" />
+
+              <div
+                className={cn(
+                  'w-14 h-14 rounded-xl flex items-center justify-center mb-6',
+                  'bg-purple-500/10 border border-purple-500/20',
+                  'group-hover:bg-purple-500/20 group-hover:border-purple-500/30',
+                  'transition-all duration-300',
+                )}
+              >
+                <feature.icon className="w-7 h-7 text-purple-400" />
               </div>
-              <div className="relative z-10 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500/30 to-indigo-500/20 text-violet-200">
-                <feature.icon className="h-5 w-5" />
-              </div>
-              <h3 className="relative z-10 mt-4 text-lg font-semibold text-white">
-                {feature.title}
-              </h3>
-              <p className="relative z-10 mt-2 text-sm text-white/60">
-                {feature.description}
-              </p>
+
+              <span
+                className={cn(
+                  'inline-block px-2.5 py-1 rounded-md text-xs font-semibold mb-4',
+                  'bg-purple-500/20 text-purple-300',
+                )}
+              >
+                {feature.highlight}
+              </span>
+
+              <h3 className="text-xl font-semibold text-white mb-3">{feature.title}</h3>
+              <p className="text-white/50 leading-relaxed">{feature.description}</p>
             </motion.div>
           ))}
-        </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+          className="text-center mt-16"
+        >
+          <p className="text-white/40 mb-6">
+            Join 500+ indie labels and brands already creating with WZRD
+          </p>
+          <a
+            href="/login?mode=signup"
+            className={cn(
+              'inline-flex items-center gap-2 px-6 py-3 rounded-xl',
+              'bg-white/5 border border-white/10',
+              'hover:bg-white/10 text-white font-medium',
+              'transition-all duration-300',
+            )}
+          >
+            Start Free Trial
+            <Zap className="w-4 h-4" />
+          </a>
+        </motion.div>
       </div>
     </section>
   );
-};
+}
 
 export default FeatureGrid;
