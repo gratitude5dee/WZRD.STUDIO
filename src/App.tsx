@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { ThirdwebProvider } from "thirdweb/react";
 import { WalletProvider } from "@/contexts/WalletContext";
 import { PlayerProvider } from "@/contexts/PlayerContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
@@ -31,44 +32,46 @@ import MogSearch from "./pages/MogSearch";
 const queryClient = new QueryClient();
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <ThemeProvider>
-      <WalletProvider>
-        <PlayerProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <Routes>
-                <Route path="/" element={<Intro />} />
-                <Route path="/landing" element={<Landing />} />
-                <Route path="/auth" element={<Auth />} />
-                <Route path="/home" element={<Mog />} />
-                <Route path="/listen" element={<Listen />} />
-                <Route path="/read" element={<Read />} />
-                <Route path="/artist" element={<Artist />} />
-                <Route path="/upload" element={<Upload />} />
-                <Route path="/search" element={<Search />} />
-                <Route path="/now-playing" element={<NowPlaying />} />
-                <Route path="/album/:id" element={<Album />} />
-                <Route path="/library" element={<Library />} />
-                <Route path="/watch" element={<WatchHome />} />
-                <Route path="/watch/:id" element={<Watch />} />
-                <Route path="/embed/track/:trackId" element={<EmbedPlayer />} />
-                <Route path="/onboarding" element={<Onboarding />} />
-                {/* Mog Sub-Routes */}
-                <Route path="/mog/upload" element={<MogUpload />} />
-                <Route path="/mog/profile/:wallet" element={<MogProfile />} />
-                <Route path="/mog/post/:id" element={<MogPost />} />
-                <Route path="/mog/search" element={<MogSearch />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </BrowserRouter>
-          </TooltipProvider>
-        </PlayerProvider>
-      </WalletProvider>
-    </ThemeProvider>
-  </QueryClientProvider>
+  <ThirdwebProvider>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
+        <WalletProvider>
+          <PlayerProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                <Routes>
+                  <Route path="/" element={<Intro />} />
+                  <Route path="/landing" element={<Landing />} />
+                  <Route path="/auth" element={<Auth />} />
+                  <Route path="/home" element={<Mog />} />
+                  <Route path="/listen" element={<Listen />} />
+                  <Route path="/read" element={<Read />} />
+                  <Route path="/artist" element={<Artist />} />
+                  <Route path="/upload" element={<Upload />} />
+                  <Route path="/search" element={<Search />} />
+                  <Route path="/now-playing" element={<NowPlaying />} />
+                  <Route path="/album/:id" element={<Album />} />
+                  <Route path="/library" element={<Library />} />
+                  <Route path="/watch" element={<WatchHome />} />
+                  <Route path="/watch/:id" element={<Watch />} />
+                  <Route path="/embed/track/:trackId" element={<EmbedPlayer />} />
+                  <Route path="/onboarding" element={<Onboarding />} />
+                  {/* Mog Sub-Routes */}
+                  <Route path="/mog/upload" element={<MogUpload />} />
+                  <Route path="/mog/profile/:wallet" element={<MogProfile />} />
+                  <Route path="/mog/post/:id" element={<MogPost />} />
+                  <Route path="/mog/search" element={<MogSearch />} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </BrowserRouter>
+            </TooltipProvider>
+          </PlayerProvider>
+        </WalletProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
+  </ThirdwebProvider>
 );
 
 export default App;

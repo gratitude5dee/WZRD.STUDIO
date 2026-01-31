@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { supabase } from "@/integrations/supabase/client";
 import { useWallet } from "@/contexts/WalletContext";
+import { ThirdwebConnectButton } from "@/components/ThirdwebConnectButton";
 import { toast } from "sonner";
 
 type ContentType = 'video' | 'image' | 'article';
@@ -233,13 +234,21 @@ export default function MogUpload() {
         </div>
 
         {/* Submit Button */}
-        <Button
-          onClick={handleSubmit}
-          disabled={uploading || !address}
-          className="w-full py-6 text-lg"
-        >
-          {!address ? 'Connect Wallet' : uploading ? 'Creating...' : 'Post Mog'}
-        </Button>
+        {!address ? (
+          <ThirdwebConnectButton 
+            label="Connect Wallet to Post" 
+            fullWidth 
+            className="py-6 text-lg"
+          />
+        ) : (
+          <Button
+            onClick={handleSubmit}
+            disabled={uploading}
+            className="w-full py-6 text-lg"
+          >
+            {uploading ? 'Creating...' : 'Post Mog'}
+          </Button>
+        )}
       </div>
     </div>
   );

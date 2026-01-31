@@ -21,7 +21,7 @@ interface LibraryItem {
 
 export default function Library() {
   const navigate = useNavigate();
-  const { address } = useWallet();
+  const { address, connect } = useWallet();
   const { playTrack, setQueue } = usePlayer();
   
   const [activeTab, setActiveTab] = useState<FilterTab>("all");
@@ -145,7 +145,16 @@ export default function Library() {
               <Search className="h-6 w-6" />
             </button>
             <ThemeToggle />
-            <button onClick={() => navigate("/upload")} className="p-2 text-foreground">
+            <button 
+              onClick={() => {
+                if (!address) {
+                  connect();
+                } else {
+                  navigate("/mog/upload");
+                }
+              }} 
+              className="p-2 text-foreground"
+            >
               <Plus className="h-6 w-6" />
             </button>
           </div>
