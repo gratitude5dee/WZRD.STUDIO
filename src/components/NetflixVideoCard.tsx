@@ -1,4 +1,4 @@
-import { Play, Radio, Info, Heart, MessageCircle } from "lucide-react";
+import { Play, Radio, Info, MessageCircle } from "lucide-react";
 import { Video } from "@/types/video";
 import { useState } from "react";
 import { BuyVideoWidget } from "./BuyVideoWidget";
@@ -92,9 +92,11 @@ export function NetflixVideoCard({ video, ranking, size = "default" }: NetflixVi
                     e.stopPropagation();
                     handleLike();
                   }}
-                  className="w-8 h-8 rounded-full border border-muted-foreground/50 flex items-center justify-center hover:border-foreground transition-colors"
+                  className={`w-8 h-8 rounded-full border border-muted-foreground/50 flex items-center justify-center hover:border-foreground transition-all duration-300 ${
+                    isLiked ? 'grayscale-0 scale-110' : 'grayscale opacity-70 hover:grayscale-0 hover:opacity-100'
+                  }`}
                 >
-                  <Heart className={`h-4 w-4 ${isLiked ? 'text-red-500 fill-red-500' : 'text-foreground'}`} />
+                  <span className="text-sm">🦞</span>
                 </button>
                 <button className="w-8 h-8 rounded-full border border-muted-foreground/50 flex items-center justify-center hover:border-foreground transition-colors">
                   <Info className="h-4 w-4 text-foreground" />
@@ -122,8 +124,8 @@ export function NetflixVideoCard({ video, ranking, size = "default" }: NetflixVi
           <div className="flex items-center justify-between mt-0.5">
             <p className="text-xs text-muted-foreground truncate flex-1">{video.artist}</p>
             <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-              <span className="flex items-center gap-0.5">
-                <Heart className={`h-3 w-3 ${isLiked ? 'text-red-500 fill-red-500' : ''}`} />
+              <span className={`flex items-center gap-0.5 transition-all duration-300 ${isLiked ? 'grayscale-0' : 'grayscale opacity-70'}`}>
+                <span className="text-xs">🦞</span>
                 {formatNumber(likesCount)}
               </span>
               <button 

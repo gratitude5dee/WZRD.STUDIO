@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from "react";
 import { 
-  Heart, 
   MessageCircle, 
   Share2, 
   Bookmark, 
@@ -220,10 +219,12 @@ export function MogPostCard({ post, isActive, onProfileClick }: MogPostCardProps
           </div>
         </button>
 
-        {/* Like */}
+        {/* Like - Lobster */}
         <button onClick={handleLike} className="flex flex-col items-center gap-1">
-          <div className="h-11 w-11 rounded-full bg-background/20 backdrop-blur-sm flex items-center justify-center">
-            <Heart className={`h-6 w-6 ${isLiked ? 'text-red-500 fill-red-500' : 'text-foreground'}`} />
+          <div className={`h-11 w-11 rounded-full bg-background/20 backdrop-blur-sm flex items-center justify-center text-2xl transition-all duration-300 ${
+            isLiked ? 'grayscale-0 scale-110 drop-shadow-lg' : 'grayscale opacity-50'
+          }`}>
+            🦞
           </div>
           <span className="text-xs font-medium text-foreground">{formatNumber(likesCount)}</span>
         </button>

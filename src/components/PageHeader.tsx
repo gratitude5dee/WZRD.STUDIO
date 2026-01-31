@@ -44,7 +44,7 @@ export function PageHeader({
       <div className="flex items-center justify-between px-4 h-14 safe-top">
         {/* Logo */}
         <div className="flex items-center min-w-[80px]">
-          <span className="text-lg font-bold gradient-text tracking-tight">eartone</span>
+          <span className="text-lg font-bold gradient-text tracking-tight">Mog</span>
         </div>
 
         {/* Right - Actions */}

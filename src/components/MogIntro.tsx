@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-interface EartoneIntroProps {
+interface MogIntroProps {
   onComplete: () => void;
   skipEnabled?: boolean;
 }
 
-export function EartoneIntro({ onComplete, skipEnabled = true }: EartoneIntroProps) {
+export function MogIntro({ onComplete, skipEnabled = true }: MogIntroProps) {
   const [phase, setPhase] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
@@ -69,7 +69,7 @@ export function EartoneIntro({ onComplete, skipEnabled = true }: EartoneIntroPro
     delay: Math.random() * 3,
   }));
 
-  const letters = ['E', 'A', 'R', 'T', 'O', 'N', 'E'];
+  const letters = ['M', 'O', 'G'];
   const taglineWords = ['Content', '·', 'Music', '·', 'Media'];
 
   return (
@@ -342,7 +342,6 @@ export function EartoneIntro({ onComplete, skipEnabled = true }: EartoneIntroPro
                   color: '#C4956A',
                   textShadow: '0 0 60px rgba(196, 149, 106, 0.4)',
                   cursor: 'default',
-                  transform: index === 6 ? 'scaleX(-1)' : 'none',
                 }}
               >
                 {letter}
@@ -468,7 +467,7 @@ export function EartoneIntro({ onComplete, skipEnabled = true }: EartoneIntroPro
                 color: 'rgba(232, 219, 197, 0.4)',
               }}
             >
-              eartone powered by
+              mog powered by
             </span>
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
@@ -480,36 +479,34 @@ export function EartoneIntro({ onComplete, skipEnabled = true }: EartoneIntroPro
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '10px',
+                gap: '16px',
               }}
             >
-              {/* Thirdweb logo */}
-              <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
-                <motion.path
-                  d="M16 2L4 9v14l12 7 12-7V9L16 2z"
-                  stroke="rgba(232, 219, 197, 0.9)"
-                  strokeWidth="1.5"
-                  fill="none"
-                  initial={{ pathLength: 0 }}
-                  animate={{ pathLength: phase >= 5 ? 1 : 0 }}
-                  transition={{ duration: 1.5, ease: [0.22, 1, 0.36, 1] }}
-                />
-                <motion.path
-                  d="M16 30V16M4 9l12 7 12-7"
-                  stroke="rgba(232, 219, 197, 0.5)"
-                  strokeWidth="1"
-                  fill="none"
-                  initial={{ pathLength: 0 }}
-                  animate={{ pathLength: phase >= 5 ? 1 : 0 }}
-                  transition={{ duration: 1.2, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
-                />
-              </svg>
+              <span
+                style={{
+                  fontFamily: "'Courier New', monospace",
+                  fontSize: '13px',
+                  letterSpacing: '-0.02em',
+                  color: 'rgba(232, 219, 197, 0.7)',
+                }}
+              >
+                Espresso
+              </span>
               <span
                 style={{
                   fontFamily: "'Inter', sans-serif",
-                  fontSize: '15px',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  color: '#3B82F6',
+                }}
+              >
+                ApeChain ⛓️
+              </span>
+              <span
+                style={{
+                  fontFamily: "'Inter', sans-serif",
+                  fontSize: '13px',
                   fontWeight: 600,
-                  letterSpacing: '0.08em',
                   color: 'rgba(232, 219, 197, 0.9)',
                 }}
               >

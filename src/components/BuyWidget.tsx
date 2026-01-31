@@ -161,11 +161,13 @@ export function BuyWidget({ track, onClose, onSuccess }: BuyWidgetProps) {
           </Button>
         </div>
 
-        {/* Footer */}
-        <div className="bg-secondary/30 py-2 px-6 text-center border-t border-border">
-          <span className="text-[10px] text-muted-foreground uppercase tracking-widest">
-            Secured by Thirdweb & Monad
-          </span>
+        {/* Footer - Partner Logos */}
+        <div className="bg-secondary/30 py-2 px-6 border-t border-border">
+          <div className="flex items-center justify-center gap-4 opacity-80">
+            <span className="font-mono tracking-tighter text-[10px] text-muted-foreground">Espresso</span>
+            <span className="font-bold text-blue-500 text-[10px]">ApeChain ⛓️</span>
+            <span className="text-[10px] text-muted-foreground">thirdweb</span>
+          </div>
         </div>
       </div>
     </div>

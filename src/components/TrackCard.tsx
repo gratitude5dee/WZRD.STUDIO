@@ -1,4 +1,4 @@
-import { Play, Music, Lock, Check, Heart, MessageCircle } from "lucide-react";
+import { Play, Music, Lock, Check, MessageCircle } from "lucide-react";
 import { Track, usePlayer } from "@/contexts/PlayerContext";
 import { getCoverUrl } from "@/lib/media-utils";
 import { useWallet } from "@/contexts/WalletContext";
@@ -102,11 +102,11 @@ export function TrackCard({ track }: TrackCardProps) {
               e.stopPropagation();
               handleLike();
             }}
-            className={`absolute top-2 right-2 w-7 h-7 rounded-full bg-background/60 backdrop-blur-sm flex items-center justify-center transition-all duration-200 ${
-              isLiked ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+            className={`absolute top-2 right-2 w-7 h-7 rounded-full bg-background/60 backdrop-blur-sm flex items-center justify-center transition-all duration-300 ${
+              isLiked ? "opacity-100 grayscale-0 scale-110" : "opacity-0 group-hover:opacity-100 grayscale"
             }`}
           >
-            <Heart className={`h-4 w-4 ${isLiked ? 'text-red-500 fill-red-500' : 'text-foreground'}`} />
+            <span className="text-sm">🦞</span>
           </button>
           
           {/* Play Button Overlay */}
@@ -138,8 +138,8 @@ export function TrackCard({ track }: TrackCardProps) {
             {track.artist}
           </p>
           <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-            <span className="flex items-center gap-0.5">
-              <Heart className={`h-3 w-3 ${isLiked ? 'text-red-500 fill-red-500' : ''}`} />
+            <span className={`flex items-center gap-0.5 transition-all duration-300 ${isLiked ? 'grayscale-0' : 'grayscale opacity-70'}`}>
+              <span className="text-xs">🦞</span>
               {formatNumber(likesCount)}
             </span>
             <button 

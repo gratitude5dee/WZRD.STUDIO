@@ -97,7 +97,7 @@ export default function Landing() {
       <nav className="fixed top-0 left-0 right-0 z-50 bg-landing-beige/90 backdrop-blur-sm border-b border-landing-charcoal/10">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <Link to="/" className="text-xl font-playfair font-semibold text-landing-charcoal tracking-wide">
-            EARTON<span className="inline-block scale-x-[-1]">E</span>
+            Mog
           </Link>
           <div className="flex items-center gap-2">
             <ThemeToggle />
@@ -115,7 +115,7 @@ export default function Landing() {
         <div className="container mx-auto text-center">
           {/* Large Wordmark */}
           <h1 className="text-5xl md:text-7xl lg:text-8xl font-playfair font-semibold text-landing-charcoal tracking-tight mb-6">
-            EARTON<span className="inline-block scale-x-[-1]">E</span>
+            Mog
           </h1>
 
           {/* Tagline with Radar Dial */}
@@ -127,7 +127,7 @@ export default function Landing() {
 
           {/* Hero Headline */}
           <h2 className="text-2xl md:text-4xl font-playfair text-landing-charcoal mb-4 max-w-3xl mx-auto">
-            Every stream pays creators <span className="text-landing-copper italic">instantly</span>
+            Mog the internet. <span className="text-landing-copper italic">Own the culture.</span>
           </h2>
           
           {/* Subheadline */}
@@ -202,7 +202,7 @@ export default function Landing() {
                 Keep 100% of what you earn. <span className="italic text-landing-copper">Finally.</span>
               </h2>
               <p className="text-landing-charcoal/70 leading-relaxed mb-6">
-                Traditional platforms take 30-70% of your revenue and pay months later. EARTONE is different. 
+                Traditional platforms take 30-70% of your revenue and pay months later. Mog is different. 
                 Every stream triggers an instant payment directly to your wallet. No advances to pay back, 
                 no mysterious deductions, no waiting 90 days for royalty statements. Set your own prices, 
                 reach your audience directly, and watch earnings arrive in real-time.
@@ -346,7 +346,7 @@ export default function Landing() {
           
           <div className="grid md:grid-cols-3 gap-6">
             <TestimonialCard 
-              quote="I made more in my first month on EARTONE than six months of Spotify streams. And I got paid the same day — not 90 days later."
+              quote="I made more in my first month on Mog than six months of Spotify streams. And I got paid the same day — not 90 days later."
               name="Marcus Chen"
               role="Independent Musician"
               offset="md:mt-0"
@@ -358,7 +358,7 @@ export default function Landing() {
               offset="md:mt-8"
             />
             <TestimonialCard 
-              quote="EARTONE represents the future of creator compensation — transparent, instant, and fair. The streaming industry should take notes."
+              quote="Mog represents the future of creator compensation — transparent, instant, and fair. The streaming industry should take notes."
               name="The Creator Report"
               role="Industry Publication"
               offset="md:mt-4"
@@ -399,14 +399,16 @@ export default function Landing() {
       <footer className="py-12 px-4 border-t border-landing-charcoal/10 bg-landing-beige">
         <div className="container mx-auto text-center">
           <p className="font-playfair text-xl text-landing-charcoal mb-2">
-            EARTON<span className="inline-block scale-x-[-1]">E</span>
+            Mog
           </p>
-          <p className="text-landing-charcoal/50 text-sm mb-1">
+          <p className="text-landing-charcoal/50 text-sm mb-3">
             Content. Music. Media. CULTURE.
           </p>
-          <p className="text-landing-charcoal/40 text-xs">
-            Powered by Thirdweb
-          </p>
+          <div className="flex items-center justify-center gap-6 opacity-80">
+            <span className="font-mono tracking-tighter text-xs text-landing-charcoal/60">Espresso</span>
+            <span className="font-bold text-blue-500 text-xs">ApeChain ⛓️</span>
+            <span className="text-xs text-landing-charcoal/60">thirdweb</span>
+          </div>
         </div>
       </footer>
     </div>

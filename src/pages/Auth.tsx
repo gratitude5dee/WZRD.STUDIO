@@ -17,7 +17,7 @@ export default function Welcome() {
 
   useEffect(() => {
     if (isConnected) {
-      const onboardingComplete = localStorage.getItem('eartone_onboarding_complete');
+      const onboardingComplete = localStorage.getItem('mog_onboarding_complete') || localStorage.getItem('eartone_onboarding_complete');
       if (!onboardingComplete) {
         setIsNewUser(true);
         navigate("/onboarding");
@@ -40,7 +40,7 @@ export default function Welcome() {
         <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/20 mb-4">
           <Music className="h-8 w-8 text-primary" />
         </div>
-        <h1 className="text-3xl font-bold text-foreground">EARTONE</h1>
+        <h1 className="text-3xl font-bold text-foreground">Mog</h1>
         <p className="text-muted-foreground mt-2">
           Pay per stream • Artists first
         </p>
@@ -93,14 +93,11 @@ export default function Welcome() {
         </button>
       </div>
 
-      {/* Footer */}
-      <p className="mt-8 text-xs text-muted-foreground text-center">
-        Powered by Monad • x402 Protocol
-      </p>
-
-      {/* Thirdweb Branding */}
-      <p className="mt-2 text-xs text-muted-foreground/50 text-center">
-        Powered by thirdweb
-      </p>
+      {/* Footer - Partner Logos */}
+      <div className="mt-8 flex items-center justify-center gap-6 opacity-80">
+        <span className="font-mono tracking-tighter text-xs text-muted-foreground">Espresso</span>
+        <span className="font-bold text-blue-500 text-xs">ApeChain ⛓️</span>
+        <span className="text-xs text-muted-foreground">thirdweb</span>
+      </div>
     </div>;
 }

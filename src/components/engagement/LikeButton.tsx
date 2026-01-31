@@ -1,4 +1,3 @@
-import { Heart } from "lucide-react";
 import { formatNumber } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
@@ -22,13 +21,13 @@ export function LikeButton({
   variant = "default",
   className,
 }: LikeButtonProps) {
-  const sizeClasses = {
-    sm: "h-3.5 w-3.5",
-    md: "h-4 w-4",
-    lg: "h-5 w-5",
+  const textSizeClasses = {
+    sm: "text-sm",
+    md: "text-base",
+    lg: "text-lg",
   };
 
-  const textSizeClasses = {
+  const countTextSizeClasses = {
     sm: "text-[10px]",
     md: "text-xs",
     lg: "text-sm",
@@ -55,25 +54,24 @@ export function LikeButton({
           animate={{ scale: 1 }}
           exit={{ scale: 0.8 }}
           transition={{ type: "spring", stiffness: 400, damping: 17 }}
+          className={cn(
+            textSizeClasses[size],
+            "leading-none transition-all duration-300",
+            isLiked 
+              ? "grayscale-0 scale-110 drop-shadow-lg" 
+              : "grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100"
+          )}
         >
-          <Heart
-            className={cn(
-              sizeClasses[size],
-              "transition-colors duration-200",
-              isLiked
-                ? "text-red-500 fill-red-500"
-                : "text-muted-foreground group-hover:text-red-400"
-            )}
-          />
+          🦞
         </motion.div>
       </AnimatePresence>
       {showCount && (
         <span
           className={cn(
-            textSizeClasses[size],
+            countTextSizeClasses[size],
             "font-medium transition-colors",
             isLiked
-              ? "text-red-500"
+              ? "text-foreground"
               : "text-muted-foreground group-hover:text-foreground"
           )}
         >

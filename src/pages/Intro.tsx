@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { EartoneIntro } from '@/components/EartoneIntro';
+import { MogIntro } from '@/components/MogIntro';
 
 export default function Intro() {
   const navigate = useNavigate();
@@ -17,7 +17,7 @@ export default function Intro() {
     <div style={{ minHeight: '100vh', background: '#0a0a0a' }}>
       {/* Intro Animation */}
       {showIntro && (
-        <EartoneIntro onComplete={handleIntroComplete} skipEnabled={true} />
+        <MogIntro onComplete={handleIntroComplete} skipEnabled={true} />
       )}
 
       {/* Transition to Landing */}
