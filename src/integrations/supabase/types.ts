@@ -4462,6 +4462,87 @@ export type Database = {
           },
         ]
       }
+      music_albums: {
+        Row: {
+          artist: string
+          cover_path: string | null
+          created_at: string
+          description: string | null
+          id: string
+          release_date: string | null
+          title: string
+        }
+        Insert: {
+          artist: string
+          cover_path?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          release_date?: string | null
+          title: string
+        }
+        Update: {
+          artist?: string
+          cover_path?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          release_date?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
+      music_entitlements: {
+        Row: {
+          expires_at: string | null
+          granted_at: string
+          id: string
+          is_active: boolean
+          track_id: string | null
+          tx_hash: string | null
+          user_id: string | null
+          user_wallet: string | null
+          video_id: string | null
+        }
+        Insert: {
+          expires_at?: string | null
+          granted_at?: string
+          id?: string
+          is_active?: boolean
+          track_id?: string | null
+          tx_hash?: string | null
+          user_id?: string | null
+          user_wallet?: string | null
+          video_id?: string | null
+        }
+        Update: {
+          expires_at?: string | null
+          granted_at?: string
+          id?: string
+          is_active?: boolean
+          track_id?: string | null
+          tx_hash?: string | null
+          user_id?: string | null
+          user_wallet?: string | null
+          video_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "music_entitlements_track_id_fkey"
+            columns: ["track_id"]
+            isOneToOne: false
+            referencedRelation: "music_tracks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "music_entitlements_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "music_videos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       music_items: {
         Row: {
           album: string | null
@@ -4561,6 +4642,256 @@ export type Database = {
           user_id?: string
           valence?: number | null
           youtube_id?: string | null
+        }
+        Relationships: []
+      }
+      music_streams: {
+        Row: {
+          access_token: string
+          created_at: string
+          expires_at: string
+          id: string
+          stream_id: string
+          track_id: string
+          user_wallet: string | null
+        }
+        Insert: {
+          access_token: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          stream_id: string
+          track_id: string
+          user_wallet?: string | null
+        }
+        Update: {
+          access_token?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          stream_id?: string
+          track_id?: string
+          user_wallet?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "music_streams_track_id_fkey"
+            columns: ["track_id"]
+            isOneToOne: false
+            referencedRelation: "music_tracks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      music_tracks: {
+        Row: {
+          album_id: string | null
+          artist: string
+          artist_wallet: string | null
+          audio_path: string | null
+          cover_path: string | null
+          created_at: string
+          description: string | null
+          duration: number | null
+          id: string
+          price: number
+          title: string
+        }
+        Insert: {
+          album_id?: string | null
+          artist: string
+          artist_wallet?: string | null
+          audio_path?: string | null
+          cover_path?: string | null
+          created_at?: string
+          description?: string | null
+          duration?: number | null
+          id?: string
+          price?: number
+          title: string
+        }
+        Update: {
+          album_id?: string | null
+          artist?: string
+          artist_wallet?: string | null
+          audio_path?: string | null
+          cover_path?: string | null
+          created_at?: string
+          description?: string | null
+          duration?: number | null
+          id?: string
+          price?: number
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "music_tracks_album_id_fkey"
+            columns: ["album_id"]
+            isOneToOne: false
+            referencedRelation: "music_albums"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      music_transactions: {
+        Row: {
+          amount: number
+          artist_wallet: string
+          created_at: string
+          id: string
+          status: string
+          track_id: string
+          tx_hash: string | null
+          user_wallet: string
+        }
+        Insert: {
+          amount: number
+          artist_wallet: string
+          created_at?: string
+          id?: string
+          status?: string
+          track_id: string
+          tx_hash?: string | null
+          user_wallet: string
+        }
+        Update: {
+          amount?: number
+          artist_wallet?: string
+          created_at?: string
+          id?: string
+          status?: string
+          track_id?: string
+          tx_hash?: string | null
+          user_wallet?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "music_transactions_track_id_fkey"
+            columns: ["track_id"]
+            isOneToOne: false
+            referencedRelation: "music_tracks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      music_video_streams: {
+        Row: {
+          access_token: string
+          created_at: string
+          expires_at: string
+          id: string
+          stream_id: string
+          user_wallet: string | null
+          video_id: string
+        }
+        Insert: {
+          access_token: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          stream_id: string
+          user_wallet?: string | null
+          video_id: string
+        }
+        Update: {
+          access_token?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          stream_id?: string
+          user_wallet?: string | null
+          video_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "music_video_streams_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "music_videos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      music_video_transactions: {
+        Row: {
+          amount: number
+          artist_wallet: string
+          created_at: string
+          id: string
+          status: string
+          tx_hash: string | null
+          user_wallet: string
+          video_id: string
+        }
+        Insert: {
+          amount: number
+          artist_wallet: string
+          created_at?: string
+          id?: string
+          status?: string
+          tx_hash?: string | null
+          user_wallet: string
+          video_id: string
+        }
+        Update: {
+          amount?: number
+          artist_wallet?: string
+          created_at?: string
+          id?: string
+          status?: string
+          tx_hash?: string | null
+          user_wallet?: string
+          video_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "music_video_transactions_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "music_videos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      music_videos: {
+        Row: {
+          artist: string
+          artist_wallet: string | null
+          created_at: string
+          description: string | null
+          duration: number | null
+          id: string
+          is_livestream: boolean
+          price: number
+          thumbnail_path: string | null
+          title: string
+          video_path: string
+        }
+        Insert: {
+          artist: string
+          artist_wallet?: string | null
+          created_at?: string
+          description?: string | null
+          duration?: number | null
+          id?: string
+          is_livestream?: boolean
+          price?: number
+          thumbnail_path?: string | null
+          title: string
+          video_path: string
+        }
+        Update: {
+          artist?: string
+          artist_wallet?: string | null
+          created_at?: string
+          description?: string | null
+          duration?: number | null
+          id?: string
+          is_livestream?: boolean
+          price?: number
+          thumbnail_path?: string | null
+          title?: string
+          video_path?: string
         }
         Relationships: []
       }
@@ -7499,6 +7830,10 @@ export type Database = {
         Args: { func_name: string; max_calls?: number; window_minutes?: number }
         Returns: boolean
       }
+      check_valid_session: {
+        Args: { p_access_token: string; p_stream_id: string }
+        Returns: boolean
+      }
       cleanup_expired_idempotency: { Args: never; Returns: undefined }
       cleanup_mrkt_decision_logs: { Args: never; Returns: undefined }
       generate_board_slug: { Args: { board_title: string }; Returns: string }
@@ -7517,6 +7852,16 @@ export type Database = {
           unpaid_invoices_amount: number
           unpaid_invoices_count: number
           upcoming_gigs: number
+        }[]
+      }
+      get_entitlement: {
+        Args: { p_track_id: string; p_user_wallet: string }
+        Returns: {
+          expires_at: string
+          id: string
+          is_active: boolean
+          track_id: string
+          user_wallet: string
         }[]
       }
       get_mrkt_principal_id: { Args: never; Returns: string }

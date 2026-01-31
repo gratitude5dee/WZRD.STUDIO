@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Upload, Music, TrendingUp, DollarSign, Disc, User, Settings, RefreshCw, BarChart3, Download } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import { Tables } from "@/integrations/supabase/types";
+import { MusicTrack } from "@/types/track";
 
 interface Stats {
   totalTracks: number;
@@ -39,7 +39,7 @@ export default function Artist() {
   const navigate = useNavigate();
   const { isConnected, address } = useWallet();
   const { setQueue, currentTrack } = usePlayer();
-  const [tracks, setTracks] = useState<Tables<"tracks">[]>([]);
+  const [tracks, setTracks] = useState<MusicTrack[]>([]);
   const [stats, setStats] = useState<Stats>({ totalTracks: 0, totalStreams: 0, totalEarnings: 0 });
   const [recentTransactions, setRecentTransactions] = useState<RecentTransaction[]>([]);
   const [loading, setLoading] = useState(true);

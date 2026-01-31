@@ -95,7 +95,7 @@ serve(async (req) => {
       const items: { type: 'track' | 'album' | 'video'; id: string; title: string; artist: string; currentPath: string | null }[] = [];
 
       if (!body.type || body.type === 'album') {
-        const { data: albums } = await supabase.from('albums').select('id, title, artist, cover_path');
+        const { data: albums } = await supabase.from('music_albums').select('id, title, artist, cover_path');
         if (albums) {
           for (const album of albums) {
             if (!body.id || body.id === album.id) {
@@ -106,7 +106,7 @@ serve(async (req) => {
       }
 
       if (!body.type || body.type === 'track') {
-        const { data: tracks } = await supabase.from('tracks').select('id, title, artist, cover_path');
+        const { data: tracks } = await supabase.from('music_tracks').select('id, title, artist, cover_path');
         if (tracks) {
           for (const track of tracks) {
             if (!body.id || body.id === track.id) {
@@ -117,7 +117,7 @@ serve(async (req) => {
       }
 
       if (!body.type || body.type === 'video') {
-        const { data: videos } = await supabase.from('videos').select('id, title, artist, thumbnail_path');
+        const { data: videos } = await supabase.from('music_videos').select('id, title, artist, thumbnail_path');
         if (videos) {
           for (const video of videos) {
             if (!body.id || body.id === video.id) {
@@ -207,7 +207,7 @@ serve(async (req) => {
         const publicUrl = publicUrlData.publicUrl;
 
         // Update database record
-        const table = item.type === 'video' ? 'videos' : item.type === 'album' ? 'albums' : 'tracks';
+        const table = item.type === 'video' ? 'music_videos' : item.type === 'album' ? 'music_albums' : 'music_tracks';
         const pathColumn = item.type === 'video' ? 'thumbnail_path' : 'cover_path';
 
         const { error: updateError } = await supabase

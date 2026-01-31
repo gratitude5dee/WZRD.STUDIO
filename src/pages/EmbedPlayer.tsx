@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Tables } from "@/integrations/supabase/types";
+import { MusicTrack } from "@/types/track";
 import { Play, Pause, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function EmbedPlayer() {
   const { trackId } = useParams<{ trackId: string }>();
-  const [track, setTrack] = useState<Tables<"tracks"> | null>(null);
+  const [track, setTrack] = useState<MusicTrack | null>(null);
   const [loading, setLoading] = useState(true);
   const [playing, setPlaying] = useState(false);
 
@@ -16,13 +16,13 @@ export default function EmbedPlayer() {
       if (!trackId) return;
       
       const { data, error } = await supabase
-        .from("tracks")
+        .from("music_tracks")
         .select("*")
         .eq("id", trackId)
         .single();
       
       if (!error && data) {
-        setTrack(data);
+        setTrack(data as MusicTrack);
       }
       setLoading(false);
     };

@@ -31,7 +31,7 @@ Deno.serve(async (req) => {
     const { data: entitlementData, error: entitlementError } = await supabase
       .rpc('get_entitlement', {
         p_track_id: track_id,
-        p_wallet_address: wallet_address
+        p_user_wallet: wallet_address
       });
 
     if (entitlementError) {
@@ -45,7 +45,7 @@ Deno.serve(async (req) => {
       
       // Get track info for audio URL
       const { data: track } = await supabase
-        .from('tracks')
+        .from('music_tracks')
         .select('audio_path, title, artist')
         .eq('id', track_id)
         .single();
@@ -75,10 +75,10 @@ Deno.serve(async (req) => {
         JSON.stringify({
           allowed: true,
           has_entitlement: true,
-          entitlement_id: ent.entitlement_id,
-          access_token: ent.access_token,
+          entitlement_id: ent.id,
+          access_token: "",
           expires_at: ent.expires_at,
-          tx_hash: ent.tx_hash,
+          tx_hash: "",
           audio_url: signedUrlData.signedUrl,
           track: {
             title: track.title,
@@ -91,7 +91,7 @@ Deno.serve(async (req) => {
 
     // No valid entitlement - get track info for payment prompt
     const { data: track, error: trackError } = await supabase
-      .from('tracks')
+      .from('music_tracks')
       .select('id, title, artist, price, artist_wallet, cover_path')
       .eq('id', track_id)
       .single();

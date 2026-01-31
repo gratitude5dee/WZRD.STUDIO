@@ -40,25 +40,25 @@ export default function Library() {
     const fetchLibrary = async () => {
       // Fetch all tracks
       const { data: allTracks } = await supabase
-        .from("tracks")
+        .from("music_tracks")
         .select("*")
         .order("created_at", { ascending: false });
 
       if (allTracks) {
-        setTracks(allTracks);
+        setTracks(allTracks as Track[]);
       }
 
       // Fetch purchased tracks for connected wallet
       if (address) {
         const { data: streams } = await supabase
-          .from("streams")
+          .from("music_streams")
           .select("track_id")
-          .eq("payer_wallet", address);
+          .eq("user_wallet", address);
 
         if (streams && streams.length > 0) {
-          const trackIds = streams.map(s => s.track_id).filter(Boolean);
+          const trackIds = streams.map((s: any) => s.track_id).filter(Boolean);
           const { data: purchasedData } = await supabase
-            .from("tracks")
+            .from("music_tracks")
             .select("*")
             .in("id", trackIds);
 

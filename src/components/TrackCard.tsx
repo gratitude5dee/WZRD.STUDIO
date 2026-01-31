@@ -29,9 +29,9 @@ export function TrackCard({ track }: TrackCardProps) {
       try {
         const { data } = await supabase.rpc('get_entitlement', {
           p_track_id: track.id,
-          p_wallet_address: address
+          p_user_wallet: address
         });
-        setHasEntitlement(data && data.length > 0);
+        setHasEntitlement(data && Array.isArray(data) && data.length > 0);
       } catch (err) {
         console.error('Error checking entitlement:', err);
       }

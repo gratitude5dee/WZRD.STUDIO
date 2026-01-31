@@ -46,7 +46,7 @@ export default function AlbumPage() {
       if (!id) return;
 
       const { data: albumData } = await supabase
-        .from("albums")
+        .from("music_albums")
         .select("*")
         .eq("id", id)
         .maybeSingle();
@@ -55,7 +55,7 @@ export default function AlbumPage() {
         setAlbum(albumData);
 
         const { data: tracksData } = await supabase
-          .from("tracks")
+          .from("music_tracks")
           .select("*")
           .eq("album_id", id)
           .order("created_at", { ascending: true });

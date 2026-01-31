@@ -45,7 +45,7 @@ export function ReceiptsDrawer({
     try {
       // Fetch entitlements with track info
       const { data: entitlements, error } = await supabase
-        .from("entitlements")
+        .from("music_entitlements")
         .select(`
           id,
           track_id,
@@ -54,7 +54,7 @@ export function ReceiptsDrawer({
           expires_at,
           is_active
         `)
-        .ilike("wallet_address", walletAddress)
+        .ilike("user_wallet", walletAddress)
         .order("granted_at", { ascending: false });
 
       if (error) {
@@ -68,18 +68,18 @@ export function ReceiptsDrawer({
       }
 
       // Fetch track info for each entitlement
-      const trackIds = [...new Set(entitlements.map(e => e.track_id))];
+      const trackIds = [...new Set(entitlements.map((e: any) => e.track_id).filter(Boolean))];
       const { data: tracks } = await supabase
-        .from("tracks")
+        .from("music_tracks")
         .select("id, title, artist, cover_path")
         .in("id", trackIds);
 
-      const trackMap = new Map(tracks?.map(t => [t.id, t]) || []);
+      const trackMap = new Map((tracks as any[] || []).map((t: any) => [t.id, t]));
       const now = new Date();
 
-      const formattedReceipts: EntitlementReceipt[] = entitlements.map(ent => {
+      const formattedReceipts: EntitlementReceipt[] = entitlements.map((ent: any) => {
         const track = trackMap.get(ent.track_id);
-        const expiresAt = new Date(ent.expires_at);
+        const expiresAt = ent.expires_at ? new Date(ent.expires_at) : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
         
         return {
           id: ent.id,
@@ -87,9 +87,9 @@ export function ReceiptsDrawer({
           title: track?.title || "Unknown Track",
           artist: track?.artist || "Unknown Artist",
           coverUrl: track?.cover_path ? getCoverUrl(track.cover_path) : null,
-          txHash: ent.tx_hash,
+          txHash: ent.tx_hash || "",
           grantedAt: ent.granted_at,
-          expiresAt: ent.expires_at,
+          expiresAt: ent.expires_at || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
           isActive: ent.is_active && expiresAt > now
         };
       });
@@ -208,16 +208,18 @@ export function ReceiptsDrawer({
                       <span>Expires: {format(new Date(receipt.expiresAt), "MMM d, yyyy h:mm a")}</span>
                     </div>
                     
-                    <a
-                      href={getMonadExplorerUrl(receipt.txHash)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={(e) => e.stopPropagation()}
-                      className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
-                    >
-                      View on Explorer
-                      <ExternalLink className="h-3 w-3" />
-                    </a>
+                    {receipt.txHash && (
+                      <a
+                        href={getMonadExplorerUrl(receipt.txHash)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
+                      >
+                        View on Explorer
+                        <ExternalLink className="h-3 w-3" />
+                      </a>
+                    )}
                   </div>
                 </div>
               ))}

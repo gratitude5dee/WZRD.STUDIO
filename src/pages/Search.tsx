@@ -29,7 +29,7 @@ export default function Search() {
   useEffect(() => {
     async function fetchAllTracks() {
       const { data } = await supabase
-        .from("tracks")
+        .from("music_tracks")
         .select("id, title, artist, cover_path, audio_path, price, artist_wallet")
         .order("created_at", { ascending: false });
 

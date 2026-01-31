@@ -140,7 +140,7 @@ export function AudioUploadForm() {
         if (coverError) throw new Error(`Cover upload failed: ${coverError.message}`);
       }
 
-      const { error: dbError } = await supabase.from("tracks").insert({
+      const { error: dbError } = await supabase.from("music_tracks").insert({
         id: trackId,
         title,
         artist,
@@ -149,7 +149,7 @@ export function AudioUploadForm() {
         artist_wallet: address.toLowerCase(),
         audio_path: audioPath,
         cover_path: coverPath,
-      });
+      } as any);
 
       if (dbError) throw new Error(`Database error: ${dbError.message}`);
 

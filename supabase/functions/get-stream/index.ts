@@ -34,8 +34,8 @@ serve(async (req) => {
 
     // Verify the stream session is valid and not expired
     const { data: session, error: sessionError } = await supabaseAdmin
-      .from('streams')
-      .select('id, track_id, expires_at, payer_wallet')
+      .from('music_streams')
+      .select('id, track_id, expires_at, user_wallet')
       .eq('track_id', track_id)
       .eq('access_token', access_token)
       .gt('expires_at', new Date().toISOString())
@@ -61,7 +61,7 @@ serve(async (req) => {
 
     // Get the track's audio path
     const { data: track, error: trackError } = await supabaseAdmin
-      .from('tracks')
+      .from('music_tracks')
       .select('audio_path, title, artist')
       .eq('id', track_id)
       .single();

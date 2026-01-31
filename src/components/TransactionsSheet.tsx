@@ -44,87 +44,85 @@ export function TransactionsSheet({
   const fetchTransactions = async () => {
     setLoading(true);
     try {
-      // Fetch track transactions with stream info
+      // Fetch track transactions
       const { data: trackTxs } = await supabase
-        .from("transactions")
-        .select(`
-          id,
-          amount,
-          tx_hash,
-          created_at,
-          stream_id,
-          track_id,
-          tracks!inner(title, artist, cover_path)
-        `)
-        .eq("payer_wallet", walletAddress)
+        .from("music_transactions")
+        .select("*")
+        .eq("user_wallet", walletAddress)
         .order("created_at", { ascending: false });
 
-      // Fetch video transactions with stream info
+      // Fetch video transactions
       const { data: videoTxs } = await supabase
-        .from("video_transactions")
-        .select(`
-          id,
-          amount,
-          tx_hash,
-          created_at,
-          stream_id,
-          video_id,
-          videos!inner(title, artist, thumbnail_path)
-        `)
-        .eq("payer_wallet", walletAddress)
+        .from("music_video_transactions")
+        .select("*")
+        .eq("user_wallet", walletAddress)
         .order("created_at", { ascending: false });
+
+      // Fetch track details for track transactions
+      const trackIds = [...new Set((trackTxs || []).map((tx: any) => tx.track_id))];
+      const { data: tracks } = trackIds.length > 0
+        ? await supabase.from("music_tracks").select("id, title, artist, cover_path").in("id", trackIds)
+        : { data: [] };
+      
+      const trackMap = new Map((tracks as any[] || []).map((t: any) => [t.id, t]));
+
+      // Fetch video details for video transactions
+      const videoIds = [...new Set((videoTxs || []).map((tx: any) => tx.video_id))];
+      const { data: videos } = videoIds.length > 0
+        ? await supabase.from("music_videos").select("id, title, artist, thumbnail_path").in("id", videoIds)
+        : { data: [] };
+      
+      const videoMap = new Map((videos as any[] || []).map((v: any) => [v.id, v]));
 
       // Fetch streams to get expiry info
       const { data: streams } = await supabase
-        .from("streams")
+        .from("music_streams")
         .select("stream_id, expires_at")
-        .eq("payer_wallet", walletAddress);
+        .eq("user_wallet", walletAddress);
 
       const { data: videoStreams } = await supabase
-        .from("video_streams")
+        .from("music_video_streams")
         .select("stream_id, expires_at")
-        .eq("payer_wallet", walletAddress);
+        .eq("user_wallet", walletAddress);
 
-      const streamMap = new Map(streams?.map(s => [s.stream_id, s.expires_at]) || []);
-      const videoStreamMap = new Map(videoStreams?.map(s => [s.stream_id, s.expires_at]) || []);
+      const streamMap = new Map((streams as any[] || []).map((s: any) => [s.stream_id, s.expires_at]));
+      const videoStreamMap = new Map((videoStreams as any[] || []).map((s: any) => [s.stream_id, s.expires_at]));
 
       const now = new Date();
 
       // Transform track transactions
       const trackTransactions: CombinedTransaction[] = (trackTxs || []).map((tx: any) => {
-        const expiresAt = tx.stream_id ? streamMap.get(tx.stream_id) : null;
-        const isActive = expiresAt ? new Date(expiresAt) > now : false;
+        const track = trackMap.get(tx.track_id);
         
         return {
           id: tx.id,
           type: "track" as const,
-          title: tx.tracks.title,
-          artist: tx.tracks.artist,
-          coverUrl: getCoverUrl(tx.tracks.cover_path),
+          title: track?.title || "Unknown Track",
+          artist: track?.artist || "Unknown Artist",
+          coverUrl: track?.cover_path ? getCoverUrl(track.cover_path) : null,
           amount: tx.amount,
           txHash: tx.tx_hash,
           createdAt: tx.created_at,
-          status: isActive ? "active" : "paid",
-          expiresAt,
+          status: tx.status === "completed" ? "paid" : "paid",
+          expiresAt: null,
         };
       });
 
       // Transform video transactions
       const videoTransactions: CombinedTransaction[] = (videoTxs || []).map((tx: any) => {
-        const expiresAt = tx.stream_id ? videoStreamMap.get(tx.stream_id) : null;
-        const isActive = expiresAt ? new Date(expiresAt) > now : false;
+        const video = videoMap.get(tx.video_id);
         
         return {
           id: tx.id,
           type: "video" as const,
-          title: tx.videos.title,
-          artist: tx.videos.artist,
-          coverUrl: getThumbnailUrl(tx.videos.thumbnail_path),
+          title: video?.title || "Unknown Video",
+          artist: video?.artist || "Unknown Creator",
+          coverUrl: video?.thumbnail_path ? getThumbnailUrl(video.thumbnail_path) : null,
           amount: tx.amount,
           txHash: tx.tx_hash,
           createdAt: tx.created_at,
-          status: isActive ? "active" : "paid",
-          expiresAt,
+          status: tx.status === "completed" ? "paid" : "paid",
+          expiresAt: null,
         };
       });
 

@@ -31,7 +31,7 @@ serve(async (req) => {
 
     // Validate the stream session
     const { data: stream, error: streamError } = await supabase
-      .from('video_streams')
+      .from('music_video_streams')
       .select('id, video_id, expires_at')
       .eq('video_id', video_id)
       .eq('access_token', access_token)
@@ -56,7 +56,7 @@ serve(async (req) => {
 
     // Fetch video details
     const { data: video, error: videoError } = await supabase
-      .from('videos')
+      .from('music_videos')
       .select('id, title, artist, video_path')
       .eq('id', video_id)
       .single();

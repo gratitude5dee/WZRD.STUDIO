@@ -45,9 +45,9 @@ export default function Home() {
   useEffect(() => {
     async function fetchContent() {
       setLoading(true);
-      const [tracksResult, videosResult] = await Promise.all([supabase.from("tracks").select("id, title, artist, cover_path, audio_path, price, artist_wallet").order("created_at", {
+      const [tracksResult, videosResult] = await Promise.all([supabase.from("music_tracks").select("id, title, artist, cover_path, audio_path, price, artist_wallet").order("created_at", {
         ascending: false
-      }).limit(20), supabase.from("videos").select("*").order("created_at", {
+      }).limit(20), supabase.from("music_videos").select("*").order("created_at", {
         ascending: false
       }).limit(20)]);
       if (tracksResult.error) {

@@ -121,7 +121,7 @@ export function VideoUploadForm() {
         if (thumbError) throw new Error(`Thumbnail upload failed: ${thumbError.message}`);
       }
 
-      const { error: dbError } = await supabase.from("videos").insert({
+      const { error: dbError } = await supabase.from("music_videos").insert({
         id: videoId,
         title,
         artist: creator,
@@ -131,7 +131,7 @@ export function VideoUploadForm() {
         video_path: videoPath,
         thumbnail_path: thumbnailPath,
         is_livestream: isLivestream,
-      });
+      } as any);
 
       if (dbError) throw new Error(`Database error: ${dbError.message}`);
 

@@ -31,7 +31,7 @@ serve(async (req) => {
 
     // Fetch video details
     const { data: video, error: videoError } = await supabase
-      .from('videos')
+      .from('music_videos')
       .select('id, title, artist, price, artist_wallet')
       .eq('id', video_id)
       .maybeSingle();
@@ -58,13 +58,12 @@ serve(async (req) => {
 
     // Insert stream record
     const { data: streamData, error: streamError } = await supabase
-      .from('video_streams')
+      .from('music_video_streams')
       .insert({
         video_id,
-        payer_wallet: payer_wallet.toLowerCase(),
+        user_wallet: payer_wallet.toLowerCase(),
         access_token: accessToken,
         stream_id: streamId,
-        tx_hash: txHash,
         expires_at: expiresAt.toISOString(),
       })
       .select()
@@ -80,11 +79,11 @@ serve(async (req) => {
 
     // Record transaction
     const { error: txError } = await supabase
-      .from('video_transactions')
+      .from('music_video_transactions')
       .insert({
         video_id,
-        stream_id: streamId,
-        payer_wallet: payer_wallet.toLowerCase(),
+        user_wallet: payer_wallet.toLowerCase(),
+        artist_wallet: video.artist_wallet,
         tx_hash: txHash,
         amount: amount || video.price,
       });

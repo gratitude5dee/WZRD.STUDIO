@@ -2,11 +2,11 @@ import { useState } from "react";
 import { ChevronDown, ChevronUp, Copy, Check, Code, Link, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
-import { Tables } from "@/integrations/supabase/types";
+import { MusicTrack } from "@/types/track";
 import { getCoverUrl } from "@/lib/media-utils";
 
 interface ArtistTrackCardProps {
-  track: Tables<"tracks">;
+  track: MusicTrack;
 }
 
 export function ArtistTrackCard({ track }: ArtistTrackCardProps) {

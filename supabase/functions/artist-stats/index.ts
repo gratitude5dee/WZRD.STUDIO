@@ -34,8 +34,8 @@ serve(async (req) => {
 
     // Get all tracks by this artist
     const { data: tracks, error: tracksError } = await supabaseAdmin
-      .from('tracks')
-      .select('id, title, artist, price, cover_path, created_at')
+      .from('music_tracks')
+      .select('id, title, artist, price, cover_path, audio_path, created_at')
       .eq('artist_wallet', wallet_address)
       .order('created_at', { ascending: false });
 
@@ -59,7 +59,7 @@ serve(async (req) => {
     if (trackIds.length > 0) {
       // Count streams
       const { count: streamCount, error: streamError } = await supabaseAdmin
-        .from('streams')
+        .from('music_streams')
         .select('*', { count: 'exact', head: true })
         .in('track_id', trackIds);
 
@@ -67,9 +67,8 @@ serve(async (req) => {
         totalStreams = streamCount || 0;
       }
 
-      // Get total earnings from transactions
       const { data: transactions, error: txError } = await supabaseAdmin
-        .from('transactions')
+        .from('music_transactions')
         .select('amount')
         .in('track_id', trackIds);
 
@@ -84,11 +83,11 @@ serve(async (req) => {
     let recentTransactions: any[] = [];
     if (trackIds.length > 0) {
       const { data: txData, error: recentTxError } = await supabaseAdmin
-        .from('transactions')
+        .from('music_transactions')
         .select(`
           id,
           amount,
-          payer_wallet,
+          user_wallet,
           tx_hash,
           created_at,
           track_id
@@ -103,6 +102,7 @@ serve(async (req) => {
           const track = tracks?.find(t => t.id === tx.track_id);
           return {
             ...tx,
+            payer_wallet: tx.user_wallet,
             track_title: track?.title || 'Unknown',
             track_artist: track?.artist || 'Unknown'
           };

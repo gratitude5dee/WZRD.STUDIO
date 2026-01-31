@@ -54,7 +54,7 @@ serve(async (req) => {
 
     // Get the track details
     const { data: track, error: trackError } = await supabaseAdmin
-      .from('tracks')
+      .from('music_tracks')
       .select('id, title, artist, price, artist_wallet')
       .eq('id', track_id)
       .single();
@@ -85,13 +85,12 @@ serve(async (req) => {
 
     // Create stream session
     const { data: stream, error: streamError } = await supabaseAdmin
-      .from('streams')
+      .from('music_streams')
       .insert({
         track_id: track.id,
-        payer_wallet: payer_wallet,
+        user_wallet: payer_wallet,
         access_token: accessToken,
         stream_id: streamId,
-        tx_hash: txHash,
         expires_at: expiresAt
       })
       .select()
@@ -109,13 +108,13 @@ serve(async (req) => {
 
     // Record the transaction
     const { error: txError } = await supabaseAdmin
-      .from('transactions')
+      .from('music_transactions')
       .insert({
         track_id: track.id,
-        payer_wallet: payer_wallet,
+        user_wallet: payer_wallet,
+        artist_wallet: track.artist_wallet,
         amount: paymentAmount,
-        tx_hash: txHash,
-        stream_id: streamId
+        tx_hash: txHash
       });
 
     if (txError) {

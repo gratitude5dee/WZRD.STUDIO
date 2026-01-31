@@ -36,7 +36,7 @@ Deno.serve(async (req) => {
 
     // Get track info
     const { data: track, error: trackError } = await supabase
-      .from('tracks')
+      .from('music_tracks')
       .select('id, title, artist, price, artist_wallet, audio_path')
       .eq('id', track_id)
       .single();
@@ -65,12 +65,11 @@ Deno.serve(async (req) => {
 
     // Create entitlement record
     const { data: entitlement, error: entitlementError } = await supabase
-      .from('entitlements')
+      .from('music_entitlements')
       .insert({
         track_id: track_id,
-        wallet_address: wallet_address.toLowerCase(),
+        user_wallet: wallet_address.toLowerCase(),
         tx_hash: tx_hash,
-        access_token: accessToken,
         expires_at: expiresAt.toISOString(),
         is_active: true
       })
@@ -84,7 +83,7 @@ Deno.serve(async (req) => {
         
         // Fetch existing entitlement
         const { data: existingEnt } = await supabase
-          .from('entitlements')
+          .from('music_entitlements')
           .select('*')
           .eq('tx_hash', tx_hash)
           .single();
@@ -116,25 +115,15 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Log play event
-    await supabase
-      .from('play_events')
-      .insert({
-        entitlement_id: entitlement.id,
-        track_id: track_id,
-        wallet_address: wallet_address.toLowerCase(),
-        access_token: accessToken
-      });
-
     // Also add to transactions table for backwards compatibility
     await supabase
-      .from('transactions')
+      .from('music_transactions')
       .insert({
         track_id: track_id,
-        payer_wallet: wallet_address.toLowerCase(),
+        user_wallet: wallet_address.toLowerCase(),
+        artist_wallet: track.artist_wallet,
         amount: track.price,
-        tx_hash: tx_hash,
-        stream_id: entitlement.id
+        tx_hash: tx_hash
       });
 
     // Generate signed URL for audio
