@@ -1,162 +1,152 @@
 
 
-# Unify Upload Button & MogUpload with Thirdweb Integration
+# Add Creator Type Selection to Onboarding Flow
 
 ## Overview
 
-This plan updates the "+" upload button in the Library header and the MogUpload page to use thirdweb's wallet connection system instead of the current manual `window.ethereum` approach. This provides a more robust, user-friendly wallet connection experience with support for multiple wallets.
+This plan adds a new **Creator Type** step at the very beginning of the onboarding flow. This step allows users to identify themselves as either a **Human Creator** (golden checkmark badge) or an **AI Agent** (orange lobster emoji). This selection will be persisted and used throughout the app.
 
-## Current State
+## Current Flow
+```
+Welcome → Tastes (Step 1) → Genres (Step 2) → Connect (Step 3) → Complete
+```
 
-- The "+" button on Library page (line 148) navigates directly to `/upload`
-- MogUpload uses the custom `WalletContext` which relies on `window.ethereum`
-- Thirdweb is installed (`v5.115.3`) but not actively used for connection
-- The thirdweb client is configured in `src/lib/thirdweb.ts` with Monad chain
+## New Flow
+```
+Welcome → Creator Type (Step 1) → Tastes (Step 2) → Genres (Step 3) → Connect (Step 4) → Complete
+```
+
+---
 
 ## Changes Required
 
-### 1. Add ThirdwebProvider to App
+### 1. Update `src/pages/Onboarding.tsx`
 
-Wrap the application with thirdweb's provider to enable its hooks throughout the app.
+**Add Creator Type State & Step:**
+- Add new state: `creatorType` (`'human' | 'agent' | null`)
+- Update `steps` array to include `'creator-type'` after welcome
+- Update step labels from "Step 1 of 3" → "Step 2 of 4", etc.
+- Update progress calculation for 5 steps (0-4)
 
-**File: `src/App.tsx`**
-- Import `ThirdwebProvider` from `thirdweb/react`
-- Wrap existing providers with `ThirdwebProvider`
+**Create `CreatorTypeStep` Component:**
+- Display two large, attractive selection cards:
+  - **Human Creator**: Golden checkmark icon, description about being a human artist
+  - **AI Agent**: Orange lobster emoji, description about being an AI creator
+- Match the existing visual style with gradient backgrounds and animations
+- Require a selection before proceeding
 
-### 2. Update WalletContext to Use Thirdweb
+**Update `handleFinish`:**
+- Include `creatorType` in the preferences saved to localStorage
+- Store as `eartone_creator_type` for easy access throughout the app
 
-Modify the WalletContext to use thirdweb's hooks internally, maintaining the same interface for backward compatibility.
+### 2. Update Step Navigation
 
-**File: `src/contexts/WalletContext.tsx`**
-- Import `useActiveAccount`, `useActiveWallet`, `useConnect`, `useDisconnect` from thirdweb
-- Replace `window.ethereum` logic with thirdweb hooks
-- Keep the same exported interface (`address`, `isConnected`, `connect`, `disconnect`)
+| Original Step | New Step | Label |
+|---------------|----------|-------|
+| Welcome (0) | Welcome (0) | - |
+| - | Creator Type (1) | Step 1 of 4 |
+| Tastes (1) | Tastes (2) | Step 2 of 4 |
+| Genres (2) | Genres (3) | Step 3 of 4 |
+| Connect (3) | Connect (4) | Step 4 of 4 |
+| Complete (4) | Complete (5) | - |
 
-### 3. Update Library Upload Button
+---
 
-Make the "+" button smart about wallet connection - if not connected, trigger wallet connection first.
+## Technical Details
 
-**File: `src/pages/Library.tsx`**
-- Update the "+" button click handler to check wallet connection
-- If not connected, open wallet connection modal
-- If connected, navigate to `/mog/upload` (unified with Mog)
-
-### 4. Update MogUpload Submit Button
-
-Use thirdweb's ConnectButton or custom integration for the submit button when wallet is not connected.
-
-**File: `src/pages/MogUpload.tsx`**
-- Import thirdweb's `ConnectButton` component
-- When `!address`, render thirdweb ConnectButton instead of disabled "Connect Wallet" button
-- Use consistent styling with the rest of the app
-
-### 5. Create Unified ThirdwebConnectButton Component
-
-Create a reusable component that wraps thirdweb's ConnectButton with app-consistent styling.
-
-**New File: `src/components/ThirdwebConnectButton.tsx`**
-- Import thirdweb client and chain config
-- Customize button appearance to match app theme
-- Support both inline and full-width variants
-
-## Detailed Component Changes
-
-### App.tsx Changes
+### New CreatorTypeStep Component
 
 ```typescript
-import { ThirdwebProvider } from "thirdweb/react";
-import { thirdwebClient } from "@/lib/thirdweb";
-
-// Wrap with ThirdwebProvider
-<ThirdwebProvider>
-  <QueryClientProvider client={queryClient}>
-    {/* existing providers */}
-  </QueryClientProvider>
-</ThirdwebProvider>
+function CreatorTypeStep({
+  selected,
+  onSelect,
+  onNext,
+  onBack,
+}: {
+  selected: 'human' | 'agent' | null;
+  onSelect: (type: 'human' | 'agent') => void;
+  onNext: () => void;
+  onBack: () => void;
+}) {
+  const options = [
+    {
+      id: 'human',
+      label: 'Human Creator',
+      description: 'I am a human artist, musician, filmmaker, or creative',
+      badge: <BadgeCheck className="w-8 h-8 text-yellow-400 fill-yellow-400/20" />,
+      gradient: 'from-yellow-500 via-amber-500 to-orange-400',
+    },
+    {
+      id: 'agent',
+      label: 'AI Agent',
+      description: 'I am an AI creating or curating content autonomously',
+      badge: <span className="text-3xl">🦞</span>,
+      gradient: 'from-orange-500 via-red-500 to-pink-400',
+    },
+  ];
+  // ... render selection cards
+}
 ```
 
-### WalletContext.tsx Integration
+### Updated State & Steps
 
 ```typescript
-import { useActiveAccount, useConnect, useDisconnect } from "thirdweb/react";
-import { thirdwebClient, chain } from "@/lib/thirdweb";
-
-// Replace window.ethereum logic with:
-const account = useActiveAccount();
-const { connect: thirdwebConnect } = useConnect();
-const { disconnect: thirdwebDisconnect } = useDisconnect();
-
-// Derive state from thirdweb
-const address = account?.address ?? null;
-const isConnected = !!account;
+const [creatorType, setCreatorType] = useState<'human' | 'agent' | null>(null);
+const steps = ['welcome', 'creator-type', 'tastes', 'genres', 'connect', 'complete'];
 ```
 
-### Library.tsx Button Update
+### Updated handleFinish
 
 ```typescript
-const handleUploadClick = () => {
-  if (!address) {
-    // Trigger wallet connection
-    connect();
-  } else {
-    navigate("/mog/upload");
+const handleFinish = () => {
+  // Save creator type separately for easy access
+  if (creatorType) {
+    localStorage.setItem('eartone_creator_type', creatorType);
   }
+  
+  const preferences = {
+    creatorType,
+    tastes: selectedTastes,
+    genres: selectedGenres,
+    connectedServices: services.filter((s) => s.connected).map((s) => s.id),
+    completedAt: new Date().toISOString(),
+  };
+  localStorage.setItem('eartone_preferences', JSON.stringify(preferences));
+  localStorage.setItem('eartone_onboarding_complete', 'true');
+  navigate('/home');
 };
-
-// Or show wallet modal if not connected
-<button onClick={handleUploadClick}>
-  <Plus className="h-6 w-6" />
-</button>
 ```
 
-### MogUpload.tsx Submit Section
+---
+
+## Integration with MogUpload
+
+After onboarding, the creator type can be pre-filled in MogUpload:
 
 ```typescript
-import { ConnectButton } from "thirdweb/react";
-import { thirdwebClient, chain } from "@/lib/thirdweb";
-
-// In render, replace the submit button section:
-{!address ? (
-  <ConnectButton
-    client={thirdwebClient}
-    chain={chain}
-    connectButton={{
-      label: "Connect Wallet to Post",
-      className: "w-full py-6 text-lg",
-    }}
-  />
-) : (
-  <Button
-    onClick={handleSubmit}
-    disabled={uploading}
-    className="w-full py-6 text-lg"
-  >
-    {uploading ? 'Creating...' : 'Post Mog'}
-  </Button>
-)}
+// In MogUpload.tsx - auto-set creator type from onboarding
+const savedCreatorType = localStorage.getItem('eartone_creator_type') as CreatorType | null;
+const [creatorType, setCreatorType] = useState<CreatorType>(savedCreatorType || 'human');
 ```
+
+---
+
+## Visual Design
+
+The Creator Type step will feature:
+- Two large cards (full width on mobile, side-by-side on desktop)
+- Golden checkmark badge for Human Creator using `BadgeCheck` icon
+- Orange lobster emoji (🦞) for AI Agent
+- Gradient backgrounds matching existing taste cards
+- Check indicator on selected card
+- Matching animation transitions
+
+---
 
 ## File Summary
 
 | File | Action | Description |
 |------|--------|-------------|
-| `src/App.tsx` | Modify | Add ThirdwebProvider wrapper |
-| `src/contexts/WalletContext.tsx` | Modify | Integrate thirdweb hooks |
-| `src/components/ThirdwebConnectButton.tsx` | Create | Reusable styled connect button |
-| `src/pages/Library.tsx` | Modify | Smart upload button with wallet check |
-| `src/pages/MogUpload.tsx` | Modify | Use thirdweb ConnectButton for auth |
-
-## Benefits
-
-1. **Multi-wallet support**: Thirdweb supports 500+ wallets out of the box
-2. **Better UX**: Built-in connection flow, chain switching, account management
-3. **Consistency**: Same wallet experience across all upload flows
-4. **Future-proof**: Ready for on-chain payments via x402 Protocol
-5. **Mobile-friendly**: Optimized for mobile wallet connections
-
-## Technical Notes
-
-- Thirdweb v5 uses a different API than v4 - uses `useActiveAccount` instead of `useAddress`
-- The thirdweb client ID must be set in `VITE_THIRDWEB_CLIENT_ID` environment variable
-- Monad chain is pre-configured in `src/lib/thirdweb.ts`
+| `src/pages/Onboarding.tsx` | Modify | Add CreatorTypeStep, update flow logic, persist creator type |
+| `src/pages/MogUpload.tsx` | Modify | Pre-fill creator type from saved onboarding preference |
 
