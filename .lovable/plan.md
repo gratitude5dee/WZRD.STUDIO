@@ -1,63 +1,97 @@
 
-# Fix: Edge Function Deployment Error
+# Fix: get-stream Edge Function 500 Error
 
 ## Problem Identified
 
-The "Payment failed - Failed to send a request to the Edge Function" error occurred because the `pay-stream` edge function was **not deployed** to Supabase. When the frontend called the function, Supabase returned a 404 "Requested function was not found" error.
+The `get-stream` edge function crashes with a 500 error when trying to generate a signed URL for audio files. The error from the logs is:
+
+```
+TypeError: Cannot read properties of null (reading 'replace')
+at M.createSignedUrl (https://esm.sh/@supabase/storage-js@2.93.3/es2022/storage-js.mjs:3:8942)
+```
 
 ## Root Cause
 
-The edge function code existed in the codebase (`supabase/functions/pay-stream/index.ts`) but had not been deployed to the Supabase project. This can happen when:
-- The function was added but deployment didn't trigger
-- A previous deployment failed silently
-- The function was deleted from Supabase but remained in the codebase
+**The `audio_path` field is `null` for all tracks in the database.** When the edge function passes `null` to `createSignedUrl()`, the Supabase storage library internally calls `.replace()` on the path, which fails on `null`.
 
-## Solution Applied
-
-I have already deployed the `pay-stream` edge function and verified it is working. The deployment was successful and the function now returns proper payment responses.
-
-### Verification Results
-- **Test call**: Sent a payment request for track "Swamp Club (Mutant Mix)"
-- **Response**: Success with stream session created
-- **Logs**: Confirmed transaction recorded and stream session active
-
-## Recommended Code Improvement
-
-The `pay-stream` function uses an older import pattern that should be modernized for consistency with other edge functions:
-
-### Current (older pattern):
-```typescript
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-serve(async (req) => { ... });
+Database evidence:
+```
+Track: "Swamp Club (Mutant Mix)"
+ID: e57551eb-db7d-4644-8b76-20dd16de5c48
+audio_path: NULL  ← This is the problem
 ```
 
-### Recommended (modern pattern):
-```typescript
-Deno.serve(async (req) => { ... });
-```
-
-This matches the pattern used in `request-play` and other functions, ensuring consistency and better compatibility with edge runtime updates.
+All 10 tracks checked have `audio_path: null`.
 
 ---
 
-## Implementation Steps
+## Solution: Two-Part Fix
 
-1. **Update pay-stream edge function** - Modernize the import pattern
-   - Remove the `serve` import from deno.land
-   - Use the built-in `Deno.serve()` method directly
-   - This improves reliability and reduces external dependencies
+### Part 1: Add Null Check in Edge Function
 
-2. **Redeploy the function** - Deploy after code update
+Update `get-stream` to validate that `audio_path` exists before attempting to create a signed URL. This prevents the crash and returns a meaningful error.
+
+**File:** `supabase/functions/get-stream/index.ts`
+
+**Changes:**
+1. Modernize the import (remove legacy `serve` import, use `Deno.serve`)
+2. Add validation check after fetching the track to ensure `audio_path` is not null
+3. Return a proper 404 error with a descriptive message if audio is missing
+
+```typescript
+// After fetching track (line 69), add this check:
+if (trackError || !track) {
+  // existing error handling...
+}
+
+// NEW: Check if audio_path exists
+if (!track.audio_path) {
+  console.error('[get-stream] Track has no audio file:', track_id);
+  return new Response(
+    JSON.stringify({ 
+      error: 'Audio file not available', 
+      code: 'AUDIO_NOT_FOUND' 
+    }),
+    { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+  );
+}
+```
+
+### Part 2: Handle Error Gracefully in Frontend
+
+Update the PlayerContext to handle the `AUDIO_NOT_FOUND` error and show a user-friendly message.
+
+**File:** `src/contexts/PlayerContext.tsx`
+
+**Changes:**
+- Check for the specific error code and display a toast notification
 
 ---
 
 ## Technical Details
 
-### File to modify:
-- `supabase/functions/pay-stream/index.ts`
+### Files to Modify
 
-### Changes:
-- Line 1: Remove `import { serve } from "https://deno.land/std@0.168.0/http/server.ts";`
-- Line 29: Change `serve(async (req) => {` to `Deno.serve(async (req) => {`
+| File | Changes |
+|------|---------|
+| `supabase/functions/get-stream/index.ts` | Add null check for `audio_path`, modernize to use `Deno.serve` |
+| `src/contexts/PlayerContext.tsx` | Handle `AUDIO_NOT_FOUND` error with toast notification |
 
-The rest of the function logic remains unchanged as it is working correctly.
+### Edge Function Changes (get-stream/index.ts)
+
+1. **Line 1**: Remove legacy import `import { serve } from "https://deno.land/std@0.168.0/http/server.ts";`
+2. **Line 9**: Change `serve(async (req) => {` to `Deno.serve(async (req) => {`
+3. **After line 75**: Add null check for `track.audio_path` with proper error response
+
+### Frontend Changes (PlayerContext.tsx)
+
+Add error handling in the `loadAudio` function to check for the audio not found error code and display a toast message to inform the user.
+
+---
+
+## Data Issue Note
+
+All tracks in the `music_tracks` table currently have `audio_path: null`. After deploying this fix:
+- The 500 error will be replaced with a proper 404 "Audio file not available" error
+- Users will see a friendly message instead of a blank screen
+- To fully resolve playback, actual audio files need to be uploaded and the `audio_path` column updated with the correct storage paths
