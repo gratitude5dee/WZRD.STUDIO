@@ -41,13 +41,13 @@ export function PageHeader({
           : "bg-gradient-to-b from-background/90 via-background/60 to-transparent backdrop-blur-sm"
       )}
     >
-      {/* Row 1: Brand Bar */}
-      <div className="flex items-center justify-between px-4 h-14 safe-top">
+      {/* Single Row: Logo + Tabs + Actions */}
+      <div className="flex items-center justify-between px-3 h-14 safe-top">
         {/* Logo with Lobster */}
-        <div className="flex items-center gap-2 min-w-[80px]">
-          <img src={moltyLogo} alt="Mog" className="h-8 w-8 object-contain" />
+        <div className="flex items-center gap-1.5 shrink-0">
+          <img src={moltyLogo} alt="Mog" className="h-7 w-7 object-contain" />
           <span 
-            className="text-lg font-bold tracking-tight"
+            className="text-base font-bold tracking-tight hidden sm:inline"
             style={{
               background: 'linear-gradient(135deg, #FF6B35, #F7931E, #FF4500)',
               WebkitBackgroundClip: 'text',
@@ -59,20 +59,12 @@ export function PageHeader({
           </span>
         </div>
 
-        {/* Right - Actions */}
-        <div className="flex items-center gap-1.5">
-          <NotificationsDropdown />
-          <WalletButton compact />
-        </div>
-      </div>
-
-      {/* Row 2: Tab Navigation */}
-      <nav 
-        className="relative px-2 border-b border-border/20 -mt-[50px]"
-        role="tablist"
-        aria-label="Content sections"
-      >
-        <div className="flex items-center justify-center">
+        {/* Center - Tab Navigation */}
+        <nav 
+          className="flex items-center justify-center flex-1"
+          role="tablist"
+          aria-label="Content sections"
+        >
           {tabs.map((tab) => {
             const isActive = activeTab === tab.id;
             const Icon = tab.icon;
@@ -84,25 +76,30 @@ export function PageHeader({
                 aria-selected={isActive}
                 onClick={() => navigate(tab.path)}
                 className={cn(
-                  "relative flex items-center justify-center gap-1.5 px-6 py-3 text-sm font-medium transition-colors touch-target",
-                  "min-w-[80px] flex-1 max-w-[120px]",
+                  "relative flex items-center justify-center gap-1 px-3 sm:px-4 py-2 text-sm font-medium transition-colors",
                   isActive 
                     ? "text-foreground" 
                     : "text-muted-foreground hover:text-foreground"
                 )}
               >
-                <Icon className="h-4 w-4 flex-shrink-0" />
-                <span className="hidden xs:inline">{tab.label}</span>
+                <Icon className="h-4 w-4 shrink-0" />
+                <span className="text-xs sm:text-sm">{tab.label}</span>
                 
                 {/* Active Indicator */}
                 {isActive && (
-                  <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-primary rounded-full" />
+                  <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-6 h-0.5 bg-primary rounded-full" />
                 )}
               </button>
             );
           })}
+        </nav>
+
+        {/* Right - Actions */}
+        <div className="flex items-center gap-1 shrink-0">
+          <NotificationsDropdown />
+          <WalletButton compact />
         </div>
-      </nav>
+      </div>
 
       {/* Optional Categories Row */}
       {showCategories && categories.length > 0 && (
