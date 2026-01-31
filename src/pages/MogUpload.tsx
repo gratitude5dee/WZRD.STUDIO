@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Upload, Image, Video, FileText } from "lucide-react";
+import { motion } from "framer-motion";
+import { X, Upload, Image, Video, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -113,17 +114,49 @@ export default function MogUpload() {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border px-4 py-4 flex items-center gap-4 safe-top">
-        <button onClick={() => navigate('/home')}>
-          <ArrowLeft className="h-6 w-6" />
-        </button>
-        <h1 className="text-lg font-semibold">Create Mog</h1>
-      </div>
+  const handleClose = () => {
+    navigate('/home');
+  };
 
-      <div className="p-4 pb-safe-bottom space-y-6">
+  return (
+    <>
+      {/* Backdrop */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
+        className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40"
+        onClick={handleClose}
+      />
+
+      {/* Sheet */}
+      <motion.div
+        initial={{ y: "100%" }}
+        animate={{ y: 0 }}
+        exit={{ y: "100%" }}
+        transition={{ type: "spring", damping: 28, stiffness: 300 }}
+        className="fixed inset-x-0 bottom-0 top-12 z-50 bg-background rounded-t-3xl overflow-hidden shadow-2xl"
+      >
+        {/* Drag handle */}
+        <div className="flex justify-center pt-3 pb-1">
+          <div className="w-10 h-1 bg-muted-foreground/30 rounded-full" />
+        </div>
+
+        {/* Header */}
+        <div className="px-4 py-3 flex items-center justify-between border-b border-border">
+          <h1 className="text-lg font-semibold">Create Mog</h1>
+          <button
+            onClick={handleClose}
+            className="p-2 -mr-2 rounded-full hover:bg-muted transition-colors"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        {/* Scrollable content */}
+        <div className="h-[calc(100%-5rem)] overflow-y-auto">
+          <div className="p-4 pb-safe-bottom space-y-6">
         {/* Content Type Selection */}
         <div className="space-y-3">
           <Label className="text-base font-medium">Content Type</Label>
@@ -244,15 +277,17 @@ export default function MogUpload() {
           />
         </div>
 
-        {/* Submit Button */}
-        <Button
-          onClick={handleSubmit}
-          disabled={uploading || !address}
-          className="w-full py-6 text-lg"
-        >
-          {uploading ? 'Creating...' : 'Post Mog'}
-        </Button>
-      </div>
-    </div>
+            {/* Submit Button */}
+            <Button
+              onClick={handleSubmit}
+              disabled={uploading || !address}
+              className="w-full py-6 text-lg"
+            >
+              {uploading ? 'Creating...' : 'Post Mog'}
+            </Button>
+          </div>
+        </div>
+      </motion.div>
+    </>
   );
 }

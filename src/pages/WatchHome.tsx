@@ -4,7 +4,7 @@ import { useWallet } from "@/contexts/WalletContext";
 import { usePlayer } from "@/contexts/PlayerContext";
 import { WalletButton } from "@/components/WalletButton";
 import { supabase } from "@/integrations/supabase/client";
-import { Video, Play, Info, Plus, ChevronDown } from "lucide-react";
+import { Video, Play, Info, Plus, BookOpen, Headphones } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { NotificationsDropdown } from "@/components/NotificationsDropdown";
 import { BottomNavigation } from "@/components/BottomNavigation";
@@ -64,26 +64,31 @@ export default function WatchHome() {
         <div className="flex items-center justify-between px-4 py-3 safe-top">
           {/* Logo */}
           <div className="flex items-center">
-            <span className="text-xl font-bold text-primary">WATCH</span>
+            <span className="text-xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">eartone</span>
           </div>
 
-          {/* Categories - Scrollable on mobile */}
-          <div className="flex-1 mx-4 overflow-x-auto scrollbar-hide">
-            <div className="flex items-center gap-3 justify-center">
-              {categories.map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => setSelectedCategory(cat)}
-                  className={`whitespace-nowrap text-sm font-medium transition-colors ${
-                    selectedCategory === cat
-                      ? "text-foreground"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
+          {/* Center - Tab Switch */}
+          <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-1">
+            <button
+              onClick={() => navigate("/read")}
+              className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <BookOpen className="h-4 w-4" />
+              Read
+            </button>
+            <button
+              onClick={() => navigate("/home")}
+              className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <Headphones className="h-4 w-4" />
+              Listen
+            </button>
+            <button
+              className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium border border-primary text-foreground"
+            >
+              <Video className="h-4 w-4" />
+              Watch
+            </button>
           </div>
 
           {/* Right - Actions */}
@@ -91,6 +96,25 @@ export default function WatchHome() {
             <NotificationsDropdown />
             <ThemeToggle />
             <WalletButton />
+          </div>
+        </div>
+
+        {/* Categories - Secondary row */}
+        <div className="px-4 pb-2 overflow-x-auto scrollbar-hide">
+          <div className="flex items-center gap-3 justify-center">
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setSelectedCategory(cat)}
+                className={`whitespace-nowrap text-sm font-medium transition-colors ${
+                  selectedCategory === cat
+                    ? "text-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
           </div>
         </div>
       </header>
