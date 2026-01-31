@@ -1,560 +1,270 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Loader2, UserPlus, Plus, FolderKanban, Activity, Image, Sparkles, Settings, HelpCircle, ChevronDown, User, LogOut, Palette } from 'lucide-react';
-import { motion } from 'framer-motion';
-import wzrdLogo from '@/assets/wzrd-logo.png';
-import { ProjectList } from '@/components/home/ProjectList';
-import { ProjectListView } from '@/components/home/ProjectListView';
-import { Sidebar } from '@/components/home/Sidebar';
-import { MobileBottomNav } from '@/components/home/MobileBottomNav';
-import { MobileHeader } from '@/components/home/MobileHeader';
-import { MobileSidebarDrawer } from '@/components/home/MobileSidebarDrawer';
-import { SearchBar } from '@/components/home/SearchBar';
-import { SortDropdown, SortOption } from '@/components/home/SortDropdown';
-import { ProjectViewModeSelector } from '@/components/home/ProjectViewModeSelector';
-import { StatCard } from '@/components/home/StatCard';
-import { DemoBanner } from '@/components/demo/DemoBanner';
-import { ThemeToggle } from '@/components/ui/theme-toggle';
-import { TextAnimate } from '@/components/ui/text-animate';
-import { ShimmerButton } from '@/components/ui/shimmer-button';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-  DropdownMenuLabel,
-} from '@/components/ui/dropdown-menu';
-import { Button } from '@/components/ui/button';
-import { OnboardingTour } from '@/components/onboarding/OnboardingTour';
-import { useOnboardingTour } from '@/hooks/useOnboardingTour';
-import { useSidebar } from '@/contexts/SidebarContext';
-import { useAuth } from '@/providers/AuthProvider';
-import { supabaseService } from '@/services/supabaseService';
-import { useToast } from '@/hooks/use-toast';
-import { useCredits } from '@/hooks/useCredits';
-import { isDemoModeEnabled, getDemoProjects } from '@/utils/demoMode';
-import { cn } from '@/lib/utils';
-import type { Project } from '@/components/home/ProjectCard';
-import { supabase } from '@/integrations/supabase/client';
-
-type ViewMode = 'grid' | 'list';
-
+import { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { useWallet } from "@/contexts/WalletContext";
+import { usePlayer, Track } from "@/contexts/PlayerContext";
+import { WalletButton } from "@/components/WalletButton";
+import { supabase } from "@/integrations/supabase/client";
+import { Headphones, Video, BookOpen } from "lucide-react";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { NotificationsDropdown } from "@/components/NotificationsDropdown";
+import { getCoverUrl } from "@/lib/media-utils";
+import { BottomNavigation } from "@/components/BottomNavigation";
+import { MiniPlayer } from "@/components/MiniPlayer";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Video as VideoType } from "@/types/video";
+import { HeroSection } from "@/components/HeroSection";
+import { CircularPreview } from "@/components/CircularPreview";
+import { ContentRow } from "@/components/ContentRow";
+import { TrackCard } from "@/components/TrackCard";
+import { NetflixVideoCard } from "@/components/NetflixVideoCard";
+import { ContinueWatchingCard } from "@/components/ContinueWatchingCard";
+import { Top10Card } from "@/components/Top10Card";
+type ContentTab = "listen" | "watch";
 export default function Home() {
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const { toast } = useToast();
-  const { availableCredits } = useCredits();
-  const { isCollapsed } = useSidebar();
-  const onboarding = useOnboardingTour();
-  const isDemo = isDemoModeEnabled();
-
-  const [activeView, setActiveView] = useState('all');
-  const [activeTab, setActiveTab] = useState<'all' | 'private' | 'public'>('all');
-  const [viewMode, setViewMode] = useState<ViewMode>('grid');
-  const [sortBy, setSortBy] = useState<SortOption>('updated');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-
-  const fetchProjects = useCallback(async () => {
-    if (!user && !isDemo) return;
-    
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      if (isDemo) {
-        const demoProjects = getDemoProjects();
-        setProjects(demoProjects as Project[]);
+  const [searchParams] = useSearchParams();
+  const {
+    isConnected
+  } = useWallet();
+  const {
+    setQueue,
+    currentTrack
+  } = usePlayer();
+  const [tracks, setTracks] = useState<Track[]>([]);
+  const [videos, setVideos] = useState<VideoType[]>([]);
+  const [activeTab, setActiveTab] = useState<ContentTab>(() => {
+    const tab = searchParams.get("tab");
+    return tab === "watch" ? "watch" : "listen";
+  });
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    if (!isConnected) {
+      navigate("/");
+    }
+  }, [isConnected, navigate]);
+  useEffect(() => {
+    async function fetchContent() {
+      setLoading(true);
+      const [tracksResult, videosResult] = await Promise.all([supabase.from("tracks").select("id, title, artist, cover_path, audio_path, price, artist_wallet").order("created_at", {
+        ascending: false
+      }).limit(20), supabase.from("videos").select("*").order("created_at", {
+        ascending: false
+      }).limit(20)]);
+      if (tracksResult.error) {
+        console.error("Error fetching tracks:", tracksResult.error);
       } else {
-        const data = await supabaseService.projects.list();
-        const activeProjects = (data as Project[]).filter(
-          (project) => project.status !== 'deleted'
-        );
-        setProjects(activeProjects);
+        const typedData = tracksResult.data || [];
+        setTracks(typedData);
+        setQueue(typedData);
       }
-    } catch (err) {
-      console.error('Error fetching projects:', err);
-      setError('Failed to load projects');
-      toast({
-        title: 'Error',
-        description: 'Failed to load projects. Please try again.',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [user, isDemo, toast]);
-
-  useEffect(() => {
-    fetchProjects();
-  }, [fetchProjects]);
-
-  useEffect(() => {
-    const handleRestore = () => {
-      fetchProjects();
-    };
-
-    const handleVisibilityUpdate = (
-      event: Event
-    ) => {
-      const detail = (event as CustomEvent<{ projectId: string; isPrivate: boolean }>).detail;
-      if (!detail) return;
-      setProjects((prev) =>
-        prev.map((project) =>
-          project.id === detail.projectId ? { ...project, is_private: detail.isPrivate } : project
-        )
-      );
-    };
-
-    window.addEventListener('project-restored', handleRestore);
-    window.addEventListener('project-visibility-updated', handleVisibilityUpdate);
-
-    return () => {
-      window.removeEventListener('project-restored', handleRestore);
-      window.removeEventListener('project-visibility-updated', handleVisibilityUpdate);
-    };
-  }, [fetchProjects]);
-
-  const handleCreateProject = () => {
-    navigate('/project-setup');
-  };
-
-  const handleOpenProject = (projectId: string) => {
-    navigate(`/timeline/${projectId}`);
-  };
-
-  const handleRenameProject = useCallback(async (projectId: string, newTitle: string) => {
-    const trimmedTitle = newTitle.trim();
-    if (!trimmedTitle) {
-      toast({
-        title: 'Error',
-        description: 'Project title cannot be empty.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    setProjects((prev) =>
-      prev.map((project) =>
-        project.id === projectId ? { ...project, title: trimmedTitle } : project
-      )
-    );
-
-    const { error } = await supabase
-      .from('projects')
-      .update({ title: trimmedTitle, updated_at: new Date().toISOString() })
-      .eq('id', projectId);
-
-    if (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to update project title.',
-        variant: 'destructive',
-      });
-      fetchProjects();
-    }
-  }, [fetchProjects, toast]);
-
-  const handleSearch = useCallback((query: string) => {
-    setSearchQuery(query);
-  }, []);
-
-  // Filter projects
-  const filteredProjects = projects
-    .filter((project) => {
-      if (activeTab === 'private' && !project.is_private) return false;
-      if (activeTab === 'public' && project.is_private) return false;
-      
-      if (searchQuery) {
-        const query = searchQuery.toLowerCase();
-        return (
-          project.title.toLowerCase().includes(query) ||
-          project.description?.toLowerCase().includes(query)
-        );
+      if (videosResult.error) {
+        console.error("Error fetching videos:", videosResult.error);
+      } else {
+        setVideos(videosResult.data || []);
       }
-      
-      return true;
-    })
-    .sort((a, b) => {
-      switch (sortBy) {
-        case 'name':
-          return a.title.localeCompare(b.title);
-        case 'created':
-          return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
-        case 'updated':
-        default:
-          return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
-      }
-    });
+      setLoading(false);
+    }
+    fetchContent();
+  }, [setQueue]);
+  const livestreams = videos.filter(v => v.is_livestream);
+  const regularVideos = videos.filter(v => !v.is_livestream);
+  const featuredVideo = videos[0] || null;
 
-  const counts = {
-    all: projects.length,
-    private: projects.filter(p => p.is_private).length,
-    public: projects.filter(p => !p.is_private).length,
+  // Get greeting based on time of day
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Good morning";
+    if (hour < 18) return "Good afternoon";
+    return "Good evening";
   };
-
-  const tabs = [
-    { id: 'all' as const, label: 'All', count: counts.all },
-    { id: 'private' as const, label: 'Private', count: counts.private },
-    { id: 'public' as const, label: 'Public', count: counts.public },
-  ];
-
-  return (
-    <>
-      {isDemo && <DemoBanner />}
-      <div className="min-h-screen bg-background flex w-full">
-        {/* Desktop Sidebar - hidden on mobile */}
-        <div className="hidden md:block">
-          <Sidebar activeView={activeView} onViewChange={setActiveView} />
-        </div>
-
-        {/* Mobile Sidebar Drawer */}
-        <MobileSidebarDrawer
-          isOpen={isMobileSidebarOpen}
-          onClose={() => setIsMobileSidebarOpen(false)}
-          activeView={activeView}
-          onViewChange={setActiveView}
-        />
-
-        {/* Main Content */}
-        <motion.div 
-          className="flex-1 pb-20 md:pb-0"
-          animate={{ marginLeft: isCollapsed ? 64 : 256 }}
-          transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          initial={false}
-        >
-          {/* Mobile Header */}
-          <MobileHeader onMenuClick={() => setIsMobileSidebarOpen(true)} />
-
-          {/* Desktop Header - hidden on mobile */}
-          <header data-tour="dashboard-title" className={cn(
-            "border-b border-border-default",
-            "bg-gradient-to-r from-surface-2 via-transparent to-surface-2 backdrop-blur-sm",
-            "hidden md:block"
-          )}>
-            {/* Row 1: Title + Project Count + Actions */}
-            <div className="h-16 flex items-center justify-between px-6">
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <TextAnimate animation="blurInUp" by="word" className="text-xl font-semibold text-text-primary dark:text-foreground">
-                    Dashboard
-                  </TextAnimate>
-                  <motion.span
-                    initial={{ opacity: 0, scale: 0 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.3, type: "spring" }}
-                    className="text-lg"
-                  >
-                    📊
-                  </motion.span>
-                </div>
-                <div className="h-5 w-px bg-border-default" />
-                <span className="text-sm text-text-secondary dark:text-muted-foreground font-medium">
-                  {filteredProjects.length} {filteredProjects.length === 1 ? 'project' : 'projects'}
-                </span>
-              </div>
-              
-              <div className="flex items-center gap-2">
-                {/* Settings dropdown */}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className={cn(
-                        "h-9 px-2 gap-1 transition-all duration-200",
-                        "text-text-secondary hover:text-text-primary hover:bg-surface-2",
-                        "dark:text-muted-foreground dark:hover:text-foreground dark:hover:bg-white/[0.06]"
-                      )}
-                    >
-                      <Settings className="h-4 w-4" />
-                      <ChevronDown className="h-3 w-3" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent 
-                    align="end" 
-                    className="w-56 bg-surface-1 border-border-default dark:bg-zinc-900 dark:border-zinc-800"
-                    sideOffset={8}
-                  >
-                    <DropdownMenuLabel className="text-text-secondary dark:text-zinc-400 text-xs">
-                      Account
-                    </DropdownMenuLabel>
-                    
-                    <DropdownMenuItem 
-                      onClick={() => navigate('/profile')} 
-                      className="hover:bg-surface-2 dark:hover:bg-zinc-800 cursor-pointer"
-                    >
-                      <User className="mr-2 h-4 w-4" />
-                      My Profile
-                    </DropdownMenuItem>
-                    
-                    <DropdownMenuSeparator className="bg-border-default dark:bg-zinc-800" />
-                    
-                    <DropdownMenuLabel className="text-text-secondary dark:text-zinc-400 text-xs">
-                      Preferences
-                    </DropdownMenuLabel>
-                    
-                    <DropdownMenuItem 
-                      className="hover:bg-surface-2 dark:hover:bg-zinc-800 cursor-pointer"
-                    >
-                      <Palette className="mr-2 h-4 w-4" />
-                      Appearance
-                    </DropdownMenuItem>
-                    
-                    <DropdownMenuSeparator className="bg-border-default dark:bg-zinc-800" />
-                    
-                    <DropdownMenuItem 
-                      onClick={async () => {
-                        try {
-                          await supabase.auth.signOut();
-                          navigate('/auth');
-                        } catch (error) {
-                          toast({
-                            title: 'Error',
-                            description: 'Failed to log out. Please try again.',
-                            variant: 'destructive',
-                          });
-                        }
-                      }} 
-                      className="hover:bg-surface-2 dark:hover:bg-zinc-800 cursor-pointer text-red-500 dark:text-red-400"
-                    >
-                      <LogOut className="mr-2 h-4 w-4" />
-                      Log out
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-
-                {/* Help button - triggers onboarding tour */}
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <motion.button 
-                      onClick={onboarding.start}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      className={cn(
-                        "p-2 rounded-lg transition-all duration-200",
-                        "text-text-secondary hover:text-text-primary hover:bg-surface-2",
-                        "dark:text-muted-foreground dark:hover:text-foreground dark:hover:bg-white/[0.06]"
-                      )}
-                    >
-                      <HelpCircle className="w-4 h-4" />
-                    </motion.button>
-                  </TooltipTrigger>
-                  <TooltipContent>Help & Tour</TooltipContent>
-                </Tooltip>
-
-                <ThemeToggle />
-                <img 
-                  src={wzrdLogo} 
-                  alt="WZRD.STUDIO Logo" 
-                  className="h-10 object-contain"
-                />
-                <span className="text-xs text-primary bg-primary/15 px-2 py-0.5 rounded-full border border-primary/25 font-medium">
-                  ALPHA
-                </span>
-              </div>
-            </div>
-            
-            {/* Row 2: Tabs + Search + Actions */}
-            <div className="h-14 flex items-center justify-between px-6 border-t border-border-subtle">
-              {/* Tabs */}
-              <div className="flex items-center gap-1 p-1 rounded-xl bg-surface-2">
-                {tabs.map((tab) => (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={cn(
-                      "px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200",
-                      activeTab === tab.id
-                        ? "text-text-primary bg-surface-1 shadow-sm"
-                        : "text-text-tertiary hover:text-text-primary"
-                    )}
-                  >
-                    {tab.label}
-                    <span className="ml-2 text-xs opacity-60">({tab.count})</span>
-                  </button>
-                ))}
-              </div>
-              
-              {/* Search + Sort + View Mode */}
-              <div className="flex items-center gap-4" data-tour="search-bar">
-                <div className="w-72">
-                  <SearchBar onSearch={handleSearch} />
-                </div>
-                <SortDropdown value={sortBy} onChange={setSortBy} />
-                <ProjectViewModeSelector viewMode={viewMode} setViewMode={setViewMode} />
-              </div>
-              
-              {/* Actions */}
-              <div className="flex items-center gap-3">
-                <motion.button 
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className={cn(
-                    "flex items-center gap-2 h-9 px-4 rounded-lg text-sm font-medium transition-all duration-200",
-                    "bg-surface-2 border border-border-default text-text-secondary",
-                    "hover:text-text-primary hover:border-border-strong hover:bg-surface-3"
-                  )}
-                >
-                  <UserPlus className="w-4 h-4" />
-                  <span>Invite</span>
-                </motion.button>
-                <ShimmerButton
-                  data-tour="new-project-btn"
-                  onClick={handleCreateProject}
-                  shimmerColor="#ffffff"
-                  shimmerSize="0.05em"
-                  shimmerDuration="2.5s"
-                  background="linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary)/0.8) 100%)"
-                  className="h-9 px-4 text-sm font-medium"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  <span>New Project</span>
-                </ShimmerButton>
-              </div>
-            </div>
-          </header>
-
-          {/* Stats Row - Responsive grid */}
-          <div data-tour="stats-section" className="px-4 md:px-6 py-4 md:py-6 border-b border-border-default bg-gradient-to-b from-surface-2 to-transparent">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-              <StatCard 
-                icon={<FolderKanban className="w-5 h-5" />}
-                label="Total Projects"
-                value={projects.length}
-                trend="+12%"
-                trendDirection="up"
-                index={0}
-              />
-              <StatCard 
-                icon={<Activity className="w-5 h-5" />}
-                label="Recent Activity"
-                value={filteredProjects.filter(p => {
-                  const updated = new Date(p.updated_at);
-                  const weekAgo = new Date();
-                  weekAgo.setDate(weekAgo.getDate() - 7);
-                  return updated > weekAgo;
-                }).length}
-                trend="This week"
-                trendDirection="neutral"
-                index={1}
-              />
-              <StatCard 
-                icon={<Image className="w-5 h-5" />}
-                label="Generated Assets"
-                value="--"
-                trend="Coming soon"
-                trendDirection="neutral"
-                className="hidden sm:block"
-                index={2}
-              />
-              <StatCard 
-                icon={<Sparkles className="w-5 h-5" />}
-                label="Credits"
-                value={availableCredits?.toLocaleString() || '0'}
-                trend="Available"
-                trendDirection="neutral"
-                className="hidden sm:block"
-                index={3}
-              />
-            </div>
+  return <div className="min-h-screen bg-background flex flex-col">
+      {/* Header - Conditional styling based on tab */}
+      <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${activeTab === "watch" ? "bg-gradient-to-b from-background/80 to-transparent backdrop-blur-sm" : "bg-background/95 backdrop-blur-sm border-b border-border/50"}`}>
+        <div className="flex items-center justify-between px-4 py-3 safe-top">
+          {/* Logo */}
+          <div className="flex items-center">
+            <span className="text-xl font-bold gradient-text">eartone
+          </span>
           </div>
 
-          {/* Content Area */}
-          <main data-tour="projects-section" className="p-4 md:p-6">
-            {isLoading ? (
-              <div className="flex flex-col items-center justify-center py-12 md:py-20">
-                <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-accent/15 flex items-center justify-center mb-4">
-                  <Loader2 className="w-7 h-7 md:w-8 md:h-8 animate-spin text-primary" />
+          {/* Center - Read/Listen/Watch Tab Switch */}
+          <div className="absolute left-1/2 -translate-x-1/2 mt-2.5 flex items-center gap-1">
+            <button onClick={() => navigate("/read")} className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200 text-muted-foreground hover:text-foreground">
+              <BookOpen className="h-4 w-4" />
+              Read
+            </button>
+            <button onClick={() => setActiveTab("listen")} className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200 ${activeTab === "listen" ? "border border-primary text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+              <Headphones className="h-4 w-4" />
+              Listen
+            </button>
+            <button onClick={() => setActiveTab("watch")} className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200 ${activeTab === "watch" ? "border border-primary text-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+              <Video className="h-4 w-4" />
+              Watch
+            </button>
+          </div>
+
+          {/* Right - Actions */}
+          <div className="flex items-center gap-2">
+            <NotificationsDropdown />
+            <ThemeToggle />
+            <WalletButton />
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className={`flex-1 ${currentTrack ? "pb-36" : "pb-20"}`}>
+        {activeTab === "listen" ? (/* ============ SPOTIFY-STYLE LISTEN TAB ============ */
+      <div className="pt-16">
+            {/* Greeting Header with gradient */}
+            <div className="px-4 pt-6 pb-4 bg-gradient-to-b from-primary/20 to-background">
+              <h1 className="text-2xl font-bold text-foreground">{getGreeting()}</h1>
+            </div>
+
+            {loading ? <div className="px-4 space-y-6">
+                {/* Recent Tracks Grid Skeleton */}
+                <div className="grid grid-cols-2 gap-3">
+                  {[...Array(6)].map((_, i) => <div key={i} className="flex items-center gap-3 bg-secondary/50 rounded-md overflow-hidden">
+                      <Skeleton className="w-14 h-14" />
+                      <Skeleton className="h-4 w-20" />
+                    </div>)}
                 </div>
-                <p className="text-xs md:text-sm text-text-tertiary dark:text-muted-foreground">Loading projects...</p>
-              </div>
-            ) : error ? (
-              <div className="flex flex-col items-center justify-center py-12 md:py-20">
-                <div className="text-center max-w-md px-4">
-                  <h3 className="text-base md:text-lg font-semibold text-text-primary dark:text-foreground mb-2">Error Loading Projects</h3>
-                  <p className="text-xs md:text-sm text-text-tertiary dark:text-muted-foreground mb-6">{error}</p>
-                  <button
-                    onClick={() => window.location.reload()}
-                    className="px-4 py-2 bg-surface-2 border border-border-default rounded-lg text-sm text-text-primary hover:bg-surface-3 transition-colors"
-                  >
-                    Retry
-                  </button>
-                </div>
-              </div>
-            ) : filteredProjects.length === 0 && searchQuery ? (
-              <div className="flex flex-col items-center justify-center py-12 md:py-20">
-                <div className="text-center max-w-md px-4">
-                  <h3 className="text-base md:text-lg font-semibold text-text-primary dark:text-foreground mb-2">No results found</h3>
-                  <p className="text-xs md:text-sm text-text-tertiary dark:text-muted-foreground">
-                    Try adjusting your search or filters
-                  </p>
-                </div>
-              </div>
-            ) : filteredProjects.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 md:py-20">
-                <div className="text-center max-w-md px-4">
-                  <div className="w-16 h-16 md:w-20 md:h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-primary/20 to-accent/15 flex items-center justify-center">
-                    <Plus className="w-8 h-8 md:w-10 md:h-10 text-primary" />
+                {/* Horizontal Scroll Skeleton */}
+                {[...Array(2)].map((_, i) => <div key={i}>
+                    <Skeleton className="h-6 w-32 mb-3" />
+                    <div className="flex gap-4 overflow-x-auto">
+                      {[...Array(4)].map((_, j) => <div key={j} className="w-36 flex-shrink-0">
+                          <Skeleton className="aspect-square rounded-md mb-2" />
+                          <Skeleton className="h-4 w-3/4 mb-1" />
+                          <Skeleton className="h-3 w-1/2" />
+                        </div>)}
+                    </div>
+                  </div>)}
+              </div> : tracks.length === 0 ? <div className="text-center py-12 px-4">
+                <Headphones className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <p className="text-muted-foreground">No tracks yet</p>
+                <p className="text-sm text-muted-foreground mt-1">Be the first to upload music!</p>
+              </div> : <div className="space-y-6">
+                {/* Quick Access Grid - Spotify style compact cards */}
+                <div className="px-4">
+                  <div className="grid grid-cols-2 gap-3">
+                {tracks.slice(0, 6).map(track => <QuickAccessCard key={track.id} track={track} />)}
                   </div>
-                  <h3 className="text-lg md:text-xl font-semibold text-text-primary dark:text-foreground mb-2">Create your first project</h3>
-                  <p className="text-xs md:text-sm text-text-tertiary dark:text-muted-foreground mb-6">
-                    Start bringing your ideas to life with AI-powered video creation
-                  </p>
-                  <button
-                    onClick={handleCreateProject}
-                    className={cn(
-                      "px-6 py-3 rounded-xl text-sm font-medium transition-all duration-200",
-                      "bg-gradient-to-r from-primary to-primary/80 text-primary-foreground",
-                      "hover:shadow-[0_0_30px_hsl(var(--primary)/0.4)] hover:-translate-y-0.5"
-                    )}
-                  >
-                    Create Project
-                  </button>
                 </div>
-              </div>
-            ) : viewMode === 'list' ? (
-              <ProjectListView
-                projects={filteredProjects}
-                onOpenProject={handleOpenProject}
-                onRefresh={fetchProjects}
-              />
-            ) : (
-              <ProjectList
-                projects={filteredProjects}
-                onOpenProject={handleOpenProject}
-                onCreateProject={handleCreateProject}
-                onRenameProject={handleRenameProject}
-              />
-            )}
-          </main>
-        </motion.div>
 
-        {/* Mobile Bottom Navigation */}
-        <MobileBottomNav
-          activeView={activeView}
-          onViewChange={setActiveView}
-          onCreateProject={handleCreateProject}
-        />
-      </div>
+                {/* New Releases - Horizontal Scroll */}
+                <section className="py-2">
+                  <h2 className="text-lg font-bold px-4 mb-4 text-foreground">New Releases</h2>
+                  <div className="flex gap-4 overflow-x-auto px-4 pb-2 scrollbar-hide">
+                    {tracks.slice(0, 8).map(track => <div key={track.id} className="w-36 flex-shrink-0">
+                        <TrackCard track={track} />
+                      </div>)}
+                  </div>
+                </section>
 
-      {/* Onboarding Tour */}
-      <OnboardingTour
-        isActive={onboarding.isActive}
-        currentStep={onboarding.currentStep}
-        currentStepIndex={onboarding.currentStepIndex}
-        totalSteps={onboarding.totalSteps}
-        onNext={onboarding.next}
-        onPrev={onboarding.prev}
-        onSkip={onboarding.stop}
-        onComplete={onboarding.complete}
-        onGoToStep={onboarding.goToStep}
-      />
-    </>
-  );
+                {/* Popular Tracks - Horizontal Scroll */}
+                <section className="py-2">
+                  <h2 className="text-lg font-bold px-4 mb-4 text-foreground">Popular Tracks</h2>
+                  <div className="flex gap-4 overflow-x-auto px-4 pb-2 scrollbar-hide">
+                    {tracks.map(track => <div key={track.id} className="w-36 flex-shrink-0">
+                        <TrackCard track={track} />
+                      </div>)}
+                  </div>
+                </section>
+
+                {/* Made For You - Horizontal Scroll */}
+                <section className="py-2">
+                  <h2 className="text-lg font-bold px-4 mb-4 text-foreground">Made For You</h2>
+                  <div className="flex gap-4 overflow-x-auto px-4 pb-2 scrollbar-hide">
+                    {[...tracks].reverse().map(track => <div key={track.id} className="w-36 flex-shrink-0">
+                        <TrackCard track={track} />
+                      </div>)}
+                  </div>
+                </section>
+              </div>}
+          </div>) : (/* ============ NETFLIX-STYLE WATCH TAB ============ */
+      <>
+            {/* Hero Section */}
+            <HeroSection featuredTrack={null} featuredVideo={featuredVideo} mode="watch" />
+
+            <div className="-mt-16 relative z-10">
+              {loading ? <div className="px-4 space-y-8">
+                  {[...Array(2)].map((_, i) => <div key={i}>
+                      <Skeleton className="h-6 w-32 mb-3" />
+                      <div className="flex gap-3 overflow-x-auto">
+                        {[...Array(4)].map((_, j) => <div key={j} className="w-44 flex-shrink-0">
+                            <Skeleton className="aspect-video rounded-md mb-2" />
+                            <Skeleton className="h-4 w-3/4 mb-1" />
+                            <Skeleton className="h-3 w-1/2" />
+                          </div>)}
+                      </div>
+                    </div>)}
+                </div> : videos.length === 0 ? <div className="text-center py-12 px-4">
+                  <Video className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">No videos yet</p>
+                  <p className="text-sm text-muted-foreground mt-1">Be the first to upload a video!</p>
+                </div> : <>
+                  {/* Previews - Circular cards section */}
+                  {(livestreams.length > 0 || videos.length > 0) && <ContentRow title="Previews" variant="previews">
+                      {[...livestreams, ...videos.slice(0, 8)].slice(0, 10).map(video => <CircularPreview key={video.id} video={video} />)}
+                    </ContentRow>}
+
+                  {/* Continue Watching - with progress bars */}
+                  {regularVideos.length > 0 && <ContentRow title="Continue Watching">
+                      {regularVideos.slice(0, 6).map((video, index) => <ContinueWatchingCard key={video.id} video={video} progress={Math.floor(Math.random() * 80) + 10} // Simulated progress
+              />)}
+                    </ContentRow>}
+
+                  {/* Top 10 in Videos Today */}
+                  {regularVideos.length >= 3 && <ContentRow title="Top 10 Videos Today" variant="top10">
+                      {regularVideos.slice(0, 10).map((video, index) => <Top10Card key={video.id} video={video} ranking={index + 1} />)}
+                    </ContentRow>}
+
+                  {/* Live Now */}
+                  {livestreams.length > 0 && <ContentRow title="🔴 Live Now">
+                      {livestreams.map(video => <NetflixVideoCard key={video.id} video={video} size="large" />)}
+                    </ContentRow>}
+
+                  {/* Popular on Monad */}
+                  <ContentRow title="Popular on Monad">
+                    {regularVideos.map(video => <NetflixVideoCard key={video.id} video={video} />)}
+                  </ContentRow>
+
+                  {/* New Releases */}
+                  {regularVideos.length > 3 && <ContentRow title="New Releases">
+                      {[...regularVideos].reverse().slice(0, 8).map(video => <NetflixVideoCard key={video.id} video={video} />)}
+                    </ContentRow>}
+
+                  {/* Trending Now */}
+                  {regularVideos.length > 5 && <ContentRow title="Trending Now">
+                      {regularVideos.slice(2, 10).map(video => <NetflixVideoCard key={video.id} video={video} size="large" />)}
+                    </ContentRow>}
+                </>}
+            </div>
+          </>)}
+      </main>
+
+      <MiniPlayer />
+      <BottomNavigation />
+    </div>;
+}
+
+// Quick Access Card Component for Spotify-style compact cards
+function QuickAccessCard({
+  track
+}: {
+  track: Track;
+}) {
+  const {
+    playTrack
+  } = usePlayer();
+  const coverUrl = getCoverUrl(track.cover_path);
+  return <div className="flex items-center gap-3 bg-secondary/50 hover:bg-secondary/80 rounded-md overflow-hidden cursor-pointer transition-colors" onClick={() => playTrack(track)}>
+      {coverUrl ? <img src={coverUrl} alt={track.title} className="w-14 h-14 object-cover" /> : <div className="w-14 h-14 bg-muted flex items-center justify-center">
+          <Headphones className="h-6 w-6 text-muted-foreground" />
+        </div>}
+      <span className="text-sm font-medium text-foreground truncate pr-3">
+        {track.title}
+      </span>
+    </div>;
 }

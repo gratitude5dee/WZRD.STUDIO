@@ -1,339 +1,414 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import HeroSection from '@/components/landing/HeroSection';
-import FeatureGrid from '@/components/landing/FeatureGrid';
-import { UseCasesSection } from '@/components/landing/UseCasesSection';
-import { TestimonialsSection } from '@/components/landing/TestimonialsSection';
-import { NewReleasePromo } from '@/components/landing/NewReleasePromo';
-import FAQAccordion from '@/components/landing/FAQAccordion';
-import { PricingSectionRedesigned } from '@/components/landing/PricingSectionRedesigned';
-import { StickyFooter } from '@/components/landing/StickyFooter';
-import { useAuth } from '@/providers/AuthProvider';
-import wzrdLogo from '@/assets/wzrd-logo.png';
-const Landing = () => {
-  const navigate = useNavigate();
-  const {
-    user
-  } = useAuth();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
-  useEffect(() => {
-    const root = window.document.documentElement;
-    root.classList.remove("light", "system");
-    root.classList.add("dark");
-  }, []);
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { 
+  TrendingUp, 
+  Play, 
+  ChevronDown, 
+  Zap, 
+  Wallet, 
+  Library,
+  Clock,
+  DollarSign,
+  Shield,
+  Eye,
+  Heart
+} from "lucide-react";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
-  // Handle scroll state for header styling
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-  const faqItems = [{
-    question: 'How does WZRD handle collaboration?',
-    answer: 'Invite collaborators with granular permissions, leave comments on nodes, and keep every timeline change synced in realtime.'
-  }, {
-    question: 'Can I bring my own assets or models?',
-    answer: 'Yes. Upload existing media, connect external sources, or plug in your preferred AI models directly in the studio.'
-  }, {
-    question: 'What formats can I export?',
-    answer: 'Export ready-to-publish video in multiple resolutions, codecs, and aspect ratios tailored to every platform.'
-  }];
-  const handleMobileNavClick = (elementId: string) => {
-    setIsMobileMenuOpen(false);
-    setTimeout(() => {
-      const element = document.getElementById(elementId);
-      if (element) {
-        const headerOffset = 120;
-        const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
-        const offsetPosition = elementPosition - headerOffset;
-        window.scrollTo({
-          top: offsetPosition,
-          behavior: "smooth"
-        });
-      }
-    }, 100);
-  };
-  const handleLogout = async () => {
-    const {
-      supabase
-    } = await import('@/integrations/supabase/client');
-    await supabase.auth.signOut();
-    navigate('/');
-  };
-  return <div className="min-h-screen w-full relative bg-black">
-      {/* Pearl Mist Background with Top Glow */}
-      <div className="absolute inset-0 z-0" style={{
-      background: "radial-gradient(ellipse 50% 35% at 50% 0%, rgba(226, 232, 240, 0.12), transparent 60%), #000000"
-    }} />
-
-      {/* Desktop Header */}
-      <header className={`sticky top-4 z-[9999] mx-auto hidden w-full self-start rounded-full bg-black/80 md:flex backdrop-blur-sm border border-white/10 shadow-lg transition-all duration-300 ${isScrolled ? "max-w-4xl px-3" : "max-w-6xl px-6"} py-2.5`} style={{
-      willChange: "transform",
-      transform: "translateZ(0)",
-      backfaceVisibility: "hidden"
-    }}>
-        <div className="flex items-center justify-between w-full gap-4">
-          {/* Logo */}
-          <Link to="/" onClick={e => {
-          // If already on home page, scroll to top
-          if (window.location.pathname === '/') {
-            e.preventDefault();
-            window.scrollTo({
-              top: 0,
-              behavior: 'smooth'
-            });
-          }
-        }} className="flex items-center justify-center gap-2 flex-shrink-0 z-50 cursor-pointer">
-            <img src={wzrdLogo} alt="WZRD.tech" className="h-12 sm:h-15 w-auto" />
-          </Link>
-
-          {/* Navigation Links */}
-          <nav className="hidden lg:flex flex-1 flex-row items-center justify-center gap-1 text-sm font-medium text-white/60">
-            <a className="relative px-3 py-2 text-white/60 hover:text-white transition-colors cursor-pointer whitespace-nowrap" onClick={e => {
-            e.preventDefault();
-            const element = document.getElementById("features");
-            if (element) {
-              const headerOffset = 120;
-              const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
-              const offsetPosition = elementPosition - headerOffset;
-              window.scrollTo({
-                top: offsetPosition,
-                behavior: "smooth"
-              });
-            }
-          }}>
-              Features
-            </a>
-            <a className="relative px-3 py-2 text-white/60 hover:text-white transition-colors cursor-pointer whitespace-nowrap" onClick={e => {
-            e.preventDefault();
-            const element = document.getElementById("pricing");
-            if (element) {
-              const headerOffset = 120;
-              const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
-              const offsetPosition = elementPosition - headerOffset;
-              window.scrollTo({
-                top: offsetPosition,
-                behavior: "smooth"
-              });
-            }
-          }}>
-              Pricing
-            </a>
-            <a className="relative px-3 py-2 text-white/60 hover:text-white transition-colors cursor-pointer whitespace-nowrap" onClick={e => {
-            e.preventDefault();
-            const element = document.getElementById("testimonials");
-            if (element) {
-              const headerOffset = 120;
-              const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
-              const offsetPosition = elementPosition - headerOffset;
-              window.scrollTo({
-                top: offsetPosition,
-                behavior: "smooth"
-              });
-            }
-          }}>
-              Testimonials
-            </a>
-            <a className="relative px-3 py-2 text-white/60 hover:text-white transition-colors cursor-pointer whitespace-nowrap" onClick={e => {
-            e.preventDefault();
-            const element = document.getElementById("faq");
-            if (element) {
-              const headerOffset = 120;
-              const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
-              const offsetPosition = elementPosition - headerOffset;
-              window.scrollTo({
-                top: offsetPosition,
-                behavior: "smooth"
-              });
-            }
-          }}>
-              FAQ
-            </a>
-          </nav>
-
-          {/* Action Buttons */}
-          <div className="flex items-center gap-3 flex-shrink-0">
-            <Link to="/demo" className="rounded-md font-medium relative cursor-pointer hover:-translate-y-0.5 transition duration-200 inline-block text-center bg-gradient-to-b from-[#8b5cf6] to-[#8b5cf6]/80 text-white shadow-[0px_2px_0px_0px_rgba(255,255,255,0.3)_inset] px-3 py-1.5 text-xs sm:text-sm whitespace-nowrap">
-              Demo
-            </Link>
-            {user ? <>
-                <Link to="/home" className="font-medium transition-colors hover:text-white text-white/60 text-xs sm:text-sm cursor-pointer whitespace-nowrap">
-                  Dashboard
-                </Link>
-                <button onClick={handleLogout} className="rounded-md font-bold relative cursor-pointer hover:-translate-y-0.5 transition duration-200 inline-block text-center bg-gradient-to-b from-[#8b5cf6] to-[#8b5cf6]/80 text-white shadow-[0px_2px_0px_0px_rgba(255,255,255,0.3)_inset] px-3 py-1.5 text-xs sm:text-sm whitespace-nowrap">
-                  Log Out
-                </button>
-              </> : <>
-                <Link to="/login" className="font-medium transition-colors hover:text-white text-white/60 text-xs sm:text-sm cursor-pointer whitespace-nowrap">
-                  Log In
-                </Link>
-                <Link to="/login?mode=signup" className="rounded-md font-bold relative cursor-pointer hover:-translate-y-0.5 transition duration-200 inline-block text-center bg-gradient-to-b from-[#8b5cf6] to-[#8b5cf6]/80 text-white shadow-[0px_2px_0px_0px_rgba(255,255,255,0.3)_inset] px-3 py-1.5 text-xs sm:text-sm whitespace-nowrap">
-                  Sign Up
-                </Link>
-              </>}
-          </div>
-        </div>
-      </header>
-
-      {/* Mobile Header */}
-      <header className="sticky top-4 z-[9999] mx-4 flex w-auto flex-row items-center justify-between rounded-full bg-black/80 backdrop-blur-sm border border-white/10 shadow-lg md:hidden px-4 py-3">
-        <Link to="/" onClick={e => {
-        // If already on home page, scroll to top
-        if (window.location.pathname === '/') {
-          e.preventDefault();
-          window.scrollTo({
-            top: 0,
-            behavior: 'smooth'
-          });
-        }
-      }} className="flex items-center justify-center gap-2 cursor-pointer">
-          <img src={wzrdLogo} alt="WZRD.tech" className="h-7 w-auto" />
-        </Link>
-
-        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="flex items-center justify-center w-10 h-10 rounded-full bg-black/50 border border-white/10 transition-colors hover:bg-black/80" aria-label="Toggle menu">
-          <div className="flex flex-col items-center justify-center w-5 h-5 space-y-1">
-            <span className={`block w-4 h-0.5 bg-white transition-all duration-300 ${isMobileMenuOpen ? "rotate-45 translate-y-1.5" : ""}`}></span>
-            <span className={`block w-4 h-0.5 bg-white transition-all duration-300 ${isMobileMenuOpen ? "opacity-0" : ""}`}></span>
-            <span className={`block w-4 h-0.5 bg-white transition-all duration-300 ${isMobileMenuOpen ? "-rotate-45 -translate-y-1.5" : ""}`}></span>
-          </div>
-        </button>
-      </header>
-
-      {/* Mobile Menu Overlay */}
-      {isMobileMenuOpen && <div className="fixed inset-0 z-[9998] bg-black/50 backdrop-blur-sm md:hidden">
-          <div className="absolute top-20 left-4 right-4 bg-black/95 backdrop-blur-md border border-white/10 rounded-2xl shadow-2xl p-6">
-            <nav className="flex flex-col space-y-4">
-              <button onClick={() => handleMobileNavClick("features")} className="text-left px-4 py-3 text-lg font-medium text-white/60 hover:text-white transition-colors rounded-lg hover:bg-white/10">
-                Features
-              </button>
-              <button onClick={() => handleMobileNavClick("pricing")} className="text-left px-4 py-3 text-lg font-medium text-white/60 hover:text-white transition-colors rounded-lg hover:bg-white/10">
-                Pricing
-              </button>
-              <button onClick={() => handleMobileNavClick("testimonials")} className="text-left px-4 py-3 text-lg font-medium text-white/60 hover:text-white transition-colors rounded-lg hover:bg-white/10">
-                Testimonials
-              </button>
-              <button onClick={() => handleMobileNavClick("faq")} className="text-left px-4 py-3 text-lg font-medium text-white/60 hover:text-white transition-colors rounded-lg hover:bg-white/10">
-                FAQ
-              </button>
-              <div className="border-t border-white/10 pt-4 mt-4 flex flex-col space-y-3">
-                <Link to="/demo" className="px-4 py-3 text-lg font-bold text-center bg-gradient-to-b from-[#8b5cf6] to-[#8b5cf6]/80 text-white rounded-lg shadow-lg hover:-translate-y-0.5 transition-all duration-200">
-                  Demo
-                </Link>
-                {user ? <>
-                    <Link to="/home" className="px-4 py-3 text-lg font-medium text-white/60 hover:text-white transition-colors rounded-lg hover:bg-white/10 cursor-pointer">
-                      Dashboard
-                    </Link>
-                    <button onClick={handleLogout} className="px-4 py-3 text-lg font-bold text-center bg-gradient-to-b from-[#8b5cf6] to-[#8b5cf6]/80 text-white rounded-lg shadow-lg hover:-translate-y-0.5 transition-all duration-200">
-                      Log Out
-                    </button>
-                  </> : <>
-                    <Link to="/login" className="px-4 py-3 text-lg font-medium text-white/60 hover:text-white transition-colors rounded-lg hover:bg-white/10 cursor-pointer">
-                      Log In
-                    </Link>
-                    <Link to="/login?mode=signup" className="px-4 py-3 text-lg font-bold text-center bg-gradient-to-b from-[#8b5cf6] to-[#8b5cf6]/80 text-white rounded-lg shadow-lg hover:-translate-y-0.5 transition-all duration-200">
-                      Sign Up
-                    </Link>
-                  </>}
-              </div>
-            </nav>
-          </div>
-        </div>}
-
-      {/* Hero Content from Wizard Web App - Always visible */}
-      <HeroSection
-        headline="Your AI Video Production Studio. No Agency Required."
-        subheadline="Create scroll-stopping UGC, music videos, and ad content 10x faster. Indie labels and DTC brands use WZRD to automate what agencies charge $50K+ for."
+// Radar dial SVG component
+const RadarDial = () => (
+  <div className="relative w-32 h-32 md:w-48 md:h-48">
+    <svg viewBox="0 0 200 200" className="w-full h-full drop-shadow-lg">
+      <defs>
+        <linearGradient id="copperGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="hsl(32 55% 75%)" />
+          <stop offset="50%" stopColor="hsl(32 55% 65%)" />
+          <stop offset="100%" stopColor="hsl(32 55% 55%)" />
+        </linearGradient>
+        <linearGradient id="wedgeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="hsl(40 40% 94%)" stopOpacity="0.8" />
+          <stop offset="100%" stopColor="hsl(32 55% 65%)" stopOpacity="0.4" />
+        </linearGradient>
+      </defs>
+      <circle cx="100" cy="100" r="90" fill="none" stroke="url(#copperGradient)" strokeWidth="1.5" opacity="0.4" />
+      <circle cx="100" cy="100" r="70" fill="none" stroke="url(#copperGradient)" strokeWidth="1.5" opacity="0.5" />
+      <circle cx="100" cy="100" r="50" fill="none" stroke="url(#copperGradient)" strokeWidth="1.5" opacity="0.6" />
+      <circle cx="100" cy="100" r="30" fill="none" stroke="url(#copperGradient)" strokeWidth="1.5" opacity="0.7" />
+      <circle cx="100" cy="100" r="10" fill="url(#copperGradient)" />
+      
+      <path
+        d="M100,100 L100,10 A90,90 0 0,1 177.78,55 Z"
+        fill="url(#wedgeGradient)"
+        className="animate-spin-slow origin-center"
       />
+      
+      <line x1="100" y1="100" x2="100" y2="15" stroke="url(#copperGradient)" strokeWidth="2" />
+      <line x1="100" y1="100" x2="170" y2="60" stroke="url(#copperGradient)" strokeWidth="1.5" opacity="0.6" />
+    </svg>
+  </div>
+);
 
-      {/* Trust Indicators Section */}
-      <section className="py-16 px-4 border-y border-white/5 bg-black/40 backdrop-blur-sm">
-        <motion.div initial={{
-        opacity: 0,
-        y: 20
-      }} whileInView={{
-        opacity: 1,
-        y: 0
-      }} viewport={{
-        once: true
-      }} transition={{
-        duration: 0.5
-      }} className="container mx-auto max-w-6xl">
-            <p className="text-center text-white/40 text-sm mb-8 uppercase tracking-wider">
-              Powered by Industry Leaders
-            </p>
-            <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-12 opacity-50 hover:opacity-70 transition-opacity">
-              <div className="text-white/60 font-bold text-xl">Runway 4.5</div>
-              <div className="text-white/60 font-bold text-xl">Kling 2.6</div>
-              <div className="text-white/60 font-bold text-xl">Google's Veo 3</div>
-              <div className="text-white/60 font-bold text-xl">WAN 2.6</div>
-              <div className="text-white/60 font-bold text-xl">Luma Ray 3</div>
-            </div>
-          </motion.div>
-        </section>
-
-        {/* Gradient Divider */}
-        <div className="h-px bg-gradient-to-r from-transparent via-[#8b5cf6]/30 to-transparent" />
-
-        {/* Features Section */}
-        <div id="features" className="relative">
-          <div className="absolute -top-20 -right-20 w-40 h-40 rounded-full bg-[#8b5cf6]/20 blur-3xl pointer-events-none" />
-          <div className="absolute -bottom-20 -left-20 w-40 h-40 rounded-full bg-[#7c3aed]/20 blur-3xl pointer-events-none" />
-          <FeatureGrid />
-        </div>
-
-        {/* Gradient Divider */}
-        <div className="h-px bg-gradient-to-r from-transparent via-[#8b5cf6]/30 to-transparent" />
-
-        {/* Use Cases Section */}
-        <div className="relative">
-          <UseCasesSection />
-        </div>
-
-        {/* Gradient Divider */}
-        <div className="h-px bg-gradient-to-r from-transparent via-[#8b5cf6]/30 to-transparent" />
-
-        {/* Testimonials Section */}
-        <div id="testimonials" className="relative">
-          <div className="absolute top-1/2 -right-20 w-60 h-60 rounded-full bg-[#8b5cf6]/10 blur-3xl pointer-events-none" />
-          <div className="absolute top-1/2 -left-20 w-60 h-60 rounded-full bg-[#7c3aed]/10 blur-3xl pointer-events-none" />
-          <TestimonialsSection />
-        </div>
-
-        {/* Gradient Divider */}
-        <div className="h-px bg-gradient-to-r from-transparent via-[#8b5cf6]/30 to-transparent" />
-            
-        {/* New Release Promo */}
-        <div className="relative">
-          <NewReleasePromo />
-        </div>
-
-        {/* Gradient Divider */}
-        <div className="h-px bg-gradient-to-r from-transparent via-[#8b5cf6]/30 to-transparent" />
-
-        {/* Pricing Section */}
-        <div id="pricing" className="relative">
-          <PricingSectionRedesigned />
-        </div>
-
-        {/* Gradient Divider */}
-        <div className="h-px bg-gradient-to-r from-transparent via-[#8b5cf6]/30 to-transparent" />
-
-        {/* FAQ Section */}
-        <div id="faq" className="relative">
-          <FAQAccordion items={faqItems} />
-        </div>
-
-        {/* Gradient Divider */}
-        <div className="h-px bg-gradient-to-r from-transparent via-[#8b5cf6]/30 to-transparent" />
-          
-      {/* Sticky Footer */}
+// Testimonial card component
+const TestimonialCard = ({ quote, name, role, offset = "" }: { quote: string; name: string; role: string; offset?: string }) => (
+  <div className={`bg-landing-cream border border-landing-beige rounded-2xl p-6 shadow-sm ${offset}`}>
+    <p className="text-landing-charcoal text-sm leading-relaxed mb-4">"{quote}"</p>
+    <div className="flex items-center gap-3">
+      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-landing-copper to-landing-violet" />
       <div>
-        <StickyFooter />
+        <p className="text-landing-charcoal font-medium text-sm">{name}</p>
+        <p className="text-landing-charcoal/60 text-xs">{role}</p>
       </div>
-    </div>;
-};
-export default Landing;
+    </div>
+  </div>
+);
+
+// Value prop card component
+const ValuePropCard = ({ icon: Icon, title, description, gradient }: { 
+  icon: React.ElementType; 
+  title: string; 
+  description: string;
+  gradient: string;
+}) => (
+  <div className="bg-white rounded-3xl p-8 shadow-lg border border-landing-beige">
+    <div className={`w-14 h-14 rounded-2xl ${gradient} flex items-center justify-center mb-6`}>
+      <Icon className="w-7 h-7 text-white" />
+    </div>
+    <h3 className="font-playfair text-xl text-landing-charcoal mb-3">{title}</h3>
+    <p className="text-landing-charcoal/70 leading-relaxed text-sm">{description}</p>
+  </div>
+);
+
+// Stat card component
+const StatCard = ({ value, label }: { value: string; label: string }) => (
+  <div className="text-center">
+    <p className="text-3xl md:text-4xl font-semibold text-landing-copper mb-1">{value}</p>
+    <p className="text-landing-charcoal/60 text-sm">{label}</p>
+  </div>
+);
+
+export default function Landing() {
+  const scrollToFeatures = () => {
+    document.getElementById("features")?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  return (
+    <div className="min-h-screen bg-landing-beige">
+      {/* Fixed Navigation */}
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-landing-beige/90 backdrop-blur-sm border-b border-landing-charcoal/10">
+        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+          <Link to="/" className="text-xl font-playfair font-semibold text-landing-charcoal tracking-wide">
+            EARTON<span className="inline-block scale-x-[-1]">E</span>
+          </Link>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <Link to="/auth">
+              <Button variant="ghost" className="text-landing-charcoal hover:bg-landing-charcoal/10 font-medium">
+                Sign In
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </nav>
+
+      {/* Hero Section */}
+      <section className="pt-32 pb-16 px-4">
+        <div className="container mx-auto text-center">
+          {/* Large Wordmark */}
+          <h1 className="text-5xl md:text-7xl lg:text-8xl font-playfair font-semibold text-landing-charcoal tracking-tight mb-6">
+            EARTON<span className="inline-block scale-x-[-1]">E</span>
+          </h1>
+
+          {/* Tagline with Radar Dial */}
+          <div className="flex items-center justify-center gap-4 md:gap-8 mb-8">
+            <span className="font-playfair italic text-landing-violet text-lg md:text-2xl">a signal</span>
+            <RadarDial />
+            <span className="font-playfair italic text-landing-violet text-lg md:text-2xl">in the noise.</span>
+          </div>
+
+          {/* Hero Headline */}
+          <h2 className="text-2xl md:text-4xl font-playfair text-landing-charcoal mb-4 max-w-3xl mx-auto">
+            Every stream pays creators <span className="text-landing-copper italic">instantly</span>
+          </h2>
+          
+          {/* Subheadline */}
+          <p className="text-landing-charcoal/70 text-lg md:text-xl max-w-2xl mx-auto mb-8">
+            100% of streaming revenue goes directly to artists. No middlemen, no delays, no platform fees.
+          </p>
+
+          {/* CTAs */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
+            <Link to="/auth">
+              <Button className="bg-landing-violet hover:bg-landing-violet/90 text-white px-8 py-6 text-base font-medium rounded-xl">
+                Start Streaming
+              </Button>
+            </Link>
+            <Link to="/auth">
+              <Button 
+                variant="outline" 
+                className="border-landing-charcoal/30 text-landing-charcoal hover:bg-landing-charcoal/5 px-8 py-6 text-base font-medium rounded-xl"
+              >
+                I'm a Creator
+              </Button>
+            </Link>
+          </div>
+
+          {/* Brand Tagline */}
+          <p className="text-landing-charcoal/50 text-sm tracking-wider">
+            Content. Music. Media. <span className="text-landing-copper font-medium">CULTURE.</span>
+          </p>
+        </div>
+      </section>
+
+      {/* Value Proposition - 3 Pillars */}
+      <section id="features" className="py-20 px-4 bg-landing-cream/50">
+        <div className="container mx-auto max-w-6xl">
+          <div className="text-center mb-16">
+            <p className="text-landing-violet text-sm font-medium uppercase tracking-widest mb-2">How it works</p>
+            <h2 className="font-playfair text-3xl md:text-4xl text-landing-charcoal">
+              Stream. Pay. Own.
+            </h2>
+          </div>
+          
+          <div className="grid md:grid-cols-3 gap-8">
+            <ValuePropCard 
+              icon={Play}
+              title="Discover & Stream"
+              description="Access premium music, videos, and written content from independent creators who put quality first. Curated culture, not algorithmic noise."
+              gradient="bg-gradient-to-br from-landing-violet to-landing-violet/80"
+            />
+            <ValuePropCard 
+              icon={Zap}
+              title="Pay Per Stream"
+              description="Pay fractions of a cent per stream — no subscriptions required. Each purchase unlocks 24 hours of unlimited access. Transparent, fair, instant."
+              gradient="bg-gradient-to-br from-landing-copper to-landing-copper/80"
+            />
+            <ValuePropCard 
+              icon={Library}
+              title="Own Your Library"
+              description="Your listening history and purchases live on-chain. Portable, verifiable, and truly yours. Take your library anywhere, forever."
+              gradient="bg-gradient-to-br from-landing-teal to-landing-teal/80"
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* For Creators Section */}
+      <section className="py-20 px-4">
+        <div className="container mx-auto max-w-6xl">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            <div>
+              <p className="text-landing-violet text-sm font-medium uppercase tracking-widest mb-2">For Creators</p>
+              <h2 className="font-playfair text-3xl md:text-4xl text-landing-charcoal mb-6">
+                Keep 100% of what you earn. <span className="italic text-landing-copper">Finally.</span>
+              </h2>
+              <p className="text-landing-charcoal/70 leading-relaxed mb-6">
+                Traditional platforms take 30-70% of your revenue and pay months later. EARTONE is different. 
+                Every stream triggers an instant payment directly to your wallet. No advances to pay back, 
+                no mysterious deductions, no waiting 90 days for royalty statements. Set your own prices, 
+                reach your audience directly, and watch earnings arrive in real-time.
+              </p>
+              <p className="text-landing-charcoal/70 leading-relaxed mb-8">
+                This is what the creator economy should have been from the start.
+              </p>
+              <Link to="/auth">
+                <Button className="bg-landing-charcoal hover:bg-landing-charcoal/90 text-white px-6 py-5 text-sm font-medium rounded-xl">
+                  Start Uploading Today
+                </Button>
+              </Link>
+            </div>
+            
+            {/* Stats Block */}
+            <div className="bg-white rounded-3xl p-8 shadow-lg border border-landing-beige">
+              <div className="grid grid-cols-2 gap-8">
+                <StatCard value="100%" label="Revenue to creators" />
+                <StatCard value="<1s" label="Payment settlement" />
+                <StatCard value="$0" label="Platform fees" />
+                <StatCard value="24hr" label="Access windows" />
+              </div>
+              <div className="mt-8 pt-6 border-t border-landing-beige">
+                <div className="flex items-center gap-2 text-sm text-landing-charcoal/60">
+                  <TrendingUp className="w-4 h-4 text-green-600" />
+                  <span>Creators earned $2.4M+ this month</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Technology Section */}
+      <section className="py-20 px-4 bg-gradient-to-br from-landing-violet via-landing-violet to-landing-violet/90">
+        <div className="container mx-auto max-w-6xl">
+          <div className="text-center mb-16">
+            <p className="text-white/60 text-sm font-medium uppercase tracking-widest mb-2">Built Different</p>
+            <h2 className="font-playfair text-3xl md:text-4xl text-white">
+              Enterprise-grade infrastructure
+            </h2>
+          </div>
+          
+          <div className="grid md:grid-cols-2 gap-8">
+            {/* Monad Block */}
+            <div className="bg-white/10 backdrop-blur-sm rounded-3xl p-8 border border-white/20">
+              <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center mb-6">
+                <Zap className="w-6 h-6 text-white" />
+              </div>
+              <h3 className="font-playfair text-2xl text-white mb-4">Powered by Monad</h3>
+              <p className="text-white/80 leading-relaxed">
+                Built on a high-performance blockchain capable of 10,000+ transactions per second with 
+                sub-second finality. This means your payments settle instantly — not in minutes, not in hours, 
+                but the moment you press play. Enterprise-grade reliability meets creator-first economics.
+              </p>
+            </div>
+            
+            {/* Thirdweb Block */}
+            <div className="bg-white/10 backdrop-blur-sm rounded-3xl p-8 border border-white/20">
+              <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center mb-6">
+                <Wallet className="w-6 h-6 text-white" />
+              </div>
+              <h3 className="font-playfair text-2xl text-white mb-4">Seamless with Thirdweb</h3>
+              <p className="text-white/80 leading-relaxed">
+                Sign in with Google, Apple, or your existing wallet — no crypto experience required. 
+                Industry-leading wallet infrastructure handles the complexity so you can focus on what matters: 
+                the music, the content, the culture. Web3 benefits without the web3 friction.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* For Consumers Section */}
+      <section className="py-20 px-4">
+        <div className="container mx-auto max-w-4xl">
+          <div className="text-center mb-12">
+            <p className="text-landing-violet text-sm font-medium uppercase tracking-widest mb-2">For Fans</p>
+            <h2 className="font-playfair text-3xl md:text-4xl text-landing-charcoal mb-6">
+              Support artists you love. <span className="italic text-landing-copper">Directly.</span>
+            </h2>
+            <p className="text-landing-charcoal/70 leading-relaxed max-w-2xl mx-auto">
+              Every stream you make sends money straight to the creator. No corporate middlemen, 
+              no mysterious algorithms deciding who gets paid. Your support matters and you can see exactly where it goes.
+            </p>
+          </div>
+          
+          <div className="grid sm:grid-cols-2 gap-6">
+            <div className="flex items-start gap-4 bg-white rounded-2xl p-6 shadow-sm border border-landing-beige">
+              <div className="w-10 h-10 rounded-xl bg-landing-violet/10 flex items-center justify-center flex-shrink-0">
+                <DollarSign className="w-5 h-5 text-landing-violet" />
+              </div>
+              <div>
+                <h4 className="font-medium text-landing-charcoal mb-1">Pay only for what you consume</h4>
+                <p className="text-landing-charcoal/60 text-sm">No monthly subscriptions. Stream what you want, when you want.</p>
+              </div>
+            </div>
+            
+            <div className="flex items-start gap-4 bg-white rounded-2xl p-6 shadow-sm border border-landing-beige">
+              <div className="w-10 h-10 rounded-xl bg-landing-copper/10 flex items-center justify-center flex-shrink-0">
+                <Clock className="w-5 h-5 text-landing-copper" />
+              </div>
+              <div>
+                <h4 className="font-medium text-landing-charcoal mb-1">24-hour unlimited access</h4>
+                <p className="text-landing-charcoal/60 text-sm">One small payment unlocks a full day of unlimited streams.</p>
+              </div>
+            </div>
+            
+            <div className="flex items-start gap-4 bg-white rounded-2xl p-6 shadow-sm border border-landing-beige">
+              <div className="w-10 h-10 rounded-xl bg-landing-teal/10 flex items-center justify-center flex-shrink-0">
+                <Eye className="w-5 h-5 text-landing-teal" />
+              </div>
+              <div>
+                <h4 className="font-medium text-landing-charcoal mb-1">Transparent, verifiable payments</h4>
+                <p className="text-landing-charcoal/60 text-sm">Every payment is recorded on-chain. See exactly where your money goes.</p>
+              </div>
+            </div>
+            
+            <div className="flex items-start gap-4 bg-white rounded-2xl p-6 shadow-sm border border-landing-beige">
+              <div className="w-10 h-10 rounded-xl bg-landing-coral/10 flex items-center justify-center flex-shrink-0">
+                <Heart className="w-5 h-5 text-landing-coral" />
+              </div>
+              <div>
+                <h4 className="font-medium text-landing-charcoal mb-1">Direct artist connection</h4>
+                <p className="text-landing-charcoal/60 text-sm">Your support goes directly to creators, not corporate shareholders.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials / Social Proof Section */}
+      <section className="py-20 px-4 bg-landing-cream/50">
+        <div className="container mx-auto max-w-5xl">
+          <div className="text-center mb-12">
+            <p className="text-landing-violet text-sm font-medium uppercase tracking-widest mb-2">What creators are saying</p>
+            <h2 className="font-playfair text-3xl md:text-4xl text-landing-charcoal">
+              Trusted by independents
+            </h2>
+          </div>
+          
+          <div className="grid md:grid-cols-3 gap-6">
+            <TestimonialCard 
+              quote="I made more in my first month on EARTONE than six months of Spotify streams. And I got paid the same day — not 90 days later."
+              name="Marcus Chen"
+              role="Independent Musician"
+              offset="md:mt-0"
+            />
+            <TestimonialCard 
+              quote="Finally, a platform that treats my short films as valuable content, not just filler between ads. The direct payment model is a game changer."
+              name="Amara Okafor"
+              role="Filmmaker & Director"
+              offset="md:mt-8"
+            />
+            <TestimonialCard 
+              quote="EARTONE represents the future of creator compensation — transparent, instant, and fair. The streaming industry should take notes."
+              name="The Creator Report"
+              role="Industry Publication"
+              offset="md:mt-4"
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* Final CTA Section */}
+      <section className="py-24 px-4 bg-gradient-to-br from-landing-charcoal to-landing-charcoal/95">
+        <div className="container mx-auto max-w-3xl text-center">
+          <h2 className="font-playfair text-3xl md:text-5xl text-white mb-4">
+            The future of streaming is <span className="italic text-landing-copper">direct</span>
+          </h2>
+          <p className="text-white/70 text-lg mb-10 max-w-xl mx-auto">
+            Join thousands of creators and fans building a fairer creative economy.
+          </p>
+          
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Link to="/auth">
+              <Button className="bg-white hover:bg-white/90 text-landing-charcoal px-8 py-6 text-base font-medium rounded-xl">
+                Start Streaming
+              </Button>
+            </Link>
+            <Link to="/auth">
+              <Button 
+                variant="outline" 
+                className="border-white/30 text-white hover:bg-white/10 px-8 py-6 text-base font-medium rounded-xl"
+              >
+                Upload as Creator
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="py-12 px-4 border-t border-landing-charcoal/10 bg-landing-beige">
+        <div className="container mx-auto text-center">
+          <p className="font-playfair text-xl text-landing-charcoal mb-2">
+            EARTON<span className="inline-block scale-x-[-1]">E</span>
+          </p>
+          <p className="text-landing-charcoal/50 text-sm mb-1">
+            Content. Music. Media. CULTURE.
+          </p>
+          <p className="text-landing-charcoal/40 text-xs">
+            Powered by Thirdweb
+          </p>
+        </div>
+      </footer>
+    </div>
+  );
+}

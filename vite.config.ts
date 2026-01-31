@@ -9,21 +9,14 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 8080,
   },
-  plugins: [
-    react(),
-    mode === 'development' &&
-    componentTagger(),
-  ].filter(Boolean),
+  plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
-      "react-dnd": path.resolve(__dirname, "./src/lib/react-dnd.tsx"),
     },
+    dedupe: ["react", "react-dom"],
   },
-  test: {
-    globals: true,
-    environment: "jsdom",
-    setupFiles: "./vitest.setup.ts",
-    css: false,
+  optimizeDeps: {
+    include: ["react", "react-dom"],
   },
 }));

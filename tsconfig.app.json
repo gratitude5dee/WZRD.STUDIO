@@ -23,8 +23,7 @@
 
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"],
-      "react-dnd": ["./src/lib/react-dnd"]
+      "@/*": ["./src/*"]
     }
   },
   "include": ["src"]
