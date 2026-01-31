@@ -1846,6 +1846,45 @@ export type Database = {
         }
         Relationships: []
       }
+      creator_balances: {
+        Row: {
+          bookmarks_earned: number | null
+          comments_earned: number | null
+          last_payout_at: string | null
+          likes_earned: number | null
+          pending_payout: number | null
+          shares_earned: number | null
+          total_earned: number | null
+          updated_at: string | null
+          views_earned: number | null
+          wallet_address: string
+        }
+        Insert: {
+          bookmarks_earned?: number | null
+          comments_earned?: number | null
+          last_payout_at?: string | null
+          likes_earned?: number | null
+          pending_payout?: number | null
+          shares_earned?: number | null
+          total_earned?: number | null
+          updated_at?: string | null
+          views_earned?: number | null
+          wallet_address: string
+        }
+        Update: {
+          bookmarks_earned?: number | null
+          comments_earned?: number | null
+          last_payout_at?: string | null
+          likes_earned?: number | null
+          pending_payout?: number | null
+          shares_earned?: number | null
+          total_earned?: number | null
+          updated_at?: string | null
+          views_earned?: number | null
+          wallet_address?: string
+        }
+        Relationships: []
+      }
       credit_transactions: {
         Row: {
           amount: number
@@ -2182,6 +2221,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      engagement_payouts: {
+        Row: {
+          action_type: string
+          amount: number
+          confirmed_at: string | null
+          content_id: string
+          content_type: string
+          created_at: string | null
+          creator_wallet: string
+          id: string
+          payer_wallet: string
+          status: string | null
+          tx_hash: string | null
+        }
+        Insert: {
+          action_type: string
+          amount: number
+          confirmed_at?: string | null
+          content_id: string
+          content_type: string
+          created_at?: string | null
+          creator_wallet: string
+          id?: string
+          payer_wallet: string
+          status?: string | null
+          tx_hash?: string | null
+        }
+        Update: {
+          action_type?: string
+          amount?: number
+          confirmed_at?: string | null
+          content_id?: string
+          content_type?: string
+          created_at?: string | null
+          creator_wallet?: string
+          id?: string
+          payer_wallet?: string
+          status?: string | null
+          tx_hash?: string | null
+        }
+        Relationships: []
       }
       evaluation_results: {
         Row: {
@@ -7022,6 +7103,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      token_config: {
+        Row: {
+          action_type: string
+          daily_cap_per_user: number | null
+          is_enabled: boolean | null
+          payout_amount: number
+          updated_at: string | null
+        }
+        Insert: {
+          action_type: string
+          daily_cap_per_user?: number | null
+          is_enabled?: boolean | null
+          payout_amount: number
+          updated_at?: string | null
+        }
+        Update: {
+          action_type?: string
+          daily_cap_per_user?: number | null
+          is_enabled?: boolean | null
+          payout_amount?: number
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       token_holders: {
         Row: {
