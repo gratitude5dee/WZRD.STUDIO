@@ -56,7 +56,7 @@ export function PageHeader({
 
       {/* Row 2: Tab Navigation */}
       <nav 
-        className="relative px-2 border-b border-border/20"
+        className="relative px-2 border-b border-border/20 -mt-[75px]"
         role="tablist"
         aria-label="Content sections"
       >
