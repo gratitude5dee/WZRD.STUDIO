@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Loader2, Radio, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
+import { useViewPayout } from "@/hooks/useViewPayout";
 
 export default function Watch() {
   const { id } = useParams<{ id: string }>();
@@ -19,6 +20,9 @@ export default function Watch() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [timeRemaining, setTimeRemaining] = useState<string>("");
+
+  // Trigger view payout after 5 seconds of watching
+  useViewPayout('video', id || '');
 
   // Fetch video URL using session
   useEffect(() => {

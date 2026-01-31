@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useWallet } from "@/contexts/WalletContext";
 import { toast } from "sonner";
 import { ContentType } from "@/types/engagement";
-
+import { useEngagementPayout } from "@/hooks/useEngagementPayout";
 interface UseContentEngagementOptions {
   contentType: ContentType;
   contentId: string;
@@ -22,6 +22,7 @@ export function useContentEngagement({
   initialViews = 0,
 }: UseContentEngagementOptions) {
   const { address } = useWallet();
+  const { triggerPayout } = useEngagementPayout({ contentType, contentId });
   const [isLiked, setIsLiked] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [likesCount, setLikesCount] = useState(initialLikes);
@@ -85,6 +86,9 @@ export function useContentEngagement({
           content_id: contentId,
           user_wallet: address.toLowerCase()
         });
+        
+        // Trigger $5DEE payout for like (fire and forget)
+        triggerPayout('like');
       } else {
         await supabase.from('content_likes')
           .delete()
@@ -109,7 +113,7 @@ export function useContentEngagement({
       setLikesCount(prev => newLikedState ? prev - 1 : prev + 1);
       console.error('Error toggling like:', error);
     }
-  }, [address, contentType, contentId, isLiked, likesCount]);
+  }, [address, contentType, contentId, isLiked, likesCount, triggerPayout]);
 
   const handleBookmark = useCallback(async () => {
     if (!address) {
@@ -128,6 +132,9 @@ export function useContentEngagement({
           user_wallet: address.toLowerCase()
         });
         toast.success('Saved to bookmarks');
+        
+        // Trigger $5DEE payout for bookmark (fire and forget)
+        triggerPayout('bookmark');
       } else {
         await supabase.from('content_bookmarks')
           .delete()
@@ -140,7 +147,7 @@ export function useContentEngagement({
       setIsBookmarked(!newBookmarkedState);
       console.error('Error toggling bookmark:', error);
     }
-  }, [address, contentType, contentId, isBookmarked]);
+  }, [address, contentType, contentId, isBookmarked, triggerPayout]);
 
   const handleShare = useCallback(async () => {
     const url = `${window.location.origin}/${contentType}/${contentId}`;
@@ -167,11 +174,14 @@ export function useContentEngagement({
         .from(tableName)
         .update({ shares_count: sharesCount + 1 })
         .eq('id', contentId);
+      
+      // Trigger $5DEE payout for share (fire and forget)
+      triggerPayout('share');
         
     } catch {
       // User cancelled share or fallback worked
     }
-  }, [contentType, contentId, sharesCount]);
+  }, [contentType, contentId, sharesCount, triggerPayout]);
 
   return {
     isLiked,
