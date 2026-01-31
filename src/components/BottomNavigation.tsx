@@ -6,9 +6,9 @@ export function BottomNavigation() {
   const navigate = useNavigate();
 
   const navItems = [
-    { icon: Home, label: "Home", path: "/home" },
+    { icon: Flame, label: "Home", path: "/home" },
     { icon: Search, label: "Search", path: "/search" },
-    { icon: Flame, label: "Mog", path: "/mog" },
+    { icon: Home, label: "Listen", path: "/listen" },
     { icon: Library, label: "Library", path: "/library" },
   ];
 
@@ -17,7 +17,7 @@ export function BottomNavigation() {
       <div className="flex items-center justify-around py-2">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path || 
-            (item.path === "/mog" && location.pathname.startsWith("/mog"));
+            (item.path === "/home" && location.pathname.startsWith("/mog"));
           return (
             <button
               key={item.path}

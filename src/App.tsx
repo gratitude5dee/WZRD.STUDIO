@@ -9,7 +9,7 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import Intro from "./pages/Intro";
 import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
-import Home from "./pages/Home";
+import Listen from "./pages/Listen";
 import Read from "./pages/Read";
 import Artist from "./pages/Artist";
 import Upload from "./pages/Upload";
@@ -42,7 +42,8 @@ const App = () => (
                 <Route path="/" element={<Intro />} />
                 <Route path="/landing" element={<Landing />} />
                 <Route path="/auth" element={<Auth />} />
-                <Route path="/home" element={<Home />} />
+                <Route path="/home" element={<Mog />} />
+                <Route path="/listen" element={<Listen />} />
                 <Route path="/read" element={<Read />} />
                 <Route path="/artist" element={<Artist />} />
                 <Route path="/upload" element={<Upload />} />
@@ -53,8 +54,7 @@ const App = () => (
                 <Route path="/watch/:id" element={<Watch />} />
                 <Route path="/embed/track/:trackId" element={<EmbedPlayer />} />
                 <Route path="/onboarding" element={<Onboarding />} />
-                {/* Mog Routes */}
-                <Route path="/mog" element={<Mog />} />
+                {/* Mog Sub-Routes */}
                 <Route path="/mog/upload" element={<MogUpload />} />
                 <Route path="/mog/profile/:wallet" element={<MogProfile />} />
                 <Route path="/mog/post/:id" element={<MogPost />} />
