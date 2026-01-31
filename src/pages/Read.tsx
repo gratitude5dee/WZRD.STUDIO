@@ -1,19 +1,17 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useWallet } from "@/contexts/WalletContext";
-import { WalletButton } from "@/components/WalletButton";
 import { BottomNavigation } from "@/components/BottomNavigation";
 import { MiniPlayer } from "@/components/MiniPlayer";
 import { usePlayer } from "@/contexts/PlayerContext";
-import { Headphones, Video, BookOpen, Clock, TrendingUp, Heart, MessageCircle, ChevronRight } from "lucide-react";
+import { Clock, TrendingUp, Heart, MessageCircle, ChevronRight, BookOpen } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { ThemeToggle } from "@/components/ThemeToggle";
-import { NotificationsDropdown } from "@/components/NotificationsDropdown";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useContentEngagement } from "@/hooks/useContentEngagement";
 import { ContentCommentsSheet } from "@/components/engagement/ContentCommentsSheet";
 import { formatNumber } from "@/lib/utils";
+import { PageHeader } from "@/components/PageHeader";
 
 interface Article {
   id: string;
@@ -89,39 +87,11 @@ export default function Read() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border/50">
-        <div className="flex items-center justify-between px-4 py-3 safe-top">
-          <div className="flex items-center">
-            <span className="text-xl font-bold gradient-text">EARTONE</span>
-          </div>
-
-          {/* Tab Switch - Centered */}
-          <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-1">
-            <button className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium border border-primary text-foreground transition-all duration-200">
-              <BookOpen className="h-4 w-4" />
-              Read
-            </button>
-            <button onClick={() => navigate("/listen")} className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium text-muted-foreground hover:text-foreground transition-all duration-200">
-              <Headphones className="h-4 w-4" />
-              Listen
-            </button>
-            <button onClick={() => navigate("/watch")} className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium text-muted-foreground hover:text-foreground transition-all duration-200">
-              <Video className="h-4 w-4" />
-              Watch
-            </button>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <NotificationsDropdown />
-            <ThemeToggle />
-            <WalletButton />
-          </div>
-        </div>
-      </header>
+      {/* Mobile-First Header */}
+      <PageHeader activeTab="read" variant="solid" />
 
       {/* Main Content */}
-      <main className={`flex-1 pt-16 ${currentTrack ? "pb-36" : "pb-20"}`}>
+      <main className={`flex-1 pt-28 ${currentTrack ? "pb-36" : "pb-20"}`}>
         {loading ? (
           <div className="p-4 space-y-6">
             <Skeleton className="aspect-[16/10] w-full rounded-xl" />
@@ -201,7 +171,7 @@ export default function Read() {
             </div>
 
             {/* Category Tabs */}
-            <div className="px-4 py-4 sticky top-16 bg-background/95 backdrop-blur-sm z-40 border-b border-border/30">
+            <div className="px-4 py-4 sticky top-28 bg-background/95 backdrop-blur-sm z-40 border-b border-border/30">
               <div className="flex gap-2 overflow-x-auto scrollbar-hide">
                 {categories.map(cat => (
                   <button 

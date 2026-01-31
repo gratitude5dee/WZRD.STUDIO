@@ -191,4 +191,26 @@
   .safe-top {
     padding-top: env(safe-area-inset-top, 0px);
   }
+
+  /* Touch target optimization - minimum 44x44 per Apple HIG */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Hide scrollbar but allow scrolling */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Extra small breakpoint for very narrow screens */
+@media (min-width: 360px) {
+  .xs\:inline {
+    display: inline;
+  }
 }

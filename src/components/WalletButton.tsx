@@ -3,6 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Wallet, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { WalletModal } from "./WalletModal";
+import { cn } from "@/lib/utils";
+
+interface WalletButtonProps {
+  compact?: boolean;
+}
 
 function generateGradient(address: string): string {
   const hash = address.slice(2, 10);
@@ -15,15 +20,15 @@ function formatAddress(address: string): string {
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
 }
 
-export function WalletButton() {
+export function WalletButton({ compact = false }: WalletButtonProps) {
   const { address, isConnected, isConnecting, connect, disconnect } = useWallet();
   const [modalOpen, setModalOpen] = useState(false);
 
   if (isConnecting) {
     return (
-      <Button disabled variant="secondary" size="sm">
-        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-        Connecting...
+      <Button disabled variant="secondary" size="sm" className={cn(compact && "h-9 w-9 p-0")}>
+        <Loader2 className="h-4 w-4 animate-spin" />
+        {!compact && <span className="ml-2">Connecting...</span>}
       </Button>
     );
   }
@@ -31,18 +36,25 @@ export function WalletButton() {
   if (isConnected && address) {
     return (
       <>
-        <Button 
-          variant="secondary" 
-          size="sm" 
-          className="gap-2 pl-1.5 pr-3"
+        <button 
           onClick={() => setModalOpen(true)}
+          className={cn(
+            "flex items-center justify-center rounded-full transition-all hover:ring-2 hover:ring-primary/50 active:scale-95 touch-target",
+            compact ? "h-9 w-9" : "gap-2 pl-1.5 pr-3 h-9 bg-secondary hover:bg-secondary/80"
+          )}
+          aria-label="Open wallet menu"
         >
           <div 
-            className="h-6 w-6 rounded-full flex-shrink-0"
+            className={cn(
+              "rounded-full flex-shrink-0",
+              compact ? "h-8 w-8" : "h-6 w-6"
+            )}
             style={{ background: generateGradient(address) }}
           />
-          <span className="font-medium">{formatAddress(address)}</span>
-        </Button>
+          {!compact && (
+            <span className="font-medium text-sm text-foreground">{formatAddress(address)}</span>
+          )}
+        </button>
         <WalletModal 
           open={modalOpen} 
           onOpenChange={setModalOpen}
@@ -54,9 +66,13 @@ export function WalletButton() {
   }
 
   return (
-    <Button onClick={connect} size="sm" className="gap-2">
+    <Button 
+      onClick={connect} 
+      size="sm" 
+      className={cn("gap-2", compact && "h-9 w-9 p-0")}
+    >
       <Wallet className="h-4 w-4" />
-      Connect Wallet
+      {!compact && <span>Connect</span>}
     </Button>
   );
 }

@@ -2,11 +2,8 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useWallet } from "@/contexts/WalletContext";
 import { usePlayer } from "@/contexts/PlayerContext";
-import { WalletButton } from "@/components/WalletButton";
 import { supabase } from "@/integrations/supabase/client";
-import { Video, Play, Info, Plus, BookOpen, Headphones, Heart, MessageCircle, Eye } from "lucide-react";
-import { ThemeToggle } from "@/components/ThemeToggle";
-import { NotificationsDropdown } from "@/components/NotificationsDropdown";
+import { Video, Play, Info, Plus, Heart, MessageCircle, Eye } from "lucide-react";
 import { BottomNavigation } from "@/components/BottomNavigation";
 import { MiniPlayer } from "@/components/MiniPlayer";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -17,8 +14,8 @@ import { ContinueWatchingCard } from "@/components/ContinueWatchingCard";
 import { Top10Card } from "@/components/Top10Card";
 import { CircularPreview } from "@/components/CircularPreview";
 import { Button } from "@/components/ui/button";
-import { useContentEngagement } from "@/hooks/useContentEngagement";
 import { formatNumber } from "@/lib/utils";
+import { PageHeader } from "@/components/PageHeader";
 
 export default function WatchHome() {
   const navigate = useNavigate();
@@ -64,65 +61,15 @@ export default function WatchHome() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Netflix-style Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-b from-background via-background/80 to-transparent">
-        <div className="flex items-center justify-between px-4 py-3 safe-top">
-          {/* Logo */}
-          <div className="flex items-center">
-            <span className="text-xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">eartone</span>
-          </div>
-
-          {/* Center - Tab Switch */}
-          <div className="absolute left-1/2 -translate-x-1/2 top-[100px] flex items-center gap-1">
-            <button
-              onClick={() => navigate("/read")}
-              className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <BookOpen className="h-4 w-4" />
-              Read
-            </button>
-            <button
-              onClick={() => navigate("/listen")}
-              className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <Headphones className="h-4 w-4" />
-              Listen
-            </button>
-            <button
-              className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium border border-primary text-foreground"
-            >
-              <Video className="h-4 w-4" />
-              Watch
-            </button>
-          </div>
-
-          {/* Right - Actions */}
-          <div className="flex items-center gap-2">
-            <NotificationsDropdown />
-            <ThemeToggle />
-            <WalletButton />
-          </div>
-        </div>
-
-        {/* Categories - Secondary row */}
-        <div className="px-4 pb-2 overflow-x-auto scrollbar-hide">
-          <div className="flex items-center gap-3 justify-center">
-            {categories.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setSelectedCategory(cat)}
-                className={`whitespace-nowrap text-sm font-medium transition-colors ${
-                  selectedCategory === cat
-                    ? "text-foreground"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
-        </div>
-      </header>
+      {/* Mobile-First Header with categories */}
+      <PageHeader 
+        activeTab="watch" 
+        variant="transparent"
+        showCategories
+        categories={categories}
+        selectedCategory={selectedCategory}
+        onCategoryChange={setSelectedCategory}
+      />
 
       {/* Main Content */}
       <main className={`flex-1 ${currentTrack ? "pb-36" : "pb-20"}`}>
@@ -153,7 +100,7 @@ export default function WatchHome() {
               </h1>
 
               {/* Metadata with Engagement */}
-              <div className="flex items-center gap-3 text-sm text-muted-foreground">
+              <div className="flex items-center gap-3 text-sm text-muted-foreground flex-wrap">
                 <span className="text-primary font-medium">98% Match</span>
                 <span>2024</span>
                 <span className="px-1 border border-muted-foreground/50 text-xs">HD</span>
@@ -207,7 +154,7 @@ export default function WatchHome() {
         )}
 
         {/* Content Rows */}
-        <div className={featuredVideo ? "-mt-10 relative z-10" : "pt-20"}>
+        <div className={featuredVideo ? "-mt-10 relative z-10" : "pt-32"}>
           {loading ? (
             <div className="px-4 space-y-8">
               {[...Array(3)].map((_, i) => (
@@ -296,15 +243,6 @@ export default function WatchHome() {
                 <ContentRow title="New Releases">
                   {[...regularVideos].reverse().slice(0, 8).map((video) => (
                     <NetflixVideoCard key={video.id} video={video} />
-                  ))}
-                </ContentRow>
-              )}
-
-              {/* Trending Now */}
-              {regularVideos.length > 5 && (
-                <ContentRow title="Trending Now">
-                  {regularVideos.slice(2, 10).map((video) => (
-                    <NetflixVideoCard key={video.id} video={video} size="large" />
                   ))}
                 </ContentRow>
               )}
