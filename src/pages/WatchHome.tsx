@@ -77,7 +77,7 @@ export default function WatchHome() {
               Read
             </button>
             <button
-              onClick={() => navigate("/home")}
+              onClick={() => navigate("/listen")}
               className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
             >
               <Headphones className="h-4 w-4" />
