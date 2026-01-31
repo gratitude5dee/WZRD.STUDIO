@@ -15,10 +15,13 @@ import {
   Leaf,
   ArrowRight,
   X,
-  ExternalLink
+  ExternalLink,
+  BadgeCheck
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+
+type CreatorType = 'human' | 'agent';
 
 // Types
 interface CreativeTaste {
@@ -267,6 +270,148 @@ function WelcomeStep({ onNext, onSkip }: { onNext: () => void; onSkip: () => voi
   );
 }
 
+function CreatorTypeStep({
+  selected,
+  onSelect,
+  onNext,
+  onBack,
+}: {
+  selected: CreatorType | null;
+  onSelect: (type: CreatorType) => void;
+  onNext: () => void;
+  onBack: () => void;
+}) {
+  const options = [
+    {
+      id: 'human' as CreatorType,
+      label: 'Human Creator',
+      description: 'I am a human artist, musician, filmmaker, or creative',
+      badge: <BadgeCheck className="w-8 h-8 text-yellow-400 fill-yellow-400/20" />,
+      gradient: 'from-yellow-500 via-amber-500 to-orange-400',
+    },
+    {
+      id: 'agent' as CreatorType,
+      label: 'AI Agent',
+      description: 'I am an AI creating or curating content autonomously',
+      badge: <span className="text-3xl">🦞</span>,
+      gradient: 'from-orange-500 via-red-500 to-pink-400',
+    },
+  ];
+
+  return (
+    <motion.div
+      key="creator-type"
+      variants={pageVariants}
+      initial="initial"
+      animate="animate"
+      exit="exit"
+      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+      className="px-6 py-8 pt-20"
+    >
+      {/* Header */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="text-center mb-10"
+      >
+        <p className="text-primary text-sm font-medium uppercase tracking-widest mb-2">
+          Step 1 of 4
+        </p>
+        <h2 className="font-serif text-3xl md:text-4xl text-foreground mb-3">
+          Who are you?
+        </h2>
+        <p className="text-muted-foreground max-w-md mx-auto">
+          Help us understand your creative identity.
+        </p>
+      </motion.div>
+
+      {/* Creator Type Cards */}
+      <motion.div
+        variants={staggerContainer}
+        initial="initial"
+        animate="animate"
+        className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto mb-10"
+      >
+        {options.map((option) => {
+          const isSelected = selected === option.id;
+          return (
+            <motion.button
+              key={option.id}
+              variants={staggerItem}
+              whileHover="hover"
+              whileTap="tap"
+              onClick={() => onSelect(option.id)}
+              className="relative group"
+            >
+              <motion.div
+                variants={cardHover}
+                className={`
+                  relative overflow-hidden rounded-2xl p-8 h-48 flex flex-col items-center justify-center text-center
+                  border-2 transition-all duration-300
+                  ${isSelected 
+                    ? 'border-primary bg-primary/10' 
+                    : 'border-border/50 bg-card hover:border-border'
+                  }
+                `}
+              >
+                {isSelected && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className={`absolute inset-0 bg-gradient-to-br ${option.gradient} opacity-10`}
+                  />
+                )}
+
+                <div className={`
+                  relative w-16 h-16 rounded-2xl flex items-center justify-center mb-4
+                  ${isSelected 
+                    ? `bg-gradient-to-br ${option.gradient} text-white` 
+                    : 'bg-secondary text-muted-foreground'
+                  }
+                `}>
+                  {option.badge}
+                </div>
+
+                <div className="relative">
+                  <h3 className="font-semibold text-lg text-foreground mb-2">{option.label}</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {option.description}
+                  </p>
+                </div>
+
+                {isSelected && (
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    className="absolute top-3 right-3 w-6 h-6 rounded-full bg-primary flex items-center justify-center"
+                  >
+                    <Check className="w-4 h-4 text-primary-foreground" />
+                  </motion.div>
+                )}
+              </motion.div>
+            </motion.button>
+          );
+        })}
+      </motion.div>
+
+      {/* Navigation */}
+      <div className="flex items-center justify-between max-w-2xl mx-auto">
+        <Button variant="ghost" onClick={onBack} className="text-muted-foreground">
+          Back
+        </Button>
+        <Button
+          onClick={onNext}
+          disabled={!selected}
+          className="rounded-full px-6"
+        >
+          Continue
+          <ChevronRight className="ml-1 w-4 h-4" />
+        </Button>
+      </div>
+    </motion.div>
+  );
+}
+
 function CreativeTastesStep({
   selected,
   onSelect,
@@ -295,7 +440,7 @@ function CreativeTastesStep({
         className="text-center mb-10"
       >
         <p className="text-primary text-sm font-medium uppercase tracking-widest mb-2">
-          Step 1 of 3
+          Step 2 of 4
         </p>
         <h2 className="font-serif text-3xl md:text-4xl text-foreground mb-3">
           What moves you?
@@ -435,7 +580,7 @@ function GenreSelectionStep({
         className="text-center mb-8"
       >
         <p className="text-primary text-sm font-medium uppercase tracking-widest mb-2">
-          Step 2 of 3
+          Step 3 of 4
         </p>
         <h2 className="font-serif text-3xl md:text-4xl text-foreground mb-3">
           Pick your genres
@@ -587,7 +732,7 @@ function ConnectServicesStep({
         className="text-center mb-10"
       >
         <p className="text-primary text-sm font-medium uppercase tracking-widest mb-2">
-          Step 3 of 3
+          Step 4 of 4
         </p>
         <h2 className="font-serif text-3xl md:text-4xl text-foreground mb-3">
           Connect your world
@@ -790,11 +935,12 @@ function CompletionStep({ onFinish }: { onFinish: () => void }) {
 export default function Onboarding() {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(0);
+  const [creatorType, setCreatorType] = useState<CreatorType | null>(null);
   const [selectedTastes, setSelectedTastes] = useState<string[]>([]);
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
   const [services, setServices] = useState<ContentService[]>(CONTENT_SERVICES);
 
-  const steps = ['welcome', 'tastes', 'genres', 'connect', 'complete'];
+  const steps = ['welcome', 'creator-type', 'tastes', 'genres', 'connect', 'complete'];
   const progress = ((currentStep) / (steps.length - 1)) * 100;
 
   const handleTasteSelect = (id: string) => {
@@ -821,7 +967,13 @@ export default function Onboarding() {
   };
 
   const handleFinish = () => {
+    // Save creator type separately for easy access
+    if (creatorType) {
+      localStorage.setItem('eartone_creator_type', creatorType);
+    }
+    
     const preferences = {
+      creatorType,
       tastes: selectedTastes,
       genres: selectedGenres,
       connectedServices: services.filter((s) => s.connected).map((s) => s.id),
@@ -865,30 +1017,38 @@ export default function Onboarding() {
           <WelcomeStep onNext={() => setCurrentStep(1)} onSkip={handleSkip} />
         )}
         {currentStep === 1 && (
-          <CreativeTastesStep
-            selected={selectedTastes}
-            onSelect={handleTasteSelect}
+          <CreatorTypeStep
+            selected={creatorType}
+            onSelect={setCreatorType}
             onNext={() => setCurrentStep(2)}
             onBack={() => setCurrentStep(0)}
           />
         )}
         {currentStep === 2 && (
-          <GenreSelectionStep
-            selected={selectedGenres}
-            onSelect={handleGenreSelect}
+          <CreativeTastesStep
+            selected={selectedTastes}
+            onSelect={handleTasteSelect}
             onNext={() => setCurrentStep(3)}
             onBack={() => setCurrentStep(1)}
           />
         )}
         {currentStep === 3 && (
-          <ConnectServicesStep
-            services={services}
-            onConnect={handleServiceConnect}
+          <GenreSelectionStep
+            selected={selectedGenres}
+            onSelect={handleGenreSelect}
             onNext={() => setCurrentStep(4)}
             onBack={() => setCurrentStep(2)}
           />
         )}
         {currentStep === 4 && (
+          <ConnectServicesStep
+            services={services}
+            onConnect={handleServiceConnect}
+            onNext={() => setCurrentStep(5)}
+            onBack={() => setCurrentStep(3)}
+          />
+        )}
+        {currentStep === 5 && (
           <CompletionStep onFinish={handleFinish} />
         )}
       </AnimatePresence>

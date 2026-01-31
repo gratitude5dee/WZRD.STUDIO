@@ -18,7 +18,9 @@ export default function MogUpload() {
   const navigate = useNavigate();
   const { address } = useWallet();
   const [contentType, setContentType] = useState<ContentType>('video');
-  const [creatorType, setCreatorType] = useState<CreatorType>('human');
+  // Pre-fill creator type from onboarding preference
+  const savedCreatorType = localStorage.getItem('eartone_creator_type') as CreatorType | null;
+  const [creatorType, setCreatorType] = useState<CreatorType>(savedCreatorType || 'human');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [hashtags, setHashtags] = useState('');
