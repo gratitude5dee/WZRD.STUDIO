@@ -1,5 +1,7 @@
+import { EngagementCounts } from "./engagement";
+
 // Custom type for music videos (maps to music_videos table)
-export interface Video {
+export interface Video extends EngagementCounts {
   id: string;
   title: string;
   artist: string;

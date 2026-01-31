@@ -1,8 +1,11 @@
-import { Play, Radio, MoreVertical, Info } from "lucide-react";
+import { Play, Radio, Info, Heart, MessageCircle } from "lucide-react";
 import { Video } from "@/types/video";
 import { useState } from "react";
 import { BuyVideoWidget } from "./BuyVideoWidget";
 import { getThumbnailUrl } from "@/lib/media-utils";
+import { useContentEngagement } from "@/hooks/useContentEngagement";
+import { ContentCommentsSheet } from "./engagement/ContentCommentsSheet";
+import { formatNumber } from "@/lib/utils";
 
 interface NetflixVideoCardProps {
   video: Video;
@@ -12,10 +15,22 @@ interface NetflixVideoCardProps {
 
 export function NetflixVideoCard({ video, ranking, size = "default" }: NetflixVideoCardProps) {
   const [showBuyWidget, setShowBuyWidget] = useState(false);
+  const [showComments, setShowComments] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
-  const thumbnailUrl = getThumbnailUrl(video.thumbnail_path);
+  const {
+    isLiked,
+    likesCount,
+    commentsCount,
+    handleLike,
+  } = useContentEngagement({
+    contentType: 'video',
+    contentId: video.id,
+    initialLikes: video.likes_count,
+    initialComments: video.comments_count,
+  });
 
+  const thumbnailUrl = getThumbnailUrl(video.thumbnail_path);
   const cardWidth = size === "large" ? "w-64 md:w-80" : "w-44 md:w-56";
 
   return (
@@ -72,11 +87,17 @@ export function NetflixVideoCard({ video, ranking, size = "default" }: NetflixVi
                 <Play className="h-5 w-5 text-background fill-current ml-0.5" />
               </button>
               <div className="flex items-center gap-1">
-                <button className="w-8 h-8 rounded-full border border-muted-foreground/50 flex items-center justify-center hover:border-foreground transition-colors">
-                  <Info className="h-4 w-4 text-foreground" />
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleLike();
+                  }}
+                  className="w-8 h-8 rounded-full border border-muted-foreground/50 flex items-center justify-center hover:border-foreground transition-colors"
+                >
+                  <Heart className={`h-4 w-4 ${isLiked ? 'text-red-500 fill-red-500' : 'text-foreground'}`} />
                 </button>
                 <button className="w-8 h-8 rounded-full border border-muted-foreground/50 flex items-center justify-center hover:border-foreground transition-colors">
-                  <MoreVertical className="h-4 w-4 text-foreground" />
+                  <Info className="h-4 w-4 text-foreground" />
                 </button>
               </div>
             </div>
@@ -95,10 +116,28 @@ export function NetflixVideoCard({ video, ranking, size = "default" }: NetflixVi
           </div>
         </div>
 
-        {/* Video Info */}
+        {/* Video Info with Engagement */}
         <div className="mt-2">
           <h3 className="text-sm font-medium text-foreground truncate">{video.title}</h3>
-          <p className="text-xs text-muted-foreground truncate">{video.artist}</p>
+          <div className="flex items-center justify-between mt-0.5">
+            <p className="text-xs text-muted-foreground truncate flex-1">{video.artist}</p>
+            <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+              <span className="flex items-center gap-0.5">
+                <Heart className={`h-3 w-3 ${isLiked ? 'text-red-500 fill-red-500' : ''}`} />
+                {formatNumber(likesCount)}
+              </span>
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowComments(true);
+                }}
+                className="flex items-center gap-0.5 hover:text-foreground transition-colors"
+              >
+                <MessageCircle className="h-3 w-3" />
+                {formatNumber(commentsCount)}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -106,6 +145,13 @@ export function NetflixVideoCard({ video, ranking, size = "default" }: NetflixVi
         video={video}
         isOpen={showBuyWidget}
         onClose={() => setShowBuyWidget(false)}
+      />
+
+      <ContentCommentsSheet
+        contentType="video"
+        contentId={video.id}
+        isOpen={showComments}
+        onClose={() => setShowComments(false)}
       />
     </>
   );

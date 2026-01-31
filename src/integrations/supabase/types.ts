@@ -284,13 +284,16 @@ export type Database = {
           body_html: string | null
           body_text: string | null
           canonical_url: string | null
+          comments_count: number
           entities: Json | null
           excerpt: string | null
           fetched_at: string | null
           id: string
           image_url: string | null
+          likes_count: number
           published_at: string | null
           score: number | null
+          shares_count: number
           simhash: number | null
           source_id: string | null
           tags: string[] | null
@@ -298,19 +301,23 @@ export type Database = {
           title: string
           topics: string[] | null
           url: string
+          views_count: number
         }
         Insert: {
           author?: string | null
           body_html?: string | null
           body_text?: string | null
           canonical_url?: string | null
+          comments_count?: number
           entities?: Json | null
           excerpt?: string | null
           fetched_at?: string | null
           id?: string
           image_url?: string | null
+          likes_count?: number
           published_at?: string | null
           score?: number | null
+          shares_count?: number
           simhash?: number | null
           source_id?: string | null
           tags?: string[] | null
@@ -318,19 +325,23 @@ export type Database = {
           title: string
           topics?: string[] | null
           url: string
+          views_count?: number
         }
         Update: {
           author?: string | null
           body_html?: string | null
           body_text?: string | null
           canonical_url?: string | null
+          comments_count?: number
           entities?: Json | null
           excerpt?: string | null
           fetched_at?: string | null
           id?: string
           image_url?: string | null
+          likes_count?: number
           published_at?: string | null
           score?: number | null
+          shares_count?: number
           simhash?: number | null
           source_id?: string | null
           tags?: string[] | null
@@ -338,6 +349,7 @@ export type Database = {
           title?: string
           topics?: string[] | null
           url?: string
+          views_count?: number
         }
         Relationships: []
       }
@@ -1466,6 +1478,77 @@ export type Database = {
           },
         ]
       }
+      content_bookmarks: {
+        Row: {
+          content_id: string
+          content_type: string
+          created_at: string
+          id: string
+          user_wallet: string
+        }
+        Insert: {
+          content_id: string
+          content_type: string
+          created_at?: string
+          id?: string
+          user_wallet: string
+        }
+        Update: {
+          content_id?: string
+          content_type?: string
+          created_at?: string
+          id?: string
+          user_wallet?: string
+        }
+        Relationships: []
+      }
+      content_comments: {
+        Row: {
+          content: string
+          content_id: string
+          content_type: string
+          created_at: string
+          id: string
+          likes_count: number
+          parent_comment_id: string | null
+          user_avatar: string | null
+          user_name: string | null
+          user_wallet: string
+        }
+        Insert: {
+          content: string
+          content_id: string
+          content_type: string
+          created_at?: string
+          id?: string
+          likes_count?: number
+          parent_comment_id?: string | null
+          user_avatar?: string | null
+          user_name?: string | null
+          user_wallet: string
+        }
+        Update: {
+          content?: string
+          content_id?: string
+          content_type?: string
+          created_at?: string
+          id?: string
+          likes_count?: number
+          parent_comment_id?: string | null
+          user_avatar?: string | null
+          user_name?: string | null
+          user_wallet?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_comments_parent_comment_id_fkey"
+            columns: ["parent_comment_id"]
+            isOneToOne: false
+            referencedRelation: "content_comments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       content_folders: {
         Row: {
           created_at: string
@@ -1615,6 +1698,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      content_likes: {
+        Row: {
+          content_id: string
+          content_type: string
+          created_at: string
+          id: string
+          user_wallet: string
+        }
+        Insert: {
+          content_id: string
+          content_type: string
+          created_at?: string
+          id?: string
+          user_wallet: string
+        }
+        Update: {
+          content_id?: string
+          content_type?: string
+          created_at?: string
+          id?: string
+          user_wallet?: string
+        }
+        Relationships: []
       }
       content_queue: {
         Row: {
@@ -4902,39 +5009,51 @@ export type Database = {
           artist: string
           artist_wallet: string | null
           audio_path: string | null
+          comments_count: number
           cover_path: string | null
           created_at: string
           description: string | null
           duration: number | null
           id: string
+          likes_count: number
           price: number
+          shares_count: number
           title: string
+          views_count: number
         }
         Insert: {
           album_id?: string | null
           artist: string
           artist_wallet?: string | null
           audio_path?: string | null
+          comments_count?: number
           cover_path?: string | null
           created_at?: string
           description?: string | null
           duration?: number | null
           id?: string
+          likes_count?: number
           price?: number
+          shares_count?: number
           title: string
+          views_count?: number
         }
         Update: {
           album_id?: string | null
           artist?: string
           artist_wallet?: string | null
           audio_path?: string | null
+          comments_count?: number
           cover_path?: string | null
           created_at?: string
           description?: string | null
           duration?: number | null
           id?: string
+          likes_count?: number
           price?: number
+          shares_count?: number
           title?: string
+          views_count?: number
         }
         Relationships: [
           {
@@ -5070,41 +5189,53 @@ export type Database = {
         Row: {
           artist: string
           artist_wallet: string | null
+          comments_count: number
           created_at: string
           description: string | null
           duration: number | null
           id: string
           is_livestream: boolean
+          likes_count: number
           price: number
+          shares_count: number
           thumbnail_path: string | null
           title: string
           video_path: string
+          views_count: number
         }
         Insert: {
           artist: string
           artist_wallet?: string | null
+          comments_count?: number
           created_at?: string
           description?: string | null
           duration?: number | null
           id?: string
           is_livestream?: boolean
+          likes_count?: number
           price?: number
+          shares_count?: number
           thumbnail_path?: string | null
           title: string
           video_path: string
+          views_count?: number
         }
         Update: {
           artist?: string
           artist_wallet?: string | null
+          comments_count?: number
           created_at?: string
           description?: string | null
           duration?: number | null
           id?: string
           is_livestream?: boolean
+          likes_count?: number
           price?: number
+          shares_count?: number
           thumbnail_path?: string | null
           title?: string
           video_path?: string
+          views_count?: number
         }
         Relationships: []
       }

@@ -11,6 +11,11 @@ export interface Track {
   artist_wallet: string;
   duration?: number | null;
   album_id?: string | null;
+  // Engagement fields (optional for backward compatibility)
+  likes_count?: number;
+  comments_count?: number;
+  shares_count?: number;
+  views_count?: number;
 }
 
 export interface StreamSession {

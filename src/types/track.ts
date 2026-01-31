@@ -1,5 +1,7 @@
+import { EngagementCounts } from "./engagement";
+
 // Custom type for music tracks (maps to music_tracks table)
-export interface MusicTrack {
+export interface MusicTrack extends Partial<EngagementCounts> {
   id: string;
   title: string;
   artist: string;

@@ -4,7 +4,7 @@ import { useWallet } from "@/contexts/WalletContext";
 import { usePlayer } from "@/contexts/PlayerContext";
 import { WalletButton } from "@/components/WalletButton";
 import { supabase } from "@/integrations/supabase/client";
-import { Video, Play, Info, Plus, BookOpen, Headphones } from "lucide-react";
+import { Video, Play, Info, Plus, BookOpen, Headphones, Heart, MessageCircle, Eye } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { NotificationsDropdown } from "@/components/NotificationsDropdown";
 import { BottomNavigation } from "@/components/BottomNavigation";
@@ -17,6 +17,8 @@ import { ContinueWatchingCard } from "@/components/ContinueWatchingCard";
 import { Top10Card } from "@/components/Top10Card";
 import { CircularPreview } from "@/components/CircularPreview";
 import { Button } from "@/components/ui/button";
+import { useContentEngagement } from "@/hooks/useContentEngagement";
+import { formatNumber } from "@/lib/utils";
 
 export default function WatchHome() {
   const navigate = useNavigate();
@@ -56,6 +58,9 @@ export default function WatchHome() {
   const livestreams = videos.filter(v => v.is_livestream);
   const regularVideos = videos.filter(v => !v.is_livestream);
   const featuredVideo = videos[0] || null;
+  
+  // Sort by likes for "Most Liked" section
+  const mostLikedVideos = [...regularVideos].sort((a, b) => b.likes_count - a.likes_count);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -147,7 +152,7 @@ export default function WatchHome() {
                 {featuredVideo.title}
               </h1>
 
-              {/* Metadata */}
+              {/* Metadata with Engagement */}
               <div className="flex items-center gap-3 text-sm text-muted-foreground">
                 <span className="text-primary font-medium">98% Match</span>
                 <span>2024</span>
@@ -155,6 +160,18 @@ export default function WatchHome() {
                 {featuredVideo.duration && (
                   <span>{Math.floor(featuredVideo.duration / 60)}m</span>
                 )}
+                <span className="flex items-center gap-1">
+                  <Eye className="h-4 w-4" />
+                  {formatNumber(featuredVideo.views_count)}
+                </span>
+                <span className="flex items-center gap-1">
+                  <Heart className="h-4 w-4" />
+                  {formatNumber(featuredVideo.likes_count)}
+                </span>
+                <span className="flex items-center gap-1">
+                  <MessageCircle className="h-4 w-4" />
+                  {formatNumber(featuredVideo.comments_count)}
+                </span>
               </div>
 
               {/* Description */}
@@ -258,6 +275,15 @@ export default function WatchHome() {
                 </ContentRow>
               )}
 
+              {/* Most Liked */}
+              {mostLikedVideos.length > 0 && (
+                <ContentRow title="🔥 Most Liked">
+                  {mostLikedVideos.slice(0, 8).map((video) => (
+                    <NetflixVideoCard key={video.id} video={video} size="large" />
+                  ))}
+                </ContentRow>
+              )}
+
               {/* Popular */}
               <ContentRow title="Popular on EARTONE">
                 {regularVideos.map((video) => (
@@ -270,6 +296,15 @@ export default function WatchHome() {
                 <ContentRow title="New Releases">
                   {[...regularVideos].reverse().slice(0, 8).map((video) => (
                     <NetflixVideoCard key={video.id} video={video} />
+                  ))}
+                </ContentRow>
+              )}
+
+              {/* Trending Now */}
+              {regularVideos.length > 5 && (
+                <ContentRow title="Trending Now">
+                  {regularVideos.slice(2, 10).map((video) => (
+                    <NetflixVideoCard key={video.id} video={video} size="large" />
                   ))}
                 </ContentRow>
               )}

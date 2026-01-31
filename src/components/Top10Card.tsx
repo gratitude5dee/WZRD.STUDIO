@@ -1,8 +1,10 @@
-import { Play, Info, MoreVertical } from "lucide-react";
+import { Play, Info, Heart } from "lucide-react";
 import { Video } from "@/types/video";
 import { useState } from "react";
 import { BuyVideoWidget } from "./BuyVideoWidget";
 import { getThumbnailUrl } from "@/lib/media-utils";
+import { useContentEngagement } from "@/hooks/useContentEngagement";
+import { formatNumber } from "@/lib/utils";
 
 interface Top10CardProps {
   video: Video;
@@ -12,6 +14,17 @@ interface Top10CardProps {
 export function Top10Card({ video, ranking }: Top10CardProps) {
   const [showBuyWidget, setShowBuyWidget] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+
+  const {
+    isLiked,
+    likesCount,
+    handleLike,
+  } = useContentEngagement({
+    contentType: 'video',
+    contentId: video.id,
+    initialLikes: video.likes_count,
+    initialComments: video.comments_count,
+  });
 
   const thumbnailUrl = getThumbnailUrl(video.thumbnail_path);
 
@@ -63,14 +76,26 @@ export function Top10Card({ video, ranking }: Top10CardProps) {
                 <button className="w-9 h-9 rounded-full bg-foreground flex items-center justify-center hover:scale-110 transition-transform">
                   <Play className="h-4 w-4 text-background fill-current ml-0.5" />
                 </button>
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleLike();
+                  }}
+                  className="w-7 h-7 rounded-full border border-muted-foreground/50 flex items-center justify-center hover:border-foreground transition-colors"
+                >
+                  <Heart className={`h-3.5 w-3.5 ${isLiked ? 'text-red-500 fill-red-500' : 'text-foreground'}`} />
+                </button>
                 <button className="w-7 h-7 rounded-full border border-muted-foreground/50 flex items-center justify-center hover:border-foreground transition-colors">
                   <Info className="h-3.5 w-3.5 text-foreground" />
                 </button>
-                <button className="w-7 h-7 rounded-full border border-muted-foreground/50 flex items-center justify-center hover:border-foreground transition-colors">
-                  <MoreVertical className="h-3.5 w-3.5 text-foreground" />
-                </button>
               </div>
             </div>
+          </div>
+
+          {/* Engagement Badge */}
+          <div className="absolute top-2 left-2 bg-background/60 backdrop-blur-sm text-[10px] font-medium px-1.5 py-0.5 rounded flex items-center gap-0.5">
+            <Heart className={`h-2.5 w-2.5 ${isLiked ? 'text-red-500 fill-red-500' : 'text-foreground'}`} />
+            {formatNumber(likesCount)}
           </div>
 
           {/* Price Badge */}
