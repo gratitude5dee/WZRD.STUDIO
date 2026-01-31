@@ -68,7 +68,7 @@ export default function WatchHome() {
           </div>
 
           {/* Center - Tab Switch */}
-          <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-1">
+          <div className="absolute left-1/2 -translate-x-1/2 top-[100px] flex items-center gap-1">
             <button
               onClick={() => navigate("/read")}
               className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
