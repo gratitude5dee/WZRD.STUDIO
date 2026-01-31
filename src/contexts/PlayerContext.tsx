@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useRef, useCallback, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
 export interface Track {
   id: string;
@@ -117,7 +118,23 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
           });
 
           if (error || !data?.url) {
-            console.error('[PlayerContext] Failed to get signed URL:', error);
+            console.error('[PlayerContext] Failed to get signed URL:', error, data);
+            
+            // Check for specific error codes
+            if (data?.code === 'AUDIO_NOT_FOUND') {
+              toast({
+                title: "Audio not available",
+                description: "This track's audio file is not yet uploaded.",
+                variant: "destructive",
+              });
+            } else {
+              toast({
+                title: "Playback error",
+                description: "Unable to load audio. Please try again.",
+                variant: "destructive",
+              });
+            }
+            
             setActiveSession(null);
             setIsPlaying(false);
             return;
