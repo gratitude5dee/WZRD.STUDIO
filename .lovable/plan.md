@@ -1,195 +1,162 @@
 
-# MOG Feature Implementation Plan
+
+# Unify Upload Button & MogUpload with Thirdweb Integration
 
 ## Overview
 
-Add a TikTok/Vine-style vertical scrolling feed called "Mog" to the EARTONE music streaming app. Users can scroll through full-screen content (videos, images, articles), interact with posts, and distinguish between Human creators (golden checkmark) and AI Agent creators (orange lobster badge).
+This plan updates the "+" upload button in the Library header and the MogUpload page to use thirdweb's wallet connection system instead of the current manual `window.ethereum` approach. This provides a more robust, user-friendly wallet connection experience with support for multiple wallets.
 
-## Architecture
+## Current State
 
-```text
-+------------------+     +------------------+     +------------------+
-|   Mog Feed UI    |---->|  Supabase DB     |---->|  Storage Bucket  |
-|  (Vertical Snap) |     |  (mog_* tables)  |     |  (media files)   |
-+------------------+     +------------------+     +------------------+
-        |                        |
-        v                        v
-+------------------+     +------------------+
-| Comments Sheet   |     | Profiles Table   |
-| (Bottom Drawer)  |     | (Creator Info)   |
-+------------------+     +------------------+
+- The "+" button on Library page (line 148) navigates directly to `/upload`
+- MogUpload uses the custom `WalletContext` which relies on `window.ethereum`
+- Thirdweb is installed (`v5.115.3`) but not actively used for connection
+- The thirdweb client is configured in `src/lib/thirdweb.ts` with Monad chain
+
+## Changes Required
+
+### 1. Add ThirdwebProvider to App
+
+Wrap the application with thirdweb's provider to enable its hooks throughout the app.
+
+**File: `src/App.tsx`**
+- Import `ThirdwebProvider` from `thirdweb/react`
+- Wrap existing providers with `ThirdwebProvider`
+
+### 2. Update WalletContext to Use Thirdweb
+
+Modify the WalletContext to use thirdweb's hooks internally, maintaining the same interface for backward compatibility.
+
+**File: `src/contexts/WalletContext.tsx`**
+- Import `useActiveAccount`, `useActiveWallet`, `useConnect`, `useDisconnect` from thirdweb
+- Replace `window.ethereum` logic with thirdweb hooks
+- Keep the same exported interface (`address`, `isConnected`, `connect`, `disconnect`)
+
+### 3. Update Library Upload Button
+
+Make the "+" button smart about wallet connection - if not connected, trigger wallet connection first.
+
+**File: `src/pages/Library.tsx`**
+- Update the "+" button click handler to check wallet connection
+- If not connected, open wallet connection modal
+- If connected, navigate to `/mog/upload` (unified with Mog)
+
+### 4. Update MogUpload Submit Button
+
+Use thirdweb's ConnectButton or custom integration for the submit button when wallet is not connected.
+
+**File: `src/pages/MogUpload.tsx`**
+- Import thirdweb's `ConnectButton` component
+- When `!address`, render thirdweb ConnectButton instead of disabled "Connect Wallet" button
+- Use consistent styling with the rest of the app
+
+### 5. Create Unified ThirdwebConnectButton Component
+
+Create a reusable component that wraps thirdweb's ConnectButton with app-consistent styling.
+
+**New File: `src/components/ThirdwebConnectButton.tsx`**
+- Import thirdweb client and chain config
+- Customize button appearance to match app theme
+- Support both inline and full-width variants
+
+## Detailed Component Changes
+
+### App.tsx Changes
+
+```typescript
+import { ThirdwebProvider } from "thirdweb/react";
+import { thirdwebClient } from "@/lib/thirdweb";
+
+// Wrap with ThirdwebProvider
+<ThirdwebProvider>
+  <QueryClientProvider client={queryClient}>
+    {/* existing providers */}
+  </QueryClientProvider>
+</ThirdwebProvider>
 ```
 
-## Database Schema
+### WalletContext.tsx Integration
 
-Following the existing `music_*` naming convention, create new tables:
+```typescript
+import { useActiveAccount, useConnect, useDisconnect } from "thirdweb/react";
+import { thirdwebClient, chain } from "@/lib/thirdweb";
 
-| Table | Purpose |
-|-------|---------|
-| `mog_posts` | Main content posts (videos, images, articles) |
-| `mog_likes` | Post likes with unique user constraint |
-| `mog_comments` | Threaded comments with replies |
-| `mog_bookmarks` | User bookmarks/favorites |
-| `mog_follows` | Following relationships between users |
+// Replace window.ethereum logic with:
+const account = useActiveAccount();
+const { connect: thirdwebConnect } = useConnect();
+const { disconnect: thirdwebDisconnect } = useDisconnect();
 
-Key columns for `mog_posts`:
-- `content_type`: 'video' | 'image' | 'article'
-- `creator_type`: 'human' | 'agent' (for badge distinction)
-- `creator_wallet`: Links to wallet for identification
-- Engagement counters: likes_count, comments_count, shares_count, views_count
-
-## File Structure
-
-### New Files to Create
-
-```text
-src/
-├── pages/
-│   ├── Mog.tsx                    # Main vertical feed
-│   ├── MogUpload.tsx              # Content upload page
-│   ├── MogProfile.tsx             # Creator profile view
-│   ├── MogPost.tsx                # Single post deep-link
-│   └── MogSearch.tsx              # Discover/search page
-├── components/
-│   └── mog/
-│       ├── MogHeader.tsx          # Following/For You tabs
-│       ├── MogPostCard.tsx        # Full-screen post card
-│       ├── MogVerificationBadge.tsx # Human/Agent badges
-│       ├── MogCommentsSheet.tsx   # Bottom sheet comments
-│       ├── MogShareSheet.tsx      # Share options sheet
-│       └── MogActionBar.tsx       # Right sidebar actions
-└── types/
-    └── mog.ts                     # TypeScript interfaces
+// Derive state from thirdweb
+const address = account?.address ?? null;
+const isConnected = !!account;
 ```
 
-### Files to Modify
+### Library.tsx Button Update
 
-1. `src/components/BottomNavigation.tsx` - Add Mog tab with Flame icon
-2. `src/App.tsx` - Add Mog routes
-3. `src/lib/utils.ts` - Add `formatNumber` utility
-4. `src/index.css` - Add scrollbar-hide utility
-5. `tailwind.config.ts` - Already has spin-slow animation
+```typescript
+const handleUploadClick = () => {
+  if (!address) {
+    // Trigger wallet connection
+    connect();
+  } else {
+    navigate("/mog/upload");
+  }
+};
 
-## Component Details
+// Or show wallet modal if not connected
+<button onClick={handleUploadClick}>
+  <Plus className="h-6 w-6" />
+</button>
+```
 
-### 1. MogPostCard (Core Component)
+### MogUpload.tsx Submit Section
 
-Full-screen TikTok-style card with:
-- **Content Layer**: Video player (auto-play when active), image, or article preview
-- **Right Sidebar**: Profile avatar, Like, Comment, Bookmark, Share buttons
-- **Bottom Info**: Creator name with verification badge, description, hashtags, audio info
-- **Controls**: Volume toggle for videos, tap to pause/play
+```typescript
+import { ConnectButton } from "thirdweb/react";
+import { thirdwebClient, chain } from "@/lib/thirdweb";
 
-### 2. MogVerificationBadge
+// In render, replace the submit button section:
+{!address ? (
+  <ConnectButton
+    client={thirdwebClient}
+    chain={chain}
+    connectButton={{
+      label: "Connect Wallet to Post",
+      className: "w-full py-6 text-lg",
+    }}
+  />
+) : (
+  <Button
+    onClick={handleSubmit}
+    disabled={uploading}
+    className="w-full py-6 text-lg"
+  >
+    {uploading ? 'Creating...' : 'Post Mog'}
+  </Button>
+)}
+```
 
-Two badge types:
-- **Human Creator**: Golden/Yellow checkmark icon (BadgeCheck from Lucide)
-- **AI Agent Creator**: Orange lobster emoji badge
+## File Summary
 
-### 3. MogCommentsSheet
+| File | Action | Description |
+|------|--------|-------------|
+| `src/App.tsx` | Modify | Add ThirdwebProvider wrapper |
+| `src/contexts/WalletContext.tsx` | Modify | Integrate thirdweb hooks |
+| `src/components/ThirdwebConnectButton.tsx` | Create | Reusable styled connect button |
+| `src/pages/Library.tsx` | Modify | Smart upload button with wallet check |
+| `src/pages/MogUpload.tsx` | Modify | Use thirdweb ConnectButton for auth |
 
-Bottom sheet (using existing Sheet component) with:
-- Comment count header
-- Scrollable comment list with avatars, names, timestamps
-- Like button per comment
-- Reply functionality
-- Input field with send button
+## Benefits
 
-### 4. MogHeader
+1. **Multi-wallet support**: Thirdweb supports 500+ wallets out of the box
+2. **Better UX**: Built-in connection flow, chain switching, account management
+3. **Consistency**: Same wallet experience across all upload flows
+4. **Future-proof**: Ready for on-chain payments via x402 Protocol
+5. **Mobile-friendly**: Optimized for mobile wallet connections
 
-Fixed header with:
-- "Following" | "For You" tabs centered
-- Search button on right
-- Semi-transparent gradient background for visibility over content
+## Technical Notes
 
-## Vertical Scroll Implementation
+- Thirdweb v5 uses a different API than v4 - uses `useActiveAccount` instead of `useAddress`
+- The thirdweb client ID must be set in `VITE_THIRDWEB_CLIENT_ID` environment variable
+- Monad chain is pre-configured in `src/lib/thirdweb.ts`
 
-Using CSS snap scrolling for smooth TikTok-style navigation:
-- Container: `snap-y snap-mandatory overflow-y-scroll`
-- Items: `snap-start h-screen`
-- Keyboard: Arrow up/down navigation
-- Videos auto-play when card becomes active
-
-## Integration with Existing Systems
-
-### WalletContext
-- Use `address` from WalletContext for user identification
-- Required for liking, commenting, posting
-
-### Profiles Table
-- Link `creator_wallet` to existing `profiles.wallet_address`
-- Use `profiles.username` and `profiles.avatar_url` for display
-
-### Storage
-- Use existing `media` or create new `mog-media` bucket for uploads
-- Support video, image file types
-
-## Implementation Steps
-
-### Phase 1: Database Setup
-1. Create migration with all mog_* tables
-2. Add RLS policies (public read, authenticated write)
-3. Create indexes for performance
-
-### Phase 2: Core Components
-1. Create type definitions (mog.ts)
-2. Build MogPostCard component
-3. Build MogVerificationBadge component
-4. Build MogHeader component
-5. Build MogCommentsSheet component
-
-### Phase 3: Pages
-1. Create Mog.tsx main feed page
-2. Create MogUpload.tsx upload page
-3. Create MogProfile.tsx profile page
-4. Create MogPost.tsx single post page
-5. Create MogSearch.tsx discover page
-
-### Phase 4: Navigation & Routing
-1. Update BottomNavigation with Mog tab
-2. Add routes to App.tsx
-3. Add utility functions
-
-### Phase 5: Polish
-1. Add scroll-snap CSS utilities
-2. Test auto-play video behavior
-3. Ensure mobile responsiveness
-
-## Technical Considerations
-
-### Performance
-- Lazy load videos outside viewport
-- Use intersection observer for auto-play
-- Virtualize long lists if needed
-
-### Mobile-First
-- Full-screen cards for immersive experience
-- Touch-friendly interaction areas
-- Safe area insets for notched devices
-
-### Accessibility
-- Keyboard navigation support
-- Screen reader labels for buttons
-- Pause controls for videos
-
-## Security
-
-### RLS Policies
-- Public read for published posts
-- Authenticated insert for posts, likes, comments
-- Users can only modify their own content
-- Follows require authenticated user
-
-## Estimated Complexity
-
-| Component | Effort |
-|-----------|--------|
-| Database Schema | Low |
-| Type Definitions | Low |
-| MogPostCard | High (video handling) |
-| MogCommentsSheet | Medium |
-| Mog Feed Page | High (scroll behavior) |
-| MogUpload Page | Medium |
-| Navigation Update | Low |
-
-Total: Medium-High complexity feature with significant UI work for the vertical scroll feed and video auto-play functionality.
