@@ -105,7 +105,7 @@ export default function MogUpload() {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border px-4 py-4 flex items-center gap-4 safe-top">
-        <button onClick={() => navigate('/mog')}>
+        <button onClick={() => navigate('/home')}>
           <ArrowLeft className="h-6 w-6" />
         </button>
         <h1 className="text-lg font-semibold">Create Mog</h1>
