@@ -1,337 +1,141 @@
 
+# EARTONE to Mog Complete Rebrand Plan
 
-# $5DEE Token Creator Payout System via Thirdweb x402 Protocol
+## Overview
 
-## Executive Summary
-
-Implement a Web3-native creator economy where every engagement action triggers automatic $5DEE token micropayments to content creators on a testnet. This transforms passive social interactions into direct creator compensation, powered by Thirdweb's x402 payment protocol on the Monad chain.
-
----
-
-## Payout Economics
-
-| Action | $5DEE Amount | Rationale |
-|--------|-------------|-----------|
-| **View** | 1 $5DEE | Low-friction passive engagement; highest volume |
-| **Like/Love** | 5 $5DEE | Active endorsement signal; moderate volume |
-| **Comment** | 10 $5DEE | High-value engagement; lower volume |
-| **Share** | 3 $5DEE | Distribution amplification |
-| **Bookmark** | 2 $5DEE | Content curation signal |
+Transform the platform identity from "EARTONE" to "Mog" with a distinct lobster (🦞) visual language and new infrastructure partner branding (Espresso Systems & ApeChain alongside existing Thirdweb).
 
 ---
 
-## Technical Architecture
+## Phase 1: Global Text Replacement
 
-### System Flow
+### Files to Update
 
-```text
-User Action (View/Like/Comment)
-        |
-        v
-+------------------+
-| useContentPayout |  (Frontend Hook)
-+------------------+
-        |
-        v
-+------------------+
-| engagement-pay   |  (Edge Function)
-+------------------+
-        |
-    +---+---+
-    |       |
-    v       v
-+------+  +-------------+
-| DB   |  | Thirdweb    |
-| Log  |  | Transfer    |
-+------+  +-------------+
-              |
-              v
-        [Testnet Chain]
-        $5DEE -> Creator
-```
+| File | Current | New |
+|------|---------|-----|
+| `index.html` | `EARTONE - A Signal in the Noise` | `Mog - The Content Economy` |
+| `index.html` | All EARTONE references in meta tags | Mog references |
+| `src/pages/Landing.tsx` | `EARTON<span>E</span>` wordmark | `Mog` |
+| `src/pages/Landing.tsx` | Hero headline | `Mog the internet. Own the culture.` |
+| `src/pages/Landing.tsx` | Testimonial EARTONE references | Mog |
+| `src/pages/Landing.tsx` | "EARTONE is different" | "Mog is different" |
+| `src/pages/Auth.tsx` | `EARTONE` heading | `Mog` |
+| `src/pages/Auth.tsx` | `eartone_onboarding_complete` localStorage key | `mog_onboarding_complete` |
+| `src/components/PageHeader.tsx` | `eartone` logo text | `Mog` |
 
 ---
 
-## Implementation Plan
+## Phase 2: Intro Animation Rename
 
-### Phase 1: Database Schema for Payouts
+### Rename Component File
 
-#### New Table: `engagement_payouts`
+| Action | Details |
+|--------|---------|
+| Rename file | `src/components/EartoneIntro.tsx` → `src/components/MogIntro.tsx` |
+| Update letters array | `['E', 'A', 'R', 'T', 'O', 'N', 'E']` → `['M', 'O', 'G']` |
+| Remove the scaleX(-1) transform | No longer needed for "Mog" |
+| Update footer text | `eartone powered by` → `mog powered by` |
 
-Records all payout transactions with blockchain verification:
+### Update Import Reference
 
-| Column | Type | Description |
-|--------|------|-------------|
-| id | uuid | Primary key |
-| content_type | text | 'track', 'video', 'article' |
-| content_id | uuid | Reference to content |
-| action_type | text | 'view', 'like', 'comment', 'share', 'bookmark' |
-| payer_wallet | text | User who triggered the action |
-| creator_wallet | text | Content creator receiving payout |
-| amount | numeric | $5DEE amount |
-| tx_hash | text | Blockchain transaction hash |
-| status | text | 'pending', 'confirmed', 'failed' |
-| created_at | timestamp | When action occurred |
-| confirmed_at | timestamp | When blockchain confirmed |
-
-#### New Table: `creator_balances`
-
-Aggregated earnings for dashboard display:
-
-| Column | Type | Description |
-|--------|------|-------------|
-| wallet_address | text | Creator's wallet (primary key) |
-| total_earned | numeric | Lifetime $5DEE earned |
-| pending_payout | numeric | Awaiting confirmation |
-| views_earned | numeric | From view actions |
-| likes_earned | numeric | From like actions |
-| comments_earned | numeric | From comment actions |
-| shares_earned | numeric | From share actions |
-| last_payout_at | timestamp | Most recent payout |
-
-#### New Table: `token_config`
-
-Configurable payout rates:
-
-| Column | Type | Description |
-|--------|------|-------------|
-| action_type | text | Primary key |
-| payout_amount | numeric | $5DEE per action |
-| is_enabled | boolean | Toggle payouts |
-| daily_cap_per_user | integer | Rate limiting |
-| updated_at | timestamp | Last config change |
+| File | Change |
+|------|--------|
+| `src/pages/Intro.tsx` | `import { EartoneIntro }` → `import { MogIntro }` |
 
 ---
 
-### Phase 2: Thirdweb Token Integration
+## Phase 3: Lobster Like Button Refactor
 
-#### Token Contract Setup
+### Target File: `src/components/engagement/LikeButton.tsx`
 
-Deploy $5DEE as an ERC-20 token on testnet:
+**Current Implementation:**
+- Uses `Heart` icon from lucide-react
+- Red fill when liked
+- Standard heart icon animation
+
+**New Implementation:**
 
 ```typescript
-// src/lib/fiveDeeToken.ts
-import { getContract } from "thirdweb";
-import { thirdwebClient, chain } from "./thirdweb";
-
-export const FIVE_DEE_CONTRACT_ADDRESS = "0x..."; // Testnet deployment
-
-export const fiveDeeContract = getContract({
-  client: thirdwebClient,
-  chain,
-  address: FIVE_DEE_CONTRACT_ADDRESS,
-});
-
-// Payout configuration
-export const PAYOUT_RATES = {
-  view: 1,
-  like: 5,
-  comment: 10,
-  share: 3,
-  bookmark: 2,
-} as const;
+// Replace Heart with Lobster emoji
+<motion.div
+  key={isLiked ? "liked" : "unliked"}
+  initial={{ scale: 0.8 }}
+  animate={{ scale: 1 }}
+  exit={{ scale: 0.8 }}
+  transition={{ type: "spring", stiffness: 400, damping: 17 }}
+  className={cn(
+    "text-xl leading-none transition-all duration-300",
+    isLiked 
+      ? "grayscale-0 scale-110 drop-shadow-lg" 
+      : "grayscale opacity-50 hover:grayscale-0 hover:opacity-100"
+  )}
+>
+  🦞
+</motion.div>
 ```
 
-#### Server Wallet for Payouts
+**Key Changes:**
+- Remove `Heart` import from lucide-react
+- Replace icon with `🦞` emoji wrapped in motion.div
+- Use grayscale filter for unliked state
+- Add `scale-110` and `drop-shadow-lg` for liked state pop effect
+- Update count text color logic (remove red, use foreground colors)
 
-Use Thirdweb Engine or server wallet for gasless payouts:
+### Propagate to Other Components
 
-```typescript
-// supabase/functions/_shared/thirdweb-server.ts
-import { createThirdwebClient, prepareContractCall, sendTransaction } from "thirdweb";
-import { privateKeyToAccount } from "thirdweb/wallets";
+These files have inline Heart icons that need updating:
 
-const serverAccount = privateKeyToAccount({
-  client: thirdwebClient,
-  privateKey: Deno.env.get("PAYOUT_WALLET_PRIVATE_KEY")!,
-});
-
-export async function transferFiveDee(
-  toAddress: string,
-  amount: bigint
-): Promise<string> {
-  const tx = prepareContractCall({
-    contract: fiveDeeContract,
-    method: "transfer",
-    params: [toAddress, amount],
-  });
-  
-  const result = await sendTransaction({
-    account: serverAccount,
-    transaction: tx,
-  });
-  
-  return result.transactionHash;
-}
-```
+| File | Lines | Change |
+|------|-------|--------|
+| `src/components/mog/MogPostCard.tsx` | Lines 224-229 | Replace Heart with 🦞, use grayscale logic |
+| `src/components/NetflixVideoCard.tsx` | Lines 97, 126 | Replace Heart with 🦞 |
+| `src/components/TrackCard.tsx` | Lines 109, 142 | Replace Heart with 🦞 |
 
 ---
 
-### Phase 3: Edge Function - Engagement Payout
+## Phase 4: Partner Logo Integration
 
-Create `supabase/functions/engagement-pay/index.ts`:
+### Target Footer Sections
 
-```typescript
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-// Import Thirdweb for token transfer
+Replace generic "Powered by X" text with a styled partner row:
 
-const PAYOUT_RATES = {
-  view: 1n * 10n ** 18n,    // 1 $5DEE
-  like: 5n * 10n ** 18n,    // 5 $5DEE
-  comment: 10n * 10n ** 18n, // 10 $5DEE
-  share: 3n * 10n ** 18n,
-  bookmark: 2n * 10n ** 18n,
-};
-
-serve(async (req) => {
-  const { 
-    content_type,
-    content_id, 
-    action_type,
-    payer_wallet 
-  } = await req.json();
-  
-  // 1. Get creator wallet from content table
-  const tableName = content_type === 'track' ? 'music_tracks' 
-    : content_type === 'video' ? 'music_videos' 
-    : 'articles';
-  
-  const { data: content } = await supabase
-    .from(tableName)
-    .select('artist_wallet, author_wallet')
-    .eq('id', content_id)
-    .single();
-  
-  const creatorWallet = content.artist_wallet || content.author_wallet;
-  
-  // 2. Check rate limits (prevent spam)
-  // 3. Process token transfer via Thirdweb
-  // 4. Log transaction in engagement_payouts
-  // 5. Update creator_balances aggregate
-  
-  return Response.json({ 
-    success: true, 
-    tx_hash: txHash,
-    amount: payoutAmount 
-  });
-});
+```tsx
+<div className="flex items-center justify-center gap-6 opacity-80">
+  <span className="font-mono tracking-tighter text-xs">Espresso</span>
+  <span className="font-bold text-blue-500 text-xs">ApeChain ⛓️</span>
+  {/* Existing Thirdweb logo/text */}
+  <span className="text-xs">thirdweb</span>
+</div>
 ```
+
+### Files to Update
+
+| File | Current Footer | New Footer |
+|------|---------------|------------|
+| `src/pages/Landing.tsx` (line 407-408) | `Powered by Thirdweb` | Partner row with Espresso, ApeChain, thirdweb |
+| `src/pages/Auth.tsx` (lines 97-103) | `Powered by Monad • x402 Protocol` + `Powered by thirdweb` | Partner row |
+| `src/components/BuyWidget.tsx` (lines 165-168) | `Secured by Thirdweb & Monad` | Partner row |
+| `src/components/MogIntro.tsx` (footer) | `eartone powered by` + thirdweb logo | `mog powered by` + partner logos |
 
 ---
 
-### Phase 4: Frontend Integration
+## Phase 5: Landing Page Hero Update
 
-#### Update `useContentEngagement` Hook
+### Current Hero (lines 129-132):
 
-Add payout trigger to existing engagement actions:
-
-```typescript
-// src/hooks/useContentEngagement.ts
-
-const triggerPayout = useCallback(async (actionType: string) => {
-  if (!address) return;
-  
-  try {
-    await supabase.functions.invoke('engagement-pay', {
-      body: {
-        content_type: contentType,
-        content_id: contentId,
-        action_type: actionType,
-        payer_wallet: address.toLowerCase()
-      }
-    });
-  } catch (error) {
-    console.error('Payout failed:', error);
-    // Non-blocking - don't prevent engagement action
-  }
-}, [address, contentType, contentId]);
-
-// Integrate into handleLike
-const handleLike = useCallback(async () => {
-  // ... existing like logic
-  if (newLikedState) {
-    triggerPayout('like'); // Fire and forget
-  }
-}, [/* deps */]);
+```tsx
+<h2 className="text-2xl md:text-4xl font-playfair text-landing-charcoal mb-4 max-w-3xl mx-auto">
+  Every stream pays creators <span className="text-landing-copper italic">instantly</span>
+</h2>
 ```
 
-#### View Tracking for Payouts
+### New Hero:
 
-Add view payout on content mount:
-
-```typescript
-// src/hooks/useViewPayout.ts
-export function useViewPayout(contentType: ContentType, contentId: string) {
-  const { address } = useWallet();
-  const hasTrackedRef = useRef(false);
-  
-  useEffect(() => {
-    if (!address || hasTrackedRef.current) return;
-    
-    const timer = setTimeout(async () => {
-      hasTrackedRef.current = true;
-      
-      await supabase.functions.invoke('engagement-pay', {
-        body: {
-          content_type: contentType,
-          content_id: contentId,
-          action_type: 'view',
-          payer_wallet: address.toLowerCase()
-        }
-      });
-    }, 5000); // 5 second minimum view time
-    
-    return () => clearTimeout(timer);
-  }, [address, contentType, contentId]);
-}
+```tsx
+<h2 className="text-2xl md:text-4xl font-playfair text-landing-charcoal mb-4 max-w-3xl mx-auto">
+  Mog the internet. <span className="text-landing-copper italic">Own the culture.</span>
+</h2>
 ```
-
----
-
-### Phase 5: Creator Dashboard
-
-#### Earnings Overview Component
-
-```typescript
-// src/components/creator/EarningsOverview.tsx
-interface CreatorEarnings {
-  total_earned: number;
-  views_earned: number;
-  likes_earned: number;
-  comments_earned: number;
-  recent_payouts: PayoutRecord[];
-}
-
-export function EarningsOverview() {
-  // Fetch from creator_balances table
-  // Display breakdown by action type
-  // Show transaction history with tx hashes
-}
-```
-
----
-
-## Cross-Chain Functionality Ideas
-
-### Near-Term Enhancements
-
-| Feature | Description | Complexity |
-|---------|-------------|------------|
-| **Multi-chain wallet display** | Show $5DEE balance across chains | Low |
-| **Testnet faucet** | Let users claim test $5DEE | Low |
-| **Payout receipts** | NFT receipts for major earnings milestones | Medium |
-| **Gasless transactions** | Thirdweb Engine for zero-gas payouts | Medium |
-
-### Future Cross-Chain Features
-
-| Feature | Description | Technical Approach |
-|---------|-------------|-------------------|
-| **Bridge to mainnet** | Convert testnet earnings to real tokens | Thirdweb Cross-chain |
-| **Multi-chain payouts** | Creators choose payout chain | Chain abstraction layer |
-| **Content NFTs** | Mint popular content as collectibles | ERC-1155 with royalties |
-| **Staking rewards** | Stake $5DEE for premium features | Staking contract |
-| **DAO governance** | Token holders vote on platform features | Governor contract |
 
 ---
 
@@ -341,101 +145,64 @@ export function EarningsOverview() {
 
 | File | Purpose |
 |------|---------|
-| `supabase/functions/engagement-pay/index.ts` | Payout processing edge function |
-| `supabase/functions/_shared/thirdweb-server.ts` | Server-side Thirdweb utilities |
-| `src/lib/fiveDeeToken.ts` | Token contract configuration |
-| `src/hooks/useViewPayout.ts` | View tracking with payout |
-| `src/hooks/useCreatorEarnings.ts` | Fetch creator earnings |
-| `src/components/creator/EarningsOverview.tsx` | Earnings dashboard UI |
-| `src/components/creator/PayoutHistory.tsx` | Transaction history |
+| `src/components/MogIntro.tsx` | Renamed from EartoneIntro.tsx |
+
+### Deleted Files
+
+| File | Reason |
+|------|--------|
+| `src/components/EartoneIntro.tsx` | Renamed to MogIntro.tsx |
 
 ### Modified Files
 
 | File | Changes |
 |------|---------|
-| `src/hooks/useContentEngagement.ts` | Add payout triggers |
-| `src/components/engagement/LikeButton.tsx` | Fire payout on like |
-| `src/components/engagement/ContentCommentsSheet.tsx` | Fire payout on comment |
-| `src/pages/WatchHome.tsx` | Add view payout hook |
-| `src/pages/Listen.tsx` | Add view payout hook |
-| `src/pages/Read.tsx` | Add view payout hook |
+| `index.html` | Title, meta tags → Mog branding |
+| `src/pages/Landing.tsx` | All EARTONE → Mog, hero headline, footer partners |
+| `src/pages/Auth.tsx` | EARTONE → Mog, localStorage key, footer partners |
+| `src/pages/Intro.tsx` | Import MogIntro instead of EartoneIntro |
+| `src/components/PageHeader.tsx` | Logo text → Mog |
+| `src/components/engagement/LikeButton.tsx` | Heart → 🦞 with grayscale logic |
+| `src/components/mog/MogPostCard.tsx` | Heart → 🦞 |
+| `src/components/NetflixVideoCard.tsx` | Heart → 🦞 |
+| `src/components/TrackCard.tsx` | Heart → 🦞 |
+| `src/components/BuyWidget.tsx` | Footer partner row |
 
-### Database Migration
+---
 
-```sql
--- Create payout tracking tables
-CREATE TABLE engagement_payouts (
-  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
-  content_type text NOT NULL,
-  content_id uuid NOT NULL,
-  action_type text NOT NULL,
-  payer_wallet text NOT NULL,
-  creator_wallet text NOT NULL,
-  amount numeric NOT NULL,
-  tx_hash text,
-  status text DEFAULT 'pending',
-  created_at timestamptz DEFAULT now(),
-  confirmed_at timestamptz,
-  UNIQUE(content_type, content_id, action_type, payer_wallet)
-);
+## Visual Reference: Lobster Button States
 
-CREATE TABLE creator_balances (
-  wallet_address text PRIMARY KEY,
-  total_earned numeric DEFAULT 0,
-  pending_payout numeric DEFAULT 0,
-  views_earned numeric DEFAULT 0,
-  likes_earned numeric DEFAULT 0,
-  comments_earned numeric DEFAULT 0,
-  shares_earned numeric DEFAULT 0,
-  last_payout_at timestamptz
-);
+**Unliked State:**
+```
+🦞 (grayscale, 50% opacity)
+```
 
-CREATE TABLE token_config (
-  action_type text PRIMARY KEY,
-  payout_amount numeric NOT NULL,
-  is_enabled boolean DEFAULT true,
-  daily_cap_per_user integer DEFAULT 100,
-  updated_at timestamptz DEFAULT now()
-);
+**Hovered State:**
+```
+🦞 (full color, 100% opacity)
+```
 
--- Seed default payout rates
-INSERT INTO token_config (action_type, payout_amount) VALUES
-  ('view', 1),
-  ('like', 5),
-  ('comment', 10),
-  ('share', 3),
-  ('bookmark', 2);
+**Liked State:**
+```
+🦞 (full color, 110% scale, drop-shadow glow)
 ```
 
 ---
 
-## Required Secrets
+## Partner Row Visual Layout
 
-| Secret Name | Purpose |
-|-------------|---------|
-| `PAYOUT_WALLET_PRIVATE_KEY` | Server wallet for sending payouts |
-| `FIVE_DEE_CONTRACT_ADDRESS` | Deployed token contract |
-
----
-
-## Anti-Abuse Measures
-
-| Measure | Implementation |
-|---------|----------------|
-| Rate limiting | Max 100 payouts per user per day |
-| View minimum | 5 second view time before payout |
-| Duplicate prevention | Unique constraint on action+content+user |
-| Self-interaction block | Cannot earn from own content |
-| Velocity checks | Flag unusual activity patterns |
+```text
+┌─────────────────────────────────────────────────┐
+│    Espresso    ApeChain ⛓️    thirdweb          │
+│   (font-mono)   (blue-500)    (existing)        │
+└─────────────────────────────────────────────────┘
+```
 
 ---
 
-## Testing Strategy
+## Implementation Notes
 
-1. Deploy $5DEE token to Monad testnet
-2. Fund server wallet with testnet tokens
-3. Test each action type triggers correct payout
-4. Verify transaction hashes on block explorer
-5. Confirm creator balance aggregation
-6. Load test rate limiting
-
+1. **MogIntro Animation**: The letters array change from 7 to 3 characters will naturally adjust the animation timing and spacing
+2. **Grayscale Filter**: Uses CSS `grayscale` class from Tailwind - works on emoji natively
+3. **Drop Shadow**: The `drop-shadow-lg` class creates the "pop" effect for the liked lobster
+4. **Backward Compatibility**: Update localStorage key check to handle both old and new keys during transition
