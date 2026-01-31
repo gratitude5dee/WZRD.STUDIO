@@ -1,111 +1,139 @@
 
-# Add Tabbed UI to Watch Page & Improve Upload Animation
+
+# Generate BAYC-Themed Seed Data for Read, Listen, Watch Pages
 
 ## Overview
 
-This plan adds a Netflix/Spotify/Articles tabbed navigation to the Watch page (similar to the Listen page's existing implementation) and improves the Create Mog/Upload UI with smooth slide-up sheet-style animations.
+This plan creates comprehensive seed data themed around **Bored Ape Yacht Club (BAYC)**, **ApeChain**, **Otherside**, and the broader BAYC ecosystem. The data will populate all three content pages (Read, Listen, Watch) with realistic, cohesive content.
 
-## Current State Analysis
+---
 
-1. **Watch Page** (`/watch` → `WatchHome.tsx`):
-   - Currently has category filters ("All", "Music Videos", "Documentaries", etc.)
-   - No Read/Listen/Watch tab switcher like the Listen page has
-   - The user's screenshot shows a "Watch Videos" empty state without the tabbed navigation
+## Current State
 
-2. **Listen Page** (`/home?tab=listen` → `Listen.tsx`):
-   - Has a proper tabbed UI with Read/Listen/Watch buttons in the header
-   - Uses state to switch between "listen" and "watch" tabs
-   - Read button navigates to `/read`
+| Table | Current Records | Purpose |
+|-------|-----------------|---------|
+| `music_tracks` | 0 | Audio tracks for Listen page |
+| `music_videos` | 0 | Videos for Watch page |
+| `music_albums` | 0 | Album groupings |
+| `articles` | 0 | Articles for Read page |
+| `mog_posts` | 8 | Vertical feed content (already BAYC themed) |
 
-3. **Upload Page** (`/mog/upload` → `MogUpload.tsx`):
-   - Currently a full-page component with no entrance/exit animations
-   - Navigates directly to the page rather than sliding up as a sheet
+The pages currently show empty states because there's no data in the core tables.
+
+---
+
+## Content Strategy
+
+### Theme: Bored Ape Yacht Club Ecosystem
+- **Artists**: BAYC-inspired artist names (ApeFest DJ, Mutant Soundz, Otherside Orchestra)
+- **Content**: Topics around ApeCoin, ApeChain, Yuga Labs, Otherside metaverse, NFT culture
+- **Visual**: Using IPFS/external BAYC-themed placeholder images
 
 ---
 
 ## Implementation Plan
 
-### 1. Add Tabbed Navigation to Watch Page
+### 1. Create SQL Migration for Seed Data
 
-Update `WatchHome.tsx` to include the same Read/Listen/Watch tab switcher that exists in `Listen.tsx`:
+A single migration file that inserts:
 
-**Changes:**
-- Import `BookOpen` and `Headphones` icons
-- Add the three-button tab switcher in the header (centered)
-- "Watch" tab will be visually active
-- "Listen" navigates to `/home` 
-- "Read" navigates to `/read`
-
-**Visual Structure:**
-```
-┌──────────────────────────────────────────────────┐
-│ eartone    [Read] [Listen] [Watch*]    🔔 🌓 💰  │
-│                                                  │
-│ [All] [Music Videos] [Documentaries] [Live]...  │
-│                                                  │
-│ ─────────── Hero Section ───────────           │
-│                                                  │
-│ ─────────── Content Rows ───────────           │
-└──────────────────────────────────────────────────┘
+#### A. Music Albums (5 albums)
+```sql
+INSERT INTO music_albums (title, artist, cover_path, description, release_date)
+VALUES
+('Yacht Club Vibes', 'Bored Ape DJ Collective', 'https://picsum.photos/seed/bayc-album1/400/400', 'The official soundtrack of the Bored Ape Yacht Club', '2025-01-15'),
+('Mutant Sessions Vol. 1', 'Mutant Ape Soundz', 'https://picsum.photos/seed/mayc-album/400/400', 'Experimental beats from the Mutant Ape community', '2025-01-10'),
+...
 ```
 
-### 2. Add Slide-Up Animation to MogUpload
+#### B. Music Tracks (15 tracks)
+Themed track names:
+- "ApeCoin Anthem"
+- "Swamp Club (Mutant Mix)"
+- "Otherside Dreams"
+- "10K Strong"
+- "Diamond Hands Forever"
+- "Serum Saga"
+- "Koda's Lullaby"
+- "Gas Fees Blues"
+- "Yacht Party All Night"
+- "BAYC Genesis"
+- "Degen Summer"
+- "Floor Price Feelings"
+- "The Swap Shop"
+- "Ape Together Strong"
+- "Moonwalk on Otherside"
 
-Convert the upload page to use a sheet-style animation with smooth entrance and exit:
+Each with:
+- BAYC-themed artist names
+- Realistic pricing ($0.001 - $0.005)
+- Duration (180-300 seconds)
+- External cover images via picsum.photos with BAYC-themed seeds
 
-**Approach A - Framer Motion Animation:**
-- Wrap the page content in a `motion.div` with slide-up animation
-- Add a semi-transparent backdrop overlay
-- Handle back navigation with exit animation before navigating
+#### C. Music Videos (12 videos)
+Video content types:
+- **Music Videos**: "ApeFest 2025 Recap", "Mutant Ape Transformation"
+- **Documentaries**: "The Story of BAYC", "Building ApeChain"
+- **Live Performances**: "Live from ApeFest Las Vegas"
+- **Behind the Scenes**: "Inside Yuga Labs"
+- **Livestreams**: "ApeDAO Weekly Town Hall", "Otherside Land Sale Live"
 
-**Animation Details:**
-- Initial: `{ y: "100%", opacity: 0 }`
-- Animate: `{ y: 0, opacity: 1 }`
-- Exit: `{ y: "100%", opacity: 0 }`
-- Transition: `{ type: "spring", damping: 25, stiffness: 300 }`
+Each with:
+- Reuse existing video files (`/videos/unitrailer.mov`, etc.)
+- External thumbnail images
+- Pricing ($0.002 - $0.008)
+- 2 marked as livestreams
 
-**Changes to `MogUpload.tsx`:**
-```tsx
-import { motion, AnimatePresence } from "framer-motion";
+#### D. Articles (10 articles)
+Article topics for the Read page:
+1. "The Rise of BAYC: From 0.08 ETH to Cultural Phenomenon"
+2. "ApeChain Explained: The Entertainment Layer of Web3"
+3. "ApeCoin Utility: Beyond Just a Token"
+4. "Otherside Metaverse: The Next Digital Frontier"
+5. "BAYC x BMW: When Web3 Meets Automotive"
+6. "The Mutant Ape Serum: Mechanics and Rarity"
+7. "Yuga Labs: Building the Future of Digital Ownership"
+8. "ApeFest Through the Years: A Visual Journey"
+9. "Koda NFTs: The Mysterious Creatures of Otherside"
+10. "How BAYC Changed NFT Community Building Forever"
 
-// Add backdrop overlay
-<motion.div 
-  initial={{ opacity: 0 }}
-  animate={{ opacity: 1 }}
-  exit={{ opacity: 0 }}
-  className="fixed inset-0 bg-black/50 z-40"
-  onClick={handleClose}
-/>
+---
 
-// Wrap content in animated container
-<motion.div
-  initial={{ y: "100%" }}
-  animate={{ y: 0 }}
-  exit={{ y: "100%" }}
-  transition={{ type: "spring", damping: 25, stiffness: 300 }}
-  className="fixed inset-x-0 bottom-0 top-12 z-50 bg-background rounded-t-3xl"
->
-  {/* Upload form content */}
-</motion.div>
-```
+## Database Schema Mapping
 
-### 3. Add New Animation Keyframes
+### music_tracks
+| Field | Sample Value |
+|-------|--------------|
+| title | "ApeCoin Anthem" |
+| artist | "Bored Ape DJ Collective" |
+| cover_path | "https://picsum.photos/seed/bayc-track1/400/400" |
+| audio_path | NULL (demo/placeholder) |
+| price | 0.002 |
+| artist_wallet | "0x..." |
+| description | "The official ApeCoin community anthem" |
+| duration | 245 |
+| album_id | (reference) |
 
-Update `tailwind.config.ts` with additional keyframes for sheet animations:
+### music_videos
+| Field | Sample Value |
+|-------|--------------|
+| title | "ApeFest 2025 Las Vegas Recap" |
+| artist | "ApeFest Official" |
+| thumbnail_path | "https://picsum.photos/seed/apefest-vid/800/450" |
+| video_path | "/videos/unitrailer.mov" |
+| price | 0.005 |
+| is_livestream | false |
+| duration | 420 |
 
-```typescript
-keyframes: {
-  // ... existing keyframes
-  "slide-up-full": {
-    from: { transform: "translateY(100%)" },
-    to: { transform: "translateY(0)" },
-  },
-  "slide-down-full": {
-    from: { transform: "translateY(0)" },
-    to: { transform: "translateY(100%)" },
-  },
-}
-```
+### articles
+| Field | Sample Value |
+|-------|--------------|
+| title | "The Rise of BAYC: From 0.08 ETH to Cultural Phenomenon" |
+| author | "CryptoJournalist" |
+| excerpt | "How 10,000 cartoon apes became..." |
+| image_url | "https://picsum.photos/seed/bayc-article1/800/600" |
+| tags | ['BAYC', 'NFT', 'Web3'] |
+| topics | ['NFT History', 'Digital Art'] |
 
 ---
 
@@ -113,90 +141,52 @@ keyframes: {
 
 | File | Action | Description |
 |------|--------|-------------|
-| `src/pages/WatchHome.tsx` | Modify | Add Read/Listen/Watch tabbed navigation in header, update logo to "eartone" |
-| `src/pages/MogUpload.tsx` | Modify | Add framer-motion slide-up animation with backdrop overlay, handle animated close |
-| `tailwind.config.ts` | Modify | Add slide-up-full and slide-down-full keyframes |
+| `supabase/migrations/[timestamp]_bayc_seed_data.sql` | Create | SQL migration with all BAYC-themed seed data |
 
 ---
 
-## Technical Details
+## Technical Notes
 
-### WatchHome.tsx Header Changes
+### Image Strategy
+Using `picsum.photos` with themed seeds for consistent, cacheable placeholder images:
+- Album covers: `https://picsum.photos/seed/bayc-album1/400/400`
+- Track covers: `https://picsum.photos/seed/bayc-track1/400/400`
+- Video thumbnails: `https://picsum.photos/seed/apefest-vid/800/450`
+- Article images: `https://picsum.photos/seed/bayc-article1/800/600`
 
-```tsx
-// Add to imports
-import { BookOpen, Headphones } from "lucide-react";
+### Video Strategy
+Reusing the 3 existing video files in rotation:
+- `/videos/unitrailer.mov`
+- `/videos/live-from-lagos.mov`
+- `/videos/escape-from-planet-universal.mov`
 
-// Replace header content with tabbed UI
-<header className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-b from-background/80 to-transparent backdrop-blur-sm">
-  <div className="flex items-center justify-between px-4 py-3 safe-top">
-    {/* Logo */}
-    <span className="text-xl font-bold gradient-text">eartone</span>
+### Wallet Addresses
+Using placeholder Ethereum addresses in the format: `0x...` (42 characters each)
 
-    {/* Center - Tab Switch */}
-    <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-1">
-      <button onClick={() => navigate("/read")} className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium text-muted-foreground hover:text-foreground">
-        <BookOpen className="h-4 w-4" />
-        Read
-      </button>
-      <button onClick={() => navigate("/home")} className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium text-muted-foreground hover:text-foreground">
-        <Headphones className="h-4 w-4" />
-        Listen
-      </button>
-      <button className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium border border-primary text-foreground">
-        <Video className="h-4 w-4" />
-        Watch
-      </button>
-    </div>
+---
 
-    {/* Right - Actions */}
-    <div className="flex items-center gap-2">
-      <NotificationsDropdown />
-      <ThemeToggle />
-      <WalletButton />
-    </div>
-  </div>
-</header>
-```
+## Sample Seed Data Preview
 
-### MogUpload.tsx Animation Implementation
+### Tracks Preview
+| Title | Artist | Price |
+|-------|--------|-------|
+| ApeCoin Anthem | Bored Ape DJ Collective | $0.002 |
+| Swamp Club (Mutant Mix) | Mutant Ape Soundz | $0.003 |
+| Otherside Dreams | Koda Orchestra | $0.001 |
+| 10K Strong | BAYC All-Stars | $0.002 |
+| Diamond Hands Forever | HODLers United | $0.002 |
 
-```tsx
-import { motion } from "framer-motion";
+### Videos Preview
+| Title | Artist | Type |
+|-------|--------|------|
+| ApeFest 2025 Las Vegas Recap | ApeFest Official | Music Video |
+| The Story of BAYC | Yuga Labs | Documentary |
+| Live from ComplexCon | Bored Ape DJ | Live (Stream) |
 
-const handleClose = () => {
-  navigate('/home');
-};
+### Articles Preview
+| Title | Author |
+|-------|--------|
+| The Rise of BAYC | CryptoVision |
+| ApeChain Explained | BlockchainToday |
+| Inside Otherside | MetaverseNews |
 
-return (
-  <>
-    {/* Backdrop */}
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/50 z-40"
-      onClick={handleClose}
-    />
-    
-    {/* Sheet */}
-    <motion.div
-      initial={{ y: "100%" }}
-      animate={{ y: 0 }}
-      exit={{ y: "100%" }}
-      transition={{ type: "spring", damping: 25, stiffness: 300 }}
-      className="fixed inset-x-0 bottom-0 top-12 z-50 bg-background rounded-t-3xl overflow-hidden"
-    >
-      {/* Drag handle */}
-      <div className="flex justify-center pt-3 pb-2">
-        <div className="w-10 h-1 bg-muted-foreground/30 rounded-full" />
-      </div>
-      
-      {/* Content - scrollable */}
-      <div className="h-full overflow-y-auto pb-safe-bottom">
-        {/* Existing form content */}
-      </div>
-    </motion.div>
-  </>
-);
-```
