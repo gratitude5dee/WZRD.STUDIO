@@ -7,8 +7,8 @@ export function BottomNavigation() {
 
   const navItems = [
     { icon: Flame, label: "Home", path: "/home" },
-    { icon: Search, label: "Search", path: "/search" },
     { icon: Home, label: "Listen", path: "/listen" },
+    { icon: Search, label: "Search", path: "/search" },
     { icon: Library, label: "Library", path: "/library" },
   ];
 
