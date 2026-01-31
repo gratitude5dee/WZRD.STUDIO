@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { Home, Search, Library } from "lucide-react";
+import { Home, Search, Library, Flame } from "lucide-react";
 
 export function BottomNavigation() {
   const location = useLocation();
@@ -8,14 +8,16 @@ export function BottomNavigation() {
   const navItems = [
     { icon: Home, label: "Home", path: "/home" },
     { icon: Search, label: "Search", path: "/search" },
-    { icon: Library, label: "Your Library", path: "/library" },
+    { icon: Flame, label: "Mog", path: "/mog" },
+    { icon: Library, label: "Library", path: "/library" },
   ];
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 bg-card/95 backdrop-blur-sm border-t border-border safe-bottom">
       <div className="flex items-center justify-around py-2">
         {navItems.map((item) => {
-          const isActive = location.pathname === item.path;
+          const isActive = location.pathname === item.path || 
+            (item.path === "/mog" && location.pathname.startsWith("/mog"));
           return (
             <button
               key={item.path}

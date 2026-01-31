@@ -21,6 +21,11 @@ import Watch from "./pages/Watch";
 import EmbedPlayer from "./pages/EmbedPlayer";
 import Onboarding from "./pages/Onboarding";
 import NotFound from "./pages/NotFound";
+import Mog from "./pages/Mog";
+import MogUpload from "./pages/MogUpload";
+import MogProfile from "./pages/MogProfile";
+import MogPost from "./pages/MogPost";
+import MogSearch from "./pages/MogSearch";
 
 const queryClient = new QueryClient();
 
@@ -48,6 +53,12 @@ const App = () => (
                 <Route path="/watch/:id" element={<Watch />} />
                 <Route path="/embed/track/:trackId" element={<EmbedPlayer />} />
                 <Route path="/onboarding" element={<Onboarding />} />
+                {/* Mog Routes */}
+                <Route path="/mog" element={<Mog />} />
+                <Route path="/mog/upload" element={<MogUpload />} />
+                <Route path="/mog/profile/:wallet" element={<MogProfile />} />
+                <Route path="/mog/post/:id" element={<MogPost />} />
+                <Route path="/mog/search" element={<MogSearch />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>

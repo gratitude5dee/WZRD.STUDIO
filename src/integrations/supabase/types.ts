@@ -3335,6 +3335,219 @@ export type Database = {
           },
         ]
       }
+      mog_bookmarks: {
+        Row: {
+          created_at: string | null
+          id: string
+          post_id: string | null
+          user_wallet: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          post_id?: string | null
+          user_wallet: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          post_id?: string | null
+          user_wallet?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mog_bookmarks_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "mog_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mog_comments: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          likes_count: number | null
+          parent_comment_id: string | null
+          post_id: string | null
+          user_avatar: string | null
+          user_name: string | null
+          user_type: string | null
+          user_wallet: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          likes_count?: number | null
+          parent_comment_id?: string | null
+          post_id?: string | null
+          user_avatar?: string | null
+          user_name?: string | null
+          user_type?: string | null
+          user_wallet: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          likes_count?: number | null
+          parent_comment_id?: string | null
+          post_id?: string | null
+          user_avatar?: string | null
+          user_name?: string | null
+          user_type?: string | null
+          user_wallet?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mog_comments_parent_comment_id_fkey"
+            columns: ["parent_comment_id"]
+            isOneToOne: false
+            referencedRelation: "mog_comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mog_comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "mog_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mog_follows: {
+        Row: {
+          created_at: string | null
+          follower_wallet: string
+          following_wallet: string
+          id: string
+        }
+        Insert: {
+          created_at?: string | null
+          follower_wallet: string
+          following_wallet: string
+          id?: string
+        }
+        Update: {
+          created_at?: string | null
+          follower_wallet?: string
+          following_wallet?: string
+          id?: string
+        }
+        Relationships: []
+      }
+      mog_likes: {
+        Row: {
+          created_at: string | null
+          id: string
+          post_id: string | null
+          user_wallet: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          post_id?: string | null
+          user_wallet: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          post_id?: string | null
+          user_wallet?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mog_likes_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "mog_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mog_posts: {
+        Row: {
+          audio_id: string | null
+          audio_name: string | null
+          comments_count: number | null
+          content_type: string
+          created_at: string | null
+          creator_avatar: string | null
+          creator_name: string | null
+          creator_type: string
+          creator_wallet: string
+          description: string | null
+          hashtags: string[] | null
+          id: string
+          is_featured: boolean | null
+          is_published: boolean | null
+          likes_count: number | null
+          media_url: string | null
+          shares_count: number | null
+          thumbnail_url: string | null
+          title: string | null
+          updated_at: string | null
+          views_count: number | null
+        }
+        Insert: {
+          audio_id?: string | null
+          audio_name?: string | null
+          comments_count?: number | null
+          content_type: string
+          created_at?: string | null
+          creator_avatar?: string | null
+          creator_name?: string | null
+          creator_type?: string
+          creator_wallet: string
+          description?: string | null
+          hashtags?: string[] | null
+          id?: string
+          is_featured?: boolean | null
+          is_published?: boolean | null
+          likes_count?: number | null
+          media_url?: string | null
+          shares_count?: number | null
+          thumbnail_url?: string | null
+          title?: string | null
+          updated_at?: string | null
+          views_count?: number | null
+        }
+        Update: {
+          audio_id?: string | null
+          audio_name?: string | null
+          comments_count?: number | null
+          content_type?: string
+          created_at?: string | null
+          creator_avatar?: string | null
+          creator_name?: string | null
+          creator_type?: string
+          creator_wallet?: string
+          description?: string | null
+          hashtags?: string[] | null
+          id?: string
+          is_featured?: boolean | null
+          is_published?: boolean | null
+          likes_count?: number | null
+          media_url?: string | null
+          shares_count?: number | null
+          thumbnail_url?: string | null
+          title?: string | null
+          updated_at?: string | null
+          views_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mog_posts_audio_id_fkey"
+            columns: ["audio_id"]
+            isOneToOne: false
+            referencedRelation: "music_tracks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mrkt_activations: {
         Row: {
           account: string | null
