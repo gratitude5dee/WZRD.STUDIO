@@ -12,14 +12,9 @@ export function MogHeader({ feedType, onFeedTypeChange, onSearch, onUpload }: Mo
   return (
     <div className="fixed top-0 left-0 right-0 z-50 pointer-events-none">
       <div className="bg-gradient-to-b from-background/80 via-background/40 to-transparent pt-safe-top pb-8">
-        <div className="flex items-center justify-between px-4 pt-4 pointer-events-auto">
-          {/* Upload Button */}
-          <button
-            onClick={onUpload}
-            className="h-10 w-10 flex items-center justify-center rounded-full bg-background/20 backdrop-blur-sm hover:bg-background/30 transition-colors"
-          >
-            <Plus className="h-5 w-5 text-foreground" />
-          </button>
+        <div className="flex items-center justify-center px-4 pt-4 pointer-events-auto">
+          {/* Spacer for symmetry */}
+          <div className="h-10 w-10" />
 
           {/* Feed Type Tabs */}
           <div className="flex items-center gap-4">
