@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Upload, Image, Video, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,6 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { supabase } from "@/integrations/supabase/client";
 import { useWallet } from "@/contexts/WalletContext";
-import { ThirdwebConnectButton } from "@/components/ThirdwebConnectButton";
 import { toast } from "sonner";
 
 type ContentType = 'video' | 'image' | 'article';
@@ -16,7 +15,17 @@ type CreatorType = 'human' | 'agent';
 
 export default function MogUpload() {
   const navigate = useNavigate();
-  const { address } = useWallet();
+  const { address, isConnected, connect } = useWallet();
+  
+  // Redirect to library if not connected
+  useEffect(() => {
+    if (!isConnected) {
+      toast.error('Please connect your wallet first');
+      connect();
+      navigate('/library');
+    }
+  }, [isConnected, navigate, connect]);
+
   const [contentType, setContentType] = useState<ContentType>('video');
   // Pre-fill creator type from onboarding preference
   const savedCreatorType = localStorage.getItem('eartone_creator_type') as CreatorType | null;
@@ -236,21 +245,13 @@ export default function MogUpload() {
         </div>
 
         {/* Submit Button */}
-        {!address ? (
-          <ThirdwebConnectButton 
-            label="Connect Wallet to Post" 
-            fullWidth 
-            className="py-6 text-lg"
-          />
-        ) : (
-          <Button
-            onClick={handleSubmit}
-            disabled={uploading}
-            className="w-full py-6 text-lg"
-          >
-            {uploading ? 'Creating...' : 'Post Mog'}
-          </Button>
-        )}
+        <Button
+          onClick={handleSubmit}
+          disabled={uploading || !address}
+          className="w-full py-6 text-lg"
+        >
+          {uploading ? 'Creating...' : 'Post Mog'}
+        </Button>
       </div>
     </div>
   );
