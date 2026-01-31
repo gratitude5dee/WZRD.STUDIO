@@ -118,17 +118,17 @@ export default function Read() {
             <span className="text-xl font-bold gradient-text">EARTONE</span>
           </div>
 
-          {/* Tab Switch */}
-          <div className="flex items-center gap-1">
+          {/* Tab Switch - Centered */}
+          <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-1">
             <button className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium border border-primary text-foreground transition-all duration-200">
               <BookOpen className="h-4 w-4" />
               Read
             </button>
-            <button onClick={() => navigate("/home")} className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium text-muted-foreground hover:text-foreground transition-all duration-200">
+            <button onClick={() => navigate("/listen")} className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium text-muted-foreground hover:text-foreground transition-all duration-200">
               <Headphones className="h-4 w-4" />
               Listen
             </button>
-            <button onClick={() => navigate("/home?tab=watch")} className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium text-muted-foreground hover:text-foreground transition-all duration-200">
+            <button onClick={() => navigate("/watch")} className="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium text-muted-foreground hover:text-foreground transition-all duration-200">
               <Video className="h-4 w-4" />
               Watch
             </button>
