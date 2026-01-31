@@ -3,6 +3,7 @@ import { BookOpen, Headphones, Video } from "lucide-react";
 import { NotificationsDropdown } from "@/components/NotificationsDropdown";
 import { WalletButton } from "@/components/WalletButton";
 import { cn } from "@/lib/utils";
+import moltyLogo from "@/assets/molty.webp";
 
 type TabType = 'read' | 'listen' | 'watch';
 
@@ -42,9 +43,20 @@ export function PageHeader({
     >
       {/* Row 1: Brand Bar */}
       <div className="flex items-center justify-between px-4 h-14 safe-top">
-        {/* Logo */}
-        <div className="flex items-center min-w-[80px]">
-          <span className="text-lg font-bold gradient-text tracking-tight">Mog</span>
+        {/* Logo with Lobster */}
+        <div className="flex items-center gap-2 min-w-[80px]">
+          <img src={moltyLogo} alt="Mog" className="h-8 w-8 object-contain" />
+          <span 
+            className="text-lg font-bold tracking-tight"
+            style={{
+              background: 'linear-gradient(135deg, #FF6B35, #F7931E, #FF4500)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+            }}
+          >
+            Mog
+          </span>
         </div>
 
         {/* Right - Actions */}
