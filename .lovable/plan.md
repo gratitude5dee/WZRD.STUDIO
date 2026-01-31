@@ -1,209 +1,337 @@
 
 
-# Mobile-First Header & Footer UI Redesign
+# $5DEE Token Creator Payout System via Thirdweb x402 Protocol
 
 ## Executive Summary
 
-A comprehensive redesign of the header and bottom navigation components with a focus on mobile phone views. The current implementation suffers from overcrowded elements, absolute positioning that causes overlaps, and poor touch targets. This plan implements industry-standard mobile patterns inspired by Spotify, TikTok, and Apple's Human Interface Guidelines.
+Implement a Web3-native creator economy where every engagement action triggers automatic $5DEE token micropayments to content creators on a testnet. This transforms passive social interactions into direct creator compensation, powered by Thirdweb's x402 payment protocol on the Monad chain.
 
 ---
 
-## Current Issues Identified
+## Payout Economics
 
-### Header Problems
-
-| Issue | Impact |
-|-------|--------|
-| Absolute positioned tab switcher overlaps with logo | Text collision on small screens |
-| 7 elements competing in one row (logo, 3 tabs, bell, theme, wallet) | Visual noise, cramped layout |
-| No responsive breakpoints | Same layout on 320px and 768px screens |
-| Notification badge overlaps with tab text | Confusing visual hierarchy |
-| Full wallet address shown | Truncates awkwardly on mobile |
-| ThemeToggle taking valuable header space | Rarely used feature blocking primary actions |
-
-### Bottom Navigation Problems
-
-| Issue | Impact |
-|-------|--------|
-| Center floating button creates uneven spacing | Touch targets are inconsistent |
-| No active state indicator beyond color | Hard to see current location |
-| Labels always visible | Takes vertical space, modern apps hide labels |
-| `px-6` padding creates awkward gaps | Doesn't adapt to screen width |
+| Action | $5DEE Amount | Rationale |
+|--------|-------------|-----------|
+| **View** | 1 $5DEE | Low-friction passive engagement; highest volume |
+| **Like/Love** | 5 $5DEE | Active endorsement signal; moderate volume |
+| **Comment** | 10 $5DEE | High-value engagement; lower volume |
+| **Share** | 3 $5DEE | Distribution amplification |
+| **Bookmark** | 2 $5DEE | Content curation signal |
 
 ---
 
-## Design Solution
+## Technical Architecture
 
-### Header Redesign Strategy
-
-**Mobile-First Two-Row Header:**
+### System Flow
 
 ```text
-Row 1: [Logo]                    [Bell] [Avatar]
-Row 2: [Read] [Listen] [Watch]  (centered, full-width tabs)
+User Action (View/Like/Comment)
+        |
+        v
++------------------+
+| useContentPayout |  (Frontend Hook)
++------------------+
+        |
+        v
++------------------+
+| engagement-pay   |  (Edge Function)
++------------------+
+        |
+    +---+---+
+    |       |
+    v       v
++------+  +-------------+
+| DB   |  | Thirdweb    |
+| Log  |  | Transfer    |
++------+  +-------------+
+              |
+              v
+        [Testnet Chain]
+        $5DEE -> Creator
 ```
-
-Key Changes:
-- Remove ThemeToggle from header (move to settings/profile)
-- Replace wallet button with compact avatar circle
-- Tabs get their own row for proper touch targets
-- Clean separation between brand and navigation
-
-**Visual Hierarchy Improvement:**
-
-```text
-+------------------------------------------+
-|  eartone                    [2] [Avatar] |
-+------------------------------------------+
-|     Read      Listen *     Watch         |
-+------------------------------------------+
-```
-
-### Bottom Navigation Redesign
-
-**Modern Tab Bar Pattern:**
-
-```text
-+------------------------------------------+
-|  [o]      [>]      [+]      [Q]     [=]  |
-|  Home    Watch   Create   Search  Library|
-+------------------------------------------+
-```
-
-Key Changes:
-- Reduce icon size to 22px for better proportions
-- Add pill indicator for active state (like iOS/Android)
-- Remove floating button, use same level as others
-- Center "Create" button with brand accent color fill
-- Optimize touch targets to 44x44 minimum (Apple HIG)
 
 ---
 
 ## Implementation Plan
 
-### Phase 1: Create Shared Header Component
+### Phase 1: Database Schema for Payouts
 
-Extract header logic into a reusable `PageHeader` component to eliminate duplication across Listen, Read, and Watch pages.
+#### New Table: `engagement_payouts`
 
-**New File: `src/components/PageHeader.tsx`**
+Records all payout transactions with blockchain verification:
 
-Features:
-- Two-row mobile layout (brand row + tab row)
-- Compact avatar button instead of full wallet address
-- Clean notification badge positioning
-- Smooth transitions between tabs
-- Responsive: collapses to icons-only tabs at 320px width
+| Column | Type | Description |
+|--------|------|-------------|
+| id | uuid | Primary key |
+| content_type | text | 'track', 'video', 'article' |
+| content_id | uuid | Reference to content |
+| action_type | text | 'view', 'like', 'comment', 'share', 'bookmark' |
+| payer_wallet | text | User who triggered the action |
+| creator_wallet | text | Content creator receiving payout |
+| amount | numeric | $5DEE amount |
+| tx_hash | text | Blockchain transaction hash |
+| status | text | 'pending', 'confirmed', 'failed' |
+| created_at | timestamp | When action occurred |
+| confirmed_at | timestamp | When blockchain confirmed |
 
-**Component Structure:**
+#### New Table: `creator_balances`
 
-```typescript
-interface PageHeaderProps {
-  activeTab: 'read' | 'listen' | 'watch';
-  variant?: 'solid' | 'transparent'; // For Watch page hero overlay
-}
-```
+Aggregated earnings for dashboard display:
 
-### Phase 2: Redesign BottomNavigation
+| Column | Type | Description |
+|--------|------|-------------|
+| wallet_address | text | Creator's wallet (primary key) |
+| total_earned | numeric | Lifetime $5DEE earned |
+| pending_payout | numeric | Awaiting confirmation |
+| views_earned | numeric | From view actions |
+| likes_earned | numeric | From like actions |
+| comments_earned | numeric | From comment actions |
+| shares_earned | numeric | From share actions |
+| last_payout_at | timestamp | Most recent payout |
 
-**Updated `src/components/BottomNavigation.tsx`**
+#### New Table: `token_config`
 
-Changes:
-- Remove floating button effect
-- Add active pill indicator
-- Standardize all button sizes
-- Add subtle haptic-feedback-style press states
-- Keep Create button visually distinct with filled background
+Configurable payout rates:
 
-**New Visual Pattern:**
-
-```text
-Current:               Redesigned:
-[Home] [Watch]        [Home] [Watch] [+] [Search] [Lib]
-   [+]                    ----         ---
-[Search] [Lib]              ^ active pill indicator
-```
-
-### Phase 3: Optimize WalletButton for Mobile
-
-**Updated `src/components/WalletButton.tsx`**
-
-Mobile Variant:
-- Icon-only avatar circle (gradient based on address)
-- Full address shown in dropdown/modal
-- 36x36px touch target
-
-**Before → After:**
-
-```text
-Before: [ [avatar] 0x954f...7624 ]   (full button with text)
-After:  [ [avatar] ]                  (compact circle only)
-```
-
-### Phase 4: Update Page Implementations
-
-**Files to Update:**
-- `src/pages/Listen.tsx` - Use new PageHeader
-- `src/pages/Read.tsx` - Use new PageHeader  
-- `src/pages/WatchHome.tsx` - Use new PageHeader with transparent variant
+| Column | Type | Description |
+|--------|------|-------------|
+| action_type | text | Primary key |
+| payout_amount | numeric | $5DEE per action |
+| is_enabled | boolean | Toggle payouts |
+| daily_cap_per_user | integer | Rate limiting |
+| updated_at | timestamp | Last config change |
 
 ---
 
-## Detailed Component Specifications
+### Phase 2: Thirdweb Token Integration
 
-### PageHeader Component
+#### Token Contract Setup
 
-**Row 1 (Brand Bar):**
+Deploy $5DEE as an ERC-20 token on testnet:
 
-| Element | Size | Position |
-|---------|------|----------|
-| Logo text "eartone" | 20px font, bold | Left, vertical center |
-| Notification bell | 20px icon, 36px touch | Right, gap-2 |
-| Avatar circle | 32px diameter | Right-most |
+```typescript
+// src/lib/fiveDeeToken.ts
+import { getContract } from "thirdweb";
+import { thirdwebClient, chain } from "./thirdweb";
 
-**Row 2 (Tab Bar):**
+export const FIVE_DEE_CONTRACT_ADDRESS = "0x..."; // Testnet deployment
 
-| Element | Style | Behavior |
-|---------|-------|----------|
-| Tab buttons | 14px font, medium weight | Flex-1, center text |
-| Active indicator | 2px bottom border, primary color | Animated slide |
-| Icons | 16px, hidden on very small screens | Left of text |
+export const fiveDeeContract = getContract({
+  client: thirdwebClient,
+  chain,
+  address: FIVE_DEE_CONTRACT_ADDRESS,
+});
 
-**Responsive Breakpoints:**
-
-| Width | Tab Display | Actions |
-|-------|-------------|---------|
-| < 360px | Icons only | Avatar only |
-| 360-480px | Text + Icons | Bell + Avatar |
-| 480px+ | Text + Icons | Bell + Avatar |
-
-### BottomNavigation Component
-
-**Nav Item Specifications:**
-
-| Property | Value |
-|----------|-------|
-| Container height | 56px (excludes safe-area) |
-| Icon size | 22px |
-| Label size | 10px, medium weight |
-| Touch target | 60px wide minimum |
-| Gap icon-to-label | 4px |
-
-**Active State:**
-
-```text
-Inactive:  [icon]     Active:  [•icon•]
-           label               label
-                               -----
-                                 ^ pill or dot indicator
+// Payout configuration
+export const PAYOUT_RATES = {
+  view: 1,
+  like: 5,
+  comment: 10,
+  share: 3,
+  bookmark: 2,
+} as const;
 ```
 
-**Create Button (Center):**
+#### Server Wallet for Payouts
 
-- Same level as other items (no float)
-- 44px circle with primary background
-- White/primary-foreground icon
-- No label text
-- Slight shadow for depth
+Use Thirdweb Engine or server wallet for gasless payouts:
+
+```typescript
+// supabase/functions/_shared/thirdweb-server.ts
+import { createThirdwebClient, prepareContractCall, sendTransaction } from "thirdweb";
+import { privateKeyToAccount } from "thirdweb/wallets";
+
+const serverAccount = privateKeyToAccount({
+  client: thirdwebClient,
+  privateKey: Deno.env.get("PAYOUT_WALLET_PRIVATE_KEY")!,
+});
+
+export async function transferFiveDee(
+  toAddress: string,
+  amount: bigint
+): Promise<string> {
+  const tx = prepareContractCall({
+    contract: fiveDeeContract,
+    method: "transfer",
+    params: [toAddress, amount],
+  });
+  
+  const result = await sendTransaction({
+    account: serverAccount,
+    transaction: tx,
+  });
+  
+  return result.transactionHash;
+}
+```
+
+---
+
+### Phase 3: Edge Function - Engagement Payout
+
+Create `supabase/functions/engagement-pay/index.ts`:
+
+```typescript
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+// Import Thirdweb for token transfer
+
+const PAYOUT_RATES = {
+  view: 1n * 10n ** 18n,    // 1 $5DEE
+  like: 5n * 10n ** 18n,    // 5 $5DEE
+  comment: 10n * 10n ** 18n, // 10 $5DEE
+  share: 3n * 10n ** 18n,
+  bookmark: 2n * 10n ** 18n,
+};
+
+serve(async (req) => {
+  const { 
+    content_type,
+    content_id, 
+    action_type,
+    payer_wallet 
+  } = await req.json();
+  
+  // 1. Get creator wallet from content table
+  const tableName = content_type === 'track' ? 'music_tracks' 
+    : content_type === 'video' ? 'music_videos' 
+    : 'articles';
+  
+  const { data: content } = await supabase
+    .from(tableName)
+    .select('artist_wallet, author_wallet')
+    .eq('id', content_id)
+    .single();
+  
+  const creatorWallet = content.artist_wallet || content.author_wallet;
+  
+  // 2. Check rate limits (prevent spam)
+  // 3. Process token transfer via Thirdweb
+  // 4. Log transaction in engagement_payouts
+  // 5. Update creator_balances aggregate
+  
+  return Response.json({ 
+    success: true, 
+    tx_hash: txHash,
+    amount: payoutAmount 
+  });
+});
+```
+
+---
+
+### Phase 4: Frontend Integration
+
+#### Update `useContentEngagement` Hook
+
+Add payout trigger to existing engagement actions:
+
+```typescript
+// src/hooks/useContentEngagement.ts
+
+const triggerPayout = useCallback(async (actionType: string) => {
+  if (!address) return;
+  
+  try {
+    await supabase.functions.invoke('engagement-pay', {
+      body: {
+        content_type: contentType,
+        content_id: contentId,
+        action_type: actionType,
+        payer_wallet: address.toLowerCase()
+      }
+    });
+  } catch (error) {
+    console.error('Payout failed:', error);
+    // Non-blocking - don't prevent engagement action
+  }
+}, [address, contentType, contentId]);
+
+// Integrate into handleLike
+const handleLike = useCallback(async () => {
+  // ... existing like logic
+  if (newLikedState) {
+    triggerPayout('like'); // Fire and forget
+  }
+}, [/* deps */]);
+```
+
+#### View Tracking for Payouts
+
+Add view payout on content mount:
+
+```typescript
+// src/hooks/useViewPayout.ts
+export function useViewPayout(contentType: ContentType, contentId: string) {
+  const { address } = useWallet();
+  const hasTrackedRef = useRef(false);
+  
+  useEffect(() => {
+    if (!address || hasTrackedRef.current) return;
+    
+    const timer = setTimeout(async () => {
+      hasTrackedRef.current = true;
+      
+      await supabase.functions.invoke('engagement-pay', {
+        body: {
+          content_type: contentType,
+          content_id: contentId,
+          action_type: 'view',
+          payer_wallet: address.toLowerCase()
+        }
+      });
+    }, 5000); // 5 second minimum view time
+    
+    return () => clearTimeout(timer);
+  }, [address, contentType, contentId]);
+}
+```
+
+---
+
+### Phase 5: Creator Dashboard
+
+#### Earnings Overview Component
+
+```typescript
+// src/components/creator/EarningsOverview.tsx
+interface CreatorEarnings {
+  total_earned: number;
+  views_earned: number;
+  likes_earned: number;
+  comments_earned: number;
+  recent_payouts: PayoutRecord[];
+}
+
+export function EarningsOverview() {
+  // Fetch from creator_balances table
+  // Display breakdown by action type
+  // Show transaction history with tx hashes
+}
+```
+
+---
+
+## Cross-Chain Functionality Ideas
+
+### Near-Term Enhancements
+
+| Feature | Description | Complexity |
+|---------|-------------|------------|
+| **Multi-chain wallet display** | Show $5DEE balance across chains | Low |
+| **Testnet faucet** | Let users claim test $5DEE | Low |
+| **Payout receipts** | NFT receipts for major earnings milestones | Medium |
+| **Gasless transactions** | Thirdweb Engine for zero-gas payouts | Medium |
+
+### Future Cross-Chain Features
+
+| Feature | Description | Technical Approach |
+|---------|-------------|-------------------|
+| **Bridge to mainnet** | Convert testnet earnings to real tokens | Thirdweb Cross-chain |
+| **Multi-chain payouts** | Creators choose payout chain | Chain abstraction layer |
+| **Content NFTs** | Mint popular content as collectibles | ERC-1155 with royalties |
+| **Staking rewards** | Stake $5DEE for premium features | Staking contract |
+| **DAO governance** | Token holders vote on platform features | Governor contract |
 
 ---
 
@@ -213,124 +341,101 @@ Inactive:  [icon]     Active:  [•icon•]
 
 | File | Purpose |
 |------|---------|
-| `src/components/PageHeader.tsx` | Shared mobile-first header component |
+| `supabase/functions/engagement-pay/index.ts` | Payout processing edge function |
+| `supabase/functions/_shared/thirdweb-server.ts` | Server-side Thirdweb utilities |
+| `src/lib/fiveDeeToken.ts` | Token contract configuration |
+| `src/hooks/useViewPayout.ts` | View tracking with payout |
+| `src/hooks/useCreatorEarnings.ts` | Fetch creator earnings |
+| `src/components/creator/EarningsOverview.tsx` | Earnings dashboard UI |
+| `src/components/creator/PayoutHistory.tsx` | Transaction history |
 
 ### Modified Files
 
 | File | Changes |
 |------|---------|
-| `src/components/BottomNavigation.tsx` | Complete redesign with new patterns |
-| `src/components/WalletButton.tsx` | Add compact mobile variant |
-| `src/pages/Listen.tsx` | Replace inline header with PageHeader |
-| `src/pages/Read.tsx` | Replace inline header with PageHeader |
-| `src/pages/WatchHome.tsx` | Replace inline header with PageHeader (transparent variant) |
-| `src/index.css` | Add new utility classes for header/nav |
+| `src/hooks/useContentEngagement.ts` | Add payout triggers |
+| `src/components/engagement/LikeButton.tsx` | Fire payout on like |
+| `src/components/engagement/ContentCommentsSheet.tsx` | Fire payout on comment |
+| `src/pages/WatchHome.tsx` | Add view payout hook |
+| `src/pages/Listen.tsx` | Add view payout hook |
+| `src/pages/Read.tsx` | Add view payout hook |
 
----
+### Database Migration
 
-## Visual Comparison
+```sql
+-- Create payout tracking tables
+CREATE TABLE engagement_payouts (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  content_type text NOT NULL,
+  content_id uuid NOT NULL,
+  action_type text NOT NULL,
+  payer_wallet text NOT NULL,
+  creator_wallet text NOT NULL,
+  amount numeric NOT NULL,
+  tx_hash text,
+  status text DEFAULT 'pending',
+  created_at timestamptz DEFAULT now(),
+  confirmed_at timestamptz,
+  UNIQUE(content_type, content_id, action_type, payer_wallet)
+);
 
-### Header Before vs After
+CREATE TABLE creator_balances (
+  wallet_address text PRIMARY KEY,
+  total_earned numeric DEFAULT 0,
+  pending_payout numeric DEFAULT 0,
+  views_earned numeric DEFAULT 0,
+  likes_earned numeric DEFAULT 0,
+  comments_earned numeric DEFAULT 0,
+  shares_earned numeric DEFAULT 0,
+  last_payout_at timestamptz
+);
 
-**Before (Current):**
-```text
-+--------------------------------------------------+
-| eartone Read Listen Watch  [2] [sun] 0x954f..7624|
-+--------------------------------------------------+
-(overlapping, cramped, no breathing room)
-```
+CREATE TABLE token_config (
+  action_type text PRIMARY KEY,
+  payout_amount numeric NOT NULL,
+  is_enabled boolean DEFAULT true,
+  daily_cap_per_user integer DEFAULT 100,
+  updated_at timestamptz DEFAULT now()
+);
 
-**After (Redesigned):**
-```text
-+--------------------------------------------------+
-|  eartone                           [2]  [avatar] |
-+--------------------------------------------------+
-|     Read          Listen*          Watch         |
-+--------------------------------------------------+
-(two rows, clear hierarchy, proper spacing)
-```
-
-### Bottom Nav Before vs After
-
-**Before (Current):**
-```text
-+--------------------------------------------------+
-| Home      Watch        Search        Library     |
-|  [x]       [>]   [+]    [Q]           [=]        |
-|            (floating)                             |
-+--------------------------------------------------+
-```
-
-**After (Redesigned):**
-```text
-+--------------------------------------------------+
-|  Home    Watch    [+]     Search     Library     |
-|  [x]      [>]    Create    [Q]        [=]        |
-|   •                                               |
-+--------------------------------------------------+
-(uniform height, center button in-line, dot indicator)
-```
-
----
-
-## CSS Additions
-
-**New utility classes in `src/index.css`:**
-
-```css
-/* Tab indicator animation */
-.tab-indicator {
-  @apply absolute bottom-0 left-0 h-0.5 bg-primary transition-all duration-200;
-}
-
-/* Touch target optimization */
-.touch-target {
-  @apply min-h-[44px] min-w-[44px];
-}
-
-/* Header row variants */
-.header-brand {
-  @apply flex items-center justify-between px-4 py-2;
-}
-
-.header-tabs {
-  @apply flex items-center justify-center gap-0 border-b border-border/30;
-}
-
-/* Active nav indicator */
-.nav-indicator {
-  @apply absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary;
-}
+-- Seed default payout rates
+INSERT INTO token_config (action_type, payout_amount) VALUES
+  ('view', 1),
+  ('like', 5),
+  ('comment', 10),
+  ('share', 3),
+  ('bookmark', 2);
 ```
 
 ---
 
-## Accessibility Improvements
+## Required Secrets
 
-| Improvement | Implementation |
-|-------------|----------------|
-| Touch targets 44x44 minimum | All interactive elements |
-| Clear focus states | Focus-visible rings |
-| Semantic navigation | `<nav>`, `role="tablist"` |
-| ARIA labels | Screen reader support |
-| Color contrast | 4.5:1 minimum ratio |
+| Secret Name | Purpose |
+|-------------|---------|
+| `PAYOUT_WALLET_PRIVATE_KEY` | Server wallet for sending payouts |
+| `FIVE_DEE_CONTRACT_ADDRESS` | Deployed token contract |
 
 ---
 
-## Expected Outcomes
+## Anti-Abuse Measures
 
-### User Experience
+| Measure | Implementation |
+|---------|----------------|
+| Rate limiting | Max 100 payouts per user per day |
+| View minimum | 5 second view time before payout |
+| Duplicate prevention | Unique constraint on action+content+user |
+| Self-interaction block | Cannot earn from own content |
+| Velocity checks | Flag unusual activity patterns |
 
-1. **Cleaner visual hierarchy** - Two-row header separates brand from navigation
-2. **Larger touch targets** - Easier to tap on mobile
-3. **Consistent patterns** - Familiar tab bar behavior
-4. **Less visual clutter** - Essential actions only in header
-5. **Better scannability** - Clear active states
+---
 
-### Technical Benefits
+## Testing Strategy
 
-1. **Single source of truth** - PageHeader component used everywhere
-2. **Easier maintenance** - One place to update header
-3. **Better responsive** - Proper mobile-first breakpoints
-4. **Reduced code duplication** - 50% less header code across pages
+1. Deploy $5DEE token to Monad testnet
+2. Fund server wallet with testnet tokens
+3. Test each action type triggers correct payout
+4. Verify transaction hashes on block explorer
+5. Confirm creator balance aggregation
+6. Load test rate limiting
 
