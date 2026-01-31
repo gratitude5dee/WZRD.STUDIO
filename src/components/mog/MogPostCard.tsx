@@ -266,27 +266,27 @@ export function MogPostCard({ post, isActive, onProfileClick }: MogPostCardProps
       <div className="absolute left-4 right-20 bottom-24 z-10">
         {/* Creator Info */}
         <button onClick={onProfileClick} className="flex items-center gap-2 mb-2">
-          <span className="font-semibold text-foreground">@{post.creator_name || 'anonymous'}</span>
+          <span className="font-semibold text-white drop-shadow-md">@{post.creator_name || 'anonymous'}</span>
           <MogVerificationBadge type={post.creator_type} size="sm" />
         </button>
 
         {/* Description */}
         {post.description && (
-          <p className="text-sm text-foreground/90 line-clamp-2 mb-2">{post.description}</p>
+          <p className="text-sm text-white/90 line-clamp-2 mb-2 drop-shadow-md">{post.description}</p>
         )}
 
         {/* Hashtags */}
         {post.hashtags && post.hashtags.length > 0 && (
           <div className="flex flex-wrap gap-1 mb-2">
             {post.hashtags.slice(0, 3).map((tag, i) => (
-              <span key={i} className="text-sm font-medium text-foreground">#{tag}</span>
+              <span key={i} className="text-sm font-medium text-white drop-shadow-md">#{tag}</span>
             ))}
           </div>
         )}
 
         {/* Audio Info */}
         {post.audio_name && (
-          <div className="flex items-center gap-2 text-sm text-foreground/80">
+          <div className="flex items-center gap-2 text-sm text-white/80 drop-shadow-md">
             <Music className="h-4 w-4" />
             <span className="truncate">{post.audio_name}</span>
           </div>
