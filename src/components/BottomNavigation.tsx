@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { Home, Search, Library, Flame } from "lucide-react";
+import { Home, Search, Library, Flame, Play } from "lucide-react";
 
 export function BottomNavigation() {
   const location = useLocation();
@@ -7,7 +7,7 @@ export function BottomNavigation() {
 
   const navItems = [
     { icon: Flame, label: "Home", path: "/home" },
-    { icon: Home, label: "Listen", path: "/listen" },
+    { icon: Play, label: "Watch", path: "/watch" },
     { icon: Search, label: "Search", path: "/search" },
     { icon: Library, label: "Library", path: "/library" },
   ];

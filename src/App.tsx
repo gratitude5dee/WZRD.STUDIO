@@ -18,6 +18,7 @@ import NowPlaying from "./pages/NowPlaying";
 import Album from "./pages/Album";
 import Library from "./pages/Library";
 import Watch from "./pages/Watch";
+import WatchHome from "./pages/WatchHome";
 import EmbedPlayer from "./pages/EmbedPlayer";
 import Onboarding from "./pages/Onboarding";
 import NotFound from "./pages/NotFound";
@@ -51,6 +52,7 @@ const App = () => (
                 <Route path="/now-playing" element={<NowPlaying />} />
                 <Route path="/album/:id" element={<Album />} />
                 <Route path="/library" element={<Library />} />
+                <Route path="/watch" element={<WatchHome />} />
                 <Route path="/watch/:id" element={<Watch />} />
                 <Route path="/embed/track/:trackId" element={<EmbedPlayer />} />
                 <Route path="/onboarding" element={<Onboarding />} />
