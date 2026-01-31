@@ -8,16 +8,30 @@ export function BottomNavigation() {
   const navItems = [
     { icon: Flame, label: "Home", path: "/home" },
     { icon: Play, label: "Watch", path: "/watch" },
-    { icon: Search, label: "Search", path: "/search" },
+    { icon: Search, label: "Search", path: "/search", isCenter: true },
     { icon: Library, label: "Library", path: "/library" },
   ];
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 bg-card/95 backdrop-blur-sm border-t border-border safe-bottom">
       <div className="flex items-center justify-around py-2">
-        {navItems.map((item) => {
+        {navItems.map((item, index) => {
           const isActive = location.pathname === item.path || 
             (item.path === "/home" && location.pathname.startsWith("/mog"));
+          
+          // Center search button with special styling
+          if (item.isCenter) {
+            return (
+              <button
+                key={item.path}
+                onClick={() => navigate(item.path)}
+                className="flex items-center justify-center h-12 w-12 -mt-6 rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 transition-colors"
+              >
+                <item.icon className="h-6 w-6" />
+              </button>
+            );
+          }
+          
           return (
             <button
               key={item.path}

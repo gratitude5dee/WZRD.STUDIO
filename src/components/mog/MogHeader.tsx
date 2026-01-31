@@ -46,13 +46,8 @@ export function MogHeader({ feedType, onFeedTypeChange, onSearch, onUpload }: Mo
             </button>
           </div>
 
-          {/* Search Button */}
-          <button
-            onClick={onSearch}
-            className="h-10 w-10 flex items-center justify-center rounded-full bg-background/20 backdrop-blur-sm hover:bg-background/30 transition-colors"
-          >
-            <Search className="h-5 w-5 text-foreground" />
-          </button>
+          {/* Spacer to balance the layout */}
+          <div className="h-10 w-10" />
         </div>
       </div>
     </div>
