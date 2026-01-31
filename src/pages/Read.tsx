@@ -36,6 +36,151 @@ const categories = [
   { name: "Guides", active: false },
 ];
 
+// Sample articles data for demo
+const sampleArticles: Article[] = [
+  {
+    id: "1",
+    title: "The Rise of ApeCoin: How a Meme Became a Movement",
+    author: "Marcus Chen",
+    excerpt: "From humble beginnings to a billion-dollar ecosystem, ApeCoin has redefined what community tokens can achieve in the Web3 space.",
+    image_url: "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=800",
+    tags: ["CULTURE"],
+    topics: ["ApeCoin", "Web3"],
+    published_at: "2024-01-15",
+    likes_count: 2847,
+    comments_count: 342,
+    shares_count: 156,
+    views_count: 45200,
+  },
+  {
+    id: "2", 
+    title: "Inside Yuga Labs: The Masterminds Behind BAYC",
+    author: "Sarah Kim",
+    excerpt: "An exclusive look at the team that built the most successful NFT project in history and their vision for the metaverse.",
+    image_url: "https://images.unsplash.com/photo-1642104704074-907c0698cbd9?w=800",
+    tags: ["INTERVIEWS"],
+    topics: ["Yuga Labs", "BAYC"],
+    published_at: "2024-01-12",
+    likes_count: 1923,
+    comments_count: 287,
+    shares_count: 98,
+    views_count: 32100,
+  },
+  {
+    id: "3",
+    title: "ApeChain Explained: The Future of NFT Infrastructure",
+    author: "Dev Patel",
+    excerpt: "A deep dive into the technical architecture powering the next generation of digital collectibles.",
+    image_url: "https://images.unsplash.com/photo-1639322537228-f710d846310a?w=800",
+    tags: ["TECH"],
+    topics: ["ApeChain", "Blockchain"],
+    published_at: "2024-01-10",
+    likes_count: 1456,
+    comments_count: 198,
+    shares_count: 87,
+    views_count: 28400,
+  },
+  {
+    id: "4",
+    title: "From Ape to Icon: The Cultural Impact of BAYC",
+    author: "Jordan Hayes",
+    excerpt: "How 10,000 cartoon apes became the ultimate status symbol and changed digital art forever.",
+    image_url: "https://images.unsplash.com/photo-1620321023374-d1a68fbc720d?w=800",
+    tags: ["CULTURE"],
+    topics: ["BAYC", "NFT"],
+    published_at: "2024-01-08",
+    likes_count: 3201,
+    comments_count: 445,
+    shares_count: 234,
+    views_count: 67800,
+  },
+  {
+    id: "5",
+    title: "Getting Started with Mog: A Complete Guide",
+    author: "Alex Rivera",
+    excerpt: "Everything you need to know about streaming, earning, and building your presence on the platform.",
+    image_url: "https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=800",
+    tags: ["GUIDES"],
+    topics: ["Mog", "Tutorial"],
+    published_at: "2024-01-05",
+    likes_count: 892,
+    comments_count: 156,
+    shares_count: 67,
+    views_count: 15600,
+  },
+  {
+    id: "6",
+    title: "The Economics of Creator Tokens in 2024",
+    author: "Emma Zhang",
+    excerpt: "Why tokenized communities are outperforming traditional platforms for content creators.",
+    image_url: "https://images.unsplash.com/photo-1621761191319-c6fb62004040?w=800",
+    tags: ["BUSINESS"],
+    topics: ["Tokens", "Creators"],
+    published_at: "2024-01-03",
+    likes_count: 1678,
+    comments_count: 234,
+    shares_count: 112,
+    views_count: 29300,
+  },
+  {
+    id: "7",
+    title: "Otherside: The Metaverse We've Been Waiting For?",
+    author: "Chris Nakamoto",
+    excerpt: "A first-hand account of exploring Yuga Labs' ambitious virtual world and what it means for gaming.",
+    image_url: "https://images.unsplash.com/photo-1634193295627-1cdddf751ebf?w=800",
+    tags: ["TECH"],
+    topics: ["Otherside", "Metaverse"],
+    published_at: "2024-01-01",
+    likes_count: 2134,
+    comments_count: 312,
+    shares_count: 145,
+    views_count: 41200,
+  },
+  {
+    id: "8",
+    title: "How Espresso Systems is Solving Blockchain Scalability",
+    author: "Nina Patel",
+    excerpt: "The infrastructure layer that's making fast, cheap transactions possible for NFT platforms.",
+    image_url: "https://images.unsplash.com/photo-1639762681057-408e52192e55?w=800",
+    tags: ["TECH"],
+    topics: ["Espresso", "Infrastructure"],
+    published_at: "2023-12-28",
+    likes_count: 945,
+    comments_count: 123,
+    shares_count: 56,
+    views_count: 18700,
+  },
+  {
+    id: "9",
+    title: "The Art of Building Web3 Communities",
+    author: "Tyler Morrison",
+    excerpt: "Lessons from the most successful NFT projects on fostering genuine connection and loyalty.",
+    image_url: "https://images.unsplash.com/photo-1552664730-d307ca884978?w=800",
+    tags: ["GUIDES"],
+    topics: ["Community", "Web3"],
+    published_at: "2023-12-25",
+    likes_count: 1567,
+    comments_count: 198,
+    shares_count: 89,
+    views_count: 24500,
+  },
+  {
+    id: "10",
+    title: "Celebrity NFT Holders: A Who's Who of BAYC",
+    author: "Jessica Lee",
+    excerpt: "From Snoop Dogg to Serena Williams, here are the famous faces in the Bored Ape club.",
+    image_url: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800",
+    tags: ["CULTURE"],
+    topics: ["Celebrities", "BAYC"],
+    published_at: "2023-12-22",
+    likes_count: 4521,
+    comments_count: 567,
+    shares_count: 312,
+    views_count: 89400,
+  },
+];
+
+
 export default function Read() {
   const navigate = useNavigate();
   const { isConnected } = useWallet();
@@ -61,8 +206,13 @@ export default function Read() {
 
       if (error) {
         console.error("Error fetching articles:", error);
+        // Use sample data as fallback
+        setArticles(sampleArticles);
+      } else if (data && data.length > 0) {
+        setArticles(data);
       } else {
-        setArticles(data || []);
+        // Use sample data if no articles in database
+        setArticles(sampleArticles);
       }
       setLoading(false);
     }
