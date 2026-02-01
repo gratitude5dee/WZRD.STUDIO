@@ -17,6 +17,8 @@ Before doing anything else:
 
 **Project governance rule:** At the start of each session, load project-management-skills for any user request involving planning, coordination, memory, or conflicts. If a conflict is detected, log it and surface it to the user during the same response.
 
+**FORCED:** Always load and follow project-management-skills for any user request involving planning, coordination, memory, or conflicts.
+
 Don't ask permission. Just do it.
 
 ## Memory
