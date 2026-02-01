@@ -4,6 +4,7 @@ import { Track, usePlayer } from "@/contexts/PlayerContext";
 import { Button } from "@/components/ui/button";
 import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
+import { useX402Fetch } from "@/lib/x402";
 
 interface BuyWidgetProps {
   track: Track;
@@ -16,6 +17,9 @@ export function BuyWidget({ track, onClose, onSuccess }: BuyWidgetProps) {
   const { setActiveSession, play } = usePlayer();
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
+
+  const maxValue = BigInt(Math.ceil(track.price * 10 ** 6));
+  const fetchWithPayment = useX402Fetch(maxValue);
 
   const coverUrl = track.cover_path
     ? `https://mttpdwowikfzcdpehlrd.supabase.co/storage/v1/object/public/covers/${track.cover_path}`
@@ -31,6 +35,15 @@ export function BuyWidget({ track, onClose, onSuccess }: BuyWidgetProps) {
       return;
     }
 
+    if (!fetchWithPayment) {
+      toast({
+        title: "Wallet not ready",
+        description: "Please connect your wallet to pay with x402.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsProcessing(true);
 
     try {
@@ -38,26 +51,17 @@ export function BuyWidget({ track, onClose, onSuccess }: BuyWidgetProps) {
 
       const gatewayUrl = import.meta.env.VITE_X402_GATEWAY_URL || "http://localhost:4020";
 
-      const payRequest = async (includePaymentHeader = false) => {
-        const res = await fetch(`${gatewayUrl}/api/pay/${track.id}`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ...(includePaymentHeader ? { "x402-payment": "mock" } : {}),
-          },
-          body: JSON.stringify({
-            payer_wallet: address.toLowerCase(),
-            amount: track.price,
-          }),
-        });
-        return res;
-      };
-
-      let response = await payRequest(false);
-      if (response.status === 402) {
-        // Placeholder x402 flow: retry with mock payment header
-        response = await payRequest(true);
-      }
+      const response = await fetchWithPayment(`${gatewayUrl}/api/pay/${track.id}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          walletAddress: address.toLowerCase(),
+          amount: track.price,
+          recipient: track.artist_wallet,
+        }),
+      });
 
       const data = await response.json();
 

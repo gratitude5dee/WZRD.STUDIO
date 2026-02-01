@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { 
   ChevronDown, 
   MoreHorizontal, 
@@ -27,6 +27,7 @@ import { Button } from "@/components/ui/button";
 
 export default function NowPlaying() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const {
     currentTrack,
     isPlaying,
@@ -47,6 +48,13 @@ export default function NowPlaying() {
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
   const [shuffleActive, setShuffleActive] = useState(false);
   const [repeatActive, setRepeatActive] = useState(false);
+
+  // Auto-open buy modal when coming from Listen unlock action
+  useEffect(() => {
+    if (searchParams.get("unlock") === "1" && isLocked) {
+      setShowBuyWidget(true);
+    }
+  }, [searchParams, isLocked]);
 
   // Session timer
   useEffect(() => {

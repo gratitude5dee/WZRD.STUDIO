@@ -314,9 +314,28 @@ cp .env.example .env.local
 # VITE_THIRDWEB_CLIENT_ID=your_thirdweb_client_id
 # VITE_SUPABASE_URL=your_supabase_url
 # VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+# VITE_X402_GATEWAY_URL=http://localhost:4020
 
 # Run development server
 bun run dev  # or npm run dev
+```
+
+### x402 Gateway (local)
+
+```bash
+cd gateway
+npm install
+npm run dev
+```
+
+Gateway env:
+
+```bash
+PORT=4020
+THIRDWEB_SECRET_KEY=your_secret_key
+THIRDWEB_SERVER_WALLET_ADDRESS=0xYourServerWallet
+X402_CHAIN_ID=33139
+X402_RPC_URL=https://rpc.apechain.com
 ```
 
 ### Project Structure

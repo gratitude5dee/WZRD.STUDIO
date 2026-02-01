@@ -1,4 +1,5 @@
 import { Play, Music, Lock, Check, MessageCircle } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Track, usePlayer } from "@/contexts/PlayerContext";
 import { getCoverUrl } from "@/lib/media-utils";
 import { useWallet } from "@/contexts/WalletContext";
@@ -14,6 +15,7 @@ interface TrackCardProps {
 
 export function TrackCard({ track }: TrackCardProps) {
   const { playTrack, currentTrack, isPlaying } = usePlayer();
+  const navigate = useNavigate();
   const { address } = useWallet();
   const [hasEntitlement, setHasEntitlement] = useState(false);
   const [showComments, setShowComments] = useState(false);
@@ -60,7 +62,12 @@ export function TrackCard({ track }: TrackCardProps) {
   return (
     <>
       <div
-        onClick={() => playTrack(track)}
+        onClick={() => {
+          playTrack(track);
+          if (track.price > 0 && !hasEntitlement) {
+            navigate("/now-playing?unlock=1");
+          }
+        }}
         className="group p-3 rounded-lg bg-card hover:bg-secondary/50 transition-all duration-300 cursor-pointer"
       >
         {/* Cover Image */}

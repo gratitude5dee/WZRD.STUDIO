@@ -16,3 +16,7 @@ npm run dev
 
 ## Env
 - `PORT` (default 4020)
+- `THIRDWEB_SECRET_KEY`
+- `THIRDWEB_SERVER_WALLET_ADDRESS`
+- `X402_CHAIN_ID` (default 33139)
+- `X402_RPC_URL` (default https://rpc.apechain.com)

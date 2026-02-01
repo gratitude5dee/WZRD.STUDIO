@@ -16,7 +16,9 @@ dist-ssr
 artifacts
 cache
 out
-lib
+/lib
+!src/lib
+!gateway/lib
 
 # Editor directories and files
 .vscode/*

@@ -3,6 +3,8 @@ import cors from "cors";
 import dotenv from "dotenv";
 import { z } from "zod";
 import crypto from "crypto";
+import { settlePayment } from "thirdweb/x402";
+import { getFacilitator, getNetwork } from "./lib/thirdweb.js";
 
 dotenv.config();
 
@@ -14,9 +16,9 @@ const PORT = process.env.PORT || 4020;
 const STREAM_TTL_SECONDS = 10 * 60; // 10 minutes
 
 const payRequestSchema = z.object({
-  payer_wallet: z.string().min(1),
+  walletAddress: z.string().min(1),
   amount: z.number().nonnegative(),
-  recipient: z.string().optional(),
+  recipient: z.string().min(1),
 });
 
 const sessions = new Map();
@@ -39,35 +41,61 @@ function createSession({ trackId, payerWallet }) {
   return session;
 }
 
-// x402-style payment flow: first request returns 402 challenge; second request with x402 header creates session
-app.post("/api/pay/:trackId", (req, res) => {
-  const { trackId } = req.params;
-  const parsed = payRequestSchema.safeParse(req.body);
+app.post("/api/pay/:trackId", async (req, res) => {
+  try {
+    const { trackId } = req.params;
+    const parsed = payRequestSchema.safeParse(req.body);
 
-  if (!parsed.success) {
-    return res.status(400).json({ error: "invalid_request", details: parsed.error.flatten() });
-  }
+    if (!parsed.success) {
+      return res.status(400).json({ error: "invalid_request", details: parsed.error.flatten() });
+    }
 
-  const paymentHeader = req.header("x402-payment");
+    const paymentData = req.headers["x-payment"];
+    const facilitator = getFacilitator();
+    const network = getNetwork();
 
-  if (!paymentHeader) {
-    return res.status(402).json({
-      error: "payment_required",
-      challenge: {
-        scheme: "x402",
-        token: "APE",
-        amount: parsed.data.amount,
-        description: "ApeCoin streaming payout",
+    const protocol = req.headers["x-forwarded-proto"] || "http";
+    const host = req.headers.host;
+    const resourceUrl = `${protocol}://${host}/api/pay/${trackId}`;
+
+    const result = await settlePayment({
+      resourceUrl,
+      method: "POST",
+      paymentData: paymentData || undefined,
+      payTo: parsed.data.recipient,
+      network,
+      price: `$${parsed.data.amount.toFixed(2)}`,
+      facilitator,
+      routeConfig: {
+        description: `Access to stream: ${trackId}`,
+        mimeType: "application/json",
+        maxTimeoutSeconds: STREAM_TTL_SECONDS,
       },
     });
+
+    if (result.status !== 200) {
+      if (result.responseHeaders) {
+        Object.entries(result.responseHeaders).forEach(([key, value]) => {
+          res.setHeader(key, value);
+        });
+      }
+      return res.status(result.status).json(result.responseBody);
+    }
+
+    const session = createSession({
+      trackId,
+      payerWallet: parsed.data.walletAddress.toLowerCase(),
+    });
+
+    return res.json({
+      success: true,
+      stream: session,
+      txHash: result.paymentReceipt?.transaction,
+    });
+  } catch (error) {
+    console.error("Payment error:", error);
+    return res.status(500).json({ error: error.message || "Payment failed" });
   }
-
-  const session = createSession({ trackId, payerWallet: parsed.data.payer_wallet });
-
-  return res.json({
-    success: true,
-    stream: session,
-  });
 });
 
 app.get("/api/stream/check/:streamId", (req, res) => {
