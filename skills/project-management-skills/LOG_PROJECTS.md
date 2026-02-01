@@ -4,8 +4,8 @@
 `OC-YYYYMMDD-####`
 
 ### Active Project Focus (exactly one)
-- **Active Project ID:** OC-YYYYMMDD-0001
-- **Project Name:** Kernel Governance OS (User)
+- **Active Project ID:** OC-20260201-0003
+- **Project Name:** ApeChain x402 Payouts PRD (Mog + ApeGate)
 - **Charter Link:** See `LOG_CHARTERS.md` under **Charters**
 
 ### Registry
@@ -13,6 +13,7 @@
 | --- | --- | --- | --- | --- |
 | OC-YYYYMMDD-0001 | Kernel Governance OS (User) | Active | #oc-yyyymmdd-0001-—-kernel-governance-os-user | Seed record |
 | OC-20260201-0002 | Mog PRD (Fix, Improve, Iterate) | Active | #oc-20260201-0002-—-mog-prd-fix-improve-iterate | New PRD project |
+| OC-20260201-0003 | ApeChain x402 Payouts PRD (Mog + ApeGate) | Active | #oc-20260201-0003-—-apechain-x402-payouts-prd-mog-+-apegate | PRD for ApeCoin streaming payouts |
 
 ### How to Create a Project (Streamlined)
 1. Auto-generate the next Project ID using the standard format.

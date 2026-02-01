@@ -37,3 +37,9 @@ Use this section for **clear, detailed entries** (full context, rationale, and e
 - **action:** Local E2E smoke test (onboarding → feed → search → create → library)
 - **result:** Onboarding fixed (Continue enabled after 1 genre); feed loads; Mog search input works but no results display; create opens Mog upload with connect CTA; library opens with connect CTA.
 - **links:** local dev http://localhost:8080
+
+- **timestamp:** 2026-02-01 07:46 PST
+- **project_id:** OC-20260201-0003
+- **action:** Created project + Charter Lite for ApeChain x402 Payouts PRD (Mog + ApeGate); preparing sub-agent PRD work.
+- **result:** Project registered; charter established; sub-agent requested.
+- **links:** LOG_CHARTERS.md#oc-20260201-0003-—-apechain-x402-payouts-prd-mog-+-apegate

@@ -95,3 +95,31 @@ Create a comprehensive PRD to fix, improve, and iterate on Mog (OpenClaw + MoltB
 - guardrails
 - dependencies
 - verification plan
+
+---
+
+# OC-20260201-0003 — ApeChain x402 Payouts PRD (Mog + ApeGate)
+
+#### Objective
+Define a PRD to enable ApeCoin streaming payouts via x402 for Mog, using ApeGate repo context and senior DevOps + todo planning.
+
+#### Scope (In)
+- Product requirements for ApeCoin streaming payouts via x402
+- Integration context from ApeGate repo
+- DevOps requirements (infra, CI/CD, observability, security)
+- Todo plan with milestones and acceptance criteria
+
+#### Scope (Out)
+- Implementing code changes
+- Non‑ApeChain payment methods
+
+#### Success Criteria
+- PRD is complete, structured, and actionable
+- Clear scope, milestones, and acceptance criteria
+- DevOps and rollout plan included
+
+#### Non-Goals
+- Marketing, branding, or non-product strategy
+
+#### Change Control
+- Changes logged in LOG_DECISIONS.md with rationale
