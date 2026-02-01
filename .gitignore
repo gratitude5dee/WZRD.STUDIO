@@ -31,3 +31,6 @@ out
 *.njsproj
 *.sln
 *.sw?
+
+# Ignore inner app repo
+mog/
