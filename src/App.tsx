@@ -43,37 +43,37 @@ const App = () => (
           <NotificationProvider>
             <MoltbookProvider>
               <PlayerProvider>
-              <TooltipProvider>
-                <Toaster />
-                <Sonner />
-                <BrowserRouter>
-                  <Routes>
-                    <Route path="/" element={<Intro />} />
-                    <Route path="/landing" element={<Landing />} />
-                    <Route path="/auth" element={<Auth />} />
-                    <Route path="/home" element={<Mog />} />
-                    <Route path="/listen" element={<Listen />} />
-                    <Route path="/read" element={<Read />} />
-                    <Route path="/artist" element={<Artist />} />
-                    <Route path="/upload" element={<Upload />} />
-                    <Route path="/search" element={<Search />} />
-                    <Route path="/now-playing" element={<NowPlaying />} />
-                    <Route path="/album/:id" element={<Album />} />
-                    <Route path="/library" element={<Library />} />
-                    <Route path="/watch" element={<WatchHome />} />
-                    <Route path="/watch/:id" element={<Watch />} />
-                    <Route path="/embed/track/:trackId" element={<EmbedPlayer />} />
-                    <Route path="/onboarding" element={<Onboarding />} />
-                    {/* Mog Sub-Routes */}
-                    <Route path="/mog/upload" element={<MogUpload />} />
-                    <Route path="/mog/profile/:wallet" element={<MogProfile />} />
-                    <Route path="/mog/post/:id" element={<MogPost />} />
-                    <Route path="/mog/search" element={<MogSearch />} />
-                    <Route path="/mog/library" element={<MogLibrary />} />
-                    <Route path="/agent-actions" element={<MoltbookAgentActions />} />
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
-                </BrowserRouter>
+                <TooltipProvider>
+                  <Toaster />
+                  <Sonner />
+                  <BrowserRouter>
+                    <Routes>
+                      <Route path="/" element={<Intro />} />
+                      <Route path="/landing" element={<Landing />} />
+                      <Route path="/auth" element={<Auth />} />
+                      <Route path="/home" element={<Mog />} />
+                      <Route path="/listen" element={<Listen />} />
+                      <Route path="/read" element={<Read />} />
+                      <Route path="/artist" element={<Artist />} />
+                      <Route path="/upload" element={<Upload />} />
+                      <Route path="/search" element={<Search />} />
+                      <Route path="/now-playing" element={<NowPlaying />} />
+                      <Route path="/album/:id" element={<Album />} />
+                      <Route path="/library" element={<Library />} />
+                      <Route path="/watch" element={<WatchHome />} />
+                      <Route path="/watch/:id" element={<Watch />} />
+                      <Route path="/embed/track/:trackId" element={<EmbedPlayer />} />
+                      <Route path="/onboarding" element={<Onboarding />} />
+                      {/* Mog Sub-Routes */}
+                      <Route path="/mog/upload" element={<MogUpload />} />
+                      <Route path="/mog/profile/:wallet" element={<MogProfile />} />
+                      <Route path="/mog/post/:id" element={<MogPost />} />
+                      <Route path="/mog/search" element={<MogSearch />} />
+                      <Route path="/mog/library" element={<MogLibrary />} />
+                      <Route path="/agent-actions" element={<MoltbookAgentActions />} />
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                  </BrowserRouter>
                 </TooltipProvider>
               </PlayerProvider>
             </MoltbookProvider>
