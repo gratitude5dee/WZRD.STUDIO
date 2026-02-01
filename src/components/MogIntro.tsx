@@ -27,8 +27,8 @@ export function MogIntro({ onComplete, skipEnabled = true }: MogIntroProps) {
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
-  // Phase progression: 0ms, 600ms, 1800ms, 3200ms, 5000ms, 6800ms, 8200ms, 9800ms
-  const phaseTimings = [0, 600, 1800, 3200, 5000, 6800, 8200, 9800, 11500];
+  // Phase progression: 0ms, 500ms, 1600ms, 3000ms, 4800ms, 6400ms, 8200ms, 9800ms
+  const phaseTimings = [0, 500, 1600, 3000, 4800, 6400, 8200, 9800, 11200];
 
   useEffect(() => {
     const timeouts = phaseTimings.map((timing, index) => {
@@ -52,15 +52,15 @@ export function MogIntro({ onComplete, skipEnabled = true }: MogIntroProps) {
     }
   };
 
-  // Floating orbs data
-  const orbData = [
-    { x: '15%', y: '20%', size: 300, delay: 0 },
-    { x: '80%', y: '70%', size: 200, delay: 0.5 },
-    { x: '60%', y: '15%', size: 150, delay: 1 },
+  // Bioluminescent glow data
+  const glowData = [
+    { x: '10%', y: '18%', size: 320, delay: 0 },
+    { x: '78%', y: '68%', size: 240, delay: 0.5 },
+    { x: '55%', y: '12%', size: 180, delay: 1 },
   ];
 
-  // Particles
-  const particles = Array.from({ length: 50 }, (_, i) => ({
+  // Bubbles
+  const bubbles = Array.from({ length: 45 }, (_, i) => ({
     id: i,
     x: Math.random() * 100,
     y: Math.random() * 100,
@@ -69,8 +69,8 @@ export function MogIntro({ onComplete, skipEnabled = true }: MogIntroProps) {
     delay: Math.random() * 3,
   }));
 
-  const letters = ['M', 'O', 'G'];
-  const taglineWords = ['Content', '·', 'Music', '·', 'Media'];
+  const letters = ['L', 'O', 'B', 'S', 'T', 'E', 'R'];
+  const taglineWords = ['Brine', '·', 'Rhythm', '·', 'Design'];
 
   return (
     <AnimatePresence mode="wait">
@@ -94,47 +94,47 @@ export function MogIntro({ onComplete, skipEnabled = true }: MogIntroProps) {
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'flex-start',
-            paddingTop: '15vh',
+            paddingTop: '12vh',
             paddingBottom: '40px',
-            background: 'linear-gradient(180deg, #0a0a0a 0%, #151210 50%, #0a0a0a 100%)',
+            background: 'linear-gradient(180deg, #041827 0%, #0c2a3f 45%, #041827 100%)',
             cursor: skipEnabled ? 'pointer' : 'default',
             overflow: 'hidden',
           }}
         >
-          {/* Ambient floating orbs */}
-          {orbData.map((orb, i) => (
+          {/* Bioluminescent glows */}
+          {glowData.map((glow, i) => (
             <motion.div
               key={i}
               initial={{ opacity: 0, scale: 0.5 }}
               animate={{
-                opacity: phase >= 1 ? 0.15 : 0,
+                opacity: phase >= 1 ? 0.2 : 0,
                 scale: phase >= 1 ? 1 : 0.5,
                 x: mousePosition.x * (30 + i * 10),
                 y: mousePosition.y * (30 + i * 10),
               }}
               transition={{
-                opacity: { duration: 2, delay: orb.delay },
-                scale: { duration: 2, delay: orb.delay },
+                opacity: { duration: 2, delay: glow.delay },
+                scale: { duration: 2, delay: glow.delay },
                 x: { duration: 0.5, ease: 'easeOut' },
                 y: { duration: 0.5, ease: 'easeOut' },
               }}
               style={{
                 position: 'absolute',
-                left: orb.x,
-                top: orb.y,
-                width: orb.size,
-                height: orb.size,
+                left: glow.x,
+                top: glow.y,
+                width: glow.size,
+                height: glow.size,
                 borderRadius: '50%',
-                background: 'radial-gradient(circle, rgba(196, 149, 106, 0.3) 0%, transparent 70%)',
+                background: 'radial-gradient(circle, rgba(255, 108, 83, 0.28) 0%, transparent 70%)',
                 pointerEvents: 'none',
               }}
             />
           ))}
 
-          {/* Ambient particles */}
-          {particles.map((particle) => (
+          {/* Rising bubbles */}
+          {bubbles.map((bubble) => (
             <motion.div
-              key={particle.id}
+              key={bubble.id}
               initial={{ opacity: 0, scale: 0 }}
               animate={{
                 opacity: phase >= 1 ? [0, 0.6, 0] : 0,
@@ -142,159 +142,212 @@ export function MogIntro({ onComplete, skipEnabled = true }: MogIntroProps) {
                 y: phase >= 1 ? [0, -40] : 0,
               }}
               transition={{
-                duration: particle.duration,
-                delay: particle.delay + 1,
+                duration: bubble.duration,
+                delay: bubble.delay + 1,
                 repeat: Infinity,
                 ease: 'easeOut',
               }}
               style={{
                 position: 'absolute',
-                left: `${particle.x}%`,
-                top: `${particle.y}%`,
-                width: particle.size,
-                height: particle.size,
+                left: `${bubble.x}%`,
+                top: `${bubble.y}%`,
+                width: bubble.size,
+                height: bubble.size,
                 borderRadius: '50%',
-                background: 'rgba(196, 149, 106, 0.6)',
+                background: 'rgba(160, 216, 255, 0.6)',
+                boxShadow: '0 0 12px rgba(160, 216, 255, 0.4)',
                 pointerEvents: 'none',
               }}
             />
           ))}
 
-          {/* Vignette overlay */}
+          {/* Ocean vignette overlay */}
           <div
             style={{
               position: 'absolute',
               inset: 0,
-              background: 'radial-gradient(ellipse at center, transparent 0%, rgba(0,0,0,0.7) 100%)',
+              background: 'radial-gradient(ellipse at center, rgba(11, 44, 63, 0.2) 0%, rgba(3, 16, 26, 0.85) 100%)',
               pointerEvents: 'none',
             }}
           />
 
-          {/* Enhanced Radar */}
+          {/* Lobster hero */}
           <motion.div
-            initial={{ scale: 0, opacity: 0 }}
+            initial={{ scale: 0.6, opacity: 0 }}
             animate={{
-              scale: phase >= 1 ? 1 : 0,
+              scale: phase >= 1 ? 1 : 0.6,
               opacity: phase >= 1 ? 1 : 0,
             }}
-            transition={{ duration: 1.5, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 1.6, ease: [0.22, 1, 0.36, 1] }}
             style={{
-              position: 'absolute',
+              position: 'relative',
               width: '320px',
               height: '320px',
-              transform: `translate(${mousePosition.x * 20}px, ${mousePosition.y * 20}px)`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transform: `translate(${mousePosition.x * 16}px, ${mousePosition.y * 16}px)`,
               transition: 'transform 0.3s ease-out',
             }}
           >
-            <svg viewBox="0 0 200 200" style={{ width: '100%', height: '100%' }}>
-              {/* Concentric rings */}
-              {[80, 65, 50, 35, 20].map((radius, i) => (
-                <motion.circle
-                  key={radius}
-                  cx="100"
-                  cy="100"
-                  r={radius}
-                  fill="none"
-                  stroke="rgba(196, 149, 106, 0.25)"
-                  strokeWidth="0.5"
-                  initial={{ scale: 0, opacity: 0 }}
+            <svg viewBox="0 0 240 240" style={{ width: '100%', height: '100%' }}>
+              <defs>
+                <linearGradient id="lobsterBody" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#ff6b57" />
+                  <stop offset="45%" stopColor="#ff8a5b" />
+                  <stop offset="100%" stopColor="#ffb07c" />
+                </linearGradient>
+                <linearGradient id="lobsterShadow" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stopColor="rgba(0,0,0,0.25)" />
+                  <stop offset="100%" stopColor="rgba(0,0,0,0)" />
+                </linearGradient>
+              </defs>
+
+              {/* Tail segments */}
+              {[0, 1, 2, 3].map((segment) => (
+                <motion.ellipse
+                  key={segment}
+                  cx="120"
+                  cy={170 - segment * 18}
+                  rx={32 - segment * 3}
+                  ry={18 - segment * 2}
+                  fill="url(#lobsterBody)"
+                  opacity={0.9}
+                  initial={{ scale: 0.7, opacity: 0 }}
                   animate={{
-                    scale: phase >= 1 ? 1 : 0,
-                    opacity: phase >= 1 ? [0.1, 0.4, 0.1] : 0,
+                    scale: phase >= 1 ? 1 : 0.7,
+                    opacity: phase >= 1 ? 0.95 : 0,
                   }}
                   transition={{
-                    scale: { duration: 1, delay: i * 0.1, ease: [0.22, 1, 0.36, 1] },
-                    opacity: { duration: 2, delay: i * 0.1 + 1, repeat: Infinity, ease: 'easeInOut' },
+                    duration: 1,
+                    delay: 0.2 + segment * 0.1,
+                    ease: [0.22, 1, 0.36, 1],
                   }}
                 />
               ))}
 
-              {/* Axis lines */}
-              <motion.g
-                initial={{ opacity: 0 }}
-                animate={{ opacity: phase >= 1 ? 0.3 : 0 }}
-                transition={{ duration: 1, delay: 0.5 }}
-              >
-                <line x1="100" y1="15" x2="100" y2="185" stroke="rgba(196, 149, 106, 0.2)" strokeWidth="0.5" />
-                <line x1="15" y1="100" x2="185" y2="100" stroke="rgba(196, 149, 106, 0.2)" strokeWidth="0.5" />
-                <line x1="30" y1="30" x2="170" y2="170" stroke="rgba(196, 149, 106, 0.1)" strokeWidth="0.5" />
-                <line x1="170" y1="30" x2="30" y2="170" stroke="rgba(196, 149, 106, 0.1)" strokeWidth="0.5" />
-              </motion.g>
+              {/* Body */}
+              <motion.ellipse
+                cx="120"
+                cy="95"
+                rx="45"
+                ry="60"
+                fill="url(#lobsterBody)"
+                initial={{ scale: 0.6, opacity: 0 }}
+                animate={{
+                  scale: phase >= 1 ? 1 : 0.6,
+                  opacity: phase >= 1 ? 1 : 0,
+                }}
+                transition={{ duration: 1.2, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
+              />
 
-              {/* Rotating sweep */}
+              {/* Body highlight */}
+              <motion.path
+                d="M110 50 C95 70 90 100 100 130"
+                stroke="rgba(255,255,255,0.3)"
+                strokeWidth="6"
+                strokeLinecap="round"
+                fill="none"
+                initial={{ pathLength: 0, opacity: 0 }}
+                animate={{
+                  pathLength: phase >= 2 ? 1 : 0,
+                  opacity: phase >= 2 ? 0.6 : 0,
+                }}
+                transition={{ duration: 1.1, delay: 0.4 }}
+              />
+
+              {/* Eyes */}
+              <motion.circle
+                cx="104"
+                cy="60"
+                r="5"
+                fill="#1d0b0b"
+                initial={{ scale: 0 }}
+                animate={{ scale: phase >= 2 ? 1 : 0 }}
+                transition={{ duration: 0.4, delay: 0.6 }}
+              />
+              <motion.circle
+                cx="136"
+                cy="60"
+                r="5"
+                fill="#1d0b0b"
+                initial={{ scale: 0 }}
+                animate={{ scale: phase >= 2 ? 1 : 0 }}
+                transition={{ duration: 0.4, delay: 0.6 }}
+              />
+
+              {/* Antennae */}
+              <motion.path
+                d="M100 45 C70 30 52 12 30 10"
+                stroke="#ffb07c"
+                strokeWidth="3"
+                fill="none"
+                initial={{ pathLength: 0, opacity: 0 }}
+                animate={{
+                  pathLength: phase >= 2 ? 1 : 0,
+                  opacity: phase >= 2 ? 0.9 : 0,
+                }}
+                transition={{ duration: 1.2, delay: 0.5 }}
+              />
+              <motion.path
+                d="M140 45 C170 30 188 12 210 10"
+                stroke="#ffb07c"
+                strokeWidth="3"
+                fill="none"
+                initial={{ pathLength: 0, opacity: 0 }}
+                animate={{
+                  pathLength: phase >= 2 ? 1 : 0,
+                  opacity: phase >= 2 ? 0.9 : 0,
+                }}
+                transition={{ duration: 1.2, delay: 0.5 }}
+              />
+
+              {/* Claws */}
               <motion.g
-                initial={{ rotate: -45 }}
-                animate={{ rotate: phase >= 1 ? 315 : -45 }}
-                transition={{ duration: 8, ease: 'linear', repeat: Infinity }}
-                style={{ transformOrigin: '100px 100px' }}
+                initial={{ rotate: -12, opacity: 0 }}
+                animate={{
+                  rotate: phase >= 2 ? 8 : -12,
+                  opacity: phase >= 1 ? 1 : 0,
+                }}
+                transition={{ duration: 1.2, delay: 0.4, ease: 'easeOut' }}
+                style={{ transformOrigin: '60px 90px' }}
               >
                 <path
-                  d="M 100 100 L 100 20 A 80 80 0 0 1 156.57 43.43 Z"
-                  fill="url(#sweepGradient)"
+                  d="M52 90 C20 88 16 120 44 132 C64 140 84 128 80 110"
+                  fill="url(#lobsterBody)"
+                />
+                <path
+                  d="M45 100 C30 105 28 120 40 126"
+                  stroke="url(#lobsterShadow)"
+                  strokeWidth="4"
+                  fill="none"
                 />
               </motion.g>
 
-              {/* Center pulse */}
-              <motion.circle
-                cx="100"
-                cy="100"
-                r="6"
-                fill="#C4956A"
-                initial={{ scale: 0 }}
+              <motion.g
+                initial={{ rotate: 12, opacity: 0 }}
                 animate={{
-                  scale: phase >= 1 ? [1, 1.3, 1] : 0,
-                  opacity: phase >= 1 ? [0.8, 1, 0.8] : 0,
+                  rotate: phase >= 2 ? -8 : 12,
+                  opacity: phase >= 1 ? 1 : 0,
                 }}
-                transition={{
-                  scale: { duration: 2, repeat: Infinity, ease: 'easeInOut' },
-                  opacity: { duration: 2, repeat: Infinity, ease: 'easeInOut' },
-                }}
-              />
-              <motion.circle
-                cx="100"
-                cy="100"
-                r="3"
-                fill="#fff"
-                initial={{ scale: 0 }}
-                animate={{ scale: phase >= 1 ? 1 : 0 }}
-                transition={{ duration: 0.5, delay: 1 }}
-              />
-
-              {/* Detection blips */}
-              {phase >= 2 && (
-                <>
-                  <motion.circle
-                    cx="140"
-                    cy="70"
-                    r="3"
-                    fill="#C4956A"
-                    initial={{ scale: 0, opacity: 0 }}
-                    animate={{ scale: [0, 1.5, 1], opacity: [0, 1, 0.6] }}
-                    transition={{ duration: 0.8, delay: 0.2 }}
-                  />
-                  <motion.circle
-                    cx="60"
-                    cy="130"
-                    r="2"
-                    fill="#C4956A"
-                    initial={{ scale: 0, opacity: 0 }}
-                    animate={{ scale: [0, 1.5, 1], opacity: [0, 1, 0.6] }}
-                    transition={{ duration: 0.8, delay: 0.5 }}
-                  />
-                </>
-              )}
-
-              <defs>
-                <linearGradient id="sweepGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="rgba(196, 149, 106, 0.6)" />
-                  <stop offset="50%" stopColor="rgba(196, 149, 106, 0.2)" />
-                  <stop offset="100%" stopColor="rgba(196, 149, 106, 0)" />
-                </linearGradient>
-              </defs>
+                transition={{ duration: 1.2, delay: 0.4, ease: 'easeOut' }}
+                style={{ transformOrigin: '180px 90px' }}
+              >
+                <path
+                  d="M188 90 C220 88 224 120 196 132 C176 140 156 128 160 110"
+                  fill="url(#lobsterBody)"
+                />
+                <path
+                  d="M195 100 C210 105 212 120 200 126"
+                  stroke="url(#lobsterShadow)"
+                  strokeWidth="4"
+                  fill="none"
+                />
+              </motion.g>
             </svg>
           </motion.div>
 
-          {/* EARTONE Wordmark */}
+          {/* Lobster Wordmark */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: phase >= 2 ? 1 : 0 }}
@@ -304,7 +357,7 @@ export function MogIntro({ onComplete, skipEnabled = true }: MogIntroProps) {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              marginTop: '180px',
+              marginTop: '64px',
               perspective: '1200px',
             }}
           >
@@ -337,10 +390,10 @@ export function MogIntro({ onComplete, skipEnabled = true }: MogIntroProps) {
                   display: 'inline-block',
                   fontFamily: "'Cormorant Garamond', Georgia, serif",
                   fontSize: 'clamp(56px, 12vw, 108px)',
-                  fontWeight: 300,
-                  letterSpacing: '0.12em',
-                  color: '#C4956A',
-                  textShadow: '0 0 60px rgba(196, 149, 106, 0.4)',
+                  fontWeight: 500,
+                  letterSpacing: '0.18em',
+                  color: '#ffb07c',
+                  textShadow: '0 0 60px rgba(255, 138, 91, 0.45)',
                   cursor: 'default',
                 }}
               >
@@ -354,18 +407,18 @@ export function MogIntro({ onComplete, skipEnabled = true }: MogIntroProps) {
             initial={{ scaleX: 0, opacity: 0 }}
             animate={{
               scaleX: phase >= 2 ? 1 : 0,
-              opacity: phase >= 2 ? 0.5 : 0,
+              opacity: phase >= 2 ? 0.6 : 0,
             }}
             transition={{ duration: 1.2, delay: 0.8, ease: [0.22, 1, 0.36, 1] }}
             style={{
-              width: '200px',
+              width: '260px',
               height: '1px',
-              background: 'linear-gradient(90deg, transparent, #C4956A, transparent)',
+              background: 'linear-gradient(90deg, transparent, #ff8a5b, transparent)',
               marginTop: '24px',
             }}
           />
 
-          {/* Tagline: Content · Music · Media ... */}
+          {/* Tagline: Brine · Rhythm · Design ... */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: phase >= 3 ? 1 : 0 }}
@@ -373,7 +426,7 @@ export function MogIntro({ onComplete, skipEnabled = true }: MogIntroProps) {
               display: 'flex',
               alignItems: 'center',
               gap: '20px',
-              marginTop: '48px',
+              marginTop: '36px',
               fontFamily: "'Inter', sans-serif",
               fontSize: 'clamp(13px, 1.8vw, 16px)',
               fontWeight: 400,
@@ -396,7 +449,7 @@ export function MogIntro({ onComplete, skipEnabled = true }: MogIntroProps) {
                   ease: [0.22, 1, 0.36, 1],
                 }}
                 style={{
-                  color: word === '·' ? 'rgba(196, 149, 106, 0.5)' : 'rgba(232, 219, 197, 0.85)',
+                  color: word === '·' ? 'rgba(255, 176, 124, 0.5)' : 'rgba(213, 235, 255, 0.85)',
                 }}
               >
                 {word}
@@ -408,40 +461,40 @@ export function MogIntro({ onComplete, skipEnabled = true }: MogIntroProps) {
               initial={{ opacity: 0 }}
               animate={{ opacity: phase >= 3 ? [0.3, 0.8, 0.3] : 0 }}
               transition={{ duration: 1.5, repeat: Infinity, delay: 1 }}
-              style={{ color: 'rgba(196, 149, 106, 0.6)', letterSpacing: '0.3em' }}
+              style={{ color: 'rgba(255, 176, 124, 0.6)', letterSpacing: '0.3em' }}
             >
               ...
             </motion.span>
           </motion.div>
 
-          {/* CULTURE - Emphasized */}
+          {/* Deep water callout */}
           <motion.div
             initial={{ scale: 0.7, opacity: 0, letterSpacing: '0em' }}
             animate={{
               scale: phase >= 4 ? 1 : 0.7,
               opacity: phase >= 4 ? 1 : 0,
-              letterSpacing: phase >= 4 ? '0.35em' : '0em',
+              letterSpacing: phase >= 4 ? '0.28em' : '0em',
             }}
             transition={{
               duration: 1.4,
               ease: [0.22, 1, 0.36, 1],
             }}
             style={{
-              marginTop: '32px',
+              marginTop: '28px',
               fontFamily: "'Cormorant Garamond', Georgia, serif",
               fontSize: 'clamp(36px, 7vw, 64px)',
-              fontWeight: 600,
+              fontWeight: 700,
               fontStyle: 'italic',
-              color: '#C4956A',
+              color: '#ffd6b3',
               textTransform: 'uppercase',
-              textShadow: phase >= 5 ? '0 0 80px rgba(196, 149, 106, 0.6)' : 'none',
+              textShadow: phase >= 5 ? '0 0 80px rgba(255, 176, 124, 0.6)' : 'none',
               transition: 'text-shadow 1s ease',
             }}
           >
-            CULTURE
+            DEEP SEA
           </motion.div>
 
-          {/* Powered by thirdweb */}
+          {/* Seaside signature */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{
@@ -464,10 +517,10 @@ export function MogIntro({ onComplete, skipEnabled = true }: MogIntroProps) {
                 fontSize: '11px',
                 letterSpacing: '0.2em',
                 textTransform: 'uppercase',
-                color: 'rgba(232, 219, 197, 0.4)',
+                color: 'rgba(213, 235, 255, 0.5)',
               }}
             >
-              mog powered by
+              welcome to the reef
             </span>
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
@@ -487,30 +540,30 @@ export function MogIntro({ onComplete, skipEnabled = true }: MogIntroProps) {
                   fontFamily: "'Courier New', monospace",
                   fontSize: '13px',
                   letterSpacing: '-0.02em',
-                  color: 'rgba(232, 219, 197, 0.7)',
+                  color: 'rgba(213, 235, 255, 0.8)',
                 }}
               >
-                Espresso
+                Saltwater
               </span>
               <span
                 style={{
                   fontFamily: "'Inter', sans-serif",
                   fontSize: '13px',
                   fontWeight: 700,
-                  color: '#3B82F6',
+                  color: '#5bdcff',
                 }}
               >
-                ApeChain ⛓️
+                Currents
               </span>
               <span
                 style={{
                   fontFamily: "'Inter', sans-serif",
                   fontSize: '13px',
                   fontWeight: 600,
-                  color: 'rgba(232, 219, 197, 0.9)',
+                  color: 'rgba(255, 214, 179, 0.9)',
                 }}
               >
-                thirdweb
+                Lobster
               </span>
             </motion.div>
           </motion.div>
@@ -523,7 +576,7 @@ export function MogIntro({ onComplete, skipEnabled = true }: MogIntroProps) {
               left: 0,
               right: 0,
               height: '3px',
-              background: 'rgba(196, 149, 106, 0.1)',
+              background: 'rgba(91, 220, 255, 0.12)',
             }}
           >
             <motion.div
@@ -532,7 +585,7 @@ export function MogIntro({ onComplete, skipEnabled = true }: MogIntroProps) {
               transition={{ duration: 0.5, ease: 'easeOut' }}
               style={{
                 height: '100%',
-                background: 'linear-gradient(90deg, #C4956A, #D4A97A)',
+                background: 'linear-gradient(90deg, #5bdcff, #ff8a5b)',
                 transformOrigin: 'left',
               }}
             />
@@ -544,18 +597,18 @@ export function MogIntro({ onComplete, skipEnabled = true }: MogIntroProps) {
               initial={{ opacity: 0 }}
               animate={{ opacity: phase >= 2 ? 0.4 : 0 }}
               transition={{ delay: 1, duration: 1 }}
-              style={{
-                position: 'absolute',
-                bottom: '16px',
-                right: '24px',
-                fontFamily: "'Inter', sans-serif",
-                fontSize: '11px',
-                letterSpacing: '0.1em',
-                color: 'rgba(232, 219, 197, 0.4)',
-                textTransform: 'uppercase',
-              }}
-            >
-              Click to skip
+            style={{
+              position: 'absolute',
+              bottom: '16px',
+              right: '24px',
+              fontFamily: "'Inter', sans-serif",
+              fontSize: '11px',
+              letterSpacing: '0.1em',
+              color: 'rgba(213, 235, 255, 0.45)',
+              textTransform: 'uppercase',
+            }}
+          >
+            Click to skip
             </motion.div>
           )}
         </motion.div>
