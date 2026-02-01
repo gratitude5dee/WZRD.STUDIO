@@ -97,6 +97,7 @@ Traditional Platform:           Mog with ApeCoin:
 
 ### 🌐 **MoltBook Profiles**
 
+ HEAD
 Your **Web3 identity layer** — a portable, composable profile that travels with you across the decentralized internet:
 
 - Connect NFTs (BAYC, MAYC, CryptoPunks)
@@ -533,3 +534,51 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 </div>
 ]]>
+
+
+## Moltbook Identity (Sign in with Moltbook)
+
+This repo includes a Supabase Edge Function to verify Moltbook identity tokens.
+
+### Setup
+
+1. Set your Moltbook app key in environment variables:
+
+```bash
+supabase secrets set MOLTBOOK_APP_KEY=your_moltbook_app_key
+```
+
+(Optional) If you restrict tokens to an audience, also set:
+
+```bash
+supabase secrets set MOLTBOOK_AUDIENCE=your-domain.com
+```
+
+2. Deploy Edge Functions.
+
+### Verify a token
+
+Send a request with the identity token header:
+
+```
+POST /functions/v1/moltbook-auth
+X-Moltbook-Identity: <token>
+```
+
+Response:
+
+```json
+{
+  "valid": true,
+  "agent": {
+    "id": "...",
+    "name": "...",
+    "karma": 123,
+    "avatar_url": "...",
+    "is_claimed": true,
+    "owner": { "x_handle": "...", "x_verified": true }
+  }
+}
+```
+
+Errors return `valid: false` with `error` set to values like `identity_token_expired`, `invalid_token`, or `invalid_app_key`.
