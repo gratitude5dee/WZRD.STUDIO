@@ -63,6 +63,34 @@ Define and enforce the governance OS for all OpenClaw projects.
 
 #### Change Control
 
+---
+
+# OC-20260201-0002 — Mog PRD (Fix, Improve, Iterate)
+
+#### Objective
+Create a comprehensive PRD to fix, improve, and iterate on Mog (OpenClaw + MoltBook ecosystem), covering product, engineering, and DevOps requirements.
+
+#### Scope (In)
+- PRD covering onboarding, feed, search, create, watch, library, share, and core UX flows
+- Technical fixes, reliability, observability, and deployment improvements
+- OpenClaw + MoltBook integration considerations
+- Prioritized roadmap, success metrics, and risks
+
+#### Scope (Out)
+- Implementing fixes or shipping code changes
+- Brand/marketing strategy beyond product requirements
+
+#### Success Criteria
+- PRD is complete, structured, and actionable
+- Clear prioritization (P0/P1/P2), owners, and milestones
+- Includes acceptance criteria and instrumentation plan
+
+#### Non-Goals
+- Detailed implementation tasks or code-level specs
+
+#### Change Control
+- Changes logged in LOG_DECISIONS.md with rationale
+
 ### Charter Full (Optional Expansion)
 - guardrails
 - dependencies
