@@ -11,7 +11,7 @@ npm run dev
 
 ## Endpoints
 - `POST /api/pay/:trackId` → x402 challenge then stream session
-- `GET /api/stream/check/:streamId` → validate session
+- `POST /api/event` → store track event (view/listen/stream)
 - `GET /api/session/active?trackId=...&walletAddress=...` → latest valid session
 - `GET /health`
 

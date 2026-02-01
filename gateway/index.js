@@ -102,6 +102,46 @@ app.post("/api/pay/:trackId", async (req, res) => {
   }
 });
 
+app.post("/api/event", async (req, res) => {
+  try {
+    const eventSchema = z.object({
+      trackId: z.string().min(1),
+      walletAddress: z.string().optional(),
+      artistWallet: z.string().min(1),
+      eventType: z.enum(["view", "listen_start", "stream_30s", "listen_complete", "session_expired"]),
+      streamSessionId: z.string().optional(),
+      streamId: z.string().optional(),
+      txHash: z.string().optional(),
+    });
+
+    const parsed = eventSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: "invalid_request", details: parsed.error.flatten() });
+    }
+
+    const supabase = getSupabaseAdmin();
+    const { data: eventId, error } = await supabase.rpc("create_track_event", {
+      p_track_id: parsed.data.trackId,
+      p_payer_wallet: parsed.data.walletAddress || null,
+      p_artist_wallet: parsed.data.artistWallet,
+      p_event_type: parsed.data.eventType,
+      p_stream_session_id: parsed.data.streamSessionId || null,
+      p_stream_id: parsed.data.streamId || null,
+      p_tx_hash: parsed.data.txHash || null,
+    });
+
+    if (error) {
+      console.error("Track event RPC error:", error);
+      return res.status(500).json({ error: "event_store_failed" });
+    }
+
+    return res.json({ success: true, id: eventId });
+  } catch (error) {
+    console.error("Track event error:", error);
+    return res.status(500).json({ error: "event_store_failed" });
+  }
+});
+
 app.get("/api/session/active", async (req, res) => {
   try {
     const trackId = req.query.trackId;

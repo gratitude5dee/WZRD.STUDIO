@@ -20,6 +20,8 @@ import {
 } from "lucide-react";
 import { usePlayer } from "@/contexts/PlayerContext";
 import { useWallet } from "@/contexts/WalletContext";
+import { postTrackEvent } from "@/lib/transactions";
+import { useToast } from "@/hooks/use-toast";
 import { BuyWidget } from "@/components/BuyWidget";
 import { ShareSheet } from "@/components/ShareSheet";
 import { TrackOptionsSheet } from "@/components/TrackOptionsSheet";
@@ -45,6 +47,7 @@ export default function NowPlaying() {
   const { address } = useWallet();
 
   const [showBuyWidget, setShowBuyWidget] = useState(false);
+  const { toast } = useToast();
   const [showShare, setShowShare] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
   const [showLyrics, setShowLyrics] = useState(false);
@@ -81,6 +84,10 @@ export default function NowPlaying() {
             access_token: data.stream.access_token,
             expires_at: data.stream.expires_at,
           });
+          toast({
+            title: "Session restored",
+            description: "Your stream is still active.",
+          });
         }
       } catch (error) {
         console.warn("Failed to restore session", error);
@@ -113,6 +120,29 @@ export default function NowPlaying() {
     const interval = setInterval(checkExpiry, 1000);
     return () => clearInterval(interval);
   }, [activeSession]);
+
+  // Handle session expiry
+  useEffect(() => {
+    if (!activeSession || timeLeft === null) return;
+    if (timeLeft === 0) {
+      setActiveSession(null);
+      toast({
+        title: "Session expired",
+        description: "Re-unlock to continue listening.",
+        variant: "destructive",
+      });
+      if (currentTrack) {
+        postTrackEvent({
+          trackId: currentTrack.id,
+          walletAddress: address,
+          artistWallet: currentTrack.artist_wallet,
+          eventType: "session_expired",
+          streamSessionId: activeSession.id,
+          streamId: activeSession.stream_id,
+        });
+      }
+    }
+  }, [timeLeft, activeSession, currentTrack, address, setActiveSession]);
 
   if (!currentTrack) {
     return (
