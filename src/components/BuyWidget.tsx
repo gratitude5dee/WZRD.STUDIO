@@ -3,7 +3,6 @@ import { X, Clock, Wallet, Loader2 } from "lucide-react";
 import { Track, usePlayer } from "@/contexts/PlayerContext";
 import { Button } from "@/components/ui/button";
 import { useWallet } from "@/contexts/WalletContext";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 interface BuyWidgetProps {
@@ -35,27 +34,38 @@ export function BuyWidget({ track, onClose, onSuccess }: BuyWidgetProps) {
     setIsProcessing(true);
 
     try {
-      console.log('[BuyWidget] Processing payment for track:', track.id);
+      console.log("[BuyWidget] Processing payment for track:", track.id);
 
-      // Call pay-stream edge function
-      const { data, error } = await supabase.functions.invoke('pay-stream', {
-        body: {
-          track_id: track.id,
-          payer_wallet: address.toLowerCase(),
-          amount: track.price
-        }
-      });
+      const gatewayUrl = import.meta.env.VITE_X402_GATEWAY_URL || "http://localhost:4020";
 
-      if (error) {
-        console.error('[BuyWidget] Edge function error:', error);
-        throw new Error(error.message || 'Payment processing failed');
+      const payRequest = async (includePaymentHeader = false) => {
+        const res = await fetch(`${gatewayUrl}/api/pay/${track.id}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(includePaymentHeader ? { "x402-payment": "mock" } : {}),
+          },
+          body: JSON.stringify({
+            payer_wallet: address.toLowerCase(),
+            amount: track.price,
+          }),
+        });
+        return res;
+      };
+
+      let response = await payRequest(false);
+      if (response.status === 402) {
+        // Placeholder x402 flow: retry with mock payment header
+        response = await payRequest(true);
       }
 
-      if (!data?.success) {
-        throw new Error(data?.error || 'Payment failed');
+      const data = await response.json();
+
+      if (!response.ok || !data?.success) {
+        throw new Error(data?.error || "Payment failed");
       }
 
-      console.log('[BuyWidget] Payment successful:', data);
+      console.log("[BuyWidget] Payment successful:", data);
 
       // Set active session in player context
       setActiveSession({
@@ -142,11 +152,7 @@ export function BuyWidget({ track, onClose, onSuccess }: BuyWidgetProps) {
           </p>
 
           {/* Purchase Button */}
-          <Button
-            onClick={handlePurchase}
-            disabled={isProcessing}
-            className="w-full h-12 text-base font-semibold"
-          >
+          <Button onClick={handlePurchase} disabled={isProcessing} className="w-full h-12 text-base font-semibold">
             {isProcessing ? (
               <>
                 <Loader2 className="h-5 w-5 animate-spin mr-2" />

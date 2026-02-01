@@ -10,7 +10,8 @@ npm run dev
 ```
 
 ## Endpoints
-- `POST /stream` → returns 402 payment challenge (placeholder)
+- `POST /api/pay/:trackId` → x402 challenge then stream session
+- `GET /api/stream/check/:streamId` → validate session
 - `GET /health`
 
 ## Env
