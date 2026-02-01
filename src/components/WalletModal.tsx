@@ -1,7 +1,7 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { ArrowUpRight, ArrowDownLeft, CreditCard, List, Eye, Wallet, LogOut, Copy, Check, ChevronRight, Upload } from "lucide-react";
+import { ArrowUpRight, ArrowDownLeft, CreditCard, List, Eye, Wallet, LogOut, Copy, Check, ChevronRight, Upload, Bot } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
@@ -129,6 +129,17 @@ export function WalletModal({
             <button className="w-full flex items-center gap-3 p-4 rounded-xl hover:bg-muted/50 transition-colors">
               <Eye className="h-5 w-5 text-muted-foreground" />
               <span className="font-medium text-foreground">View Assets</span>
+            </button>
+            <button
+              onClick={() => {
+                onOpenChange(false);
+                navigate("/agent-actions");
+              }}
+              className="w-full flex items-center gap-3 p-4 rounded-xl hover:bg-muted/50 transition-colors"
+            >
+              <Bot className="h-5 w-5 text-muted-foreground" />
+              <span className="font-medium text-foreground">Agent Actions</span>
+              <ChevronRight className="h-5 w-5 text-muted-foreground ml-auto" />
             </button>
             <button className="w-full flex items-center gap-3 p-4 rounded-xl hover:bg-muted/50 transition-colors">
               <Wallet className="h-5 w-5 text-muted-foreground" />
