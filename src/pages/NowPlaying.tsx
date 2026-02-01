@@ -234,7 +234,7 @@ export default function NowPlaying() {
             className="w-full max-w-sm h-12"
           >
             <Wallet className="h-5 w-5 mr-2" />
-            Unlock for ${currentTrack.price.toFixed(3)}
+            Unlock with ApeCoin (${currentTrack.price.toFixed(3)})
           </Button>
         ) : (
           activeSession && timeLeft !== null && (

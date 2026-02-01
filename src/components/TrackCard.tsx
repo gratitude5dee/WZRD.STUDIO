@@ -1,4 +1,4 @@
-import { Play, Music, Lock, Check, MessageCircle } from "lucide-react";
+import { Play, Music, Lock, Check, MessageCircle, Wallet } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Track, usePlayer } from "@/contexts/PlayerContext";
 import { getCoverUrl } from "@/lib/media-utils";
@@ -99,7 +99,7 @@ export function TrackCard({ track }: TrackCardProps) {
                   OWNED
                 </>
               ) : (
-                `${track.price} ETH`
+                `${track.price} APE`
               )}
             </div>
           )}
@@ -162,6 +162,20 @@ export function TrackCard({ track }: TrackCardProps) {
             </button>
           </div>
         </div>
+
+        {isPaidTrack && !hasEntitlement && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              playTrack(track);
+              navigate("/now-playing?unlock=1");
+            }}
+            className="mt-2 w-full inline-flex items-center justify-center gap-2 text-xs font-semibold bg-primary/15 text-primary border border-primary/30 rounded-md py-1.5 hover:bg-primary/20"
+          >
+            <Wallet className="h-3 w-3" />
+            Pay to Play (x402)
+          </button>
+        )}
       </div>
 
       <ContentCommentsSheet
