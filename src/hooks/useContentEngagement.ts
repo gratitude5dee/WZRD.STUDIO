@@ -11,6 +11,7 @@ interface UseContentEngagementOptions {
   initialComments?: number;
   initialShares?: number;
   initialViews?: number;
+  creatorWallet?: string | null;
 }
 
 export function useContentEngagement({
@@ -20,6 +21,7 @@ export function useContentEngagement({
   initialComments = 0,
   initialShares = 0,
   initialViews = 0,
+  creatorWallet = null,
 }: UseContentEngagementOptions) {
   const { address } = useWallet();
   const { triggerPayout } = useEngagementPayout({ contentType, contentId });
@@ -89,6 +91,20 @@ export function useContentEngagement({
         
         // Trigger $5DEE payout for like (fire and forget)
         triggerPayout('like');
+
+        if (creatorWallet) {
+          try {
+            await supabase.functions.invoke('distribute-rewards', {
+              body: {
+                creatorWallet,
+                amount: "5",
+                actionType: "like",
+              }
+            });
+          } catch (error) {
+            console.warn('[distribute-rewards] failed', error);
+          }
+        }
       } else {
         await supabase.from('content_likes')
           .delete()
@@ -113,7 +129,7 @@ export function useContentEngagement({
       setLikesCount(prev => newLikedState ? prev - 1 : prev + 1);
       console.error('Error toggling like:', error);
     }
-  }, [address, contentType, contentId, isLiked, likesCount, triggerPayout]);
+  }, [address, contentType, contentId, isLiked, likesCount, triggerPayout, creatorWallet]);
 
   const handleBookmark = useCallback(async () => {
     if (!address) {

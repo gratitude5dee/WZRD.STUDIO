@@ -28,6 +28,7 @@ export function NetflixVideoCard({ video, ranking, size = "default" }: NetflixVi
     contentId: video.id,
     initialLikes: video.likes_count,
     initialComments: video.comments_count,
+    creatorWallet: video.artist_wallet,
   });
 
   const thumbnailUrl = getThumbnailUrl(video.thumbnail_path);

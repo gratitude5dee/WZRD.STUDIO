@@ -28,6 +28,7 @@ export function TrackCard({ track }: TrackCardProps) {
     contentId: track.id,
     initialLikes: track.likes_count || 0,
     initialComments: track.comments_count || 0,
+    creatorWallet: track.artist_wallet,
   });
 
   const coverUrl = getCoverUrl(track.cover_path);
