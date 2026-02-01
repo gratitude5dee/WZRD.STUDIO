@@ -690,7 +690,7 @@ function GenreSelectionStep({
           </span>
           <Button
             onClick={onNext}
-            disabled={selected.length < 3}
+            disabled={selected.length === 0}
             className="rounded-full px-6"
           >
             Continue

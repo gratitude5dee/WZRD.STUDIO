@@ -19,7 +19,7 @@ import { PageHeader } from "@/components/PageHeader";
 
 export default function WatchHome() {
   const navigate = useNavigate();
-  const { isConnected } = useWallet();
+  const { isConnected, connect } = useWallet();
   const { currentTrack } = usePlayer();
   const [videos, setVideos] = useState<VideoType[]>([]);
   const [loading, setLoading] = useState(true);
@@ -29,9 +29,9 @@ export default function WatchHome() {
 
   useEffect(() => {
     if (!isConnected) {
-      navigate("/");
+      return;
     }
-  }, [isConnected, navigate]);
+  }, [isConnected]);
 
   useEffect(() => {
     async function fetchVideos() {
@@ -58,6 +58,20 @@ export default function WatchHome() {
   
   // Sort by likes for "Most Liked" section
   const mostLikedVideos = [...regularVideos].sort((a, b) => b.likes_count - a.likes_count);
+
+  if (!isConnected) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 text-center">
+        <Video className="h-12 w-12 text-muted-foreground mb-4" />
+        <h2 className="text-xl font-semibold mb-2">Connect to watch</h2>
+        <p className="text-muted-foreground mb-6">
+          Connect your wallet to access Watch content.
+        </p>
+        <Button onClick={connect}>Connect Wallet</Button>
+        <BottomNavigation />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex flex-col">

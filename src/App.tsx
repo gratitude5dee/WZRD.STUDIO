@@ -29,6 +29,7 @@ import MogUpload from "./pages/MogUpload";
 import MogProfile from "./pages/MogProfile";
 import MogPost from "./pages/MogPost";
 import MogSearch from "./pages/MogSearch";
+import MogLibrary from "./pages/MogLibrary";
 import MoltbookAgentActions from "./pages/MoltbookAgentActions";
 
 const queryClient = new QueryClient();
@@ -66,6 +67,7 @@ const App = () => (
                     <Route path="/mog/profile/:wallet" element={<MogProfile />} />
                     <Route path="/mog/post/:id" element={<MogPost />} />
                     <Route path="/mog/search" element={<MogSearch />} />
+                    <Route path="/mog/library" element={<MogLibrary />} />
                     <Route path="/agent-actions" element={<MoltbookAgentActions />} />
                     <Route path="*" element={<NotFound />} />
                   </Routes>

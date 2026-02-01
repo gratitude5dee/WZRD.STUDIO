@@ -6,13 +6,23 @@ export function BottomNavigation() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const navItems = [
-    { icon: Flame, label: "Home", path: "/home" },
-    { icon: Play, label: "Watch", path: "/watch" },
-    { icon: Plus, label: "Create", path: "/mog/upload", isCenter: true },
-    { icon: Search, label: "Search", path: "/search" },
-    { icon: Library, label: "Library", path: "/library" },
-  ];
+  const isMogContext = location.pathname.startsWith("/mog") || location.pathname === "/home";
+
+  const navItems = isMogContext
+    ? [
+        { icon: Flame, label: "Home", path: "/home" },
+        { icon: Play, label: "Watch", path: "/watch" },
+        { icon: Plus, label: "Create", path: "/mog/upload", isCenter: true },
+        { icon: Search, label: "Search", path: "/mog/search" },
+        { icon: Library, label: "Library", path: "/mog/library" },
+      ]
+    : [
+        { icon: Flame, label: "Home", path: "/home" },
+        { icon: Play, label: "Watch", path: "/watch" },
+        { icon: Plus, label: "Create", path: "/mog/upload", isCenter: true },
+        { icon: Search, label: "Search", path: "/search" },
+        { icon: Library, label: "Library", path: "/library" },
+      ];
 
   return (
     <nav 

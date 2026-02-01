@@ -20,14 +20,12 @@ export default function MogUpload() {
   const navigate = useNavigate();
   const { address, isConnected, connect } = useWallet();
   
-  // Redirect to library if not connected
+  // If not connected, show connect CTA (do not redirect away)
   useEffect(() => {
     if (!isConnected) {
-      toast.error('Please connect your wallet first');
-      connect();
-      navigate('/library');
+      toast.error('Please connect your wallet to post');
     }
-  }, [isConnected, navigate, connect]);
+  }, [isConnected]);
 
   // Upload tab state
   const [contentType, setContentType] = useState<ContentType>('video');
@@ -303,6 +301,17 @@ export default function MogUpload() {
             <X className="h-5 w-5" />
           </button>
         </div>
+
+        {!isConnected && (
+          <div className="px-4 py-3 border-b border-border bg-muted/40 flex items-center justify-between">
+            <p className="text-sm text-muted-foreground">
+              Connect your wallet to post Mogs.
+            </p>
+            <Button size="sm" onClick={connect}>
+              Connect
+            </Button>
+          </div>
+        )}
 
         {/* Tabs */}
         <Tabs defaultValue="upload" className="h-[calc(100%-5rem)]">
