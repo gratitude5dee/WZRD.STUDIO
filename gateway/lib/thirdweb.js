@@ -25,8 +25,8 @@ export function getFacilitator() {
 }
 
 export function getNetwork() {
-  const chainId = Number(process.env.X402_CHAIN_ID || 33139);
-  const rpcUrl = process.env.X402_RPC_URL || "https://rpc.apechain.com";
+  const chainId = Number(process.env.X402_CHAIN_ID || 3313939);
+  const rpcUrl = process.env.X402_RPC_URL || "https://apechain-tnet.rpc.caldera.xyz/http";
 
   return defineChain({
     id: chainId,
