@@ -1,1 +1,4 @@
 project_id = "ixkkrousepsiorwlaycp"
+
+[functions.verify-moltbook-identity]
+verify_jwt = false
