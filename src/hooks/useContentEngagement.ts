@@ -99,6 +99,9 @@ export function useContentEngagement({
                 creatorWallet,
                 amount: "5",
                 actionType: "like",
+                contentType,
+                contentId,
+                payerWallet: address.toLowerCase(),
               }
             });
           } catch (error) {

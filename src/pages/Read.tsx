@@ -26,6 +26,7 @@ interface Article {
   comments_count: number;
   shares_count: number;
   views_count: number;
+  author_wallet: string | null;
 }
 
 const categories = [
@@ -51,6 +52,7 @@ const sampleArticles: Article[] = [
     comments_count: 342,
     shares_count: 156,
     views_count: 45200,
+    author_wallet: null,
   },
   {
     id: "2", 
@@ -65,6 +67,7 @@ const sampleArticles: Article[] = [
     comments_count: 287,
     shares_count: 98,
     views_count: 32100,
+    author_wallet: null,
   },
   {
     id: "3",
@@ -79,6 +82,7 @@ const sampleArticles: Article[] = [
     comments_count: 198,
     shares_count: 87,
     views_count: 28400,
+    author_wallet: null,
   },
   {
     id: "4",
@@ -93,6 +97,7 @@ const sampleArticles: Article[] = [
     comments_count: 445,
     shares_count: 234,
     views_count: 67800,
+    author_wallet: null,
   },
   {
     id: "5",
@@ -107,6 +112,7 @@ const sampleArticles: Article[] = [
     comments_count: 156,
     shares_count: 67,
     views_count: 15600,
+    author_wallet: null,
   },
   {
     id: "6",
@@ -121,6 +127,7 @@ const sampleArticles: Article[] = [
     comments_count: 234,
     shares_count: 112,
     views_count: 29300,
+    author_wallet: null,
   },
   {
     id: "7",
@@ -135,6 +142,7 @@ const sampleArticles: Article[] = [
     comments_count: 312,
     shares_count: 145,
     views_count: 41200,
+    author_wallet: null,
   },
   {
     id: "8",
@@ -149,6 +157,7 @@ const sampleArticles: Article[] = [
     comments_count: 123,
     shares_count: 56,
     views_count: 18700,
+    author_wallet: null,
   },
   {
     id: "9",
@@ -163,6 +172,7 @@ const sampleArticles: Article[] = [
     comments_count: 198,
     shares_count: 89,
     views_count: 24500,
+    author_wallet: null,
   },
   {
     id: "10",
@@ -177,6 +187,7 @@ const sampleArticles: Article[] = [
     comments_count: 567,
     shares_count: 312,
     views_count: 89400,
+    author_wallet: null,
   },
 ];
 
@@ -200,7 +211,7 @@ export default function Read() {
       setLoading(true);
       const { data, error } = await supabase
         .from("articles")
-        .select("id, title, author, excerpt, image_url, tags, topics, published_at, likes_count, comments_count, shares_count, views_count")
+        .select("id, title, author, excerpt, image_url, tags, topics, published_at, likes_count, comments_count, shares_count, views_count, author_wallet")
         .order("created_at", { ascending: false })
         .limit(20);
 
@@ -399,6 +410,7 @@ function ArticleCard({ article, variant, getCategoryColor }: ArticleCardProps) {
     contentId: article.id,
     initialLikes: article.likes_count,
     initialComments: article.comments_count,
+    creatorWallet: article.author_wallet,
   });
 
   const tag = article.tags?.[0] || "ARTICLE";

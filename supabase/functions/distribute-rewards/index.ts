@@ -41,7 +41,7 @@ serve(async (req) => {
   }
 
   try {
-    const { creatorWallet, amount, actionType } = await req.json();
+    const { creatorWallet, amount, actionType, contentType, contentId, payerWallet } = await req.json();
 
     if (!creatorWallet || !amount) {
       return jsonResponse({ error: "missing_fields" }, 400);
@@ -71,6 +71,32 @@ serve(async (req) => {
     });
 
     const result = await sendTransaction({ transaction: tx, account });
+
+    if (contentType && contentId && payerWallet) {
+      const supabaseUrl = Deno.env.get("SUPABASE_URL");
+      const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+      if (supabaseUrl && supabaseServiceKey) {
+        const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2");
+        const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+        await supabase
+          .from("engagement_payouts")
+          .upsert({
+            content_type: contentType,
+            content_id: contentId,
+            action_type: actionType ?? "like",
+            payer_wallet: String(payerWallet).toLowerCase(),
+            creator_wallet: String(creatorWallet).toLowerCase(),
+            amount: Number(amount),
+            tx_hash: result.transactionHash,
+            status: "confirmed",
+            confirmed_at: new Date().toISOString(),
+          }, {
+            onConflict: "content_type,content_id,action_type,payer_wallet",
+          });
+      }
+    }
 
     return jsonResponse({
       success: true,
