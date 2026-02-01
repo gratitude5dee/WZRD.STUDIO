@@ -6,6 +6,7 @@ import crypto from "crypto";
 import { settlePayment } from "thirdweb/x402";
 import { getFacilitator, getNetwork } from "./lib/thirdweb.js";
 import { getSupabaseAdmin } from "./lib/supabase.js";
+import { fetchActiveSession } from "./lib/sessions.js";
 
 dotenv.config();
 
@@ -98,6 +99,32 @@ app.post("/api/pay/:trackId", async (req, res) => {
   } catch (error) {
     console.error("Payment error:", error);
     return res.status(500).json({ error: error.message || "Payment failed" });
+  }
+});
+
+app.get("/api/session/active", async (req, res) => {
+  try {
+    const trackId = req.query.trackId;
+    const walletAddress = req.query.walletAddress;
+
+    if (!trackId || !walletAddress) {
+      return res.status(400).json({ error: "missing_params" });
+    }
+
+    const supabase = getSupabaseAdmin();
+    const session = await fetchActiveSession(supabase, { trackId, walletAddress });
+
+    if (!session) {
+      return res.status(404).json({ error: "not_found" });
+    }
+
+    return res.json({
+      success: true,
+      stream: session,
+    });
+  } catch (error) {
+    console.error("Session lookup error:", error);
+    return res.status(500).json({ error: "session_lookup_failed" });
   }
 });
 

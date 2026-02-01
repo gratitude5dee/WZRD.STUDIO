@@ -19,6 +19,7 @@ import {
   ChevronUp
 } from "lucide-react";
 import { usePlayer } from "@/contexts/PlayerContext";
+import { useWallet } from "@/contexts/WalletContext";
 import { BuyWidget } from "@/components/BuyWidget";
 import { ShareSheet } from "@/components/ShareSheet";
 import { TrackOptionsSheet } from "@/components/TrackOptionsSheet";
@@ -39,7 +40,9 @@ export default function NowPlaying() {
     duration,
     seek,
     activeSession,
+    setActiveSession,
   } = usePlayer();
+  const { address } = useWallet();
 
   const [showBuyWidget, setShowBuyWidget] = useState(false);
   const [showShare, setShowShare] = useState(false);
@@ -55,6 +58,37 @@ export default function NowPlaying() {
       setShowBuyWidget(true);
     }
   }, [searchParams, isLocked]);
+
+  // Restore active session from gateway/Supabase when locked
+  useEffect(() => {
+    const restoreSession = async () => {
+      if (!currentTrack || !address || !isLocked) return;
+
+      try {
+        const gatewayUrl = import.meta.env.VITE_X402_GATEWAY_URL || "http://localhost:4020";
+        const res = await fetch(
+          `${gatewayUrl}/api/session/active?trackId=${currentTrack.id}&walletAddress=${address}`
+        );
+
+        if (!res.ok) return;
+
+        const data = await res.json();
+        if (data?.success && data?.stream) {
+          setActiveSession({
+            id: data.stream.id,
+            stream_id: data.stream.stream_id,
+            track_id: data.stream.track_id,
+            access_token: data.stream.access_token,
+            expires_at: data.stream.expires_at,
+          });
+        }
+      } catch (error) {
+        console.warn("Failed to restore session", error);
+      }
+    };
+
+    restoreSession();
+  }, [currentTrack, address, isLocked, setActiveSession]);
 
   // Session timer
   useEffect(() => {
