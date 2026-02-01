@@ -18,5 +18,7 @@ npm run dev
 - `PORT` (default 4020)
 - `THIRDWEB_SECRET_KEY`
 - `THIRDWEB_SERVER_WALLET_ADDRESS`
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
 - `X402_CHAIN_ID` (default 3313939)
 - `X402_RPC_URL` (default https://apechain-tnet.rpc.caldera.xyz/http)

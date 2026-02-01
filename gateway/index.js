@@ -5,6 +5,7 @@ import { z } from "zod";
 import crypto from "crypto";
 import { settlePayment } from "thirdweb/x402";
 import { getFacilitator, getNetwork } from "./lib/thirdweb.js";
+import { getSupabaseAdmin } from "./lib/supabase.js";
 
 dotenv.config();
 
@@ -19,32 +20,13 @@ const payRequestSchema = z.object({
   walletAddress: z.string().min(1),
   amount: z.number().nonnegative(),
   recipient: z.string().min(1),
+  trackId: z.string().min(1),
 });
-
-const sessions = new Map();
-
-function createSession({ trackId, payerWallet }) {
-  const id = crypto.randomUUID();
-  const accessToken = crypto.randomUUID();
-  const expiresAt = new Date(Date.now() + STREAM_TTL_SECONDS * 1000).toISOString();
-
-  const session = {
-    id,
-    stream_id: `stream_${id}`,
-    track_id: trackId,
-    access_token: accessToken,
-    expires_at: expiresAt,
-    payer_wallet: payerWallet,
-  };
-
-  sessions.set(id, session);
-  return session;
-}
 
 app.post("/api/pay/:trackId", async (req, res) => {
   try {
     const { trackId } = req.params;
-    const parsed = payRequestSchema.safeParse(req.body);
+    const parsed = payRequestSchema.safeParse({ ...req.body, trackId });
 
     if (!parsed.success) {
       return res.status(400).json({ error: "invalid_request", details: parsed.error.flatten() });
@@ -82,32 +64,41 @@ app.post("/api/pay/:trackId", async (req, res) => {
       return res.status(result.status).json(result.responseBody);
     }
 
-    const session = createSession({
-      trackId,
-      payerWallet: parsed.data.walletAddress.toLowerCase(),
+    const sessionId = crypto.randomUUID();
+    const accessToken = crypto.randomUUID();
+    const expiresAt = new Date(Date.now() + STREAM_TTL_SECONDS * 1000).toISOString();
+
+    const supabase = getSupabaseAdmin();
+    const { data: sessionRow, error: sessionError } = await supabase.rpc("create_stream_session", {
+      p_stream_id: `stream_${sessionId}`,
+      p_track_id: parsed.data.trackId,
+      p_payer_wallet: parsed.data.walletAddress,
+      p_artist_wallet: parsed.data.recipient,
+      p_access_token: accessToken,
+      p_expires_at: expiresAt,
+      p_tx_hash: result.paymentReceipt?.transaction || null,
     });
+
+    if (sessionError) {
+      console.error("Supabase RPC error:", sessionError);
+      return res.status(500).json({ error: "failed_to_store_session" });
+    }
 
     return res.json({
       success: true,
-      stream: session,
+      stream: {
+        id: sessionRow,
+        stream_id: `stream_${sessionId}`,
+        track_id: parsed.data.trackId,
+        access_token: accessToken,
+        expires_at: expiresAt,
+      },
       txHash: result.paymentReceipt?.transaction,
     });
   } catch (error) {
     console.error("Payment error:", error);
     return res.status(500).json({ error: error.message || "Payment failed" });
   }
-});
-
-app.get("/api/stream/check/:streamId", (req, res) => {
-  const session = sessions.get(req.params.streamId);
-  if (!session) {
-    return res.status(404).json({ valid: false, error: "not_found" });
-  }
-
-  const expiresAt = new Date(session.expires_at).getTime();
-  const isValid = Date.now() < expiresAt;
-
-  return res.json({ valid: isValid, expires_at: session.expires_at });
 });
 
 app.get("/health", (_req, res) => res.json({ ok: true }));

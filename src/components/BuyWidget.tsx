@@ -60,6 +60,7 @@ export function BuyWidget({ track, onClose, onSuccess }: BuyWidgetProps) {
           walletAddress: address.toLowerCase(),
           amount: track.price,
           recipient: track.artist_wallet,
+          trackId: track.id,
         }),
       });
 
