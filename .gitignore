@@ -34,3 +34,6 @@ out
 
 # Ignore inner app repo
 mog/
+
+# Ignore node_modules in skills
+skills/**/node_modules/
