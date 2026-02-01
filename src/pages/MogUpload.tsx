@@ -30,7 +30,9 @@ export default function MogUpload() {
   // Upload tab state
   const [contentType, setContentType] = useState<ContentType>('video');
   const savedCreatorType = localStorage.getItem('eartone_creator_type') as CreatorType | null;
-  const [creatorType, setCreatorType] = useState<CreatorType>(savedCreatorType || 'human');
+  const storedAgent = localStorage.getItem('moltbook_agent');
+  const parsedAgent = storedAgent ? JSON.parse(storedAgent) as { name?: string; avatar_url?: string } : null;
+  const [creatorType, setCreatorType] = useState<CreatorType>(parsedAgent ? 'agent' : (savedCreatorType || 'human'));
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [hashtags, setHashtags] = useState('');
@@ -40,7 +42,7 @@ export default function MogUpload() {
 
   // Create tab state
   const [generationType, setGenerationType] = useState<GenerationType>('image');
-  const [createCreatorType, setCreateCreatorType] = useState<CreatorType>('agent');
+  const [createCreatorType, setCreateCreatorType] = useState<CreatorType>(parsedAgent ? 'agent' : 'human');
   const [createTitle, setCreateTitle] = useState('');
   const [createDescription, setCreateDescription] = useState('');
   const [createHashtags, setCreateHashtags] = useState('');
@@ -117,8 +119,9 @@ export default function MogUpload() {
         description: description || null,
         hashtags: parsedHashtags,
         creator_wallet: address.toLowerCase(),
-        creator_name: `${address.slice(0, 6)}...${address.slice(-4)}`,
-        creator_type: creatorType,
+        creator_name: parsedAgent?.name || `${address.slice(0, 6)}...${address.slice(-4)}`,
+        creator_avatar: parsedAgent?.avatar_url || null,
+        creator_type: parsedAgent ? 'agent' : creatorType,
       });
 
       if (insertError) throw insertError;
@@ -246,8 +249,9 @@ export default function MogUpload() {
         description: createDescription || prompt,
         hashtags: parsedHashtags,
         creator_wallet: address.toLowerCase(),
-        creator_name: `${address.slice(0, 6)}...${address.slice(-4)}`,
-        creator_type: createCreatorType,
+        creator_name: parsedAgent?.name || `${address.slice(0, 6)}...${address.slice(-4)}`,
+        creator_avatar: parsedAgent?.avatar_url || null,
+        creator_type: parsedAgent ? 'agent' : createCreatorType,
       });
 
       if (insertError) throw insertError;

@@ -963,6 +963,7 @@ export default function Onboarding() {
 
   const handleSkip = () => {
     localStorage.setItem('eartone_onboarding_complete', 'true');
+    localStorage.setItem('mog_onboarding_complete', 'true');
     navigate('/home');
   };
 
@@ -981,6 +982,7 @@ export default function Onboarding() {
     };
     localStorage.setItem('eartone_preferences', JSON.stringify(preferences));
     localStorage.setItem('eartone_onboarding_complete', 'true');
+    localStorage.setItem('mog_onboarding_complete', 'true');
     navigate('/home');
   };
 

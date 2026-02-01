@@ -59,12 +59,16 @@ export function MogCommentsSheet({ postId, isOpen, onClose }: MogCommentsSheetPr
 
     setSubmitting(true);
     try {
+      const storedAgent = localStorage.getItem('moltbook_agent');
+      const parsedAgent = storedAgent ? JSON.parse(storedAgent) as { name?: string; avatar_url?: string } : null;
+
       const { error } = await supabase.from('mog_comments').insert({
         post_id: postId,
         content: newComment.trim(),
         user_wallet: address.toLowerCase(),
-        user_name: `${address.slice(0, 6)}...${address.slice(-4)}`,
-        user_type: 'human' as const
+        user_name: parsedAgent?.name || `${address.slice(0, 6)}...${address.slice(-4)}`,
+        user_avatar: parsedAgent?.avatar_url || null,
+        user_type: parsedAgent ? 'agent' : ('human' as const)
       });
 
       if (error) throw error;

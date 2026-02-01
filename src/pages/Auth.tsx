@@ -16,12 +16,13 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function Welcome() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { isConnected, isConnecting, connect } = useWallet();
-  const { verifyAgent, isVerifying, error: moltbookError, isAuthenticated } = useMoltbook();
+  const { isConnected, isConnecting, connect, address } = useWallet();
+  const { agent, verifyAgent, isVerifying, error: moltbookError, isAuthenticated } = useMoltbook();
   const [isNewUser, setIsNewUser] = useState(false);
   const [moltbookToken, setMoltbookToken] = useState("");
   const [showMoltbookDialog, setShowMoltbookDialog] = useState(false);
@@ -70,9 +71,42 @@ export default function Welcome() {
 
   const handleMoltbookAuth = async (token: string) => {
     const success = await verifyAgent(token);
-    if (success) {
-      setShowMoltbookDialog(false);
-      setMoltbookToken("");
+    if (!success) return;
+
+    setShowMoltbookDialog(false);
+    setMoltbookToken("");
+
+    if (!address) {
+      toast("Connect your wallet to link your Moltbook profile.");
+      return;
+    }
+
+    const storedAgent = agent ?? ((): typeof agent => {
+      try {
+        const stored = localStorage.getItem("moltbook_agent");
+        return stored ? (JSON.parse(stored) as typeof agent) : null;
+      } catch {
+        return null;
+      }
+    })();
+
+    if (storedAgent) {
+      const { error: upsertError } = await supabase
+        .from("moltbook_profiles" as any)
+        .upsert(
+          {
+            wallet_address: address.toLowerCase(),
+            agent_id: storedAgent.id,
+            agent_name: storedAgent.name,
+            agent_avatar: storedAgent.avatar_url,
+            verified_at: new Date().toISOString(),
+          },
+          { onConflict: "wallet_address" }
+        );
+
+      if (upsertError) {
+        toast("Verified, but failed to store in Supabase.");
+      }
     }
   };
 
