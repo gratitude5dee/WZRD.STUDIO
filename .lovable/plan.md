@@ -1,119 +1,130 @@
 
-# Sign in with Moltbook Integration (Mocked Version)
+# Fix Pre-existing Build Errors
 
 ## Overview
-This updated plan implements "Sign in with Moltbook" authentication with **mocked verification logic** that can be easily swapped for the real Moltbook API once you receive the API key.
+These build errors are **not GitHub sync issues** - they are mismatches between the code and the current thirdweb SDK version plus database schema. I'll fix all 6 errors.
 
 ---
 
-## Implementation Steps
+## Error Fixes
 
-### Step 1: Create Moltbook Types
-**New File:** `src/types/moltbook.ts`
+### Fix 1: ThirdwebConnectButton.tsx (line 2)
+**Issue:** Imports `chain` but the export is named `apeChain`
 
-TypeScript interfaces for the Moltbook agent profile and verification responses.
+**Solution:** Change the import from `chain` to `apeChain`
+```typescript
+// Before
+import { thirdwebClient, chain } from "@/lib/thirdweb";
 
----
-
-### Step 2: Create Shared Verification Helper (Mocked)
-**New File:** `supabase/functions/_shared/moltbook-verify.ts`
-
-- Contains mock agent data for testing
-- Supports special test tokens: `mock_agent_1`, `mock_agent_2`, `test_token`
-- Simulates error cases: `expired_token`, `invalid_token`
-- Any other token creates a dynamic mock agent
-- **Commented-out real API code** ready to enable when API key arrives
+// After
+import { thirdwebClient, apeChain } from "@/lib/thirdweb";
+```
+Also update the usage from `chain={chain}` to `chain={apeChain}`
 
 ---
 
-### Step 3: Create verify-moltbook-identity Edge Function
-**New File:** `supabase/functions/verify-moltbook-identity/index.ts`
+### Fix 2: MogPostCard.tsx (line 158)
+**Issue:** TypeScript complains `'clipboard' does not exist on type 'never'`
 
-- Extracts `X-Moltbook-Identity` header
-- Calls the mocked verification helper
-- Returns agent profile or error responses
+**Solution:** The `if (!("share" in navigator))` narrows the type incorrectly. Fix by checking clipboard existence properly:
+```typescript
+// Before
+if (!("share" in navigator)) {
+  await navigator.clipboard.writeText(shareUrl);
+  ...
+}
 
-**Update:** `supabase/config.toml`
-```toml
-[functions.verify-moltbook-identity]
-verify_jwt = false
+// After
+if (!("share" in navigator) && navigator.clipboard) {
+  await navigator.clipboard.writeText(shareUrl);
+  ...
+}
 ```
 
 ---
 
-### Step 4: Create MoltbookContext
-**New File:** `src/contexts/MoltbookContext.tsx`
+### Fix 3: WalletContext.tsx (line 58)
+**Issue:** thirdweb's `Account` type doesn't have a `chainId` property
 
-- Stores verified agent profile
-- Persists to localStorage for session continuity
-- Provides `verifyAgent(token)` and `clearAgent()` methods
+**Solution:** Remove the `account.chainId` check since we're already using `apeChain.id` as the target:
+```typescript
+// Before
+if (wallet && account && account.chainId !== apeChain.id && "switchChain" in wallet) {
 
----
-
-### Step 5: Create useMoltbookAuth Hook
-**New File:** `src/hooks/useMoltbookAuth.ts`
-
-- Reusable hook for components
-- Handles loading and error states
+// After  
+if (wallet && account && "switchChain" in wallet) {
+```
 
 ---
 
-### Step 6: Update Auth Page
-**Modify:** `src/pages/Auth.tsx`
+### Fix 4: x402.ts (line 12)
+**Issue:** thirdweb's `wrapFetchWithPayment` API changed - expects options object, not bigint
 
-- Add "Sign in with Moltbook" button (robot icon 🤖)
-- Add token input dialog for testing
-- Check URL for `moltbook_token` query param
-- Navigate to home on successful verification
+**Solution:** Update the function signature to pass an options object:
+```typescript
+// Before
+return wrapFetchWithPayment(fetch, thirdwebClient, wallet, maxValue);
 
----
-
-### Step 7: Update App Providers
-**Modify:** `src/App.tsx`
-
-- Import and add `MoltbookProvider` to provider tree
+// After
+return wrapFetchWithPayment(fetch, thirdwebClient, wallet, { maxValue });
+```
 
 ---
 
-### Step 8: Update Engagement Pay (Optional)
-**Modify:** `supabase/functions/engagement-pay/index.ts`
+### Fix 5: MogLibrary.tsx (line 51)
+**Issue:** Type mismatch when mapping Supabase response - `content_type` is `string` but MogPost expects `"article" | "image" | "video"`
 
-- Check for `X-Moltbook-Identity` header
-- Verify agent and log in payout metadata
+**Solution:** The current code already has proper null filtering. The issue is the inline type annotation. Remove it and let TypeScript infer:
+```typescript
+// Before
+.map((row: { mog_posts: MogPost }) => row.mog_posts)
 
----
-
-## Test Tokens for Development
-
-| Token | Behavior |
-|-------|----------|
-| `mock_agent_1` | Returns "MogBot" with karma 420, verified owner |
-| `mock_agent_2` | Returns "StreamerBot" with karma 150, no owner |
-| `test_token` | Returns "TestAgent" with karma 100, unverified owner |
-| `expired_token` | Returns error: `identity_token_expired` |
-| `invalid_token` | Returns error: `invalid_token` |
-| Any other string | Creates a dynamic mock agent |
+// After (already in file, just needs the null check)
+.map((row: { mog_posts: MogPost | null }) => row.mog_posts)
+.filter(Boolean) as MogPost[];
+```
+This is actually already correct in the file. The issue is the Supabase types - need to cast properly.
 
 ---
 
-## When API Key Arrives
+### Fix 6: Read.tsx (line 214/223)
+**Issue:** The `articles` table doesn't have an `author_wallet` column in the database
 
-1. Add `MOLTBOOK_APP_KEY` secret to Supabase
-2. Uncomment the real API code in `_shared/moltbook-verify.ts`
-3. Remove or reduce mock logic
-4. Test with real Moltbook tokens
+**Solution:** Remove `author_wallet` from the select query and the Article interface, OR check if the column exists first:
+
+**Option A (Remove if column doesn't exist):**
+```typescript
+// Remove from select query
+.select("id, title, author, excerpt, image_url, tags, topics, published_at, likes_count, comments_count, shares_count, views_count")
+
+// Remove from interface
+interface Article {
+  // ... remove author_wallet
+}
+```
+
+**Option B (Keep but make nullable with fallback):**
+Since the code uses `author_wallet` for engagement tracking, we should keep it but handle the case where it might not exist yet.
 
 ---
 
-## Files Summary
+## Files to Modify
 
-| File | Action | Purpose |
-|------|--------|---------|
-| `src/types/moltbook.ts` | Create | TypeScript interfaces |
-| `supabase/functions/_shared/moltbook-verify.ts` | Create | Mocked verification helper |
-| `supabase/functions/verify-moltbook-identity/index.ts` | Create | Main verification Edge Function |
-| `supabase/config.toml` | Modify | Add JWT config for new function |
-| `src/contexts/MoltbookContext.tsx` | Create | Frontend agent state |
-| `src/hooks/useMoltbookAuth.ts` | Create | Verification hook |
-| `src/pages/Auth.tsx` | Modify | Add Moltbook sign-in button |
-| `src/App.tsx` | Modify | Add MoltbookProvider |
+| File | Change |
+|------|--------|
+| `src/components/ThirdwebConnectButton.tsx` | Fix import `chain` to `apeChain` |
+| `src/components/mog/MogPostCard.tsx` | Fix clipboard access type narrowing |
+| `src/contexts/WalletContext.tsx` | Remove `account.chainId` check |
+| `src/lib/x402.ts` | Update to use options object `{ maxValue }` |
+| `src/pages/MogLibrary.tsx` | Add proper type casting for Supabase response |
+| `src/pages/Read.tsx` | Remove `author_wallet` from query or add column to DB |
+
+---
+
+## Technical Notes
+
+These errors indicate:
+1. **thirdweb SDK was updated** - API signatures changed
+2. **Database schema drift** - Code references a column (`author_wallet`) that doesn't exist
+
+The Moltbook integration I just implemented is **separate from these issues** and should work once these pre-existing errors are fixed.
