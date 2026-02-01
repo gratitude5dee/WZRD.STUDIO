@@ -1,5 +1,5 @@
 import { ConnectButton } from "thirdweb/react";
-import { thirdwebClient, chain } from "@/lib/thirdweb";
+import { thirdwebClient, apeChain } from "@/lib/thirdweb";
 
 interface ThirdwebConnectButtonProps {
   label?: string;
@@ -15,7 +15,7 @@ export function ThirdwebConnectButton({
   return (
     <ConnectButton
       client={thirdwebClient}
-      chain={chain}
+      chain={apeChain}
       connectButton={{
         label,
         className: `${fullWidth ? 'w-full' : ''} ${className}`,

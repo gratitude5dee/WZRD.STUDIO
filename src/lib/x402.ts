@@ -9,5 +9,5 @@ export function useX402Fetch(maxValue: bigint) {
     return null;
   }
 
-  return wrapFetchWithPayment(fetch, thirdwebClient, wallet, maxValue);
+  return wrapFetchWithPayment(fetch, thirdwebClient, wallet, { maxValue });
 }

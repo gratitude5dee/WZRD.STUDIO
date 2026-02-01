@@ -55,7 +55,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const enforceChain = async () => {
       try {
-        if (wallet && account && account.chainId !== apeChain.id && "switchChain" in wallet) {
+        if (wallet && account && "switchChain" in wallet) {
           await (wallet as { switchChain?: (chain: typeof apeChain) => Promise<void> }).switchChain?.(apeChain);
         }
       } catch (error) {

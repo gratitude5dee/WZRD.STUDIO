@@ -48,8 +48,8 @@ export default function MogLibrary() {
 
       if (bookmarksResult.data) {
         const mapped = bookmarksResult.data
-          .map((row: { mog_posts: MogPost | null }) => row.mog_posts)
-          .filter(Boolean) as MogPost[];
+          .map((row) => row.mog_posts as MogPost | null)
+          .filter((post): post is MogPost => post !== null);
         setBookmarkedPosts(mapped);
       }
     } catch (error) {

@@ -154,18 +154,19 @@ export function MogPostCard({ post, isActive, onProfileClick }: MogPostCardProps
   const handleShare = async () => {
     const shareUrl = `${window.location.origin}/mog/post/${post.id}`;
 
-    if (!("share" in navigator)) {
-      await navigator.clipboard.writeText(shareUrl);
-      toast.success("Link copied to clipboard");
-      return;
+    if ("share" in navigator) {
+      try {
+        await navigator.share({
+          title: post.title || "Check out this Mog",
+          url: shareUrl,
+        });
+        return;
+      } catch {
+        // Fall through to clipboard
+      }
     }
 
-    try {
-      await navigator.share({
-        title: post.title || "Check out this Mog",
-        url: shareUrl,
-      });
-    } catch {
+    if (navigator.clipboard) {
       await navigator.clipboard.writeText(shareUrl);
       toast.success("Link copied to clipboard");
     }
