@@ -8,6 +8,7 @@ import { WalletProvider } from "@/contexts/WalletContext";
 import { PlayerProvider } from "@/contexts/PlayerContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { MoltbookProvider } from "@/contexts/MoltbookContext";
+import { NotificationProvider } from "@/contexts/NotificationContext";
 import Intro from "./pages/Intro";
 import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
@@ -39,8 +40,9 @@ const App = () => (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <WalletProvider>
-          <MoltbookProvider>
-            <PlayerProvider>
+          <NotificationProvider>
+            <MoltbookProvider>
+              <PlayerProvider>
               <TooltipProvider>
                 <Toaster />
                 <Sonner />
@@ -72,9 +74,10 @@ const App = () => (
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </BrowserRouter>
-              </TooltipProvider>
-            </PlayerProvider>
-          </MoltbookProvider>
+                </TooltipProvider>
+              </PlayerProvider>
+            </MoltbookProvider>
+          </NotificationProvider>
         </WalletProvider>
       </ThemeProvider>
     </QueryClientProvider>

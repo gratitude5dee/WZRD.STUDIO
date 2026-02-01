@@ -2,11 +2,13 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Music, Video, Receipt, Zap, ExternalLink } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ArrowLeft, Music, Video, Receipt, Zap, ExternalLink, Heart, Eye, MessageCircle, Share2, Bookmark, Coins } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getCoverUrl, getThumbnailUrl } from "@/lib/media-utils";
 import { formatDistanceToNow } from "date-fns";
+import { formatFiveDee, PayoutActionType } from "@/lib/fiveDeeToken";
 
 interface TransactionsSheetProps {
   open: boolean;
@@ -27,19 +29,95 @@ interface CombinedTransaction {
   expiresAt: string | null;
 }
 
+interface EngagementPayout {
+  id: string;
+  actionType: PayoutActionType;
+  contentType: string;
+  contentId: string;
+  amount: number;
+  txHash: string | null;
+  createdAt: string;
+  status: string;
+}
+
+const getActionIcon = (actionType: PayoutActionType) => {
+  switch (actionType) {
+    case "view":
+      return <Eye className="h-4 w-4" />;
+    case "like":
+      return <Heart className="h-4 w-4" />;
+    case "comment":
+      return <MessageCircle className="h-4 w-4" />;
+    case "share":
+      return <Share2 className="h-4 w-4" />;
+    case "bookmark":
+      return <Bookmark className="h-4 w-4" />;
+    default:
+      return <Coins className="h-4 w-4" />;
+  }
+};
+
+const getActionColor = (actionType: PayoutActionType) => {
+  switch (actionType) {
+    case "view":
+      return "bg-blue-500/20 text-blue-400";
+    case "like":
+      return "bg-pink-500/20 text-pink-400";
+    case "comment":
+      return "bg-purple-500/20 text-purple-400";
+    case "share":
+      return "bg-cyan-500/20 text-cyan-400";
+    case "bookmark":
+      return "bg-amber-500/20 text-amber-400";
+    default:
+      return "bg-primary/20 text-primary";
+  }
+};
+
 export function TransactionsSheet({
   open,
   onOpenChange,
   walletAddress,
 }: TransactionsSheetProps) {
   const [transactions, setTransactions] = useState<CombinedTransaction[]>([]);
+  const [payouts, setPayouts] = useState<EngagementPayout[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("purchases");
 
   useEffect(() => {
     if (open && walletAddress) {
       fetchTransactions();
+      fetchPayouts();
     }
   }, [open, walletAddress]);
+
+  const fetchPayouts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("engagement_payouts")
+        .select("*")
+        .eq("creator_wallet", walletAddress)
+        .order("created_at", { ascending: false })
+        .limit(50);
+
+      if (error) throw error;
+
+      const mapped: EngagementPayout[] = (data || []).map((p: any) => ({
+        id: p.id,
+        actionType: p.action_type as PayoutActionType,
+        contentType: p.content_type,
+        contentId: p.content_id,
+        amount: p.amount,
+        txHash: p.tx_hash,
+        createdAt: p.created_at,
+        status: p.status,
+      }));
+
+      setPayouts(mapped);
+    } catch (error) {
+      console.error("Error fetching payouts:", error);
+    }
+  };
 
   const fetchTransactions = async () => {
     setLoading(true);
@@ -73,22 +151,6 @@ export function TransactionsSheet({
         : { data: [] };
       
       const videoMap = new Map((videos as any[] || []).map((v: any) => [v.id, v]));
-
-      // Fetch streams to get expiry info
-      const { data: streams } = await supabase
-        .from("music_streams")
-        .select("stream_id, expires_at")
-        .eq("user_wallet", walletAddress);
-
-      const { data: videoStreams } = await supabase
-        .from("music_video_streams")
-        .select("stream_id, expires_at")
-        .eq("user_wallet", walletAddress);
-
-      const streamMap = new Map((streams as any[] || []).map((s: any) => [s.stream_id, s.expires_at]));
-      const videoStreamMap = new Map((videoStreams as any[] || []).map((s: any) => [s.stream_id, s.expires_at]));
-
-      const now = new Date();
 
       // Transform track transactions
       const trackTransactions: CombinedTransaction[] = (trackTxs || []).map((tx: any) => {
@@ -163,6 +225,8 @@ export function TransactionsSheet({
     }
   };
 
+  const totalEarnings = payouts.reduce((sum, p) => sum + p.amount, 0);
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent 
@@ -184,105 +248,203 @@ export function TransactionsSheet({
           </div>
         </SheetHeader>
 
-        <ScrollArea className="h-[calc(85vh-100px)] mt-4">
-          {loading ? (
-            <div className="space-y-3">
-              {[...Array(5)].map((_, i) => (
-                <div key={i} className="flex items-center gap-4 p-4 rounded-2xl bg-muted/10">
-                  <Skeleton className="h-14 w-14 rounded-xl" />
-                  <div className="flex-1 space-y-2">
-                    <Skeleton className="h-4 w-36" />
-                    <Skeleton className="h-3 w-24" />
-                  </div>
-                  <Skeleton className="h-7 w-16 rounded-full" />
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">
+          <TabsList className="grid w-full grid-cols-2 mb-4">
+            <TabsTrigger value="purchases" className="gap-2">
+              <Receipt className="h-4 w-4" />
+              Purchases
+            </TabsTrigger>
+            <TabsTrigger value="earnings" className="gap-2">
+              <Coins className="h-4 w-4" />
+              Earnings
+              {totalEarnings > 0 && (
+                <Badge variant="secondary" className="ml-1 text-xs">
+                  {totalEarnings}
+                </Badge>
+              )}
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="purchases">
+            <ScrollArea className="h-[calc(85vh-180px)]">
+              {loading ? (
+                <div className="space-y-3">
+                  {[...Array(5)].map((_, i) => (
+                    <div key={i} className="flex items-center gap-4 p-4 rounded-2xl bg-muted/10">
+                      <Skeleton className="h-14 w-14 rounded-xl" />
+                      <div className="flex-1 space-y-2">
+                        <Skeleton className="h-4 w-36" />
+                        <Skeleton className="h-3 w-24" />
+                      </div>
+                      <Skeleton className="h-7 w-16 rounded-full" />
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          ) : transactions.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-center">
-              <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center mb-6 border border-primary/10">
-                <Receipt className="h-10 w-10 text-primary/60" />
-              </div>
-              <p className="text-xl font-semibold text-foreground mb-2">No transactions yet</p>
-              <p className="text-sm text-muted-foreground max-w-[200px]">
-                Start streaming music or videos to see your payment history here
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {transactions.map((tx) => (
-                <div
-                  key={tx.id}
-                  className="p-4 rounded-2xl bg-gradient-to-r from-muted/20 to-muted/5 hover:from-muted/30 hover:to-muted/10 transition-all border border-border/10 hover:border-border/20"
-                >
-                  <div className="flex items-center gap-4">
-                    {/* Cover Art */}
-                    <div className="relative h-14 w-14 rounded-xl overflow-hidden bg-muted/30 flex-shrink-0 shadow-lg">
-                      {tx.coverUrl ? (
-                        <img
-                          src={tx.coverUrl}
-                          alt={tx.title}
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <div className="h-full w-full flex items-center justify-center bg-gradient-to-br from-primary/30 to-primary/10">
-                          {tx.type === "track" ? (
-                            <Music className="h-6 w-6 text-primary" />
+              ) : transactions.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-20 text-center">
+                  <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center mb-6 border border-primary/10">
+                    <Receipt className="h-10 w-10 text-primary/60" />
+                  </div>
+                  <p className="text-xl font-semibold text-foreground mb-2">No purchases yet</p>
+                  <p className="text-sm text-muted-foreground max-w-[200px]">
+                    Start streaming music or videos to see your payment history here
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {transactions.map((tx) => (
+                    <div
+                      key={tx.id}
+                      className="p-4 rounded-2xl bg-gradient-to-r from-muted/20 to-muted/5 hover:from-muted/30 hover:to-muted/10 transition-all border border-border/10 hover:border-border/20"
+                    >
+                      <div className="flex items-center gap-4">
+                        {/* Cover Art */}
+                        <div className="relative h-14 w-14 rounded-xl overflow-hidden bg-muted/30 flex-shrink-0 shadow-lg">
+                          {tx.coverUrl ? (
+                            <img
+                              src={tx.coverUrl}
+                              alt={tx.title}
+                              className="h-full w-full object-cover"
+                            />
                           ) : (
-                            <Video className="h-6 w-6 text-primary" />
+                            <div className="h-full w-full flex items-center justify-center bg-gradient-to-br from-primary/30 to-primary/10">
+                              {tx.type === "track" ? (
+                                <Music className="h-6 w-6 text-primary" />
+                              ) : (
+                                <Video className="h-6 w-6 text-primary" />
+                              )}
+                            </div>
                           )}
+                          {/* Type indicator badge */}
+                          <div className="absolute -bottom-1 -right-1 h-6 w-6 rounded-full bg-background/90 backdrop-blur flex items-center justify-center border border-border/30 shadow-sm">
+                            {tx.type === "track" ? (
+                              <Music className="h-3 w-3 text-primary" />
+                            ) : (
+                              <Video className="h-3 w-3 text-cyan-400" />
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Info */}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-foreground truncate leading-tight">{tx.title}</p>
+                          <p className="text-sm text-muted-foreground truncate mt-0.5">{tx.artist}</p>
+                          <div className="flex items-center gap-2 mt-1.5">
+                            <span className="text-xs font-medium text-primary/80 bg-primary/10 px-2 py-0.5 rounded-full">
+                              {tx.amount} ETH
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {formatDistanceToNow(new Date(tx.createdAt), { addSuffix: true })}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Status Badge */}
+                        <div className="flex-shrink-0">
+                          {getStatusBadge(tx.status)}
+                        </div>
+                      </div>
+                      
+                      {/* Explorer Link */}
+                      {tx.txHash && (
+                        <div className="mt-3 pt-3 border-t border-border/10">
+                          <a
+                            href={`https://explorer.monad.xyz/tx/${tx.txHash}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
+                          >
+                            View on Explorer
+                            <ExternalLink className="h-3 w-3" />
+                          </a>
                         </div>
                       )}
-                      {/* Type indicator badge */}
-                      <div className="absolute -bottom-1 -right-1 h-6 w-6 rounded-full bg-background/90 backdrop-blur flex items-center justify-center border border-border/30 shadow-sm">
-                        {tx.type === "track" ? (
-                          <Music className="h-3 w-3 text-primary" />
-                        ) : (
-                          <Video className="h-3 w-3 text-cyan-400" />
-                        )}
-                      </div>
                     </div>
-
-                    {/* Info */}
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-foreground truncate leading-tight">{tx.title}</p>
-                      <p className="text-sm text-muted-foreground truncate mt-0.5">{tx.artist}</p>
-                      <div className="flex items-center gap-2 mt-1.5">
-                        <span className="text-xs font-medium text-primary/80 bg-primary/10 px-2 py-0.5 rounded-full">
-                          {tx.amount} ETH
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                          {formatDistanceToNow(new Date(tx.createdAt), { addSuffix: true })}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Status Badge */}
-                    <div className="flex-shrink-0">
-                      {getStatusBadge(tx.status)}
-                    </div>
-                  </div>
-                  
-                  {/* Explorer Link */}
-                  {tx.txHash && (
-                    <div className="mt-3 pt-3 border-t border-border/10">
-                      <a
-                        href={`https://explorer.monad.xyz/tx/${tx.txHash}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={(e) => e.stopPropagation()}
-                        className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
-                      >
-                        View on Monad Explorer
-                        <ExternalLink className="h-3 w-3" />
-                      </a>
-                    </div>
-                  )}
+                  ))}
                 </div>
-              ))}
-            </div>
-          )}
-        </ScrollArea>
+              )}
+            </ScrollArea>
+          </TabsContent>
+
+          <TabsContent value="earnings">
+            <ScrollArea className="h-[calc(85vh-180px)]">
+              {payouts.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-20 text-center">
+                  <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center mb-6 border border-primary/10">
+                    <Coins className="h-10 w-10 text-primary/60" />
+                  </div>
+                  <p className="text-xl font-semibold text-foreground mb-2">No earnings yet</p>
+                  <p className="text-sm text-muted-foreground max-w-[220px]">
+                    Create content and get views, likes, and comments to earn $5DEE tokens
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {/* Summary Card */}
+                  <div className="p-4 rounded-2xl bg-gradient-to-r from-primary/20 to-primary/5 border border-primary/20">
+                    <p className="text-sm text-muted-foreground">Total Earned</p>
+                    <p className="text-2xl font-bold text-foreground">{formatFiveDee(totalEarnings)}</p>
+                  </div>
+
+                  {payouts.map((payout) => (
+                    <div
+                      key={payout.id}
+                      className="p-4 rounded-2xl bg-gradient-to-r from-muted/20 to-muted/5 hover:from-muted/30 hover:to-muted/10 transition-all border border-border/10 hover:border-border/20"
+                    >
+                      <div className="flex items-center gap-4">
+                        {/* Action Icon */}
+                        <div className={`h-12 w-12 rounded-xl flex items-center justify-center ${getActionColor(payout.actionType)}`}>
+                          {getActionIcon(payout.actionType)}
+                        </div>
+
+                        {/* Info */}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-foreground">
+                            +{formatFiveDee(payout.amount)}
+                          </p>
+                          <p className="text-sm text-muted-foreground capitalize">
+                            {payout.actionType} on {payout.contentType}
+                          </p>
+                          <p className="text-xs text-muted-foreground/70 mt-1">
+                            {formatDistanceToNow(new Date(payout.createdAt), { addSuffix: true })}
+                          </p>
+                        </div>
+
+                        {/* Status */}
+                        <Badge 
+                          className={
+                            payout.status === "confirmed" 
+                              ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                              : "bg-amber-500/20 text-amber-400 border border-amber-500/30"
+                          }
+                        >
+                          {payout.status.toUpperCase()}
+                        </Badge>
+                      </div>
+                      
+                      {/* Explorer Link */}
+                      {payout.txHash && (
+                        <div className="mt-3 pt-3 border-t border-border/10">
+                          <a
+                            href={`https://apescan.io/tx/${payout.txHash}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
+                          >
+                            View on ApeScan
+                            <ExternalLink className="h-3 w-3" />
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </ScrollArea>
+          </TabsContent>
+        </Tabs>
       </SheetContent>
     </Sheet>
   );
