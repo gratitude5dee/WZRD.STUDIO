@@ -1,275 +1,230 @@
 
-# $5DEE Token Notifications & ApeChain Blockchain Integration
+# Sign in with Moltbook Integration
 
 ## Overview
-Implement a complete real-time $5DEE token notification system with true blockchain payouts on ApeChain. This includes:
-1. **NotificationContext** for in-app notifications
-2. **ApeChain configuration** for Thirdweb
-3. **distribute-rewards Edge Function** with server-side signing
-4. **Wallet UI updates** to display $5DEE balance and earnings
-5. **Mog engagement integration** for $5DEE payouts
-
----
+This plan implements "Sign in with Moltbook" authentication for AI agents in the Mog app. Moltbook provides universal identity for AI agents, allowing bots to authenticate with verified identity, reputation data (karma), and owner information.
 
 ## Architecture
 
 ```text
 ┌─────────────────────────────────────────────────────────────────────────────────┐
-│                           User Engagement (like/comment/bookmark/share)          │
-└───────────────────────────────────┬─────────────────────────────────────────────┘
-                                    │
-                                    ▼
+│                    AI Agent with Moltbook Identity                               │
+│                    (sends X-Moltbook-Identity header)                            │
+└───────────────────────────────────────┬─────────────────────────────────────────┘
+                                        │
+                                        ▼
 ┌─────────────────────────────────────────────────────────────────────────────────┐
-│                    MogPostCard / useContentEngagement                            │
-│                         triggers payout & notification                           │
-└───────────────────────────────────┬─────────────────────────────────────────────┘
-                                    │
-              ┌─────────────────────┴─────────────────────┐
-              ▼                                           ▼
-┌──────────────────────────────┐           ┌──────────────────────────────────────┐
-│  distribute-rewards          │           │  NotificationContext                 │
-│  Edge Function               │           │  - Stores notifications              │
-│  - Server-side signing       │           │  - Persists to localStorage          │
-│  - Thirdweb + ApeChain       │           │  - Shows toast + dropdown            │
-│  - Admin wallet pays gas     │           └──────────────────────────────────────┘
-└──────────────────────────────┘
-              │
-              ▼
-┌──────────────────────────────┐
-│  $5DEE ERC-20 Contract       │
-│  on ApeChain                 │
-│  Token transferred to        │
-│  creator wallet              │
-└──────────────────────────────┘
+│                    verify-moltbook-identity Edge Function                        │
+│                    - Extracts X-Moltbook-Identity header                         │
+│                    - Calls Moltbook API to verify token                          │
+│                    - Returns verified agent profile                              │
+└───────────────────────────────────────┬─────────────────────────────────────────┘
+                                        │
+                   ┌────────────────────┴────────────────────┐
+                   ▼                                          ▼
+┌────────────────────────────────────┐     ┌────────────────────────────────────┐
+│  Moltbook Verify API               │     │  Verified Agent Profile            │
+│  POST /api/v1/agents/verify-identity│     │  - id, name, karma                 │
+│  X-Moltbook-App-Key: <app key>     │     │  - avatar_url, is_claimed          │
+│  Body: {"token": "...", "audience"}│     │  - owner: {x_handle, x_verified}   │
+└────────────────────────────────────┘     └────────────────────────────────────┘
 ```
 
 ---
 
 ## Implementation Steps
 
-### Step 1: Configure Thirdweb for ApeChain
+### Step 1: Store Moltbook App API Key
 
-Update the Thirdweb configuration to use ApeChain instead of Monad.
+Add the `MOLTBOOK_APP_KEY` secret to Supabase Edge Functions.
 
-**File:** `src/lib/thirdweb.ts`
+**Secret to Add:**
+- **Name:** `MOLTBOOK_APP_KEY`
+- **Value:** `moltbook_sk_bujliVoeImDMFwYAyqkw66c548d_gJ5G`
 
-**Changes:**
-- Import `defineChain` from thirdweb
-- Define ApeChain (Curtis Testnet ID: 33111, Mainnet: 33139)
-- Export `FIVE_DEE_TOKEN_ADDRESS` constant
-- Export `tokenContract` for frontend reference
+This secret will be used by the Edge Function to authenticate with the Moltbook API.
 
+---
+
+### Step 2: Create verify-moltbook-identity Edge Function
+
+Create a new Edge Function that verifies Moltbook identity tokens.
+
+**New File:** `supabase/functions/verify-moltbook-identity/index.ts`
+
+**Functionality:**
+1. Extract `X-Moltbook-Identity` header from incoming request
+2. Call Moltbook's verification endpoint with:
+   - Header: `X-Moltbook-App-Key` (from env)
+   - Body: `{ token, audience }`
+3. Return verified agent profile or appropriate error
+
+**Request/Response:**
 ```typescript
-import { createThirdwebClient, defineChain, getContract } from "thirdweb";
+// Input headers:
+// X-Moltbook-Identity: <identity_token>
 
-export const apeChain = defineChain({
-  id: 33111, // Curtis Testnet (use 33139 for Mainnet)
-  name: "ApeChain Curtis",
-  rpc: "https://rpc.curtis.apechain.com",
-  nativeCurrency: {
-    name: "ApeCoin",
-    symbol: "APE",
-    decimals: 18,
-  },
-});
+// Output on success:
+{
+  "success": true,
+  "valid": true,
+  "agent": {
+    "id": "uuid",
+    "name": "BotName",
+    "karma": 420,
+    "avatar_url": "https://...",
+    "is_claimed": true,
+    "follower_count": 42,
+    "following_count": 10,
+    "stats": { "posts": 156, "comments": 892 },
+    "owner": {
+      "x_handle": "human_owner",
+      "x_verified": true,
+      "x_follower_count": 10000
+    }
+  }
+}
 
-export const FIVE_DEE_TOKEN_ADDRESS = "0x954fA8cfb797a26D4878ee212004889a2C9D7624";
-
-export const tokenContract = getContract({
-  client: thirdwebClient,
-  chain: apeChain,
-  address: FIVE_DEE_TOKEN_ADDRESS,
-});
+// Output on error:
+{
+  "success": false,
+  "valid": false,
+  "error": "identity_token_expired" | "invalid_token" | "invalid_app_key"
+}
 ```
 
+**Error Handling:**
+- 401: No identity token provided
+- 401: Invalid or expired token (with specific error code)
+- 500: Failed to verify identity (Moltbook API unreachable)
+
 ---
 
-### Step 2: Create NotificationContext
+### Step 3: Create MoltbookContext for Frontend
 
-Create a context to manage in-app notifications with persistence and toast integration.
+Create a context to manage Moltbook agent state in the React app.
 
-**New File:** `src/contexts/NotificationContext.tsx`
+**New File:** `src/contexts/MoltbookContext.tsx`
 
 **Features:**
-- Store notifications with type, amount, action, timestamp
-- `addNotification()` - add new notification and show toast
-- `markAllAsRead()` - clear unread status
-- `clearNotifications()` - remove all notifications
-- Persist to localStorage for session continuity
-- Max 50 notifications retained
+- Store authenticated Moltbook agent profile
+- `verifyAgent(token)` - Verify an identity token
+- `clearAgent()` - Clear agent authentication
+- Expose agent data: id, name, karma, avatar, owner info
+- Persist agent to localStorage for session continuity
 
-**Notification Types:**
-- `payout` - $5DEE token earnings (green/gold styling)
-- `upload` - New content uploaded
-- `transaction` - General blockchain transactions
-- `system` - Platform notifications
-
----
-
-### Step 3: Create distribute-rewards Edge Function
-
-Create a new Edge Function that handles server-side token transfers using an Admin wallet.
-
-**New File:** `supabase/functions/distribute-rewards/index.ts`
-
-**Secret Required:** `ADMIN_PRIVATE_KEY` - The private key of the platform's admin wallet that holds $5DEE tokens and pays gas fees.
-
-**Logic Flow:**
-1. Accept JSON body: `{ creatorWallet, amount, actionType, contentId }`
-2. Initialize Thirdweb client with `THIRDWEB_SECRET_KEY`
-3. Create Admin Account from `ADMIN_PRIVATE_KEY`
-4. Connect to $5DEE ERC-20 contract on ApeChain
-5. Prepare transfer: `transfer(to: creatorWallet, amount: amount * 10^18)`
-6. Send transaction signed by Admin wallet
-7. Return `{ success: true, txHash, amount }`
-
-**Error Handling:**
-- Return 400 for missing fields
-- Return 500 if transaction fails with descriptive error
-- Log all transactions for debugging
-
----
-
-### Step 4: Update engagement-pay Edge Function
-
-Modify the existing `engagement-pay` function to call `distribute-rewards` for real blockchain payouts.
-
-**File:** `supabase/functions/engagement-pay/index.ts`
-
-**Changes:**
-- After validation and anti-abuse checks, call `distribute-rewards` internally
-- Store the real `tx_hash` from blockchain response
-- Update `engagement_payouts` table with confirmed transaction
-- Return payout details including action type for notifications
-
----
-
-### Step 5: Update useEngagementPayout Hook
-
-Add notification triggering when payouts succeed.
-
-**File:** `src/hooks/useEngagementPayout.ts`
-
-**Changes:**
-- Import NotificationContext
-- On successful payout response, call `addNotification()`
-- Include action type and amount in notification
-
+**TypeScript Interface:**
 ```typescript
-if (response.data?.success) {
-  addNotification({
-    type: 'payout',
-    title: `+${response.data.amount} $5DEE`,
-    description: `You earned tokens for your ${actionType}!`,
-    amount: response.data.amount,
-    actionType: actionType,
-  });
+interface MoltbookAgent {
+  id: string;
+  name: string;
+  karma: number;
+  avatar_url: string | null;
+  is_claimed: boolean;
+  follower_count: number;
+  following_count: number;
+  stats: {
+    posts: number;
+    comments: number;
+  };
+  owner: {
+    x_handle: string;
+    x_name: string;
+    x_avatar: string;
+    x_verified: boolean;
+    x_follower_count: number;
+  } | null;
 }
 ```
 
 ---
 
-### Step 6: Integrate $5DEE Payouts into MogPostCard
+### Step 4: Create Moltbook Auth Hook
 
-Update the Mog engagement handlers to trigger $5DEE payouts.
+Create a reusable hook for components that need to verify Moltbook identity.
 
-**File:** `src/components/mog/MogPostCard.tsx`
+**New File:** `src/hooks/useMoltbookAuth.ts`
 
-**Changes:**
-- Import and use `useEngagementPayout` hook with `contentType: 'mog'`
-- Call `triggerPayout('like')` in `handleLike`
-- Call `triggerPayout('bookmark')` in `handleBookmark`
-- Call `triggerPayout('share')` in `handleShare`
-- Add comment payout in `MogCommentsSheet` when user posts a comment
+**Features:**
+- `verifyIdentity(token)` - Call the Edge Function to verify a token
+- `isVerifying` - Loading state
+- `error` - Error message if verification fails
+- Integration with MoltbookContext
 
 ---
 
-### Step 7: Update NotificationsDropdown
+### Step 5: Update Auth Page with Moltbook Sign-in Option
 
-Replace mock data with real notifications from context.
+Add "Sign in with Moltbook" button to the existing Auth page.
 
-**File:** `src/components/NotificationsDropdown.tsx`
+**File:** `src/pages/Auth.tsx`
 
 **Changes:**
-- Import and use NotificationContext
-- Add new `payout` notification type with coin icon (🪙)
-- Display $5DEE amount in green/gold color
-- Show action type (like, comment, share, bookmark)
-- Add "Mark all as read" button
-- Add "Clear all" option
-- Dynamic unread count badge
+- Add Moltbook icon/button to social login options
+- Handle token from URL query param (for OAuth-style redirects)
+- Call verification Edge Function on Moltbook sign-in
+- Navigate to home on successful verification
 
-**Payout Notification Styling:**
+**New UI Element:**
 ```text
 ┌───────────────────────────────────────┐
-│ 🪙  +5 $5DEE                    • new │
-│     You earned for your like!         │
-│     2 min ago                         │
+│  🤖 Continue with Moltbook           │
+│     For AI agents                     │
 └───────────────────────────────────────┘
 ```
 
 ---
 
-### Step 8: Update WalletModal with $5DEE Balance
+### Step 6: Create Moltbook Verification Helper
 
-Display the user's earned $5DEE balance and breakdown.
+Create a shared utility for other Edge Functions to verify Moltbook identity.
 
-**File:** `src/components/WalletModal.tsx`
+**New File:** `supabase/functions/_shared/moltbook-verify.ts`
 
-**Changes:**
-- Fetch `creator_balances` from Supabase on open
-- Display `$5DEE Earnings` section below wallet address
-- Show total earned with token icon
-- Display breakdown by action type:
-  - 👁 Views: X
-  - 🦞 Likes: X  
-  - 💬 Comments: X
-  - 🔗 Shares: X
-  - 🔖 Bookmarks: X
+**Functionality:**
+- Reusable function: `verifyMoltbookIdentity(identityToken: string)`
+- Used by other Edge Functions that need to authenticate Moltbook agents
+- Returns typed agent profile or error
 
-**New Section Layout:**
-```text
-┌────────────────────────────────────────┐
-│  🪙 $5DEE Earnings                     │
-│  ─────────────────────                 │
-│  Total: 247 $5DEE                      │
-│                                        │
-│  👁 120  🦞 85  💬 30  🔗 12           │
-└────────────────────────────────────────┘
+**Usage in other Edge Functions:**
+```typescript
+import { verifyMoltbookIdentity } from "../_shared/moltbook-verify.ts";
+
+// In any Edge Function:
+const identityToken = req.headers.get('X-Moltbook-Identity');
+if (identityToken) {
+  const result = await verifyMoltbookIdentity(identityToken);
+  if (result.valid) {
+    // Agent is authenticated, use result.agent
+  }
+}
 ```
 
 ---
 
-### Step 9: Update WalletContext for ApeChain
+### Step 7: Update Engagement Pay for Agent Support
 
-Ensure wallet connection enforces ApeChain network.
+Modify the engagement-pay Edge Function to support Moltbook agent authentication.
 
-**File:** `src/contexts/WalletContext.tsx`
+**File:** `supabase/functions/engagement-pay/index.ts`
 
 **Changes:**
-- Import `apeChain` from thirdweb config
-- Use ApeChain as the required network
-- Pass chain to wallet connect
+- Check for `X-Moltbook-Identity` header
+- If present, verify with Moltbook API
+- Allow agents to trigger engagements on behalf of their owner
+- Log agent ID in payout metadata for attribution
 
 ---
 
-### Step 10: Wrap App with NotificationProvider
+### Step 8: Update App Provider Hierarchy
 
-Add the notification context to the app tree.
+Add MoltbookProvider to the app's provider tree.
 
 **File:** `src/App.tsx`
 
 **Changes:**
-- Import `NotificationProvider`
-- Wrap inside `WalletProvider`
-
----
-
-## Database Changes Required
-
-Update `engagement_payouts` table to support Mog content type:
-
-**Migration:** Add 'mog' as valid content_type in existing check constraint (if any) or handle in code.
+- Import and add `MoltbookProvider`
+- Place inside WalletProvider (agents can also have wallets)
 
 ---
 
@@ -277,51 +232,78 @@ Update `engagement_payouts` table to support Mog content type:
 
 | File | Action | Purpose |
 |------|--------|---------|
-| `src/lib/thirdweb.ts` | Modify | Configure ApeChain, export token contract |
-| `src/contexts/NotificationContext.tsx` | Create | Manage in-app notifications |
-| `supabase/functions/distribute-rewards/index.ts` | Create | Server-side token transfers |
-| `supabase/functions/engagement-pay/index.ts` | Modify | Integrate with distribute-rewards |
-| `src/hooks/useEngagementPayout.ts` | Modify | Add notification on success |
-| `src/components/mog/MogPostCard.tsx` | Modify | Add $5DEE payouts to Mog engagement |
-| `src/components/NotificationsDropdown.tsx` | Modify | Use real notifications, add payout type |
-| `src/components/WalletModal.tsx` | Modify | Display $5DEE balance |
-| `src/contexts/WalletContext.tsx` | Modify | Use ApeChain |
-| `src/App.tsx` | Modify | Add NotificationProvider |
+| `supabase/functions/verify-moltbook-identity/index.ts` | Create | Main verification Edge Function |
+| `supabase/functions/_shared/moltbook-verify.ts` | Create | Reusable verification helper |
+| `src/contexts/MoltbookContext.tsx` | Create | Frontend agent state management |
+| `src/hooks/useMoltbookAuth.ts` | Create | Verification hook for components |
+| `src/types/moltbook.ts` | Create | TypeScript interfaces for Moltbook |
+| `src/pages/Auth.tsx` | Modify | Add Moltbook sign-in button |
+| `supabase/functions/engagement-pay/index.ts` | Modify | Support agent authentication |
+| `src/App.tsx` | Modify | Add MoltbookProvider |
 
 ---
 
 ## Secret Requirements
 
-A new secret is required:
+| Secret Name | Value | Purpose |
+|-------------|-------|---------|
+| `MOLTBOOK_APP_KEY` | `moltbook_sk_bujliVoeImDMFwYAyqkw66c548d_gJ5G` | Authenticate with Moltbook API for token verification |
 
-| Secret Name | Purpose |
-|-------------|---------|
-| `ADMIN_PRIVATE_KEY` | Private key of platform wallet that holds $5DEE and pays gas fees for creator payouts |
+---
 
-Existing secrets already configured:
-- `THIRDWEB_SECRET_KEY` - For server-side Thirdweb SDK
-- `THIRDWEB_CLIENT_ID` - For frontend client
+## Edge Function Configuration
+
+Update `supabase/config.toml` to disable JWT verification for the new function (it uses its own Moltbook-based auth):
+
+```toml
+[functions.verify-moltbook-identity]
+verify_jwt = false
+```
+
+---
+
+## Technical Details
+
+### Token Verification Flow
+
+1. Agent calls your endpoint with `X-Moltbook-Identity: <token>`
+2. Your Edge Function extracts the token
+3. Edge Function calls Moltbook API:
+   ```
+   POST https://moltbook.com/api/v1/agents/verify-identity
+   X-Moltbook-App-Key: moltbook_sk_bujliVoeImDMFwYAyqkw66c548d_gJ5G
+   Content-Type: application/json
+   
+   {"token": "<token>", "audience": "mog.lovable.app"}
+   ```
+4. Moltbook returns agent profile if valid
+5. Edge Function attaches agent to request context
+
+### Error Codes
+
+| Error | Meaning | HTTP Status |
+|-------|---------|-------------|
+| `identity_token_expired` | Token has expired (1 hour default) | 401 |
+| `invalid_token` | Token is malformed or revoked | 401 |
+| `invalid_app_key` | Your app key is invalid | 500 |
+| `audience_mismatch` | Token was issued for different service | 401 |
 
 ---
 
 ## Testing Strategy
 
-1. Connect wallet and switch to ApeChain network
-2. Like a Mog post
-3. Verify toast notification appears: "+5 $5DEE"
-4. Check NotificationsDropdown shows the payout
-5. Open WalletModal and verify $5DEE balance displays
-6. Check `engagement_payouts` table for new record
-7. Verify `creator_balances` updates for the creator
+1. Deploy the verify-moltbook-identity Edge Function
+2. Test with a sample Moltbook identity token (if available)
+3. Verify error handling for expired/invalid tokens
+4. Test the Auth page "Sign in with Moltbook" flow
+5. Verify agent data displays correctly in the UI
+6. Test engagement-pay with agent authentication header
 
 ---
 
-## Edge Cases Handled
+## Security Considerations
 
-1. **Self-interaction blocked** - No payout or notification
-2. **Daily limit reached** - No payout, no notification
-3. **Already rewarded** - No duplicate payout
-4. **No wallet connected** - Toast prompts connection
-5. **Transaction failure** - Error logged, graceful fallback
-6. **Creator balance doesn't exist** - Show "0 $5DEE" with graceful fallback
-7. **Wrong network** - Wallet prompts switch to ApeChain
+1. **Never expose MOLTBOOK_APP_KEY** - Only used server-side in Edge Functions
+2. **Audience verification** - Always pass your domain as audience to prevent token reuse
+3. **Token expiry** - Tokens expire after 1 hour by default; handle gracefully
+4. **Rate limiting** - Moltbook may rate limit verification requests; implement caching if needed
