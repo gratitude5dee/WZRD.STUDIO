@@ -4,6 +4,106 @@
     "agent-browser-tekken": {
       "version": "0.8.6",
       "installedAt": 1769928523275
+    },
+    "claw-conductor": {
+      "version": "0.1.1",
+      "installedAt": 1769929244335
+    },
+    "prompt-optimizer": {
+      "version": "1.0.0",
+      "installedAt": 1769929245760
+    },
+    "amygdala-memory": {
+      "version": "1.2.0",
+      "installedAt": 1769929247381
+    },
+    "vision-sandbox": {
+      "version": "1.0.0",
+      "installedAt": 1769929248943
+    },
+    "hippocampus-memory": {
+      "version": "3.1.2",
+      "installedAt": 1769929252166
+    },
+    "skillguard": {
+      "version": "1.0.1",
+      "installedAt": 1769929255456
+    },
+    "project-management-skills": {
+      "version": "1.3.0",
+      "installedAt": 1769929257752
+    },
+    "macbook-optimizer": {
+      "version": "1.0.1",
+      "installedAt": 1769929258973
+    },
+    "metamask": {
+      "version": "1.0.0",
+      "installedAt": 1769929260147
+    },
+    "fast-browser-use": {
+      "version": "1.0.4",
+      "installedAt": 1769929264334
+    },
+    "agent-orchestrator": {
+      "version": "0.1.0",
+      "installedAt": 1769929265735
+    },
+    "clawflows": {
+      "version": "1.0.0",
+      "installedAt": 1769929267207
+    },
+    "moltbook-interact": {
+      "version": "1.0.1",
+      "installedAt": 1769929268590
+    },
+    "moltbook-registry": {
+      "version": "1.0.3",
+      "installedAt": 1769929270031
+    },
+    "api-designer": {
+      "version": "0.1.0",
+      "installedAt": 1769929271575
+    },
+    "cron-mastery": {
+      "version": "1.0.0",
+      "installedAt": 1769929272697
+    },
+    "senior-devops": {
+      "version": "0.1.0",
+      "installedAt": 1769929274423
+    },
+    "remotion-video-toolkit": {
+      "version": "1.4.0",
+      "installedAt": 1769929277211
+    },
+    "exa-web-search-free": {
+      "version": "1.0.1",
+      "installedAt": 1769929278680
+    },
+    "social-card-gen": {
+      "version": "1.0.2",
+      "installedAt": 1769929280066
+    },
+    "ui-ux-pro-max": {
+      "version": "0.1.0",
+      "installedAt": 1769929284757
+    },
+    "x-trends": {
+      "version": "1.2.1",
+      "installedAt": 1769929286214
+    },
+    "deep-research": {
+      "version": "1.0.1",
+      "installedAt": 1769929287376
+    },
+    "youtube-transcript": {
+      "version": "1.0.1",
+      "installedAt": 1769929288711
+    },
+    "todo": {
+      "version": "1.1.0",
+      "installedAt": 1769929290136
     }
   }
 }
