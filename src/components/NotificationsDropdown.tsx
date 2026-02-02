@@ -1,4 +1,4 @@
-import { Bell, Heart, Eye, MessageCircle, Share2, Bookmark, Clock, CheckCheck, Trash2 } from "lucide-react";
+import { Bell, Heart, Eye, MessageCircle, Share2, Bookmark, Clock, CheckCheck, Trash2, ArrowUpRight, ArrowDownLeft } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,20 +31,26 @@ const getNotificationIcon = (actionType: PayoutActionType) => {
   }
 };
 
-const getNotificationColor = (actionType: PayoutActionType) => {
-  switch (actionType) {
-    case "view":
-      return "bg-blue-500/20 text-blue-400";
-    case "like":
-      return "bg-pink-500/20 text-pink-400";
-    case "comment":
-      return "bg-purple-500/20 text-purple-400";
-    case "share":
-      return "bg-cyan-500/20 text-cyan-400";
-    case "bookmark":
-      return "bg-amber-500/20 text-amber-400";
-    default:
-      return "bg-muted text-muted-foreground";
+const getNotificationColor = (actionType: PayoutActionType, isCreator: boolean) => {
+  if (isCreator) {
+    // Earnings - use action-specific colors
+    switch (actionType) {
+      case "view":
+        return "bg-blue-500/20 text-blue-400";
+      case "like":
+        return "bg-pink-500/20 text-pink-400";
+      case "comment":
+        return "bg-purple-500/20 text-purple-400";
+      case "share":
+        return "bg-cyan-500/20 text-cyan-400";
+      case "bookmark":
+        return "bg-amber-500/20 text-amber-400";
+      default:
+        return "bg-muted text-muted-foreground";
+    }
+  } else {
+    // Activity (payer) - use muted colors
+    return "bg-muted/50 text-muted-foreground";
   }
 };
 
@@ -68,6 +74,9 @@ const getActionLabel = (actionType: PayoutActionType) => {
 export function NotificationsDropdown() {
   const { notifications, unreadCount, totalEarnings, markAsRead, markAllAsRead, clearNotifications } = useNotifications();
 
+  const creatorNotifications = notifications.filter(n => n.isCreator);
+  const payerNotifications = notifications.filter(n => !n.isCreator);
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -87,10 +96,10 @@ export function NotificationsDropdown() {
       >
         <DropdownMenuLabel className="flex items-center justify-between py-3">
           <div className="flex flex-col">
-            <span className="text-base font-semibold text-foreground">Earnings</span>
+            <span className="text-base font-semibold text-foreground">Activity</span>
             {totalEarnings > 0 && (
               <span className="text-xs text-primary font-medium">
-                Total: {formatFiveDee(totalEarnings)}
+                Earned: {formatFiveDee(totalEarnings)}
               </span>
             )}
           </div>
@@ -141,47 +150,48 @@ export function NotificationsDropdown() {
           {notifications.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
               <Bell className="h-8 w-8 mb-2 opacity-50" />
-              <p className="text-sm">No earnings yet</p>
+              <p className="text-sm">No activity yet</p>
               <p className="text-xs text-muted-foreground/70 mt-1">
-                Engage with content to earn $5DEE
+                Engage with content to see activity
               </p>
             </div>
           ) : (
-            notifications.map((notification) => (
-              <DropdownMenuItem
-                key={notification.id}
-                className="flex items-start gap-3 p-3 cursor-pointer focus:bg-secondary/50"
-                onClick={() => markAsRead(notification.id)}
-              >
-                {/* Icon */}
-                <div
-                  className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${getNotificationColor(
-                    notification.actionType
-                  )}`}
-                >
-                  {getNotificationIcon(notification.actionType)}
-                </div>
-                
-                {/* Content */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className={`text-sm font-medium truncate ${notification.read ? "text-muted-foreground" : "text-foreground"}`}>
-                      +{formatFiveDee(notification.amount)}
-                    </p>
-                    {!notification.read && (
-                      <span className="flex-shrink-0 w-2 h-2 rounded-full bg-primary" />
-                    )}
+            <>
+              {/* Earnings Section (Creator) */}
+              {creatorNotifications.length > 0 && (
+                <>
+                  <div className="px-3 py-2 flex items-center gap-2">
+                    <ArrowDownLeft className="h-3 w-3 text-emerald-400" />
+                    <span className="text-xs font-medium text-emerald-400">Earnings</span>
                   </div>
-                  <p className="text-xs text-muted-foreground truncate mt-0.5">
-                    Someone {getActionLabel(notification.actionType)} your {notification.contentType}
-                  </p>
-                  <p className="text-[10px] text-muted-foreground/70 mt-1 flex items-center gap-1">
-                    <Clock className="h-3 w-3" />
-                    {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
-                  </p>
-                </div>
-              </DropdownMenuItem>
-            ))
+                  {creatorNotifications.slice(0, 10).map((notification) => (
+                    <NotificationItem
+                      key={notification.id}
+                      notification={notification}
+                      onRead={markAsRead}
+                    />
+                  ))}
+                </>
+              )}
+
+              {/* Activity Section (Payer) */}
+              {payerNotifications.length > 0 && (
+                <>
+                  {creatorNotifications.length > 0 && <DropdownMenuSeparator />}
+                  <div className="px-3 py-2 flex items-center gap-2">
+                    <ArrowUpRight className="h-3 w-3 text-muted-foreground" />
+                    <span className="text-xs font-medium text-muted-foreground">Your Activity</span>
+                  </div>
+                  {payerNotifications.slice(0, 10).map((notification) => (
+                    <NotificationItem
+                      key={notification.id}
+                      notification={notification}
+                      onRead={markAsRead}
+                    />
+                  ))}
+                </>
+              )}
+            </>
           )}
         </ScrollArea>
         
@@ -197,5 +207,59 @@ export function NotificationsDropdown() {
         )}
       </DropdownMenuContent>
     </DropdownMenu>
+  );
+}
+
+function NotificationItem({
+  notification,
+  onRead,
+}: {
+  notification: PayoutNotification;
+  onRead: (id: string) => void;
+}) {
+  const isCreator = notification.isCreator;
+
+  return (
+    <DropdownMenuItem
+      className="flex items-start gap-3 p-3 cursor-pointer focus:bg-secondary/50"
+      onClick={() => onRead(notification.id)}
+    >
+      {/* Icon */}
+      <div
+        className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${getNotificationColor(
+          notification.actionType,
+          isCreator
+        )}`}
+      >
+        {getNotificationIcon(notification.actionType)}
+      </div>
+      
+      {/* Content */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <p className={`text-sm font-medium truncate ${notification.read ? "text-muted-foreground" : "text-foreground"}`}>
+            {isCreator ? (
+              <>+{formatFiveDee(notification.amount)}</>
+            ) : (
+              <span className="capitalize">{getActionLabel(notification.actionType).replace("ed", "")}</span>
+            )}
+          </p>
+          {!notification.read && (
+            <span className="flex-shrink-0 w-2 h-2 rounded-full bg-primary" />
+          )}
+        </div>
+        <p className="text-xs text-muted-foreground truncate mt-0.5">
+          {isCreator ? (
+            <>Someone {getActionLabel(notification.actionType)} your {notification.contentType}</>
+          ) : (
+            <>You {getActionLabel(notification.actionType)} a {notification.contentType}</>
+          )}
+        </p>
+        <p className="text-[10px] text-muted-foreground/70 mt-1 flex items-center gap-1">
+          <Clock className="h-3 w-3" />
+          {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
+        </p>
+      </div>
+    </DropdownMenuItem>
   );
 }

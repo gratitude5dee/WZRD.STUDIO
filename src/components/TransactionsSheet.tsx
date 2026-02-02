@@ -38,6 +38,7 @@ interface EngagementPayout {
   txHash: string | null;
   createdAt: string;
   status: string;
+  isCreator: boolean;
 }
 
 const getActionIcon = (actionType: PayoutActionType) => {
@@ -93,16 +94,27 @@ export function TransactionsSheet({
 
   const fetchPayouts = async () => {
     try {
-      const { data, error } = await supabase
+      // Fetch payouts where user is creator (earnings)
+      const { data: creatorPayouts, error: creatorError } = await supabase
         .from("engagement_payouts")
         .select("*")
         .eq("creator_wallet", walletAddress)
         .order("created_at", { ascending: false })
         .limit(50);
 
-      if (error) throw error;
+      if (creatorError) throw creatorError;
 
-      const mapped: EngagementPayout[] = (data || []).map((p: any) => ({
+      // Fetch payouts where user is payer (activity)
+      const { data: payerPayouts, error: payerError } = await supabase
+        .from("engagement_payouts")
+        .select("*")
+        .eq("payer_wallet", walletAddress)
+        .order("created_at", { ascending: false })
+        .limit(50);
+
+      if (payerError) throw payerError;
+
+      const mapPayout = (p: any, isCreator: boolean): EngagementPayout => ({
         id: p.id,
         actionType: p.action_type as PayoutActionType,
         contentType: p.content_type,
@@ -111,9 +123,19 @@ export function TransactionsSheet({
         txHash: p.tx_hash,
         createdAt: p.created_at,
         status: p.status,
-      }));
+        isCreator,
+      });
 
-      setPayouts(mapped);
+      const creatorMapped = (creatorPayouts || []).map((p: any) => mapPayout(p, true));
+      const payerMapped = (payerPayouts || []).map((p: any) => mapPayout(p, false));
+
+      // Combine and dedupe (in case user is both creator and payer for same content)
+      const allPayouts = [...creatorMapped, ...payerMapped];
+      const uniquePayouts = allPayouts.filter(
+        (payout, index, self) => index === self.findIndex((p) => p.id === payout.id)
+      );
+
+      setPayouts(uniquePayouts);
     } catch (error) {
       console.error("Error fetching payouts:", error);
     }
@@ -225,7 +247,9 @@ export function TransactionsSheet({
     }
   };
 
-  const totalEarnings = payouts.reduce((sum, p) => sum + p.amount, 0);
+  const creatorPayouts = payouts.filter(p => p.isCreator);
+  const activityPayouts = payouts.filter(p => !p.isCreator);
+  const totalEarnings = creatorPayouts.reduce((sum, p) => sum + p.amount, 0);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -249,7 +273,7 @@ export function TransactionsSheet({
         </SheetHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">
-          <TabsList className="grid w-full grid-cols-2 mb-4">
+          <TabsList className="grid w-full grid-cols-3 mb-4">
             <TabsTrigger value="purchases" className="gap-2">
               <Receipt className="h-4 w-4" />
               Purchases
@@ -262,6 +286,10 @@ export function TransactionsSheet({
                   {totalEarnings}
                 </Badge>
               )}
+            </TabsTrigger>
+            <TabsTrigger value="activity" className="gap-2">
+              <Zap className="h-4 w-4" />
+              Activity
             </TabsTrigger>
           </TabsList>
 
@@ -369,7 +397,7 @@ export function TransactionsSheet({
 
           <TabsContent value="earnings">
             <ScrollArea className="h-[calc(85vh-180px)]">
-              {payouts.length === 0 ? (
+              {creatorPayouts.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-20 text-center">
                   <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center mb-6 border border-primary/10">
                     <Coins className="h-10 w-10 text-primary/60" />
@@ -387,7 +415,7 @@ export function TransactionsSheet({
                     <p className="text-2xl font-bold text-foreground">{formatFiveDee(totalEarnings)}</p>
                   </div>
 
-                  {payouts.map((payout) => (
+                  {creatorPayouts.map((payout) => (
                     <div
                       key={payout.id}
                       className="p-4 rounded-2xl bg-gradient-to-r from-muted/20 to-muted/5 hover:from-muted/30 hover:to-muted/10 transition-all border border-border/10 hover:border-border/20"
@@ -408,6 +436,79 @@ export function TransactionsSheet({
                           </p>
                           <p className="text-xs text-muted-foreground/70 mt-1">
                             {formatDistanceToNow(new Date(payout.createdAt), { addSuffix: true })}
+                          </p>
+                        </div>
+
+                        {/* Status */}
+                        <Badge 
+                          className={
+                            payout.status === "confirmed" 
+                              ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                              : "bg-amber-500/20 text-amber-400 border border-amber-500/30"
+                          }
+                        >
+                          {payout.status.toUpperCase()}
+                        </Badge>
+                      </div>
+                      
+                      {/* Explorer Link */}
+                      {payout.txHash && (
+                        <div className="mt-3 pt-3 border-t border-border/10">
+                          <a
+                            href={`https://apescan.io/tx/${payout.txHash}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
+                          >
+                            View on ApeScan
+                            <ExternalLink className="h-3 w-3" />
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </ScrollArea>
+          </TabsContent>
+
+          {/* Activity Tab - Your Engagement Actions */}
+          <TabsContent value="activity">
+            <ScrollArea className="h-[calc(85vh-180px)]">
+              {activityPayouts.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-20 text-center">
+                  <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center mb-6 border border-primary/10">
+                    <Zap className="h-10 w-10 text-primary/60" />
+                  </div>
+                  <p className="text-xl font-semibold text-foreground mb-2">No activity yet</p>
+                  <p className="text-sm text-muted-foreground max-w-[220px]">
+                    Like, comment, or share content to see your engagement history
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {activityPayouts.map((payout) => (
+                    <div
+                      key={payout.id}
+                      className="p-4 rounded-2xl bg-gradient-to-r from-muted/20 to-muted/5 hover:from-muted/30 hover:to-muted/10 transition-all border border-border/10 hover:border-border/20"
+                    >
+                      <div className="flex items-center gap-4">
+                        {/* Action Icon */}
+                        <div className={`h-12 w-12 rounded-xl flex items-center justify-center ${getActionColor(payout.actionType)}`}>
+                          {getActionIcon(payout.actionType)}
+                        </div>
+
+                        {/* Info */}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-foreground capitalize">
+                            {payout.actionType}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            You {payout.actionType}d a {payout.contentType}
+                          </p>
+                          <p className="text-xs text-muted-foreground/70 mt-1">
+                            Creator earned {formatFiveDee(payout.amount)} • {formatDistanceToNow(new Date(payout.createdAt), { addSuffix: true })}
                           </p>
                         </div>
 
