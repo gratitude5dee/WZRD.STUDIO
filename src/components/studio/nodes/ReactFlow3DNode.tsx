@@ -5,11 +5,17 @@ import { BaseNode } from './BaseNode';
 import { NodeStatusBadge } from '../status/NodeStatusBadge';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import type { NodeStatus } from '@/types/computeFlow';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import ModelSelector from './ModelSelector';
 
 interface ThreeDNodeData {
   status?: string;
@@ -19,6 +25,9 @@ interface ThreeDNodeData {
   imageUrl?: string;
   modelUrl?: string;
   model?: string;
+  onDuplicate?: () => void;
+  onDelete?: () => void;
+  onModelChange?: (modelId: string) => void;
 }
 
 const THREE_D_MODELS = [
@@ -43,9 +52,9 @@ export const ReactFlow3DNode = memo(({ id, data, selected }: NodeProps) => {
   const [modelUrl, setModelUrl] = useState<string | null>(nodeData?.modelUrl || null);
   const [model, setModel] = useState(nodeData?.model || 'fal-ai/triposr');
   const [isGenerating, setIsGenerating] = useState(false);
-  const onDuplicate = (data as any)?.onDuplicate;
-  const onDelete = (data as any)?.onDelete;
-  const dataOnModelChange = (data as any)?.onModelChange;
+  const onDuplicate = nodeData?.onDuplicate;
+  const onDelete = nodeData?.onDelete;
+  const dataOnModelChange = nodeData?.onModelChange;
 
   const handles = [
     {
