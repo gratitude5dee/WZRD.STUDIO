@@ -4,7 +4,7 @@ import { Track, usePlayer } from "@/contexts/PlayerContext";
 import { Button } from "@/components/ui/button";
 import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
-import { useX402Fetch } from "@/lib/x402";
+import { supabase } from "@/integrations/supabase/client";
 
 interface BuyWidgetProps {
   track: Track;
@@ -17,9 +17,6 @@ export function BuyWidget({ track, onClose, onSuccess }: BuyWidgetProps) {
   const { setActiveSession, play } = usePlayer();
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
-
-  const maxValue = BigInt(Math.ceil(track.price * 10 ** 6));
-  const fetchWithPayment = useX402Fetch(maxValue);
 
   const coverUrl = track.cover_path
     ? `https://mttpdwowikfzcdpehlrd.supabase.co/storage/v1/object/public/covers/${track.cover_path}`
@@ -35,38 +32,24 @@ export function BuyWidget({ track, onClose, onSuccess }: BuyWidgetProps) {
       return;
     }
 
-    if (!fetchWithPayment) {
-      toast({
-        title: "Wallet not ready",
-        description: "Please connect your wallet to pay with x402.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setIsProcessing(true);
 
     try {
       console.log("[BuyWidget] Processing payment for track:", track.id);
 
-      const gatewayUrl = import.meta.env.VITE_X402_GATEWAY_URL || "http://localhost:4020";
-
-      const response = await fetchWithPayment(`${gatewayUrl}/api/pay/${track.id}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          walletAddress: address.toLowerCase(),
+      const { data, error } = await supabase.functions.invoke('pay-stream', {
+        body: {
+          track_id: track.id,
+          payer_wallet: address.toLowerCase(),
           amount: track.price,
-          recipient: track.artist_wallet,
-          trackId: track.id,
-        }),
+        }
       });
 
-      const data = await response.json();
+      if (error) {
+        throw new Error(error.message || "Payment failed");
+      }
 
-      if (!response.ok || !data?.success) {
+      if (!data?.success) {
         throw new Error(data?.error || "Payment failed");
       }
 
