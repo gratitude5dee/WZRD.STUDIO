@@ -1,5 +1,5 @@
 import { memo, useMemo } from 'react';
-import { EdgeProps, getBezierPath, getSmoothStepPath, Position } from '@xyflow/react';
+import { EdgeProps, getBezierPath } from '@xyflow/react';
 
 // Data type color mapping for intuitive visual connections
 const DATA_TYPE_COLORS: Record<string, { primary: string; secondary: string; glow: string }> = {
@@ -30,16 +30,17 @@ export const ImprovedEdge = memo(({
   markerEnd,
   data,
   selected,
-}: EdgeProps<ImprovedEdgeData>) => {
-  const dataType = (data?.dataType as string) || 'default';
-  const status = data?.status || 'idle';
-  const isAnimated = data?.animated ?? false;
+}: EdgeProps) => {
+  const edgeData = data as ImprovedEdgeData | undefined;
+  const dataType = edgeData?.dataType || 'default';
+  const status = edgeData?.status || 'idle';
+  const isAnimated = edgeData?.animated ?? false;
 
   // Get colors based on data type
   const colors = DATA_TYPE_COLORS[dataType] || DATA_TYPE_COLORS.default;
 
   // Calculate smooth bezier path with better curvature
-  const [edgePath, labelX, labelY] = useMemo(() => {
+  const [edgePath] = useMemo(() => {
     // Calculate distance for dynamic curvature
     const dx = targetX - sourceX;
     const dy = targetY - sourceY;
@@ -150,7 +151,7 @@ export const ImprovedEdge = memo(({
         stroke={`url(#${gradientId})`}
         fill="none"
         strokeLinecap="round"
-        markerEnd={markerEnd}
+        markerEnd={markerEnd as string | undefined}
         style={{
           transition: 'stroke-width 0.3s ease',
         }}

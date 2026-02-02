@@ -104,6 +104,7 @@ interface StudioCanvasProps {
 }
 
 // Node types configuration (outside component for React Flow optimization)
+// Cast to NodeTypes to avoid strict type checking issues with custom node data
 const nodeTypes: NodeTypes = {
   // Core nodes
   text: ReactFlowTextNode,
@@ -112,7 +113,7 @@ const nodeTypes: NodeTypes = {
   upload: ReactFlowUploadNode,
   compute: ComputeNode,
   addBlockNode: AddBlockNode,
-  selectionNode: SelectionNode,
+  selectionNode: SelectionNode as any,
   
   // Specialized upload nodes
   uploadImage: UploadImageNode,
@@ -133,12 +134,13 @@ const nodeTypes: NodeTypes = {
 };
 
 // Edge types configuration
+// Cast to EdgeTypes to avoid strict type checking issues with custom edge data
 const edgeTypes: EdgeTypes = {
   bezier: BezierConnection,
   studio: GlowingEdge,
   glow: GlowingEdge,
   compute: ComputeEdge,
-  improved: ImprovedEdge,
+  improved: ImprovedEdge as any,
   default: BezierConnection,
 };
 

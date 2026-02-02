@@ -3,28 +3,29 @@ import { Handle, Position, type NodeProps, useReactFlow } from '@xyflow/react';
 import { motion } from 'framer-motion';
 import { Image, Type, Upload, Video } from 'lucide-react';
 
-type SelectionNodeData = {
+interface SelectionNodeData {
   showSelector?: boolean;
   onSelectType?: (type: 'text' | 'image' | 'video' | 'upload', position?: { x: number; y: number }) => void;
   onClose?: (nodeId: string) => void;
-};
+}
 
 const blockTypes = [
-  { id: 'text', icon: Type, label: 'Text', shortcut: 'T' },
-  { id: 'image', icon: Image, label: 'Image', shortcut: 'I' },
-  { id: 'video', icon: Video, label: 'Video', shortcut: 'V' },
-  { id: 'upload', icon: Upload, label: 'Upload', shortcut: 'U' },
+  { id: 'text' as const, icon: Type, label: 'Text', shortcut: 'T' },
+  { id: 'image' as const, icon: Image, label: 'Image', shortcut: 'I' },
+  { id: 'video' as const, icon: Video, label: 'Video', shortcut: 'V' },
+  { id: 'upload' as const, icon: Upload, label: 'Upload', shortcut: 'U' },
 ];
 
-export const SelectionNode = memo(({ id, data }: NodeProps<SelectionNodeData>) => {
+export const SelectionNode = memo(({ id, data }: NodeProps) => {
   const { getNode } = useReactFlow();
-  const showSelector = data?.showSelector ?? true;
+  const nodeData = data as SelectionNodeData;
+  const showSelector = nodeData?.showSelector ?? true;
 
   const handleSelect = (type: 'text' | 'image' | 'video' | 'upload') => {
     const node = getNode(id);
     const position = node?.position ?? { x: 0, y: 0 };
-    data?.onSelectType?.(type, position);
-    data?.onClose?.(id);
+    nodeData?.onSelectType?.(type, position);
+    nodeData?.onClose?.(id);
   };
 
   if (!showSelector) {
