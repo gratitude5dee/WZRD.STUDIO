@@ -1,130 +1,191 @@
 
-# Fix Pre-existing Build Errors
+# Fix Notification System - Complete Overhaul
 
-## Overview
-These build errors are **not GitHub sync issues** - they are mismatches between the code and the current thirdweb SDK version plus database schema. I'll fix all 6 errors.
+## Problem Summary
 
----
+The notification system is not showing earnings because of three interconnected issues:
 
-## Error Fixes
-
-### Fix 1: ThirdwebConnectButton.tsx (line 2)
-**Issue:** Imports `chain` but the export is named `apeChain`
-
-**Solution:** Change the import from `chain` to `apeChain`
-```typescript
-// Before
-import { thirdwebClient, chain } from "@/lib/thirdweb";
-
-// After
-import { thirdwebClient, apeChain } from "@/lib/thirdweb";
-```
-Also update the usage from `chain={chain}` to `chain={apeChain}`
+1. **Notifications only track creator earnings** - but you're a consumer (payer), not a creator
+2. **Realtime subscription is broken** - `engagement_payouts` table is not published for realtime
+3. **No initial data load** - Historical payouts are never fetched from the database
 
 ---
 
-### Fix 2: MogPostCard.tsx (line 158)
-**Issue:** TypeScript complains `'clipboard' does not exist on type 'never'`
+## Solution Architecture
 
-**Solution:** The `if (!("share" in navigator))` narrows the type incorrectly. Fix by checking clipboard existence properly:
-```typescript
-// Before
-if (!("share" in navigator)) {
-  await navigator.clipboard.writeText(shareUrl);
-  ...
-}
+### Option A: Show Earnings for Creators Only (Current Intent)
+Keep the system as-is but:
+- Add the table to realtime publication
+- Fetch initial data on mount
+- You'll see notifications when **someone engages with YOUR content**
 
-// After
-if (!("share" in navigator) && navigator.clipboard) {
-  await navigator.clipboard.writeText(shareUrl);
-  ...
-}
+### Option B: Show All Engagement Activity (Better UX for Testing)
+Expand notifications to show:
+- Your earnings when you're a creator (someone liked YOUR video)
+- Your spending when you're a payer (you liked SOMEONE's video)
+
+I recommend **Option B** for now since it provides immediate visual feedback.
+
+---
+
+## Implementation Steps
+
+### Step 1: Database Migration - Enable Realtime
+Add `engagement_payouts` table to the Supabase realtime publication so subscriptions work.
+
+```sql
+ALTER PUBLICATION supabase_realtime ADD TABLE public.engagement_payouts;
 ```
 
 ---
 
-### Fix 3: WalletContext.tsx (line 58)
-**Issue:** thirdweb's `Account` type doesn't have a `chainId` property
+### Step 2: Update NotificationContext
+Modify to:
+1. **Fetch initial payouts** from database on mount
+2. **Track both creator AND payer activities** for better testing visibility
+3. **Add polling fallback** in case realtime fails
 
-**Solution:** Remove the `account.chainId` check since we're already using `apeChain.id` as the target:
 ```typescript
-// Before
-if (wallet && account && account.chainId !== apeChain.id && "switchChain" in wallet) {
+// Key changes:
+// 1. Add initial fetch useEffect
+useEffect(() => {
+  if (!address) return;
+  
+  const fetchInitialPayouts = async () => {
+    const { data } = await supabase
+      .from("engagement_payouts")
+      .select("*")
+      .or(`creator_wallet.eq.${address},payer_wallet.eq.${address}`)
+      .order("created_at", { ascending: false })
+      .limit(MAX_NOTIFICATIONS);
+    
+    if (data) {
+      // Map and merge with localStorage
+      const mapped = data.map(payout => ({
+        id: payout.id,
+        type: "payout",
+        isCreator: payout.creator_wallet === address,
+        actionType: payout.action_type,
+        contentType: payout.content_type,
+        contentId: payout.content_id,
+        amount: payout.amount,
+        txHash: payout.tx_hash,
+        createdAt: payout.created_at,
+        read: false,
+      }));
+      
+      setNotifications(prev => mergeAndDedupe(prev, mapped));
+    }
+  };
+  
+  fetchInitialPayouts();
+}, [address]);
 
-// After  
-if (wallet && account && "switchChain" in wallet) {
+// 2. Subscribe to BOTH creator and payer events
+// Update realtime filter to OR condition
 ```
 
 ---
 
-### Fix 4: x402.ts (line 12)
-**Issue:** thirdweb's `wrapFetchWithPayment` API changed - expects options object, not bigint
-
-**Solution:** Update the function signature to pass an options object:
-```typescript
-// Before
-return wrapFetchWithPayment(fetch, thirdwebClient, wallet, maxValue);
-
-// After
-return wrapFetchWithPayment(fetch, thirdwebClient, wallet, { maxValue });
-```
+### Step 3: Update NotificationsDropdown UI
+Add visual distinction between:
+- **Earned** (when you're the creator): "❤️ +5 $5DEE - Someone liked your video"
+- **Spent** (when you're the payer): "❤️ -5 $5DEE - You liked a video" (or just confirmation)
 
 ---
 
-### Fix 5: MogLibrary.tsx (line 51)
-**Issue:** Type mismatch when mapping Supabase response - `content_type` is `string` but MogPost expects `"article" | "image" | "video"`
-
-**Solution:** The current code already has proper null filtering. The issue is the inline type annotation. Remove it and let TypeScript infer:
-```typescript
-// Before
-.map((row: { mog_posts: MogPost }) => row.mog_posts)
-
-// After (already in file, just needs the null check)
-.map((row: { mog_posts: MogPost | null }) => row.mog_posts)
-.filter(Boolean) as MogPost[];
-```
-This is actually already correct in the file. The issue is the Supabase types - need to cast properly.
-
----
-
-### Fix 6: Read.tsx (line 214/223)
-**Issue:** The `articles` table doesn't have an `author_wallet` column in the database
-
-**Solution:** Remove `author_wallet` from the select query and the Article interface, OR check if the column exists first:
-
-**Option A (Remove if column doesn't exist):**
-```typescript
-// Remove from select query
-.select("id, title, author, excerpt, image_url, tags, topics, published_at, likes_count, comments_count, shares_count, views_count")
-
-// Remove from interface
-interface Article {
-  // ... remove author_wallet
-}
-```
-
-**Option B (Keep but make nullable with fallback):**
-Since the code uses `author_wallet` for engagement tracking, we should keep it but handle the case where it might not exist yet.
+### Step 4: Update TransactionsSheet
+Similar change - show both:
+- Earnings tab: payouts where you're the creator
+- Activity tab: all your engagement actions (payer + creator)
 
 ---
 
 ## Files to Modify
 
-| File | Change |
-|------|--------|
-| `src/components/ThirdwebConnectButton.tsx` | Fix import `chain` to `apeChain` |
-| `src/components/mog/MogPostCard.tsx` | Fix clipboard access type narrowing |
-| `src/contexts/WalletContext.tsx` | Remove `account.chainId` check |
-| `src/lib/x402.ts` | Update to use options object `{ maxValue }` |
-| `src/pages/MogLibrary.tsx` | Add proper type casting for Supabase response |
-| `src/pages/Read.tsx` | Remove `author_wallet` from query or add column to DB |
+| File | Changes |
+|------|---------|
+| `supabase/migrations/*` | Add `engagement_payouts` to realtime publication |
+| `src/contexts/NotificationContext.tsx` | Add initial fetch, expand filter, add deduplication |
+| `src/components/NotificationsDropdown.tsx` | Add earned vs spent visual distinction |
+| `src/components/TransactionsSheet.tsx` | Update query to also show payer activity |
 
 ---
 
-## Technical Notes
+## Technical Details
 
-These errors indicate:
-1. **thirdweb SDK was updated** - API signatures changed
-2. **Database schema drift** - Code references a column (`author_wallet`) that doesn't exist
+### PayoutNotification Type Update
+```typescript
+export interface PayoutNotification {
+  id: string;
+  type: "payout";
+  isCreator: boolean;  // NEW: true if you earned, false if you spent
+  actionType: PayoutActionType;
+  contentType: string;
+  contentId: string;
+  amount: number;
+  txHash: string | null;
+  createdAt: string;
+  read: boolean;
+}
+```
 
-The Moltbook integration I just implemented is **separate from these issues** and should work once these pre-existing errors are fixed.
+### Realtime Subscription Update
+Since Supabase realtime filter doesn't support OR conditions, we'll:
+1. Subscribe without a wallet filter
+2. Filter client-side for relevant payouts (where user is creator OR payer)
+
+```typescript
+const channel = supabase
+  .channel("payout-notifications")
+  .on(
+    "postgres_changes",
+    {
+      event: "INSERT",
+      schema: "public",
+      table: "engagement_payouts",
+    },
+    (payload) => {
+      const payout = payload.new;
+      // Check if this payout is relevant to current user
+      if (payout.creator_wallet !== address && payout.payer_wallet !== address) {
+        return; // Not relevant
+      }
+      
+      const isCreator = payout.creator_wallet === address;
+      // Show appropriate notification...
+    }
+  )
+  .subscribe();
+```
+
+---
+
+## Expected Behavior After Fix
+
+1. **When you LIKE a video:**
+   - Toast: "❤️ Liked! Creator earned 5 $5DEE"
+   - Your Activity shows: "You liked a video"
+   
+2. **When someone LIKES YOUR video:**
+   - Toast: "❤️ +5 $5DEE earned!"
+   - Earnings shows: "+5 $5DEE from like"
+   - Bell icon shows unread count
+
+3. **TransactionsSheet > Earnings tab:**
+   - Shows all payouts where you are the creator
+
+4. **TransactionsSheet > Activity tab (new):**
+   - Shows all your engagement actions
+
+---
+
+## Testing Steps
+
+After implementation:
+1. Connect wallet
+2. Go to `/watch` page
+3. Like a video you haven't liked before
+4. Verify toast appears: "Liked! Creator earned 5 $5DEE"
+5. Check bell dropdown - should show the activity
+6. Open Transactions Sheet > Activity tab - should show the like
