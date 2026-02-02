@@ -17,3 +17,12 @@
 - **Owner:** User + OpenClaw
 - **Status:** Active
 - **Created:** 2026-02-01 15:58 PST
+
+## OC-20260201-0006 — WZRD.STUDIO Studio Optimization
+- **Goal:** Test the app and improve/optimize functionality on the /studio page; integrate multiple image/video generation models into studio UI and app settings.
+- **Scope:** Repo review, local setup/test plan, UX + functional improvements on /studio, model provider integration design/implementation, settings wiring for generation.
+- **Out of Scope:** Unapproved public deployments, paid vendor usage without keys/budget, breaking API changes without approval.
+- **Timeline:** Triage + plan (24–48h), implementation after approval.
+- **Owner:** User + OpenClaw
+- **Status:** Active
+- **Created:** 2026-02-01 19:03 PST
