@@ -14,18 +14,33 @@ const formatRelativeTime = (date: Date) => {
   return `${days}d ago`;
 };
 
-const StudioBottomBar = () => {
-  const { isSaving, execution } = useComputeFlowStore();
+interface StudioBottomBarProps {
+  isSaving?: boolean;
+  lastSaved?: Date | null;
+}
+
+const StudioBottomBar = ({ isSaving: externalIsSaving, lastSaved: externalLastSaved }: StudioBottomBarProps) => {
+  const { isSaving: graphIsSaving, execution } = useComputeFlowStore();
   const { availableCredits } = useCredits();
-  const [lastSaved, setLastSaved] = useState<Date | null>(null);
-  const prevSaving = useRef(isSaving);
+  const [lastSaved, setLastSaved] = useState<Date | null>(externalLastSaved ?? null);
+  const prevSaving = useRef(graphIsSaving);
+
+  const isSaving = (externalIsSaving ?? false) || graphIsSaving;
+  const lastSavedToDisplay = externalLastSaved ?? lastSaved;
 
   useEffect(() => {
-    if (prevSaving.current && !isSaving) {
+    if (externalLastSaved !== undefined) {
+      setLastSaved(externalLastSaved ?? null);
+    }
+  }, [externalLastSaved]);
+
+  useEffect(() => {
+    if (externalIsSaving !== undefined) return;
+    if (prevSaving.current && !graphIsSaving) {
       setLastSaved(new Date());
     }
-    prevSaving.current = isSaving;
-  }, [isSaving]);
+    prevSaving.current = graphIsSaving;
+  }, [graphIsSaving, externalIsSaving]);
 
   const lowCredits = availableCredits !== null && availableCredits < 25;
   const activeJobs = execution.isRunning
@@ -48,7 +63,7 @@ const StudioBottomBar = () => {
             <span>Saving...</span>
           </div>
         )}
-        {!isSaving && lastSaved && <span>Saved {formatRelativeTime(lastSaved)}</span>}
+        {!isSaving && lastSavedToDisplay && <span>Saved {formatRelativeTime(lastSavedToDisplay)}</span>}
       </div>
 
       <button className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-2 hover:bg-surface-3 border border-border-subtle transition-colors">

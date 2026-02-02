@@ -97,6 +97,10 @@ interface StudioCanvasProps {
   interactionMode?: 'pan' | 'select';
   onToggleInteractionMode?: () => void;
   onWorkflowGenerated?: (nodes: any[], edges: any[]) => void;
+  initialViewport?: { x: number; y: number; zoom: number };
+  initialSettings?: { showGrid?: boolean };
+  onViewportChange?: (viewport: { x: number; y: number; zoom: number }) => void;
+  onCanvasSettingsChange?: (settings: { showGrid?: boolean }) => void;
 }
 
 // Node types configuration (outside component for React Flow optimization)
@@ -163,8 +167,12 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
   interactionMode = 'pan',
   onToggleInteractionMode,
   onWorkflowGenerated,
+  initialViewport,
+  initialSettings,
+  onViewportChange,
+  onCanvasSettingsChange,
 }) => {
-  const { screenToFlowPosition, fitView, zoomIn, zoomOut } = useReactFlow();
+  const { screenToFlowPosition, fitView, zoomIn, zoomOut, setViewport } = useReactFlow();
   const { isValidConnection: isValidBlockConnection } = useConnectionValidation();
   const { validateNewEdge } = useStrictConnectionValidation();
   const { 
@@ -193,6 +201,24 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
   
   // Gallery closed by default for clean start
   const [showGallery, setShowGallery] = useState(false);
+
+  const [showGrid, setShowGrid] = useState(initialSettings?.showGrid ?? true);
+  const lastViewportRef = useRef<string | null>(null);
+  const appliedViewportRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (typeof initialSettings?.showGrid === 'boolean') {
+      setShowGrid(initialSettings.showGrid);
+    }
+  }, [initialSettings?.showGrid]);
+
+  useEffect(() => {
+    if (!initialViewport) return;
+    const nextKey = JSON.stringify(initialViewport);
+    if (appliedViewportRef.current === nextKey) return;
+    appliedViewportRef.current = nextKey;
+    setViewport(initialViewport, { duration: 0 });
+  }, [initialViewport, setViewport]);
   
   // Track dragging data type for handle highlighting
   const [draggingDataType, setDraggingDataType] = useState<DataType | null>(null);
@@ -565,7 +591,6 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
   const [showNodeSelector, setShowNodeSelector] = useState(false);
   const [nodeSelectorPosition, setNodeSelectorPosition] = useState({ x: 0, y: 0 });
   const [activeConnection, setActiveConnection] = useState<any>(null);
-  const [showGrid, setShowGrid] = useState(true);
   
   // Get selected nodes count
   const selectedNodes = useMemo(() => nodes.filter(n => n.selected), [nodes]);
@@ -586,6 +611,24 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
       }
     },
   });
+
+  const handleMoveEnd = useCallback(
+    (_event: any, viewport: { x: number; y: number; zoom: number }) => {
+      const nextKey = JSON.stringify(viewport);
+      if (lastViewportRef.current === nextKey) return;
+      lastViewportRef.current = nextKey;
+      onViewportChange?.(viewport);
+    },
+    [onViewportChange]
+  );
+
+  const handleToggleGrid = useCallback(() => {
+    setShowGrid((prev) => {
+      const next = !prev;
+      onCanvasSettingsChange?.({ showGrid: next });
+      return next;
+    });
+  }, [onCanvasSettingsChange]);
   
   // Integrated keyboard shortcuts
   useStudioKeyboardShortcuts({
@@ -951,6 +994,7 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
           onNodeClick={handleNodeClick}
           onNodeDragStart={onNodeDragStart}
           onNodeDragStop={onNodeDragStop}
+          onMoveEnd={handleMoveEnd}
           onPaneClick={handlePaneClick}
           onDoubleClick={handleCanvasDoubleClick}
           nodeTypes={nodeTypes}
@@ -1011,7 +1055,7 @@ const StudioCanvasInner: React.FC<StudioCanvasProps> = ({
         connectionMode={isClickMode ? 'click' : 'drag'}
         onToggleConnectionMode={toggleMode}
         showGrid={showGrid}
-        onToggleGrid={() => setShowGrid(prev => !prev)}
+        onToggleGrid={handleToggleGrid}
         onFitView={() => fitView({ padding: 0.2, duration: 300 })}
         onZoomIn={() => zoomIn()}
         onZoomOut={() => zoomOut()}

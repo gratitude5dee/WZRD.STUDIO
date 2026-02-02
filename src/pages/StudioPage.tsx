@@ -6,6 +6,7 @@ import { useAppStore } from '@/store/appStore';
 import AppHeader from '@/components/AppHeader';
 import StudioSidebar from '@/components/studio/StudioSidebar';
 import StudioCanvas from '@/components/studio/StudioCanvas';
+import StudioBottomBar from '@/components/studio/StudioBottomBar';
 import BlockSettingsModal from '@/components/studio/BlockSettingsModal';
 import { SettingsPanel } from '@/components/studio/panels/SettingsPanel';
 
@@ -50,18 +51,21 @@ const StudioPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [interactionMode, setInteractionMode] = useState<'pan' | 'select'>('pan');
+  const [canvasState, setCanvasState] = useState({
+    viewport: { x: 0, y: 0, zoom: 1 },
+    settings: { showGrid: true },
+  });
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastSavedPayloadRef = useRef<string | null>(null);
 
   // Handle workflow generated from right panel
   const handleWorkflowGenerated = useCallback(
-    (nodes: NodeDefinition[], edges: EdgeDefinition[]) => {
+    async (nodes: NodeDefinition[], edges: EdgeDefinition[]) => {
       addGeneratedWorkflow(nodes, edges);
       if (projectId) {
-        setTimeout(() => {
-          saveGraph(projectId);
-          toast.info('Workflow saved! Starting generation...');
-          setTimeout(() => executeGraphStreaming(projectId), 600);
-        }, 500);
+        await saveGraph(projectId);
+        toast.info('Workflow saved! Starting generation...');
+        await executeGraphStreaming(projectId);
       }
     },
     [addGeneratedWorkflow, saveGraph, projectId, executeGraphStreaming]
@@ -114,13 +118,30 @@ const StudioPage = () => {
           setBlocks(stateData.blocks);
 
           const models: Record<string, string> = {};
-          stateData.blocks.forEach((block: Block) => {
-            if (block.initialData?.imageUrl) {
-              models[block.id] = 'google/gemini-2.5-flash-image-preview';
+          stateData.blocks.forEach((block: Block & { selectedModel?: string }) => {
+            const initialModel = block.selectedModel || (block.initialData?.imageUrl
+              ? 'google/gemini-2.5-flash-image-preview'
+              : undefined);
+            if (initialModel) {
+              models[block.id] = initialModel;
             }
           });
           setBlockModels(models);
         }
+
+        if (stateData?.canvasState) {
+          setCanvasState(stateData.canvasState);
+        }
+
+        const hydratedBlocks = stateData?.blocks ?? [];
+        const hydratedCanvasState = stateData?.canvasState ?? {
+          viewport: { x: 0, y: 0, zoom: 1 },
+          settings: { showGrid: true },
+        };
+        lastSavedPayloadRef.current = JSON.stringify({
+          blocks: hydratedBlocks,
+          canvasState: hydratedCanvasState,
+        });
       } catch (error) {
         console.error('Error initializing project:', error);
         toast.error('Failed to load project state');
@@ -133,22 +154,35 @@ const StudioPage = () => {
 
   // Auto-save with debounce
   const saveState = useCallback(async () => {
-    if (!projectId || blocks.length === 0) return;
+    if (!projectId) return;
+
+    const blocksWithModels = blocks.map((block) => ({
+      ...block,
+      selectedModel: blockModels[block.id],
+    }));
+
+    const payload = {
+      blocks: blocksWithModels,
+      canvasState,
+    };
+
+    const payloadKey = JSON.stringify(payload);
+    if (payloadKey === lastSavedPayloadRef.current) {
+      return;
+    }
+
     setIsSaving(true);
     try {
       console.log('💾 Auto-saving state...', { blockCount: blocks.length });
       const { error } = await supabase.functions.invoke('studio-save-state', {
         body: {
           projectId,
-          blocks,
-          canvasState: {
-            viewport: { x: 0, y: 0, zoom: 1 },
-            settings: { showGrid: true },
-          },
+          ...payload,
         },
       });
       if (error) throw error;
       setLastSaved(new Date());
+      lastSavedPayloadRef.current = payloadKey;
       console.log('✅ State saved successfully');
     } catch (error) {
       console.error('Error saving state:', error);
@@ -156,7 +190,7 @@ const StudioPage = () => {
     } finally {
       setIsSaving(false);
     }
-  }, [projectId, blocks]);
+  }, [projectId, blocks, blockModels, canvasState]);
 
   // Debounced auto-save effect
   useEffect(() => {
@@ -173,7 +207,7 @@ const StudioPage = () => {
         clearTimeout(saveTimeoutRef.current);
       }
     };
-  }, [blocks, projectId, isLoading, saveState]);
+  }, [blocks, blockModels, canvasState, projectId, isLoading, saveState]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -318,11 +352,30 @@ const StudioPage = () => {
               interactionMode={interactionMode}
               onToggleInteractionMode={handleToggleInteractionMode}
               onWorkflowGenerated={handleWorkflowGenerated}
+              initialViewport={canvasState.viewport}
+              initialSettings={canvasState.settings}
+              onViewportChange={(viewport) =>
+                setCanvasState((prev) => ({
+                  ...prev,
+                  viewport,
+                }))
+              }
+              onCanvasSettingsChange={(settings) =>
+                setCanvasState((prev) => ({
+                  ...prev,
+                  settings: {
+                    ...prev.settings,
+                    ...settings,
+                  },
+                }))
+              }
             />
           )}
         </div>
 
       </div>
+
+      <StudioBottomBar isSaving={isSaving} lastSaved={lastSaved} />
 
       {/* Settings Panel Overlay */}
       {isSettingsPanelOpen && projectId && (

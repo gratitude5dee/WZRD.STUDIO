@@ -48,21 +48,37 @@ Deno.serve(async (req) => {
 
     // Start a transaction by saving blocks
     if (blocks && Array.isArray(blocks)) {
-      // Delete existing blocks for this project
-      const { error: deleteError } = await supabase
+      const { data: existingBlocks, error: existingError } = await supabase
         .from('studio_blocks')
-        .delete()
+        .select('id')
         .eq('project_id', projectId)
         .eq('user_id', user.id);
 
-      if (deleteError) {
-        console.error('Error deleting blocks:', deleteError);
-        throw deleteError;
+      if (existingError) {
+        console.error('Error loading existing blocks:', existingError);
+        throw existingError;
       }
 
-      // Insert new blocks
+      const incomingIds = new Set(blocks.map((block: any) => block.id).filter(Boolean));
+      const existingIds = (existingBlocks || []).map((block: any) => block.id);
+      const idsToDelete = existingIds.filter((id: string) => !incomingIds.has(id));
+
+      if (idsToDelete.length > 0) {
+        const { error: deleteError } = await supabase
+          .from('studio_blocks')
+          .delete()
+          .in('id', idsToDelete)
+          .eq('user_id', user.id);
+
+        if (deleteError) {
+          console.error('Error deleting blocks:', deleteError);
+          throw deleteError;
+        }
+      }
+
       if (blocks.length > 0) {
-        const blocksToInsert = blocks.map((block: any) => ({
+        const blocksToUpsert = blocks.map((block: any) => ({
+          id: block.id,
           project_id: projectId,
           user_id: user.id,
           block_type: (block.type || 'text').toLowerCase(), // Normalize to lowercase
@@ -77,13 +93,13 @@ Deno.serve(async (req) => {
           selected_model: block.selectedModel || null
         }));
 
-        const { error: insertError } = await supabase
+        const { error: upsertError } = await supabase
           .from('studio_blocks')
-          .insert(blocksToInsert);
+          .upsert(blocksToUpsert, { onConflict: 'id' });
 
-        if (insertError) {
-          console.error('Error inserting blocks:', insertError);
-          throw insertError;
+        if (upsertError) {
+          console.error('Error upserting blocks:', upsertError);
+          throw upsertError;
         }
       }
     }
