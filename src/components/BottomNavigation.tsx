@@ -1,28 +1,17 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { Home, Search, Library, Flame, Play, Plus } from "lucide-react";
+import { Home, Search, Library, Play } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function BottomNavigation() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const isMogContext = location.pathname.startsWith("/mog") || location.pathname === "/home";
-
-  const navItems = isMogContext
-    ? [
-        { icon: Flame, label: "Home", path: "/home" },
-        { icon: Play, label: "Watch", path: "/watch" },
-        { icon: Plus, label: "Create", path: "/mog/upload", isCenter: true },
-        { icon: Search, label: "Search", path: "/mog/search" },
-        { icon: Library, label: "Library", path: "/mog/library" },
-      ]
-    : [
-        { icon: Flame, label: "Home", path: "/home" },
-        { icon: Play, label: "Watch", path: "/watch" },
-        { icon: Plus, label: "Create", path: "/mog/upload", isCenter: true },
-        { icon: Search, label: "Search", path: "/search" },
-        { icon: Library, label: "Library", path: "/library" },
-      ];
+  const navItems = [
+    { icon: Home, label: "Home", path: "/landing" },
+    { icon: Play, label: "Watch", path: "/watch" },
+    { icon: Search, label: "Search", path: "/search" },
+    { icon: Library, label: "Library", path: "/library" },
+  ];
 
   return (
     <nav 
@@ -32,22 +21,7 @@ export function BottomNavigation() {
     >
       <div className="flex items-center justify-around h-14 max-w-lg mx-auto">
         {navItems.map((item) => {
-          const isActive = location.pathname === item.path || 
-            (item.path === "/home" && location.pathname.startsWith("/mog"));
-          
-          // Center Create button with special styling
-          if (item.isCenter) {
-            return (
-              <button
-                key={item.path}
-                onClick={() => navigate(item.path)}
-                className="flex items-center justify-center h-11 w-11 rounded-full bg-primary text-primary-foreground shadow-md hover:bg-primary/90 active:scale-95 transition-all"
-                aria-label="Create new content"
-              >
-                <item.icon className="h-5 w-5" />
-              </button>
-            );
-          }
+          const isActive = location.pathname === item.path;
           
           return (
             <button

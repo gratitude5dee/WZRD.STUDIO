@@ -106,7 +106,7 @@ export function AnimatedLogo({
       transition: {
         duration: 0.8,
         times: [0, 0.6, 1],
-        ease: "easeOut",
+        ease: "easeOut" as const,
         delay: i * 0.08
       }
     }),

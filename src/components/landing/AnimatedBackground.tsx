@@ -1,49 +1,39 @@
-import { motion } from "framer-motion";
+import { motion, Variants } from "framer-motion";
 
 interface AnimatedBackgroundProps {
   phase: 'void' | 'awakening' | 'energized' | 'active';
 }
 
 export function AnimatedBackground({ phase }: AnimatedBackgroundProps) {
-  const gradientVariants = {
+  const gradientVariants: Variants = {
     void: {
       background: 'radial-gradient(circle at 50% 50%, hsl(220 25% 6%) 0%, hsl(220 25% 4%) 100%)',
     },
     awakening: {
-      background: [
-        'radial-gradient(circle at 50% 50%, hsl(220 25% 6%) 0%, hsl(220 25% 4%) 100%)',
-        'radial-gradient(circle at 50% 40%, hsl(230 50% 15%) 0%, hsl(220 25% 4%) 50%, hsl(220 25% 6%) 100%)',
-      ],
+      background: 'radial-gradient(circle at 50% 40%, hsl(230 50% 15%) 0%, hsl(220 25% 4%) 50%, hsl(220 25% 6%) 100%)',
       transition: {
         duration: 1.5,
-        ease: [0.22, 1, 0.36, 1],
+        ease: [0.22, 1, 0.36, 1] as const,
       }
     },
     energized: {
-      background: [
-        'radial-gradient(circle at 50% 40%, hsl(230 50% 15%) 0%, hsl(220 25% 4%) 50%, hsl(220 25% 6%) 100%)',
-        'radial-gradient(ellipse at 50% 30%, hsl(200 85% 25%) 0%, hsl(270 60% 20%) 30%, hsl(220 25% 6%) 60%, hsl(220 25% 4%) 100%)',
-      ],
+      background: 'radial-gradient(ellipse at 50% 30%, hsl(200 85% 25%) 0%, hsl(270 60% 20%) 30%, hsl(220 25% 6%) 60%, hsl(220 25% 4%) 100%)',
       transition: {
         duration: 2,
-        ease: [0.22, 1, 0.36, 1],
+        ease: [0.22, 1, 0.36, 1] as const,
       }
     },
     active: {
-      background: [
-        'radial-gradient(ellipse at 50% 30%, hsl(200 85% 25%) 0%, hsl(270 60% 20%) 30%, hsl(220 25% 6%) 60%, hsl(220 25% 4%) 100%)',
-        'radial-gradient(ellipse at 50% 30%, hsl(200 85% 20%) 0%, hsl(270 60% 18%) 30%, hsl(220 25% 6%) 60%, hsl(220 25% 4%) 100%)',
-        'radial-gradient(ellipse at 50% 30%, hsl(200 85% 25%) 0%, hsl(270 60% 20%) 30%, hsl(220 25% 6%) 60%, hsl(220 25% 4%) 100%)',
-      ],
+      background: 'radial-gradient(ellipse at 50% 30%, hsl(200 85% 25%) 0%, hsl(270 60% 20%) 30%, hsl(220 25% 6%) 60%, hsl(220 25% 4%) 100%)',
       transition: {
         duration: 8,
         repeat: Infinity,
-        ease: "easeInOut",
+        ease: "easeInOut" as const,
       }
     }
   };
 
-  const meshVariants = {
+  const meshVariants: Variants = {
     void: {
       opacity: 0,
     },
@@ -61,16 +51,16 @@ export function AnimatedBackground({ phase }: AnimatedBackgroundProps) {
       }
     },
     active: {
-      opacity: [0.05, 0.08, 0.05],
+      opacity: 0.08,
       transition: {
         duration: 6,
         repeat: Infinity,
-        ease: "easeInOut",
+        ease: "easeInOut" as const,
       }
     }
   };
 
-  const glowOrbVariants = {
+  const glowOrbVariants: Variants = {
     void: {
       scale: 0,
       opacity: 0,
@@ -80,7 +70,7 @@ export function AnimatedBackground({ phase }: AnimatedBackgroundProps) {
       opacity: 0.1,
       transition: {
         duration: 1.5,
-        ease: [0.22, 1, 0.36, 1],
+        ease: [0.22, 1, 0.36, 1] as const,
       }
     },
     energized: {
@@ -88,16 +78,16 @@ export function AnimatedBackground({ phase }: AnimatedBackgroundProps) {
       opacity: 0.15,
       transition: {
         duration: 1.5,
-        ease: [0.22, 1, 0.36, 1],
+        ease: [0.22, 1, 0.36, 1] as const,
       }
     },
     active: {
-      scale: [1, 1.1, 1],
-      opacity: [0.15, 0.2, 0.15],
+      scale: 1.1,
+      opacity: 0.2,
       transition: {
         duration: 8,
         repeat: Infinity,
-        ease: "easeInOut",
+        ease: "easeInOut" as const,
       }
     }
   };

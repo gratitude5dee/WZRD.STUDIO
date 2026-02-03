@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { motion, Variants } from "framer-motion";
 import { useMemo } from "react";
 
 interface Particle {
@@ -29,7 +29,7 @@ export function ParticleField({ phase, particleCount = 80 }: ParticleFieldProps)
     }));
   }, [particleCount]);
 
-  const getParticleVariants = (particle: Particle) => {
+  const getParticleVariants = (particle: Particle): Variants => {
     const centerX = 50;
     const centerY = 40;
 
@@ -48,7 +48,7 @@ export function ParticleField({ phase, particleCount = 80 }: ParticleFieldProps)
         transition: {
           duration: 0.8,
           delay: particle.delay,
-          ease: [0.4, 0, 0.2, 1],
+          ease: [0.4, 0, 0.2, 1] as const,
         }
       },
       connect: {
@@ -59,18 +59,19 @@ export function ParticleField({ phase, particleCount = 80 }: ParticleFieldProps)
         transition: {
           duration: 1.5,
           delay: particle.delay * 0.5,
-          ease: [0.22, 1, 0.36, 1],
+          ease: [0.22, 1, 0.36, 1] as const,
         }
       },
       ambient: {
-        x: [`${centerX + (particle.x - centerX) * 0.3}vw`, `${centerX + (particle.x - centerX) * 0.35}vw`, `${centerX + (particle.x - centerX) * 0.3}vw`],
-        y: [`${centerY + (particle.y - centerY) * 0.3}vh`, `${centerY + (particle.y - centerY) * 0.35}vh`, `${centerY + (particle.y - centerY) * 0.3}vh`],
-        scale: [1.2, 1.3, 1.2],
-        opacity: [0.4, 0.6, 0.4],
+        x: `${centerX + (particle.x - centerX) * 0.35}vw`,
+        y: `${centerY + (particle.y - centerY) * 0.35}vh`,
+        scale: 1.3,
+        opacity: 0.5,
         transition: {
           duration: particle.duration * 2,
           repeat: Infinity,
-          ease: "easeInOut",
+          repeatType: "reverse" as const,
+          ease: "easeInOut" as const,
         }
       }
     };
@@ -150,7 +151,7 @@ export function ParticleField({ phase, particleCount = 80 }: ParticleFieldProps)
               transition={{
                 duration: 1,
                 delay: i * 0.02,
-                ease: [0.22, 1, 0.36, 1],
+                ease: [0.22, 1, 0.36, 1] as const,
               }}
             />
           );

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { motion, useAnimation, AnimatePresence } from "framer-motion";
+import { motion, useAnimation, AnimatePresence, Variants } from "framer-motion";
 import { ParticleField } from "./ParticleField";
 import { AnimatedBackground } from "./AnimatedBackground";
 import { AnimatedLogo } from "../ui/animated-logo";
@@ -39,7 +39,7 @@ export function CinematicIntro({ onComplete }: CinematicIntroProps) {
         opacity: [0, 1, 1, 0],
         transition: {
           duration: 1.2,
-          ease: [0.22, 1, 0.36, 1],
+          ease: [0.22, 1, 0.36, 1] as const,
         }
       });
 
@@ -64,7 +64,7 @@ export function CinematicIntro({ onComplete }: CinematicIntroProps) {
     sequence();
   }, [onComplete, logoControls, scanlineControls]);
 
-  const containerVariants = {
+  const containerVariants: Variants = {
     void: {
       opacity: 1,
     },
@@ -72,12 +72,12 @@ export function CinematicIntro({ onComplete }: CinematicIntroProps) {
       opacity: 0,
       transition: {
         duration: 1,
-        ease: [0.22, 1, 0.36, 1],
+        ease: [0.22, 1, 0.36, 1] as const,
       }
     }
   };
 
-  const logoContainerVariants = {
+  const logoContainerVariants: Variants = {
     void: {
       scale: 0.8,
       opacity: 0,
@@ -89,7 +89,7 @@ export function CinematicIntro({ onComplete }: CinematicIntroProps) {
       y: 10,
       transition: {
         duration: 0.8,
-        ease: [0.22, 1, 0.36, 1],
+        ease: [0.22, 1, 0.36, 1] as const,
       }
     },
     synthesis: {
@@ -98,7 +98,7 @@ export function CinematicIntro({ onComplete }: CinematicIntroProps) {
       y: 0,
       transition: {
         duration: 1,
-        ease: [0.22, 1, 0.36, 1],
+        ease: [0.22, 1, 0.36, 1] as const,
       }
     },
     revelation: {
@@ -108,7 +108,7 @@ export function CinematicIntro({ onComplete }: CinematicIntroProps) {
     }
   };
 
-  const taglineVariants = {
+  const taglineVariants: Variants = {
     void: {
       opacity: 0,
       y: 20,
@@ -121,23 +121,23 @@ export function CinematicIntro({ onComplete }: CinematicIntroProps) {
       transition: {
         duration: 0.8,
         delay: 0.3,
-        ease: [0.22, 1, 0.36, 1],
+        ease: [0.22, 1, 0.36, 1] as const,
       }
     }
   };
 
-  const pulseVariants = {
+  const pulseVariants: Variants = {
     void: {
       scale: 1,
       opacity: 0,
     },
     awakening: {
-      scale: [1, 1.5, 2],
-      opacity: [0.5, 0.3, 0],
+      scale: 2,
+      opacity: 0,
       transition: {
         duration: 2,
         repeat: Infinity,
-        ease: "easeOut",
+        ease: "easeOut" as const,
       }
     }
   };
