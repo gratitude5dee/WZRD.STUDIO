@@ -35,3 +35,12 @@
 - **Owner:** User + OpenClaw
 - **Status:** Active
 - **Created:** 2026-02-03 00:27 PST
+
+## OC-20260203-0002 — Mog Repo PRD (feature request list for Codex)
+- **Goal:** Review repo `gratitude5dee/mog` and deliver a comprehensive PRD + feature request list for Codex implementation.
+- **Scope:** Codebase audit, UX + product gaps, prioritized feature list, acceptance criteria, and implementation notes for Codex.
+- **Out of Scope:** Implementation changes or deployments without approval.
+- **Timeline:** PRD draft within 24–48h.
+- **Owner:** User + OpenClaw
+- **Status:** Active
+- **Created:** 2026-02-03 01:36 PST
