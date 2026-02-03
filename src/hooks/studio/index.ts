@@ -16,3 +16,9 @@ export { useSelectionBox } from './useSelectionBox';
 export type { SelectionBox, UseSelectionBoxOptions } from './useSelectionBox';
 
 export { useNodePositionSync } from './useNodePositionSync';
+
+// Physics Canvas hooks
+export { useSpringPhysics } from './useSpringPhysics';
+export { useGestureVelocity } from './useGestureVelocity';
+export { useGridSnapping } from './useGridSnapping';
+export { usePhysicsLoop } from './usePhysicsLoop';

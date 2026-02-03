@@ -1,5 +1,6 @@
-import { memo, useMemo } from 'react';
+import { memo, useMemo, useRef, useEffect, useState } from 'react';
 import { EdgeProps, getBezierPath } from '@xyflow/react';
+import { TravelingPulse } from './TravelingPulse';
 
 // Data type color mapping for intuitive visual connections
 const DATA_TYPE_COLORS: Record<string, { primary: string; secondary: string; glow: string }> = {
@@ -13,9 +14,19 @@ const DATA_TYPE_COLORS: Record<string, { primary: string; secondary: string; glo
   default: { primary: '#8B5CF6', secondary: '#22D3EE', glow: 'rgba(139, 92, 246, 0.3)' },
 };
 
+// Status-based colors
+const STATUS_COLORS: Record<string, string> = {
+  idle: 'rgba(255, 255, 255, 0.3)',
+  queued: 'rgba(251, 191, 36, 0.8)',
+  running: '#00D4FF',
+  success: 'rgba(34, 197, 94, 0.8)',
+  error: 'rgba(239, 68, 68, 0.8)',
+};
+
 interface ImprovedEdgeData {
   dataType?: string;
-  status?: 'idle' | 'active' | 'success' | 'error';
+  status?: 'idle' | 'queued' | 'running' | 'success' | 'error';
+  progress?: number;
   animated?: boolean;
 }
 
@@ -34,19 +45,18 @@ export const ImprovedEdge = memo(({
   const edgeData = data as ImprovedEdgeData | undefined;
   const dataType = edgeData?.dataType || 'default';
   const status = edgeData?.status || 'idle';
+  const progress = edgeData?.progress ?? 0;
   const isAnimated = edgeData?.animated ?? false;
 
-  // Get colors based on data type
+  // Get colors based on data type and status
   const colors = DATA_TYPE_COLORS[dataType] || DATA_TYPE_COLORS.default;
+  const statusColor = STATUS_COLORS[status] || STATUS_COLORS.idle;
 
   // Calculate smooth bezier path with better curvature
   const [edgePath] = useMemo(() => {
-    // Calculate distance for dynamic curvature
     const dx = targetX - sourceX;
     const dy = targetY - sourceY;
     const distance = Math.sqrt(dx * dx + dy * dy);
-
-    // Adjust curvature based on distance for more natural curves
     const curvature = Math.min(0.5, Math.max(0.2, distance / 500));
 
     return getBezierPath({
@@ -67,16 +77,21 @@ export const ImprovedEdge = memo(({
   // Status-based styling
   const statusStyles = useMemo(() => {
     switch (status) {
-      case 'active':
-        return { strokeWidth: 3, glowOpacity: 0.5, animate: true };
+      case 'running':
+        return { strokeWidth: 3, glowOpacity: 0.6, animate: true, showPulse: true };
+      case 'queued':
+        return { strokeWidth: 2.5, glowOpacity: 0.4, animate: true, showPulse: false };
       case 'success':
-        return { strokeWidth: 2.5, glowOpacity: 0.4, animate: false };
+        return { strokeWidth: 2.5, glowOpacity: 0.5, animate: false, showPulse: false };
       case 'error':
-        return { strokeWidth: 2.5, glowOpacity: 0.3, animate: false };
+        return { strokeWidth: 2.5, glowOpacity: 0.4, animate: false, showPulse: false };
       default:
-        return { strokeWidth: 2.5, glowOpacity: 0.35, animate: isAnimated };
+        return { strokeWidth: 2.5, glowOpacity: 0.35, animate: isAnimated, showPulse: false };
     }
   }, [status, isAnimated]);
+
+  // Determine stroke color based on status
+  const strokeColor = status !== 'idle' ? statusColor : `url(#${gradientId})`;
 
   return (
     <>
@@ -119,7 +134,7 @@ export const ImprovedEdge = memo(({
         className="react-flow__edge-path"
         d={edgePath}
         strokeWidth={16}
-        stroke={colors.glow}
+        stroke={status !== 'idle' ? statusColor : colors.glow}
         fill="none"
         style={{
           opacity: selected ? 0.5 : statusStyles.glowOpacity * 0.5,
@@ -133,7 +148,7 @@ export const ImprovedEdge = memo(({
         className="react-flow__edge-path"
         d={edgePath}
         strokeWidth={10}
-        stroke={`url(#${gradientId})`}
+        stroke={strokeColor}
         fill="none"
         filter={`url(#${glowId})`}
         style={{
@@ -148,17 +163,22 @@ export const ImprovedEdge = memo(({
         className="react-flow__edge-path"
         d={edgePath}
         strokeWidth={statusStyles.strokeWidth}
-        stroke={`url(#${gradientId})`}
+        stroke={strokeColor}
         fill="none"
         strokeLinecap="round"
         markerEnd={markerEnd as string | undefined}
         style={{
-          transition: 'stroke-width 0.3s ease',
+          transition: 'stroke-width 0.3s ease, stroke 0.3s ease',
+          // Marching ants for queued status
+          ...(status === 'queued' && {
+            strokeDasharray: '6, 6',
+            animation: 'marching-ants 0.5s linear infinite',
+          }),
         }}
       />
 
       {/* Flow animation overlay */}
-      {statusStyles.animate && (
+      {statusStyles.animate && status !== 'queued' && (
         <path
           d={edgePath}
           strokeWidth={statusStyles.strokeWidth + 1}
@@ -169,6 +189,17 @@ export const ImprovedEdge = memo(({
             mixBlendMode: 'overlay',
             pointerEvents: 'none'
           }}
+        />
+      )}
+
+      {/* Traveling pulse for running status */}
+      {statusStyles.showPulse && (
+        <TravelingPulse
+          path={edgePath}
+          progress={progress}
+          color={STATUS_COLORS.running}
+          size={8}
+          isActive={true}
         />
       )}
 
@@ -183,6 +214,21 @@ export const ImprovedEdge = memo(({
           style={{
             opacity: 0.3,
             transition: 'opacity 0.3s ease'
+          }}
+        />
+      )}
+
+      {/* Success flash effect */}
+      {status === 'success' && (
+        <path
+          d={edgePath}
+          strokeWidth={statusStyles.strokeWidth * 2}
+          stroke={STATUS_COLORS.success}
+          fill="none"
+          strokeLinecap="round"
+          style={{
+            opacity: 0,
+            animation: 'edge-success-flash 0.5s ease-out',
           }}
         />
       )}
