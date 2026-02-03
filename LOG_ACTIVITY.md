@@ -7,3 +7,4 @@
 - 2026-02-01 19:03 PST: Created project OC-20260201-0006 (WZRD.STUDIO Studio Optimization). Scope logged; sub-agents requested.
 - 2026-02-03 00:27 PST: Created project OC-20260203-0001 (Openwork ClawX Swarm). Logged scope, decision to use specialized agents, and created SOUL_CLAWX.md.
 - 2026-02-03 01:36 PST: Created project OC-20260203-0002 (Mog Repo PRD). Logged scope and decision to use sub-agent swarm.
+- 2026-02-03 10:59 PST: WZRD.STUDIO /studio optimization — reduced StudioCanvas churn (memoized nodes + consolidated sync), fixed fitView timing, and optimized autosave with hashed payload + adaptive debounce.
