@@ -45,7 +45,8 @@ const App = () => (
                       <Route path="/" element={<Intro />} />
                       <Route path="/landing" element={<Landing />} />
                       <Route path="/auth" element={<Auth />} />
-                      <Route path="/home" element={<Navigate to="/landing" replace />} />
+            <Route path="/home" element={<Navigate to="/landing" replace />} />
+            <Route path="/login" element={<Navigate to="/auth" replace />} />
                       <Route path="/listen" element={<Listen />} />
                       <Route path="/read" element={<Read />} />
                       <Route path="/artist" element={<Artist />} />

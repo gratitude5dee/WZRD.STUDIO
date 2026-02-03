@@ -21,7 +21,7 @@ export function PricingSection() {
         'Export up to 720p',
       ],
       ctaText: 'Get Started',
-      ctaAction: () => navigate('/login?mode=signup'),
+      ctaAction: () => navigate('/auth?mode=signup'),
     },
     {
       title: 'Pro',
@@ -38,7 +38,7 @@ export function PricingSection() {
         'Custom branding',
       ],
       ctaText: 'Start Free Trial',
-      ctaAction: () => navigate('/login?mode=signup'),
+      ctaAction: () => navigate('/auth?mode=signup'),
       popular: true,
     },
     {

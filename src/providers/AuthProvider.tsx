@@ -159,9 +159,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setUser(session?.user ?? null);
       setLoading(false);
       
-      // If user just logged in and they're on the login page, redirect them
-      if (session?.user && location.pathname === '/login') {
-        navigate('/home');
+      // If user just logged in and they're on the auth page, redirect them
+      if (session?.user && location.pathname === '/auth') {
+        navigate('/studio');
       }
     });
 
@@ -182,8 +182,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     if (thirdwebAccount && !user && !loading && !isWalletAuthenticating) {
       // Wallet connected but no Supabase user - trigger wallet auth
       authenticateWallet().then(success => {
-        if (success && location.pathname === '/login') {
-          navigate('/home');
+        if (success && location.pathname === '/auth') {
+          navigate('/studio');
         }
       });
     }

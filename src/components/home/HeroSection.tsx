@@ -91,7 +91,7 @@ export const HeroSection = () => {
           <Button
             size="lg"
             variant="outline"
-            onClick={() => navigate('/login?mode=signup')}
+            onClick={() => navigate('/auth?mode=signup')}
             className="border-white/20 text-white hover:bg-white/10 px-10 py-7 text-lg backdrop-blur-sm font-semibold"
           >
             Get Started

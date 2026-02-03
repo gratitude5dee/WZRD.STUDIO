@@ -71,7 +71,7 @@ export function HeroSection({ headline, subheadline }: HeroSectionProps) {
             className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16"
           >
             <Link
-              to="/login?mode=signup"
+              to="/auth?mode=signup"
               className={cn(
                 'group relative inline-flex items-center gap-3',
                 'px-8 py-4 rounded-xl',
