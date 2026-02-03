@@ -1,0 +1,32 @@
+import { darkTheme } from "thirdweb/react";
+
+export const wzrdTheme = darkTheme({
+  colors: {
+    modalBg: "hsl(240 10% 3.9%)",
+    primaryButtonBg: "hsl(263 70% 50%)",
+    primaryButtonText: "hsl(0 0% 100%)",
+    accentButtonBg: "hsl(263 70% 50% / 0.1)",
+    borderColor: "hsl(240 3.7% 15.9%)",
+    separatorLine: "hsl(240 3.7% 15.9%)",
+    secondaryButtonBg: "hsl(240 3.7% 15.9%)",
+    secondaryButtonText: "hsl(0 0% 98%)",
+    secondaryButtonHoverBg: "hsl(240 5.9% 10%)",
+    connectedButtonBg: "hsl(240 3.7% 15.9%)",
+    connectedButtonBgHover: "hsl(240 5.9% 10%)",
+    inputAutofillBg: "hsl(240 10% 3.9%)",
+    tooltipBg: "hsl(240 10% 3.9%)",
+    tooltipText: "hsl(0 0% 98%)",
+    danger: "hsl(0 84.2% 60.2%)",
+    success: "hsl(142.1 76.2% 36.3%)",
+    selectedTextBg: "hsl(263 70% 50% / 0.2)",
+    selectedTextColor: "hsl(0 0% 98%)",
+    skeletonBg: "hsl(240 3.7% 15.9%)",
+    primaryText: "hsl(0 0% 98%)",
+    secondaryText: "hsl(240 5% 64.9%)",
+    accentText: "hsl(263 70% 50%)",
+    secondaryIconColor: "hsl(240 5% 64.9%)",
+    secondaryIconHoverBg: "hsl(240 3.7% 15.9%)",
+    secondaryIconHoverColor: "hsl(0 0% 98%)",
+    tertiaryBg: "hsl(240 5.9% 10%)",
+  },
+});

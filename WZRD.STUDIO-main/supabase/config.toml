@@ -1,0 +1,61 @@
+project_id = "ixkkrousepsiorwlaycp"
+
+[functions.wallet-auth]
+verify_jwt = false
+
+[functions.studio-save-state]
+verify_jwt = false
+
+[functions.studio-load-state]
+verify_jwt = false
+
+[functions.gemini-text-generation]
+verify_jwt = false
+
+[functions.gemini-image-generation]
+verify_jwt = false
+
+[functions.gemini-video-generation]
+verify_jwt = false
+
+[functions.gemini-storyline-generation]
+verify_jwt = false
+
+[functions.generate-concept-examples]
+verify_jwt = false
+
+[functions.generate-character-image]
+verify_jwt = false
+
+[functions.get-thirdweb-config]
+verify_jwt = false
+
+[functions.groq-stream]
+verify_jwt = false
+
+[functions.admin-add-credits]
+verify_jwt = false
+
+[functions.fal-stream]
+verify_jwt = false
+
+[functions.gen-shots]
+verify_jwt = false
+
+[functions.elevenlabs-tts]
+verify_jwt = false
+
+[functions.elevenlabs-sfx]
+verify_jwt = false
+
+[functions.elevenlabs-music]
+verify_jwt = false
+
+[functions.compute-execute]
+verify_jwt = false
+
+[functions.compute-save-graph]
+verify_jwt = false
+
+[functions.generate-workflow]
+verify_jwt = false
