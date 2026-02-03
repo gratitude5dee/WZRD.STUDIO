@@ -23,7 +23,6 @@ import Library from "./pages/Library";
 import Watch from "./pages/Watch";
 import WatchHome from "./pages/WatchHome";
 import EmbedPlayer from "./pages/EmbedPlayer";
-import Onboarding from "./pages/Onboarding";
 import NotFound from "./pages/NotFound";
 import MoltbookAgentActions from "./pages/MoltbookAgentActions";
 
@@ -58,7 +57,6 @@ const App = () => (
                       <Route path="/watch" element={<WatchHome />} />
                       <Route path="/watch/:id" element={<Watch />} />
                       <Route path="/embed/track/:trackId" element={<EmbedPlayer />} />
-                      <Route path="/onboarding" element={<Onboarding />} />
                       <Route path="/agent-actions" element={<MoltbookAgentActions />} />
                       {/* Redirect old mog routes */}
                       <Route path="/mog/*" element={<Navigate to="/landing" replace />} />
