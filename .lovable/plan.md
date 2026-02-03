@@ -1,191 +1,106 @@
 
-# Fix Notification System - Complete Overhaul
 
-## Problem Summary
+# Remove All Mog-Related Pages and Components
 
-The notification system is not showing earnings because of three interconnected issues:
+## Overview
 
-1. **Notifications only track creator earnings** - but you're a consumer (payer), not a creator
-2. **Realtime subscription is broken** - `engagement_payouts` table is not published for realtime
-3. **No initial data load** - Historical payouts are never fetched from the database
+Remove the entire "Mog" social media feed feature from the project, including pages, components, types, routes, and related references. The `/home` route will be redirected to the main Studio or landing page.
 
 ---
 
-## Solution Architecture
+## Files to Delete
 
-### Option A: Show Earnings for Creators Only (Current Intent)
-Keep the system as-is but:
-- Add the table to realtime publication
-- Fetch initial data on mount
-- You'll see notifications when **someone engages with YOUR content**
+### Pages (6 files)
+- `src/pages/Mog.tsx` - Main feed page
+- `src/pages/MogUpload.tsx` - Content upload page
+- `src/pages/MogProfile.tsx` - Creator profile page
+- `src/pages/MogPost.tsx` - Individual post view
+- `src/pages/MogSearch.tsx` - Search interface
+- `src/pages/MogLibrary.tsx` - User's saved content
 
-### Option B: Show All Engagement Activity (Better UX for Testing)
-Expand notifications to show:
-- Your earnings when you're a creator (someone liked YOUR video)
-- Your spending when you're a payer (you liked SOMEONE's video)
+### Components (entire directory + 1 file)
+- `src/components/mog/` - Delete entire directory containing:
+  - `MogPostCard.tsx`
+  - `MogHeader.tsx`
+  - `MogVerificationBadge.tsx`
+  - `MogComments.tsx`
+  - `MogInteractions.tsx`
+  - And other mog-related components
+- `src/components/MogIntro.tsx` - Intro component
 
-I recommend **Option B** for now since it provides immediate visual feedback.
+### Types (1 file)
+- `src/types/mog.ts` - Mog data types (MogPost, MogComment, MogLike, etc.)
 
 ---
 
-## Implementation Steps
+## Files to Update
 
-### Step 1: Database Migration - Enable Realtime
-Add `engagement_payouts` table to the Supabase realtime publication so subscriptions work.
+### 1. `src/App.tsx` - Remove Mog Routes
 
-```sql
-ALTER PUBLICATION supabase_realtime ADD TABLE public.engagement_payouts;
+Remove these route definitions:
+```text
+Routes to remove:
+├── /home (currently points to Mog.tsx)
+├── /mog/upload
+├── /mog/profile/:wallet
+├── /mog/post/:id
+├── /mog/search
+└── /mog/library
 ```
 
----
+Update `/home` to redirect to `/studio` or `/` instead.
 
-### Step 2: Update NotificationContext
-Modify to:
-1. **Fetch initial payouts** from database on mount
-2. **Track both creator AND payer activities** for better testing visibility
-3. **Add polling fallback** in case realtime fails
+### 2. `src/components/BottomNavigation.tsx`
 
-```typescript
-// Key changes:
-// 1. Add initial fetch useEffect
-useEffect(() => {
-  if (!address) return;
-  
-  const fetchInitialPayouts = async () => {
-    const { data } = await supabase
-      .from("engagement_payouts")
-      .select("*")
-      .or(`creator_wallet.eq.${address},payer_wallet.eq.${address}`)
-      .order("created_at", { ascending: false })
-      .limit(MAX_NOTIFICATIONS);
-    
-    if (data) {
-      // Map and merge with localStorage
-      const mapped = data.map(payout => ({
-        id: payout.id,
-        type: "payout",
-        isCreator: payout.creator_wallet === address,
-        actionType: payout.action_type,
-        contentType: payout.content_type,
-        contentId: payout.content_id,
-        amount: payout.amount,
-        txHash: payout.tx_hash,
-        createdAt: payout.created_at,
-        read: false,
-      }));
-      
-      setNotifications(prev => mergeAndDedupe(prev, mapped));
-    }
-  };
-  
-  fetchInitialPayouts();
-}, [address]);
+Remove any navigation items pointing to Mog pages (home feed, library, etc.)
 
-// 2. Subscribe to BOTH creator and payer events
-// Update realtime filter to OR condition
-```
+### 3. `src/components/PageHeader.tsx`
+
+Remove any Mog-related navigation links if present.
+
+### 4. `index.html`
+
+Update metadata:
+- Change title from "Mog - The Content Economy" to "WZRD.STUDIO"
+- Update meta description to focus on the AI workflow platform
+
+### 5. Onboarding References
+
+Check and remove "mog_onboarding_complete" references in:
+- `src/pages/Onboarding.tsx`
+- `src/pages/Auth.tsx`
+- `src/pages/Intro.tsx`
 
 ---
 
-### Step 3: Update NotificationsDropdown UI
-Add visual distinction between:
-- **Earned** (when you're the creator): "❤️ +5 $5DEE - Someone liked your video"
-- **Spent** (when you're the payer): "❤️ -5 $5DEE - You liked a video" (or just confirmation)
+## Route Redirect Strategy
+
+After removal:
+- `/home` → Redirect to `/studio` (main canvas)
+- `/mog/*` routes → Show 404 or redirect to `/studio`
 
 ---
 
-### Step 4: Update TransactionsSheet
-Similar change - show both:
-- Earnings tab: payouts where you're the creator
-- Activity tab: all your engagement actions (payer + creator)
+## Files NOT Being Removed (Backend)
+
+The following Supabase resources will remain (can be cleaned up separately if needed):
+- Database tables: `mog_posts`, `mog_likes`, `mog_comments`, etc.
+- Storage bucket: `mog-media`
+- Edge functions with mog logic
+- Migration files
+
+These are not critical to remove for the frontend cleanup.
 
 ---
 
-## Files to Modify
+## Summary
 
-| File | Changes |
-|------|---------|
-| `supabase/migrations/*` | Add `engagement_payouts` to realtime publication |
-| `src/contexts/NotificationContext.tsx` | Add initial fetch, expand filter, add deduplication |
-| `src/components/NotificationsDropdown.tsx` | Add earned vs spent visual distinction |
-| `src/components/TransactionsSheet.tsx` | Update query to also show payer activity |
+| Category | Action | Count |
+|----------|--------|-------|
+| Pages | Delete | 6 files |
+| Components | Delete | ~10 files (1 directory) |
+| Types | Delete | 1 file |
+| Routes | Remove | 6 routes |
+| Navigation | Update | 2 files |
+| Metadata | Update | 1 file |
 
----
-
-## Technical Details
-
-### PayoutNotification Type Update
-```typescript
-export interface PayoutNotification {
-  id: string;
-  type: "payout";
-  isCreator: boolean;  // NEW: true if you earned, false if you spent
-  actionType: PayoutActionType;
-  contentType: string;
-  contentId: string;
-  amount: number;
-  txHash: string | null;
-  createdAt: string;
-  read: boolean;
-}
-```
-
-### Realtime Subscription Update
-Since Supabase realtime filter doesn't support OR conditions, we'll:
-1. Subscribe without a wallet filter
-2. Filter client-side for relevant payouts (where user is creator OR payer)
-
-```typescript
-const channel = supabase
-  .channel("payout-notifications")
-  .on(
-    "postgres_changes",
-    {
-      event: "INSERT",
-      schema: "public",
-      table: "engagement_payouts",
-    },
-    (payload) => {
-      const payout = payload.new;
-      // Check if this payout is relevant to current user
-      if (payout.creator_wallet !== address && payout.payer_wallet !== address) {
-        return; // Not relevant
-      }
-      
-      const isCreator = payout.creator_wallet === address;
-      // Show appropriate notification...
-    }
-  )
-  .subscribe();
-```
-
----
-
-## Expected Behavior After Fix
-
-1. **When you LIKE a video:**
-   - Toast: "❤️ Liked! Creator earned 5 $5DEE"
-   - Your Activity shows: "You liked a video"
-   
-2. **When someone LIKES YOUR video:**
-   - Toast: "❤️ +5 $5DEE earned!"
-   - Earnings shows: "+5 $5DEE from like"
-   - Bell icon shows unread count
-
-3. **TransactionsSheet > Earnings tab:**
-   - Shows all payouts where you are the creator
-
-4. **TransactionsSheet > Activity tab (new):**
-   - Shows all your engagement actions
-
----
-
-## Testing Steps
-
-After implementation:
-1. Connect wallet
-2. Go to `/watch` page
-3. Like a video you haven't liked before
-4. Verify toast appears: "Liked! Creator earned 5 $5DEE"
-5. Check bell dropdown - should show the activity
-6. Open Transactions Sheet > Activity tab - should show the like
