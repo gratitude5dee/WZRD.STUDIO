@@ -300,7 +300,16 @@ export default {
 				'shine': 'shine var(--duration) infinite linear',
 				'gradient': 'gradient 8s linear infinite',
 				'pulse-subtle': 'pulse-subtle 2s ease-in-out infinite',
-				'marquee': 'marquee var(--duration) linear infinite'
+				'marquee': 'marquee var(--duration) linear infinite',
+				// Physics Canvas Animations
+				'marching-ants': 'marching-ants 0.5s linear infinite',
+				'spring-bounce': 'spring-bounce 0.3s ease-out',
+				'slice-trail': 'slice-trail 0.3s ease-out',
+				'crosshair-pulse': 'crosshair-pulse 0.8s ease-in-out infinite',
+				'particle-drift': 'particle-drift 30s linear infinite',
+				'pulse-travel': 'pulse-travel 0.5s ease-in-out infinite',
+				'node-spawn': 'node-spawn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+				'handle-pulse': 'handle-pulse 0.8s ease-in-out infinite',
 			},
 			backgroundImage: {
 				'noise': 'url("/noise.png")',

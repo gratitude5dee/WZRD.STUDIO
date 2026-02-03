@@ -622,11 +622,138 @@ body::after {
   animation: scale-in 0.2s ease-out forwards;
 }
 
+/* Physics Canvas Animations */
+
+/* Marching ants animation for queued edges */
+@keyframes marching-ants {
+  0% { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: 12; }
+}
+
+.animate-marching-ants {
+  animation: marching-ants 0.5s linear infinite;
+}
+
+/* Edge success flash */
+@keyframes edge-success-flash {
+  0% { opacity: 0.8; }
+  100% { opacity: 0; }
+}
+
+/* Spring bounce for physics connections */
+@keyframes spring-bounce {
+  0% { transform: scale(0.8); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+.animate-spring-bounce {
+  animation: spring-bounce 0.3s ease-out;
+}
+
+/* Slice trail fade */
+@keyframes slice-trail {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.animate-slice-trail {
+  animation: slice-trail 0.3s ease-out;
+}
+
+/* Crosshair pulse for grid snapping */
+@keyframes crosshair-pulse {
+  0%, 100% { 
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% { 
+    opacity: 1;
+    transform: scale(1.1);
+  }
+}
+
+.animate-crosshair-pulse {
+  animation: crosshair-pulse 0.8s ease-in-out infinite;
+}
+
+/* Ambient particle drift */
+@keyframes particle-drift {
+  0%, 100% { 
+    opacity: 0;
+    transform: translate(0, 0);
+  }
+  10% { opacity: 0.3; }
+  90% { opacity: 0.3; }
+  100% { 
+    opacity: 0;
+    transform: translate(var(--drift-x, 20px), var(--drift-y, 10px));
+  }
+}
+
+.animate-particle-drift {
+  animation: particle-drift 30s linear infinite;
+}
+
+/* Traveling pulse glow */
+@keyframes pulse-travel {
+  0%, 100% { 
+    filter: drop-shadow(0 0 4px currentColor);
+    transform: scale(1);
+  }
+  50% { 
+    filter: drop-shadow(0 0 12px currentColor);
+    transform: scale(1.2);
+  }
+}
+
+.animate-pulse-travel {
+  animation: pulse-travel 0.5s ease-in-out infinite;
+}
+
+/* Node spawn animation */
+@keyframes node-spawn {
+  0% { 
+    opacity: 0;
+    transform: scale(0) translateY(20px);
+  }
+  100% { 
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-node-spawn {
+  animation: node-spawn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Handle pulse when connecting */
+@keyframes handle-pulse {
+  0%, 100% { 
+    box-shadow: 0 0 0 0 currentColor;
+  }
+  50% { 
+    box-shadow: 0 0 0 6px transparent;
+  }
+}
+
+.animate-handle-pulse {
+  animation: handle-pulse 0.8s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-pulse-subtle,
   .animate-dash,
   .animate-fade-in-up,
-  .animate-scale-in {
+  .animate-scale-in,
+  .animate-marching-ants,
+  .animate-spring-bounce,
+  .animate-slice-trail,
+  .animate-crosshair-pulse,
+  .animate-particle-drift,
+  .animate-pulse-travel,
+  .animate-node-spawn,
+  .animate-handle-pulse {
     animation: none;
   }
 }
