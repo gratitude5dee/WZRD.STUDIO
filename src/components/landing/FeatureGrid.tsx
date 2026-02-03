@@ -169,7 +169,7 @@ export function FeatureGrid() {
             Join 500+ indie labels and brands already creating with WZRD
           </p>
           <a
-            href="/login?mode=signup"
+            href="/auth?mode=signup"
             className={cn(
               'inline-flex items-center gap-2 px-6 py-3 rounded-xl',
               'bg-white/5 border border-white/10',

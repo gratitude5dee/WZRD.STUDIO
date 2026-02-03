@@ -8,7 +8,7 @@ export const DemoBanner = () => {
 
   const handleSignUp = () => {
     disableDemoMode();
-    navigate('/login?mode=signup');
+    navigate('/auth?mode=signup');
   };
 
   const handleExit = () => {

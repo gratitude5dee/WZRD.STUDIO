@@ -20,7 +20,7 @@ const Credits = () => {
         <div className="text-center p-6 bg-zinc-800 rounded-lg">
           <h1 className="text-xl font-semibold text-white mb-4">Authentication Required</h1>
           <p className="text-zinc-300 mb-6">Please log in to view your credits</p>
-          <Button onClick={() => navigate('/login')}>Go to Login</Button>
+          <Button onClick={() => navigate('/auth')}>Go to Login</Button>
         </div>
       </div>
     );
