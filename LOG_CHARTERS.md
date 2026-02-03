@@ -26,3 +26,12 @@
 - **Owner:** User + OpenClaw
 - **Status:** Active
 - **Created:** 2026-02-01 19:03 PST
+
+## OC-20260203-0001 — Openwork ClawX Swarm
+- **Goal:** Onboard ClawX to Openwork and execute high‑value, easily accomplishable tasks using a specialized swarm.
+- **Scope:** Openwork onboarding submission, job discovery/matching, task selection summaries, and rapid execution of approved high‑value tasks.
+- **Out of Scope:** Spending tokens or posting jobs without approval; any external publishing without approval.
+- **Timeline:** Immediate onboarding + continuous task execution.
+- **Owner:** User + OpenClaw
+- **Status:** Active
+- **Created:** 2026-02-03 00:27 PST
