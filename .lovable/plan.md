@@ -1,91 +1,116 @@
 
-# Fix Landing & Home Pages - Remove Mog Branding
+# Fix Missing /login Route - Causing 404 Error
 
-## Problem Identified
+## Problem
 
-The current `src/pages/Landing.tsx` file contains the **entire Mog streaming platform** landing page:
-- "Mog" logo and wordmark throughout
-- Streaming revenue, creator economy messaging
-- "Mog the internet. Own the culture." tagline
-- Monad blockchain, pay-per-stream features
-- Creator testimonials about "Mog" earnings
+You're seeing a 404 error because:
+- The "Start Creating Free" button in the HeroSection links to `/login?mode=signup`
+- However, there's NO `/login` route defined in `App.tsx`
+- The authentication page is actually at `/auth`
 
-Meanwhile, proper WZRD.STUDIO landing components already exist in `src/components/landing/`:
-- `HeroSection.tsx` - Studio-focused hero with "Start Creating Free"
-- `Features.tsx` - AI Workflow Builder features (bento grid)
-- `PricingSection.tsx` - Pricing cards
-- `TestimonialsSection.tsx` - Creator testimonials
-- `FAQSection.tsx` - FAQ accordion
-- `StickyFooter.tsx` - Footer navigation
+This is a routing mismatch affecting 12+ files across the codebase.
 
-## Solution
+---
 
-### 1. Replace `src/pages/Landing.tsx`
+## Files Requiring Updates
 
-Completely rewrite the landing page to use WZRD.STUDIO branding and the existing studio-focused components:
+### 1. Add `/login` Route Redirect in `App.tsx`
 
-**New Structure:**
+Add a redirect from `/login` to `/auth` to handle both old links and maintain URL compatibility:
+
 ```text
-Landing.tsx
-├── Navigation bar with WZRD.STUDIO logo
-├── HeroSection (existing component)
-│   ├── Headline: "Create Stunning AI Content"
-│   ├── Subheadline: "Visual workflow editor for AI"
-│   └── CTAs: "Start Creating Free" / "Watch Demo"
-├── Features (existing bento grid)
-│   ├── AI Workflow Builder (large card)
-│   ├── Lightning Fast generation
-│   ├── Multiple AI Models
-│   ├── Secure & Private
-│   ├── Team Collaboration
-│   └── Export Anywhere
-├── Tech Partners / Powered By section
-├── PricingSection (existing)
-├── TestimonialsSection (existing)
-├── FAQSection (existing)
-└── StickyFooter (existing)
+Location: src/App.tsx
+Change: Add route that redirects /login to /auth (preserving query params)
 ```
 
-**Branding Changes:**
-- Logo: WZRD.STUDIO (use existing logo component)
-- Colors: Purple gradient theme (#8b5cf6)
-- Background: Dark (#0a0a0a) with gradient overlays
-- Messaging: AI creative platform, workflow builder, content generation
+### 2. Fix HeroSection.tsx (Landing Component)
 
-### 2. Update Route in `src/App.tsx`
+```text
+Location: src/components/landing/HeroSection.tsx
+Line 74: Change "/login?mode=signup" to "/auth?mode=signup"
+```
 
-Keep the redirect but ensure `/home` → `/landing` shows the correct page:
-- `/` → Intro animation → `/landing`
-- `/home` → Redirect to `/landing`
-- `/landing` → New WZRD.STUDIO landing page
+### 3. Fix PricingSection.tsx
 
-### 3. Update `index.html` Metadata (if needed)
+```text
+Location: src/components/landing/PricingSection.tsx
+Line 24: Change "/login?mode=signup" to "/auth?mode=signup"
+Line 41: Change "/login?mode=signup" to "/auth?mode=signup"
+```
 
-Verify the metadata reflects WZRD.STUDIO:
-- Title: "WZRD.STUDIO - AI Creative Platform"
-- Description: Focus on AI workflow, content generation
+### 4. Fix FeatureGrid.tsx
 
-### 4. Files to Modify
+```text
+Location: src/components/landing/FeatureGrid.tsx
+Line 172: Change "/login?mode=signup" to "/auth?mode=signup"
+```
 
-| File | Action |
-|------|--------|
-| `src/pages/Landing.tsx` | **Replace entirely** - Remove Mog, use WZRD.STUDIO components |
-| `src/App.tsx` | Verify routes (likely no change needed) |
+### 5. Fix AuthProvider.tsx
 
-### 5. Components to Use (Already Exist)
+```text
+Location: src/providers/AuthProvider.tsx
+Line 163: Change pathname check from '/login' to '/auth'
+Line 185: Change pathname check from '/login' to '/auth'
+Line 164: Change redirect destination from '/home' to '/studio' (direct to workspace)
+Line 186: Change redirect destination from '/home' to '/studio'
+```
 
-- `@/components/landing/HeroSection`
-- `@/components/landing/Features`
-- `@/components/landing/PricingSection`
-- `@/components/landing/TestimonialsSection`
-- `@/components/landing/FAQSection`
-- `@/components/landing/StickyFooter`
-- `@/components/ui/logo` (WZRD logo)
+### 6. Fix ProtectedRoute.tsx
+
+```text
+Location: src/components/ProtectedRoute.tsx
+Line 17: Change redirect from '/login' to '/auth'
+```
+
+### 7. Fix Credits.tsx
+
+```text
+Location: src/pages/Credits.tsx
+Line 23: Change navigate('/login') to navigate('/auth')
+```
+
+### 8. Fix DemoBanner.tsx
+
+```text
+Location: src/components/demo/DemoBanner.tsx
+Line 11: Change '/login?mode=signup' to '/auth?mode=signup'
+```
+
+### 9. Fix Home HeroSection.tsx
+
+```text
+Location: src/components/home/HeroSection.tsx
+Line 94: Change '/login?mode=signup' to '/auth?mode=signup'
+```
+
+---
+
+## Summary of Changes
+
+| File | Lines to Update | Change |
+|------|-----------------|--------|
+| `App.tsx` | Add new route | Redirect `/login` → `/auth` |
+| `HeroSection.tsx` (landing) | Line 74 | `/login` → `/auth` |
+| `PricingSection.tsx` | Lines 24, 41 | `/login` → `/auth` |
+| `FeatureGrid.tsx` | Line 172 | `/login` → `/auth` |
+| `AuthProvider.tsx` | Lines 163-164, 185-186 | Check `/auth`, redirect to `/studio` |
+| `ProtectedRoute.tsx` | Line 17 | `/login` → `/auth` |
+| `Credits.tsx` | Line 23 | `/login` → `/auth` |
+| `DemoBanner.tsx` | Line 11 | `/login` → `/auth` |
+| `HeroSection.tsx` (home) | Line 94 | `/login` → `/auth` |
+
+---
+
+## Additional Improvement
+
+After successful login, users will be redirected to `/studio` instead of `/home` (which just redirects to `/landing` anyway). This provides a better user experience by taking authenticated users directly to the creative workspace.
+
+---
 
 ## Expected Result
 
-After this change:
-- `/landing` and `/home` show the **WZRD.STUDIO AI Creative Platform** landing page
-- All Mog references (streaming, creator economy, blockchain payments) are removed
-- The landing page showcases the AI Workflow Builder as the core product
-- Dark theme with purple accents consistent with the Studio page
+After these changes:
+- Clicking "Start Creating Free" will go to `/auth?mode=signup` (working page)
+- The `/login` route will redirect to `/auth` for backwards compatibility
+- Protected routes will redirect to `/auth` when not logged in
+- Successful login will redirect users to `/studio` (the actual product)
