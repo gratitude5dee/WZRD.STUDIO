@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MogIntro } from '@/components/MogIntro';
+import { CinematicIntro } from '@/components/landing/CinematicIntro';
 
 export default function Intro() {
   const navigate = useNavigate();
@@ -17,7 +17,7 @@ export default function Intro() {
     <div style={{ minHeight: '100vh', background: '#0a0a0a' }}>
       {/* Intro Animation */}
       {showIntro && (
-        <MogIntro onComplete={handleIntroComplete} skipEnabled={true} />
+        <CinematicIntro onComplete={handleIntroComplete} />
       )}
 
       {/* Transition to Landing */}

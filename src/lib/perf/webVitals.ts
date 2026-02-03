@@ -1,5 +1,5 @@
 import type { Metric } from 'web-vitals';
-import { onCLS, onFID, onLCP, onINP } from 'web-vitals';
+import { onCLS, onLCP, onINP } from 'web-vitals';
 
 type MetricHandler = (metric: Metric) => void;
 
@@ -22,7 +22,6 @@ const defaultHandler: MetricHandler = (metric) => {
 
 export const reportWebVitals = (handler: MetricHandler = defaultHandler) => {
   onCLS(handler);
-  onFID(handler);
   onLCP(handler);
   onINP(handler);
 };

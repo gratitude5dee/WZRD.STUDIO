@@ -63,7 +63,7 @@ const StoryboardSidebar: React.FC<StoryboardSidebarProps> = ({ data, onUpdate })
       height: "auto",
       transition: {
         duration: 0.3,
-        ease: "easeOut"
+        ease: "easeOut" as const
       }
     },
     collapsed: {
@@ -71,7 +71,7 @@ const StoryboardSidebar: React.FC<StoryboardSidebarProps> = ({ data, onUpdate })
       height: 0,
       transition: {
         duration: 0.2,
-        ease: "easeIn"
+        ease: "easeIn" as const
       }
     }
   };
