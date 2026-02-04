@@ -1,116 +1,143 @@
 
-# Fix Missing /login Route - Causing 404 Error
+# Fix Authentication Flow - Remove Onboarding & Add Studio Route
 
-## Problem
+## Problem Summary
 
-You're seeing a 404 error because:
-- The "Start Creating Free" button in the HeroSection links to `/login?mode=signup`
-- However, there's NO `/login` route defined in `App.tsx`
-- The authentication page is actually at `/auth`
+The authentication is broken because:
+1. **`/auth` route uses the wrong file** - It uses `Auth.tsx` which is the old Mog "Welcome" page with `/onboarding` redirect on line 46
+2. **`/studio` route is missing** - The creative workspace page exists (`StudioPage.tsx`) but has no route
+3. **`Login.tsx` is unused** - A properly themed WZRD.STUDIO auth page exists but isn't wired up
+4. **Legacy Mog routes clutter the app** - Routes like `/listen`, `/read`, `/artist` are leftover from the old streaming app
 
-This is a routing mismatch affecting 12+ files across the codebase.
+## Solution
+
+### Phase 1: Fix the Auth Route
+
+**Replace `Auth.tsx` with `Login.tsx` content** (or use `Login.tsx` directly)
+
+The `Login.tsx` file already has:
+- WZRD.STUDIO branding with animated logo
+- Cosmic dark theme with purple gradients
+- Thirdweb ConnectEmbed for wallet authentication
+- Proper redirect logic (just needs to point to `/studio` instead of `/home`)
+
+**Change in `src/App.tsx`:**
+```
+Current:  import Auth from "./pages/Auth";
+Change:   import Auth from "./pages/Login";  // Use the themed login page
+```
+
+**Change in `src/pages/Login.tsx` (line 33):**
+```
+Current:  navigate('/home');
+Change:   navigate('/studio');
+```
+
+### Phase 2: Add Studio Route
+
+**Add to `src/App.tsx`:**
+```typescript
+import StudioPage from "./pages/StudioPage";
+
+// Add routes:
+<Route path="/studio" element={<StudioPage />} />
+<Route path="/studio/:projectId" element={<StudioPage />} />
+```
+
+### Phase 3: Clean Up Legacy Routes
+
+**Remove unused Mog routes from `App.tsx`:**
+- `/listen` → Listen.tsx (music streaming)
+- `/read` → Read.tsx
+- `/artist` → Artist.tsx  
+- `/upload` → Upload.tsx
+- `/search` → Search.tsx
+- `/now-playing` → NowPlaying.tsx
+- `/album/:id` → Album.tsx
+- `/library` → Library.tsx
+- `/watch` → WatchHome.tsx
+- `/watch/:id` → Watch.tsx
+- `/embed/track/:trackId` → EmbedPlayer.tsx
+- `/agent-actions` → MoltbookAgentActions.tsx
+
+**Keep essential routes:**
+- `/` → Intro (cinematic intro animation)
+- `/landing` → Landing (marketing page)
+- `/auth` → Login (themed auth page)
+- `/studio` → StudioPage (main workspace)
+- `/studio/:projectId` → StudioPage (project-specific workspace)
+- `/storyboard` → Storyboard (if needed for WZRD.STUDIO)
+- `*` → NotFound (404 page)
+
+### Phase 4: Remove Unused Providers (Optional)
+
+The `App.tsx` wraps with Mog-specific providers that may no longer be needed:
+- `PlayerProvider` - for music player
+- `MoltbookProvider` - for AI agent auth
+
+These can remain for now if they don't cause issues, or be removed later.
 
 ---
 
-## Files Requiring Updates
+## Files to Modify
 
-### 1. Add `/login` Route Redirect in `App.tsx`
+| File | Action |
+|------|--------|
+| `src/App.tsx` | Import Login instead of Auth, add /studio routes, remove legacy routes |
+| `src/pages/Login.tsx` | Change redirect from `/home` to `/studio` |
 
-Add a redirect from `/login` to `/auth` to handle both old links and maintain URL compatibility:
+## Files to Delete (Optional - Can Be Done Later)
 
-```text
-Location: src/App.tsx
-Change: Add route that redirects /login to /auth (preserving query params)
+These files are no longer needed after route cleanup:
+- `src/pages/Auth.tsx` (replaced by Login.tsx)
+- `src/pages/Listen.tsx`
+- `src/pages/Read.tsx`
+- `src/pages/Artist.tsx`
+- `src/pages/Upload.tsx`
+- `src/pages/Search.tsx`
+- `src/pages/NowPlaying.tsx`
+- `src/pages/Album.tsx`
+- `src/pages/Library.tsx`
+- `src/pages/Watch.tsx`
+- `src/pages/WatchHome.tsx`
+- `src/pages/EmbedPlayer.tsx`
+- `src/pages/MoltbookAgentActions.tsx`
+
+---
+
+## Expected Flow After Fix
+
 ```
+User visits / 
+  → Sees cinematic intro animation
+  → Auto-navigates to /landing
 
-### 2. Fix HeroSection.tsx (Landing Component)
+User clicks "Start Creating Free" or "Sign In"
+  → Goes to /auth (themed WZRD.STUDIO login)
+  → Connects wallet via Thirdweb
+  → AuthProvider detects login
+  → Redirects to /studio (creative workspace)
 
-```text
-Location: src/components/landing/HeroSection.tsx
-Line 74: Change "/login?mode=signup" to "/auth?mode=signup"
-```
-
-### 3. Fix PricingSection.tsx
-
-```text
-Location: src/components/landing/PricingSection.tsx
-Line 24: Change "/login?mode=signup" to "/auth?mode=signup"
-Line 41: Change "/login?mode=signup" to "/auth?mode=signup"
-```
-
-### 4. Fix FeatureGrid.tsx
-
-```text
-Location: src/components/landing/FeatureGrid.tsx
-Line 172: Change "/login?mode=signup" to "/auth?mode=signup"
-```
-
-### 5. Fix AuthProvider.tsx
-
-```text
-Location: src/providers/AuthProvider.tsx
-Line 163: Change pathname check from '/login' to '/auth'
-Line 185: Change pathname check from '/login' to '/auth'
-Line 164: Change redirect destination from '/home' to '/studio' (direct to workspace)
-Line 186: Change redirect destination from '/home' to '/studio'
-```
-
-### 6. Fix ProtectedRoute.tsx
-
-```text
-Location: src/components/ProtectedRoute.tsx
-Line 17: Change redirect from '/login' to '/auth'
-```
-
-### 7. Fix Credits.tsx
-
-```text
-Location: src/pages/Credits.tsx
-Line 23: Change navigate('/login') to navigate('/auth')
-```
-
-### 8. Fix DemoBanner.tsx
-
-```text
-Location: src/components/demo/DemoBanner.tsx
-Line 11: Change '/login?mode=signup' to '/auth?mode=signup'
-```
-
-### 9. Fix Home HeroSection.tsx
-
-```text
-Location: src/components/home/HeroSection.tsx
-Line 94: Change '/login?mode=signup' to '/auth?mode=signup'
+User is authenticated
+  → Can access /studio and /studio/:projectId
+  → Protected routes work correctly
 ```
 
 ---
 
-## Summary of Changes
+## Visual Flow
 
-| File | Lines to Update | Change |
-|------|-----------------|--------|
-| `App.tsx` | Add new route | Redirect `/login` → `/auth` |
-| `HeroSection.tsx` (landing) | Line 74 | `/login` → `/auth` |
-| `PricingSection.tsx` | Lines 24, 41 | `/login` → `/auth` |
-| `FeatureGrid.tsx` | Line 172 | `/login` → `/auth` |
-| `AuthProvider.tsx` | Lines 163-164, 185-186 | Check `/auth`, redirect to `/studio` |
-| `ProtectedRoute.tsx` | Line 17 | `/login` → `/auth` |
-| `Credits.tsx` | Line 23 | `/login` → `/auth` |
-| `DemoBanner.tsx` | Line 11 | `/login` → `/auth` |
-| `HeroSection.tsx` (home) | Line 94 | `/login` → `/auth` |
-
----
-
-## Additional Improvement
-
-After successful login, users will be redirected to `/studio` instead of `/home` (which just redirects to `/landing` anyway). This provides a better user experience by taking authenticated users directly to the creative workspace.
-
----
-
-## Expected Result
-
-After these changes:
-- Clicking "Start Creating Free" will go to `/auth?mode=signup` (working page)
-- The `/login` route will redirect to `/auth` for backwards compatibility
-- Protected routes will redirect to `/auth` when not logged in
-- Successful login will redirect users to `/studio` (the actual product)
+```text
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│     /       │────▶│  /landing   │────▶│    /auth    │
+│  (Intro)    │     │ (Marketing) │     │ (WZRD Login)│
+└─────────────┘     └─────────────┘     └──────┬──────┘
+                                               │
+                                    Wallet Connected
+                                               │
+                                               ▼
+                                        ┌─────────────┐
+                                        │   /studio   │
+                                        │ (Workspace) │
+                                        └─────────────┘
+```
