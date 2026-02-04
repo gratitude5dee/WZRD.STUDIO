@@ -27,10 +27,10 @@ const Login = () => {
       });
   }, []);
   
-  // Redirect to home if already logged in (either Supabase or Thirdweb)
+  // Redirect to studio if already logged in (either Supabase or Thirdweb)
   useEffect(() => {
     if (user || thirdwebAccount) {
-      navigate('/home');
+      navigate('/studio');
     }
   }, [user, thirdwebAccount, navigate]);
 
