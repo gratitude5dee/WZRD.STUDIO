@@ -11,20 +11,9 @@ import { MoltbookProvider } from "@/contexts/MoltbookContext";
 import { NotificationProvider } from "@/contexts/NotificationContext";
 import Intro from "./pages/Intro";
 import Landing from "./pages/Landing";
-import Auth from "./pages/Auth";
-import Listen from "./pages/Listen";
-import Read from "./pages/Read";
-import Artist from "./pages/Artist";
-import Upload from "./pages/Upload";
-import Search from "./pages/Search";
-import NowPlaying from "./pages/NowPlaying";
-import Album from "./pages/Album";
-import Library from "./pages/Library";
-import Watch from "./pages/Watch";
-import WatchHome from "./pages/WatchHome";
-import EmbedPlayer from "./pages/EmbedPlayer";
+import Auth from "./pages/Login";
+import StudioPage from "./pages/StudioPage";
 import NotFound from "./pages/NotFound";
-import MoltbookAgentActions from "./pages/MoltbookAgentActions";
 
 const queryClient = new QueryClient();
 
@@ -44,21 +33,12 @@ const App = () => (
                       <Route path="/" element={<Intro />} />
                       <Route path="/landing" element={<Landing />} />
                       <Route path="/auth" element={<Auth />} />
-            <Route path="/home" element={<Navigate to="/landing" replace />} />
-            <Route path="/login" element={<Navigate to="/auth" replace />} />
-                      <Route path="/listen" element={<Listen />} />
-                      <Route path="/read" element={<Read />} />
-                      <Route path="/artist" element={<Artist />} />
-                      <Route path="/upload" element={<Upload />} />
-                      <Route path="/search" element={<Search />} />
-                      <Route path="/now-playing" element={<NowPlaying />} />
-                      <Route path="/album/:id" element={<Album />} />
-                      <Route path="/library" element={<Library />} />
-                      <Route path="/watch" element={<WatchHome />} />
-                      <Route path="/watch/:id" element={<Watch />} />
-                      <Route path="/embed/track/:trackId" element={<EmbedPlayer />} />
-                      <Route path="/agent-actions" element={<MoltbookAgentActions />} />
-                      {/* Redirect old mog routes */}
+                      <Route path="/login" element={<Navigate to="/auth" replace />} />
+                      <Route path="/home" element={<Navigate to="/landing" replace />} />
+                      <Route path="/studio" element={<StudioPage />} />
+                      <Route path="/studio/:projectId" element={<StudioPage />} />
+                      {/* Redirect old routes */}
+                      <Route path="/onboarding" element={<Navigate to="/studio" replace />} />
                       <Route path="/mog/*" element={<Navigate to="/landing" replace />} />
                       <Route path="*" element={<NotFound />} />
                     </Routes>
